@@ -1,0 +1,84 @@
+Àngela Buxó López
+Paula Mas Pascual
+Pol Montanera Vives
+
+Correcciones a la primera entrega
+---------------------------------
+
+ANALISIS:
+********
+
+Vuestro analisis esta bastante bien, pero hay algunas cosas que teneis que corregir en los escenarios.
+
+En vuestro escenario "comprar productes", fijaos que entre que llega una 
+peticion de compra y se envia pasa un tiempo, ya que teneis una percepcion periodica cada 3 horas
+que pone en marcha todo el proceso de envio. En este escenario estais mezclando algo reactivo 
+(compra) con algo proactivo (decidir periodicamente enviar paquetes). Tiene mas sentido tener un escenario 
+en el que el agente del usuario hace la compra (procesado de una en una) y otro en el que el sistema 
+va organizando los envios (en grupo), para eso teneis una percepcion que llega cada tres horas.
+
+En el escenario "Gestionar Feedback" os hace falta una percepcion que lo ponga en marcha, es igual que el de 
+recomendacion. 
+
+En el escenario "introduir productes extern", aunque no lo diga el enunciado, pensad que 
+tendria sentido que la tienda hiciera alguna accion de confirmacion hacia la tienda externa.
+
+El diagrama de objetivos me parece correcto 
+
+En el diagrama de roles, la percepcion periodica para crear los lotes realmente la deberia recibir solo
+el rol "gestor de magatzem", ya que la negociacion no puede realizarse sin que este rol genere los lotes,
+este se coordinara con "negociador d'enviament". 
+
+No se que significa la percepcion "dades entrega comanda" que recibe "negociador d'enviament", esa informacion
+la debe saber el sistema. Tampoco tiene sentido la percepcion "producte enviat" que le llega a "gestor de
+pagament", ya que es el sistema el que sabe cuando se envia algo.
+
+
+DISEÑO ARQUITECTONICO:
+*********************
+
+Respecto el data coupling como os he comentado en clase es importante hacer que los diferentes roles sean
+responsables de los datos y que el resto se comuniquen con ellos a partir de mensajes y minimizar las
+dependencias entre los roles y los datos.
+
+Fijaos por ejemplo que el "gestor de peticion de compra" no necesita escribir directamente en la fuente
+de datos que tiene los datos bancarios de los usuarios (o de los vendedores externos) y el gestor de pagos
+deberia ser el responsable de toda la gestion de esos datos. Podria pasar igual con la informacion
+de los productos de los vendedores externos, si el gestor de busqueda es el que tiene los datos de 
+todos los productos que hay en la tienda deberia ser el dueño de esos datos.
+
+Fijaos tambien que una compra pasa por diferentes estados durante la compra y que diferentes roles se
+encargan de esos estados. Tal como teneis los roles, el "gestor de peticio de compra" le pasa 
+la informacion que necesita del pedido a "gestor de comanda" y al "gestor de pagament", 
+este ya no necesita esa informacion para nada. El "gestor de comanda" basicamente redirecciona la
+informacion del pedido al "gestor de magatzem" de los centros logisticos que toque
+que son los que realmente hace algo con esa informacion (crear los lotes). 
+El gestor de pagaments, una vez es informado del envio ya puede
+pasarle la informacion al que se encargue del historico de pedidos. Ved que en vuestro
+diseño nadie escribe en vuestra fuente "historial de compres". Este podria ser el
+agente opinador ya que sus roles deberian hacer mas trabajo que el agente retornador (asumimos
+que no todo lo que se compra se devuelve :-), aunque podria ser el dueño el agente 
+retornador. De todas formas, lo mas sencillo es que el retornador preguntara
+al opinador si el pedido cumple con las restricciones de devolucion, si no queremos que
+los dos agentes accedan esa fuente.
+
+Como veis, el gestor de comandes no necesita guardar los pedidos. 
+
+Respecto a la agrupacion de roles en agentes, la agrupacion me parece correcta, pero necesita
+algo mas de justificacion. Por ejemplo, ¿porque juntar el feedback y las sugerencias?
+
+El separar el buscador de la compra, fijaos que lo logico es que se hagan mas busquedas que compras,
+no se activan los dos juntos, el resto de la justificacion me parece bien.
+
+Fijaos que no hay ninguna coordinacion entre el agente "cercador" y el "compra", las compras llegan
+a partir de la percepcion correspondiente. Tambien el centro logistico es el que sabe cuando se 
+hace un envio, tiene mas sentido que se comunique directamente con el agente "bancari".
+
+El resto del system overview me parece correcto, pero os cambiara si ajustais el acceso a las fuentes de 
+datos para que haya menos acoplamientos entre agentes.
+
+-------------------
+
+Podeis continuar trabajando, pero completad y corregid lo que os comento.
+Preguntadme si teneis alguna duda.
+
