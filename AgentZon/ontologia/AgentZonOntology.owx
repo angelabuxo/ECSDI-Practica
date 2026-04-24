@@ -14,10 +14,19 @@
     <Import>http://purl.org/goodrelations/v1</Import>
     <Import>http://xmlns.com/foaf/0.1/</Import>
     <Declaration>
+        <Class IRI="http://example.invalid/ontologies/ont.owl#Acció"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="http://example.invalid/ontologies/ont.owl#Resposta"/>
+    </Declaration>
+    <Declaration>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Actor"/>
     </Declaration>
     <Declaration>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Comanda"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Comunicació"/>
     </Declaration>
     <Declaration>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Concepte"/>
@@ -33,9 +42,6 @@
     </Declaration>
     <Declaration>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Lot"/>
-    </Declaration>
-    <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
     </Declaration>
     <Declaration>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#NotificacióCobrament"/>
@@ -63,9 +69,6 @@
     </Declaration>
     <Declaration>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Suggeriment"/>
-    </Declaration>
-    <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Usuari"/>
     </Declaration>
     <Declaration>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#VenedorExtern"/>
@@ -76,9 +79,14 @@
     <Declaration>
         <ObjectProperty IRI="http://example.invalid/ontologies/ont.owl#venProducte"/>
     </Declaration>
-    <Declaration>
-        <Class IRI="http://www.w3.org/2000/10/swap/pim/contact#Person"/>
-    </Declaration>
+    <SubClassOf>
+        <Class IRI="http://example.invalid/ontologies/ont.owl#Acció"/>
+        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Comunicació"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="http://example.invalid/ontologies/ont.owl#Resposta"/>
+        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Comunicació"/>
+    </SubClassOf>
     <SubClassOf>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Comanda"/>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Concepte"/>
@@ -105,27 +113,23 @@
     </SubClassOf>
     <SubClassOf>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#NotificacióCobrament"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
+        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Comunicació"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#NotificacióEnviament"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
+        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Comunicació"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#PeticióCerca"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
+        <Class IRI="http://example.invalid/ontologies/ont.owl#Acció"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#PeticióCompra"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
+        <Class IRI="http://example.invalid/ontologies/ont.owl#Acció"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#PeticióDevolució"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Producte"/>
-        <Class IRI="http://purl.org/goodrelations/v1#ProductOrService"/>
+        <Class IRI="http://example.invalid/ontologies/ont.owl#Acció"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Producte"/>
@@ -133,23 +137,15 @@
     </SubClassOf>
     <SubClassOf>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#RespostaDevolució"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
+        <Class IRI="http://example.invalid/ontologies/ont.owl#Resposta"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#ResultatCerca"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
+        <Class IRI="http://example.invalid/ontologies/ont.owl#Resposta"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Suggeriment"/>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Concepte"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Usuari"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Actor"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Usuari"/>
-        <Class IRI="http://www.w3.org/2000/10/swap/pim/contact#Person"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#VenedorExtern"/>
@@ -159,14 +155,6 @@
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#VenedorExtern"/>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Actor"/>
     </SubClassOf>
-    <SubClassOf>
-        <Class IRI="Thing"/>
-        <Class IRI="http://purl.org/goodrelations/v1#ProductOrService"/>
-    </SubClassOf>
-    <ObjectPropertyDomain>
-        <ObjectProperty IRI="http://example.invalid/ontologies/ont.owl#faComanda"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Usuari"/>
-    </ObjectPropertyDomain>
     <ObjectPropertyDomain>
         <ObjectProperty IRI="http://example.invalid/ontologies/ont.owl#venProducte"/>
         <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#VenedorExtern"/>
