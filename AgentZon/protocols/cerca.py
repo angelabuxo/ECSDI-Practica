@@ -62,3 +62,9 @@ class PeticioCerca:
 def cercar_en_base_de_dades(peticio: PeticioCerca, inventari_complet: List[ProducteModel]) -> ResultatCerca:
     resultats = [p for p in inventari_complet if peticio.producte_compleix_filtres(p)]
     return ResultatCerca(resultats, peticio.id)
+        if (
+            self.preu_min is not None
+            and self.preu_max is not None
+            and self.preu_min > self.preu_max
+        ):
+            raise ValueError("El preu mínim no pot ser mes gran que el preu màxim.")
