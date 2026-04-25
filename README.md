@@ -25,7 +25,6 @@ AgentZon/
 │   │   └── cercador.html        # Interfície web de l'Agent Cercador
 │   └── static/
 │       └── style.css            # Estils de la interfície
-└── FLUX_AGENT_CERCADOR.md       # Explicació detallada del Cercador
 ```
 
 ## Requisits
@@ -80,5 +79,3 @@ python3 -c "from AgentZon.agents.agent_cercador import AgentCercador; from Agent
 `AgentZon/ontologia/AgentZonOntology.rdf` defineix el vocabulari compartit pels agents: classes, accions, respostes i propietats.
 
 `AgentZon/data/productes.ttl` conté les dades concretes del catàleg. Està en format Turtle perquè és més llegible i fàcil de versionar que RDF/XML.
-
-Per entendre el flux complet del Cercador, consulteu `AgentZon/FLUX_AGENT_CERCADOR.md`.
