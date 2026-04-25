@@ -1,102 +1,84 @@
 # AgentZon
 
-> Plataforma distribuïda multiagent per a la gestió de processos de comerç electrònic.
+AgentZon és el prototip de la pràctica d'ECSDI: una plataforma distribuïda multiagent per gestionar processos d'una empresa de comerç electrònic. El projecte parteix del disseny Prometheus i implementa agents que es comuniquen amb missatges i comparteixen una ontologia comuna.
 
-AgentZon és el prototip desenvolupat per a la pràctica de l'assignatura **ECSDI** (Enginyeria del Coneixement i Sistemes Distribuïts Intel·ligents) del Grau en Enginyeria Informàtica de la **UPC - FIB**, curs 2025/2026 Q2.
+Ara mateix la implementació està centrada en l'Agent Cercador, que permet buscar productes dins d'un catàleg RDF/Turtle.
 
-El sistema modela una empresa global de comerç electrònic (tipus Amazon) com un conjunt d'agents autònoms que col·laboren mitjançant una ontologia compartida i protocols de comunicació basats en missatges, seguint la metodologia **Prometheus**.
+## Estructura
 
-## Context de la pràctica
-
-L'objectiu global és que un **agent assistent virtual** sigui capaç de fer compres en nom d'un usuari a partir d'un conjunt de restriccions (marca, rang de preu, termini d'entrega, valoració, venedor, etc.). L'assistent raona sobre els productes disponibles, presenta opcions a l'usuari, confirma la tria i, a partir d'aquí, gestiona tota la compra de manera automatitzada.
-
-## Estructura del projecte
-
-```
+```text
 AgentZon/
-├── main.py                     # Punt d'entrada del sistema
-├── ontologia/
-│   ├── AgentZonOntology.owl    # Ontologia principal (OWL)
-│   └── documentation/          # Documentació autogenerada
-│       ├── index.html          # Documentació W3C (pyLODE)
-│       └── grafo.png           # Graf visual (owl2plot)
-├── protocols/
-│   ├── cerca.py                # Missatges del protocol de cerca
-│   └── compra.py               # Missatges del protocol de compra
+├── config.py                    # Rutes i namespace compartits pels agents
 ├── agents/
-│   ├── agent_cercador.py       # Agent responsable de la cerca
-│   └── agent_compra.py         # Agent responsable de la compra
-└── utils/
-    └── interface.py            # Utilitats d'interacció amb l'usuari
+│   ├── agent_cercador.py        # Agent Cercador i interfície web
+│   └── agent_compra.py          # Agent de compra, pendent d'implementar
+├── data/
+│   └── productes.ttl            # Catàleg de productes en Turtle
+├── ontologia/
+│   ├── AgentZonOntology.rdf     # Ontologia compartida en RDF/XML
+│   └── documentation/           # Documentació generada de l'ontologia
+├── protocols/
+│   ├── cerca.py                 # Missatges del protocol de cerca
+│   └── compra.py                # Missatges del protocol de compra
+├── web/
+│   ├── templates/
+│   │   └── cercador.html        # Interfície web de l'Agent Cercador
+│   └── static/
+│       └── style.css            # Estils de la interfície
+└── FLUX_AGENT_CERCADOR.md       # Explicació detallada del Cercador
 ```
-
-### Descripció dels mòduls
-
-**`main.py`** — Punt d'entrada del sistema. Inicialitza l'entorn d'agents (el contenidor), crea les instàncies de cada agent (Cercador, Compra) i manté el sistema en execució.
-
-**`ontologia/`** — El nucli del coneixement.
-- `AgentZonOntology.owl`: jerarquia de classes (`Producte`, `Categoria`), propietats (`téPreu`, `téMarca`) i individus (els productes reals). És un model iteratiu que creix amb el sistema.
-- `documentation/`: documentació tècnica autogenerada.
-  - `index.html`: documentació en format W3C generada amb **pyLODE**.
-  - `grafo.png`: representació visual de l'ontologia generada amb **owl2plot**.
-
-**`protocols/`** — Defineix l'"idioma" i els "formularis" que fan servir els agents per parlar entre ells.
-- `cerca.py`: estructura dels missatges de cerca. Inclou la classe `MostrarCerca`, que dicta quins camps rep l'usuari quan l'Agent Cercador retorna resultats.
-- `compra.py`: estructura per a les transaccions. Inclou la classe `ConfirmarCompra`, que assegura que els missatges d'èxit o error de la comanda segueixin un format estàndard.
-
-**`agents/`** — La lògica de comportament (els "cervells" del sistema).
-- `agent_cercador.py`: implementa el *pla de cerca*. La seva responsabilitat és rebre peticions, fer consultes SPARQL o filtrats sobre l'ontologia i tornar els resultats.
-- `agent_compra.py`: implementa la lògica de comanda. Verifica la disponibilitat del producte a l'ontologia i gestiona la confirmació de la comanda simple.
-
-**`utils/`** — Funcions de suport.
-- `interface.py`: utilitats per a la interacció amb l'usuari. Centralitza la manera d'imprimir les taules de productes i de demanar dades per consola, assegurant una estètica coherent a tots els agents.
 
 ## Requisits
 
-- **Python 3.10+**
-- Llibreries principals:
-  - `rdflib` — manipulació de grafs RDF i consultes SPARQL.
-  - `owlready2` — càrrega i raonament sobre ontologies OWL.
-  - `pyLODE` — generació de documentació W3C de l'ontologia.
-  - `owl2else` — generació del graf visual de l'ontologia.
+- Python 3.10 o superior.
+- Dependències de `requirements.txt`:
+  - `Flask`
+  - `rdflib`
 
 ## Instal·lació
 
-```bash
-git clone <url-del-repositori>
-cd ECSDI-Practica/AgentZon
+Des de l'arrel del repositori:
 
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-De moment el repositori encara no té un `requirements.txt`. Les dependències s'instal·len manualment segons el que necessiti cada mòdul, per exemple:
+Si no voleu crear entorn virtual, també es pot fer:
 
 ```bash
-pip install rdflib owlready2 pylode
+python3 -m pip install --user -r requirements.txt
 ```
 
-## Execució
+## Executar la interfície web de cerca
 
-Des de l'arrel de `AgentZon/`:
+Des de l'arrel del repositori:
 
 ```bash
-python main.py
+python3 AgentZon/agents/agent_cercador.py
 ```
 
-Això inicialitza el contenidor d'agents i engega els agents Cercador i Compra, que queden a l'espera de peticions per part de l'usuari.
+Després obriu el navegador a:
 
-### Regenerar la documentació de l'ontologia
+```text
+http://127.0.0.1:9001
+```
+
+La pàgina HTML mostra un formulari simple. Quan l'usuari envia la cerca, el mateix Agent Cercador rep els camps del formulari, crea una `PeticioCerca`, executa la cerca i torna a renderitzar la mateixa pàgina amb els resultats. No s'utilitza JSON ni una API REST separada.
+
+## Provar només la lògica
+
+També es pot provar la lògica directament:
 
 ```bash
-pylode ontologia/AgentZonOntology.owl -o ontologia/documentation/index.html
-owl2plot ontologia/AgentZonOntology.owl -o ontologia/documentation/grafo.png
+python3 -c "from AgentZon.agents.agent_cercador import AgentCercador; from AgentZon.protocols.cerca import PeticioCerca; r = AgentCercador().processar_cerca(PeticioCerca(text='portatil')); print(r.total)"
 ```
 
-## Tecnologies
+## Ontologia i dades
 
-- **Python 3** com a llenguatge d'implementació.
-- **OWL / RDF / SPARQL** per a la representació i consulta del coneixement.
-- **Prometheus Design Tool (PDT)** per al disseny del sistema multiagent.
-- **Protégé** per a l'edició de l'ontologia.
-- **pyLODE** i **owl2plot** per a la documentació de l'ontologia.
+`AgentZon/ontologia/AgentZonOntology.rdf` defineix el vocabulari compartit pels agents: classes, accions, respostes i propietats.
+
+`AgentZon/data/productes.ttl` conté les dades concretes del catàleg. Està en format Turtle perquè és més llegible i fàcil de versionar que RDF/XML.
+
+Per entendre el flux complet del Cercador, consulteu `AgentZon/FLUX_AGENT_CERCADOR.md`.

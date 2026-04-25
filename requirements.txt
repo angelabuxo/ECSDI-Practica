@@ -1,5 +1,2 @@
 Flask
-flask-restful
-requests
 rdflib
-SPARQLWrapper

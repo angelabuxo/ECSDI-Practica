@@ -1,0 +1,134 @@
+from pathlib import Path
+import sys
+from typing import List
+
+from flask import Flask, render_template, request
+from rdflib import Graph, RDF, URIRef
+from rdflib.exceptions import ParserError
+
+# Directori base del paquet AgentZon. Com que sovint executarem aquest fitxer
+# directament amb `python AgentZon/agents/agent_cercador.py`, afegim AgentZon
+# al PYTHONPATH per poder importar `protocols.cerca` sense problemes.
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
+
+from config import AGENTZON, ONTOLOGY_PATH, PRODUCTES_PATH, WEB_DIR
+from protocols.cerca import PeticioCerca, ProducteModel, ResultatCerca, cercar_en_base_de_dades
+
+
+class AgentCercador:
+    """
+    Implementa els plans definits a Prometheus per a l'Agent Cercador:
+    processar peticions de cerca i presentar resultats.
+    """
+
+    def __init__(self, ontology_path: Path = ONTOLOGY_PATH, productes_path: Path = PRODUCTES_PATH):
+        self.ontology_path = ontology_path
+        self.productes_path = productes_path
+
+        # El graf RDF és la "base de coneixement" local de l'agent. Hi carreguem
+        # tant l'ontologia com les dades de productes.
+        self.graph = Graph()
+        self.graph.bind("az", AGENTZON)
+        self._carregar_ontologia()
+        self._carregar_productes()
+
+    def _carregar_ontologia(self) -> None:
+        """Carrega l'ontologia RDF/XML per tenir disponibles classes i propietats."""
+        if self.ontology_path.exists():
+            try:
+                self.graph.parse(self.ontology_path, format="xml")
+            except ParserError:
+                # Si algun dia es torna a exportar en OWL/XML, el Cercador pot
+                # seguir funcionant amb el namespace i el catàleg Turtle.
+                pass
+
+    def _carregar_productes(self) -> None:
+        """Carrega el catàleg Turtle que actua com a font de dades de productes."""
+        if not self.productes_path.exists():
+            raise FileNotFoundError(f"No s'ha trobat el catàleg de productes: {self.productes_path}")
+
+        self.graph.parse(self.productes_path, format="turtle")
+
+    def inventari(self) -> List[ProducteModel]:
+        """Converteix totes les instàncies RDF de Producte a models Python."""
+        return [self._producte_des_de_graf(subject) for subject in self.graph.subjects(RDF.type, AGENTZON.Producte)]
+
+    def _literal(self, subject: URIRef, predicate: URIRef, default=None):
+        """Llegeix un literal RDF i retorna un valor Python normal."""
+        value = self.graph.value(subject, predicate)
+        return value.toPython() if value is not None else default
+
+    def _producte_des_de_graf(self, subject: URIRef) -> ProducteModel:
+        """Reconstrueix un ProducteModel a partir de les seves propietats RDF."""
+        return ProducteModel(
+            id=str(self._literal(subject, AGENTZON.IdProducte, subject.split("/")[-1])),
+            nom=str(self._literal(subject, AGENTZON.NomProducte, "")),
+            preu=float(self._literal(subject, AGENTZON.PreuProducte, 0.0)),
+            descr=str(self._literal(subject, AGENTZON.DescripcióProducte, "")),
+            categ=str(self._literal(subject, AGENTZON.CategoriaProducte, "")),
+            marca=str(self._literal(subject, AGENTZON.MarcaProducte, "")),
+            pes=int(float(self._literal(subject, AGENTZON.PesProducte, 0))),
+        )
+
+    def processar_cerca(self, peticio: PeticioCerca) -> ResultatCerca:
+        """Executa el pla de cerca: obté l'inventari i aplica els filtres."""
+        return cercar_en_base_de_dades(peticio, self.inventari())
+
+
+def _float_opcional(valor: str):
+    """Converteix un camp del formulari a float o None si està buit."""
+    valor = valor.strip()
+    return float(valor) if valor else None
+
+
+def create_app() -> Flask:
+    """Crea la interfície HTML que pertany a l'Agent Cercador."""
+    app = Flask(
+        __name__,
+        template_folder=str(WEB_DIR / "templates"),
+        static_folder=str(WEB_DIR / "static"),
+    )
+    cercador = AgentCercador()
+
+    @app.route("/", methods=["GET", "POST"])
+    def index():
+        resultat = None
+        error = None
+        valors = {
+            "text": "",
+            "categ": "",
+            "marca": "",
+            "preu_min": "",
+            "preu_max": "",
+        }
+
+        if request.method == "POST":
+            valors = {
+                "text": request.form.get("text", ""),
+                "categ": request.form.get("categ", ""),
+                "marca": request.form.get("marca", ""),
+                "preu_min": request.form.get("preu_min", ""),
+                "preu_max": request.form.get("preu_max", ""),
+            }
+
+            try:
+                peticio = PeticioCerca(
+                    text=valors["text"],
+                    categ=valors["categ"] or None,
+                    marca=valors["marca"] or None,
+                    preu_min=_float_opcional(valors["preu_min"]),
+                    preu_max=_float_opcional(valors["preu_max"]),
+                )
+                resultat = cercador.processar_cerca(peticio)
+            except ValueError as exc:
+                error = str(exc)
+
+        return render_template("cercador.html", resultat=resultat, error=error, valors=valors)
+
+    return app
+
+
+if __name__ == "__main__":
+    create_app().run(host="127.0.0.1", port=9001, debug=True)
