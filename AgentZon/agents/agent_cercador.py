@@ -1,22 +1,14 @@
 from pathlib import Path
-import sys
 from typing import List
 
 from flask import Flask, render_template, request
 from rdflib import Graph, RDF, URIRef
 from rdflib.exceptions import ParserError
 
-# Directori base del paquet AgentZon. Com que sovint executarem aquest fitxer
-# directament amb `python AgentZon/agents/agent_cercador.py`, afegim AgentZon
-# al PYTHONPATH per poder importar `protocols.cerca` sense problemes.
-ROOT_DIR = Path(__file__).resolve().parents[1]
-if str(ROOT_DIR) not in sys.path:
-    sys.path.append(str(ROOT_DIR))
-
-from config import AGENTZON, ONTOLOGY_PATH, PRODUCTES_PATH, WEB_DIR
-from protocols.cerca import PeticioCerca, ProducteModel, ResultatCerca, cercar_en_base_de_dades
-
-
+# Aquest mòdul s'ha d'executar com a part del paquet, per exemple amb:
+# `python -m AgentZon.agents.agent_cercador`
+from AgentZon.config import AGENTZON, ONTOLOGY_PATH, PRODUCTES_PATH, WEB_DIR
+from AgentZon.protocols.cerca import PeticioCerca, ProducteModel, ResultatCerca, cercar_en_base_de_dades
 class AgentCercador:
     """
     Implementa els plans definits a Prometheus per a l'Agent Cercador:
