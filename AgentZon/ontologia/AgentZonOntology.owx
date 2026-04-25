@@ -1,184 +1,496 @@
 <?xml version="1.0"?>
 <Ontology xmlns="http://www.w3.org/2002/07/owl#"
-     xml:base="http://www.w3.org/2002/07/owl#"
+     xml:base="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:xml="http://www.w3.org/XML/1998/namespace"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
-     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
-    <Prefix name="" IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6/"/>
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     ontologyIRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15">
+    <Prefix name="" IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15/"/>
     <Prefix name="owl" IRI="http://www.w3.org/2002/07/owl#"/>
     <Prefix name="rdf" IRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
     <Prefix name="xml" IRI="http://www.w3.org/XML/1998/namespace"/>
     <Prefix name="xsd" IRI="http://www.w3.org/2001/XMLSchema#"/>
     <Prefix name="rdfs" IRI="http://www.w3.org/2000/01/rdf-schema#"/>
-    <Import>http://purl.org/goodrelations/v1</Import>
-    <Import>http://xmlns.com/foaf/0.1/</Import>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Actor"/>
+        <Class IRI="#Acció"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Comanda"/>
+        <Class IRI="#Actor"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Concepte"/>
+        <Class IRI="#Banc"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Devolució"/>
+        <Class IRI="#Comanda"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#EmpresaTransport"/>
+        <Class IRI="#Comunicació"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Feedback"/>
+        <Class IRI="#Devolució"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Lot"/>
+        <Class IRI="#EmpresaTransport"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
+        <Class IRI="#Feedback"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#NotificacióCobrament"/>
+        <Class IRI="#InfoUsuari"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#NotificacióEnviament"/>
+        <Class IRI="#Lot"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#PeticióCerca"/>
+        <Class IRI="#PeticióAfegirProducteExtern"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#PeticióCompra"/>
+        <Class IRI="#PeticióCerca"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#PeticióDevolució"/>
+        <Class IRI="#PeticióCompra"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Producte"/>
+        <Class IRI="#PeticióInfoUsuari"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#RespostaDevolució"/>
+        <Class IRI="#Producte"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#ResultatCerca"/>
+        <Class IRI="#Resposta"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Suggeriment"/>
+        <Class IRI="#ResultatCerca"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Usuari"/>
+        <Class IRI="#Suggeriment"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#VenedorExtern"/>
+        <Class IRI="#Usuari"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="http://example.invalid/ontologies/ont.owl#faComanda"/>
+        <Class IRI="#VenedorExtern"/>
     </Declaration>
     <Declaration>
-        <ObjectProperty IRI="http://example.invalid/ontologies/ont.owl#venProducte"/>
+        <ObjectProperty IRI="#Conté"/>
     </Declaration>
     <Declaration>
-        <Class IRI="http://www.w3.org/2000/10/swap/pim/contact#Person"/>
+        <ObjectProperty IRI="#DemanaAfegir"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#Envia"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#Fa"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#FormatPer"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#Mostra"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#Realitza"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#Rep"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#RepPregunta"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#AdreçaUsuari"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#CategoriaProducte"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#DadesBancàriesUsuari"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#DadesBancàriesVenedorExtern"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#DescripcióProducte"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#IdBanc"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#IdEmpresaTransport"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#IdProducte"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#IdUsuari"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#IdVenedorExtern"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#ImatgeProducte"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#MarcaProducte"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#NomProducte"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#NomUsuari"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#PesProducte"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#PreuProducte"/>
     </Declaration>
     <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Comanda"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Concepte"/>
+        <Class IRI="#Acció"/>
+        <Class IRI="#Comunicació"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Devolució"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Concepte"/>
+        <Class IRI="#Banc"/>
+        <Class IRI="#Actor"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#EmpresaTransport"/>
-        <Class IRI="http://schema.org/Organization"/>
+        <Class IRI="#EmpresaTransport"/>
+        <Class IRI="#Actor"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#EmpresaTransport"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Actor"/>
+        <Class IRI="#InfoUsuari"/>
+        <Class IRI="#Resposta"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Feedback"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Concepte"/>
+        <Class IRI="#PeticióAfegirProducteExtern"/>
+        <Class IRI="#Acció"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Lot"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Concepte"/>
+        <Class IRI="#PeticióCerca"/>
+        <Class IRI="#Acció"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#NotificacióCobrament"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
+        <Class IRI="#PeticióCompra"/>
+        <Class IRI="#Acció"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#NotificacióEnviament"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
+        <Class IRI="#PeticióInfoUsuari"/>
+        <Class IRI="#Acció"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#PeticióCerca"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
+        <Class IRI="#Resposta"/>
+        <Class IRI="#Comunicació"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#PeticióCompra"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
+        <Class IRI="#ResultatCerca"/>
+        <Class IRI="#Resposta"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#PeticióDevolució"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
+        <Class IRI="#Usuari"/>
+        <Class IRI="#Actor"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Producte"/>
-        <Class IRI="http://purl.org/goodrelations/v1#ProductOrService"/>
+        <Class IRI="#VenedorExtern"/>
+        <Class IRI="#Actor"/>
     </SubClassOf>
-    <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Producte"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Concepte"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#RespostaDevolució"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#ResultatCerca"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Missatge"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Suggeriment"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Concepte"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Usuari"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Actor"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Usuari"/>
-        <Class IRI="http://www.w3.org/2000/10/swap/pim/contact#Person"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#VenedorExtern"/>
-        <Class IRI="http://schema.org/Organization"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#VenedorExtern"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Actor"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="Thing"/>
-        <Class IRI="http://purl.org/goodrelations/v1#ProductOrService"/>
-    </SubClassOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#Conté"/>
+        <ObjectProperty abbreviatedIRI="owl:topObjectProperty"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#DemanaAfegir"/>
+        <ObjectProperty abbreviatedIRI="owl:topObjectProperty"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#Envia"/>
+        <ObjectProperty abbreviatedIRI="owl:topObjectProperty"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#Fa"/>
+        <ObjectProperty abbreviatedIRI="owl:topObjectProperty"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#FormatPer"/>
+        <ObjectProperty abbreviatedIRI="owl:topObjectProperty"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#Mostra"/>
+        <ObjectProperty abbreviatedIRI="owl:topObjectProperty"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#Realitza"/>
+        <ObjectProperty abbreviatedIRI="owl:topObjectProperty"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#Rep"/>
+        <ObjectProperty abbreviatedIRI="owl:topObjectProperty"/>
+    </SubObjectPropertyOf>
+    <SubObjectPropertyOf>
+        <ObjectProperty IRI="#RepPregunta"/>
+        <ObjectProperty abbreviatedIRI="owl:topObjectProperty"/>
+    </SubObjectPropertyOf>
     <ObjectPropertyDomain>
-        <ObjectProperty IRI="http://example.invalid/ontologies/ont.owl#faComanda"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Usuari"/>
+        <ObjectProperty IRI="#Conté"/>
+        <Class IRI="#Comanda"/>
     </ObjectPropertyDomain>
     <ObjectPropertyDomain>
-        <ObjectProperty IRI="http://example.invalid/ontologies/ont.owl#venProducte"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#VenedorExtern"/>
+        <ObjectProperty IRI="#DemanaAfegir"/>
+        <Class IRI="#VenedorExtern"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#Envia"/>
+        <Class IRI="#Usuari"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#Fa"/>
+        <Class IRI="#Usuari"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#FormatPer"/>
+        <Class IRI="#Lot"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#Mostra"/>
+        <Class IRI="#ResultatCerca"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#Realitza"/>
+        <Class IRI="#Usuari"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#Rep"/>
+        <Class IRI="#Usuari"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#RepPregunta"/>
+        <Class IRI="#Usuari"/>
     </ObjectPropertyDomain>
     <ObjectPropertyRange>
-        <ObjectProperty IRI="http://example.invalid/ontologies/ont.owl#faComanda"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Comanda"/>
+        <ObjectProperty IRI="#Conté"/>
+        <Class IRI="#Producte"/>
     </ObjectPropertyRange>
     <ObjectPropertyRange>
-        <ObjectProperty IRI="http://example.invalid/ontologies/ont.owl#venProducte"/>
-        <Class IRI="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-6#Producte"/>
+        <ObjectProperty IRI="#DemanaAfegir"/>
+        <Class IRI="#PeticióAfegirProducteExtern"/>
     </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#Envia"/>
+        <Class IRI="#InfoUsuari"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#Fa"/>
+        <Class IRI="#PeticióCompra"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#FormatPer"/>
+        <Class IRI="#Producte"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#Mostra"/>
+        <Class IRI="#Producte"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#Realitza"/>
+        <Class IRI="#PeticióCerca"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#Rep"/>
+        <Class IRI="#ResultatCerca"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#RepPregunta"/>
+        <Class IRI="#PeticióInfoUsuari"/>
+    </ObjectPropertyRange>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#AdreçaUsuari"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#CategoriaProducte"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#DadesBancàriesUsuari"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#DadesBancàriesVenedorExtern"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#DescripcióProducte"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#IdBanc"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#IdEmpresaTransport"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#IdProducte"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#IdUsuari"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#IdVenedorExtern"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#ImatgeProducte"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#MarcaProducte"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#NomProducte"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#NomUsuari"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#PesProducte"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <SubDataPropertyOf>
+        <DataProperty IRI="#PreuProducte"/>
+        <DataProperty abbreviatedIRI="owl:topDataProperty"/>
+    </SubDataPropertyOf>
+    <DataPropertyDomain>
+        <DataProperty IRI="#AdreçaUsuari"/>
+        <Class IRI="#Usuari"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#CategoriaProducte"/>
+        <Class IRI="#Producte"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#DadesBancàriesUsuari"/>
+        <Class IRI="#Usuari"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#DadesBancàriesVenedorExtern"/>
+        <Class IRI="#VenedorExtern"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#DescripcióProducte"/>
+        <Class IRI="#Producte"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#IdBanc"/>
+        <Class IRI="#Banc"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#IdEmpresaTransport"/>
+        <Class IRI="#EmpresaTransport"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#IdProducte"/>
+        <Class IRI="#Producte"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#IdUsuari"/>
+        <Class IRI="#Usuari"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#IdVenedorExtern"/>
+        <Class IRI="#VenedorExtern"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#ImatgeProducte"/>
+        <Class IRI="#Producte"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#MarcaProducte"/>
+        <Class IRI="#Producte"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#NomProducte"/>
+        <Class IRI="#Producte"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#NomUsuari"/>
+        <Class IRI="#Usuari"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#PesProducte"/>
+        <Class IRI="#Producte"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#PreuProducte"/>
+        <Class IRI="#Producte"/>
+    </DataPropertyDomain>
+    <DataPropertyRange>
+        <DataProperty IRI="#AdreçaUsuari"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#CategoriaProducte"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#DadesBancàriesUsuari"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#DadesBancàriesVenedorExtern"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#DescripcióProducte"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#IdBanc"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#IdEmpresaTransport"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#IdProducte"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#IdUsuari"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#IdVenedorExtern"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#MarcaProducte"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#NomProducte"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#NomUsuari"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#PesProducte"/>
+        <Datatype abbreviatedIRI="xsd:float"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#PreuProducte"/>
+        <Datatype abbreviatedIRI="xsd:float"/>
+    </DataPropertyRange>
 </Ontology>
 
 
