@@ -39,10 +39,13 @@ class AgentCercador:
         if self.ontology_path.exists():
             try:
                 self.graph.parse(self.ontology_path, format="xml")
-            except ParserError:
+            except ParserError as exc:
                 # Si algun dia es torna a exportar en OWL/XML, el Cercador pot
                 # seguir funcionant amb el namespace i el catàleg Turtle.
-                pass
+                print(
+                    f"Avís: no s'ha pogut carregar l'ontologia '{self.ontology_path}': {exc}",
+                    file=sys.stderr,
+                )
 
     def _carregar_productes(self) -> None:
         """Carrega el catàleg Turtle que actua com a font de dades de productes."""
