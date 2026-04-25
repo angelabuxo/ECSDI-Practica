@@ -1,0 +1,39 @@
+@prefix az: <http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#producte/p001> a az:Producte ;
+    az:CategoriaProducte "informatica"^^xsd:string ;
+    az:DescripcióProducte "Portatil lleuger per estudi i oficina"^^xsd:string ;
+    az:IdProducte "p001"^^xsd:string ;
+    az:MarcaProducte "Lenovo"^^xsd:string ;
+    az:NomProducte "Portatil Lenovo IdeaPad"^^xsd:string ;
+    az:PesProducte "1600"^^xsd:float ;
+    az:PreuProducte "699.99"^^xsd:float .
+
+<http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#producte/p002> a az:Producte ;
+    az:CategoriaProducte "audio"^^xsd:string ;
+    az:DescripcióProducte "Auriculars bluetooth amb bateria de llarga durada"^^xsd:string ;
+    az:IdProducte "p002"^^xsd:string ;
+    az:MarcaProducte "Sony"^^xsd:string ;
+    az:NomProducte "Auriculars Sony WH-CH520"^^xsd:string ;
+    az:PesProducte "147"^^xsd:float ;
+    az:PreuProducte "49.9"^^xsd:float .
+
+<http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#producte/p003> a az:Producte ;
+    az:CategoriaProducte "llar"^^xsd:string ;
+    az:DescripcióProducte "Cafetera automatica per cafe espresso"^^xsd:string ;
+    az:IdProducte "p003"^^xsd:string ;
+    az:MarcaProducte "Philips"^^xsd:string ;
+    az:NomProducte "Cafetera Philips Series 2200"^^xsd:string ;
+    az:PesProducte "7500"^^xsd:float ;
+    az:PreuProducte "329.0"^^xsd:float .
+
+<http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#producte/p004> a az:Producte ;
+    az:CategoriaProducte "llibres"^^xsd:string ;
+    az:DescripcióProducte "Lector de llibres electronics amb pantalla antireflexos"^^xsd:string ;
+    az:IdProducte "p004"^^xsd:string ;
+    az:MarcaProducte "Amazon"^^xsd:string ;
+    az:NomProducte "Kindle Paperwhite"^^xsd:string ;
+    az:PesProducte "205"^^xsd:float ;
+    az:PreuProducte "159.99"^^xsd:float .
+
