@@ -1,0 +1,66 @@
+{
+  "p001": {
+    "categoria": "informatica",
+    "descripcio": "Portatil lleuger per estudi i oficina",
+    "marca": "Lenovo",
+    "nom": "Portatil Lenovo IdeaPad",
+    "pes": 1600.0,
+    "preu": 699.99
+  },
+  "p002": {
+    "categoria": "audio",
+    "descripcio": "Auriculars bluetooth amb bateria de llarga durada",
+    "marca": "Sony",
+    "nom": "Auriculars Sony WH-CH520",
+    "pes": 147.0,
+    "preu": 49.9
+  },
+  "p003": {
+    "categoria": "llar",
+    "descripcio": "Cafetera automatica per cafe espresso",
+    "marca": "Philips",
+    "nom": "Cafetera Philips Series 2200",
+    "pes": 7500.0,
+    "preu": 329.0
+  },
+  "p004": {
+    "categoria": "llibres",
+    "descripcio": "Lector de llibres electronics amb pantalla antireflexos",
+    "marca": "Amazon",
+    "nom": "Kindle Paperwhite",
+    "pes": 205.0,
+    "preu": 159.99
+  },
+  "p005": {
+    "categoria": "audio",
+    "descripcio": "Auriculars sense fil amb cancellacio activa de soroll",
+    "marca": "Apple",
+    "nom": "AirPods Pro",
+    "pes": 56.4,
+    "preu": 279.0
+  },
+  "p006": {
+    "categoria": "informatica",
+    "descripcio": "Portatil Apple d'alt rendiment amb xip M4 per professionals",
+    "marca": "Apple",
+    "nom": "MacBook Pro M4",
+    "pes": 1550.0,
+    "preu": 2399.0
+  },
+  "p007": {
+    "categoria": "informatica",
+    "descripcio": "Portatil Apple de nova generacio amb xip M5",
+    "marca": "Apple",
+    "nom": "MacBook Pro M5",
+    "pes": 1540.0,
+    "preu": 2699.0
+  },
+  "p008": {
+    "categoria": "telefonia",
+    "descripcio": "Smartphone Apple amb sistema de cameres avancat i alt rendiment",
+    "marca": "Apple",
+    "nom": "iPhone 17 Pro",
+    "pes": 210.0,
+    "preu": 1399.0
+  }
+}

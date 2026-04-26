@@ -1,8 +1,10 @@
+import json
+import sys
 from pathlib import Path
 from typing import List
 
 from flask import Flask, render_template, request
-from rdflib import Graph, RDF, URIRef
+from rdflib import Graph
 from rdflib.exceptions import ParserError
 
 # Aquest mòdul s'ha d'executar com a part del paquet, per exemple amb:
@@ -18,9 +20,10 @@ class AgentCercador:
     def __init__(self, ontology_path: Path = ONTOLOGY_PATH, productes_path: Path = PRODUCTES_PATH):
         self.ontology_path = ontology_path
         self.productes_path = productes_path
+        self._inventari_cache: List[ProducteModel] = []
 
         # El graf RDF és la "base de coneixement" local de l'agent. Hi carreguem
-        # tant l'ontologia com les dades de productes.
+        # l'ontologia; el catàleg de productes actual és en JSON.
         self.graph = Graph()
         self.graph.bind("az", AGENTZON)
         self._carregar_ontologia()
@@ -40,32 +43,30 @@ class AgentCercador:
                 )
 
     def _carregar_productes(self) -> None:
-        """Carrega el catàleg Turtle que actua com a font de dades de productes."""
+        """Carrega el catàleg JSON i construeix l'inventari en memòria."""
         if not self.productes_path.exists():
             raise FileNotFoundError(f"No s'ha trobat el catàleg de productes: {self.productes_path}")
 
-        self.graph.parse(self.productes_path, format="turtle")
+        with self.productes_path.open("r", encoding="utf-8") as f:
+            dades = json.load(f)
+
+        self._inventari_cache = []
+        for producte_id, info in dades.items():
+            self._inventari_cache.append(
+                ProducteModel(
+                    id=producte_id,
+                    nom=str(info.get("nom", "")),
+                    preu=float(info.get("preu", 0.0)),
+                    descr=str(info.get("descripcio", "")),
+                    categ=str(info.get("categoria", "")),
+                    marca=str(info.get("marca", "")),
+                    pes=int(float(info.get("pes", 0))),
+                )
+            )
 
     def inventari(self) -> List[ProducteModel]:
-        """Converteix totes les instàncies RDF de Producte a models Python."""
-        return [self._producte_des_de_graf(subject) for subject in self.graph.subjects(RDF.type, AGENTZON.Producte)]
-
-    def _literal(self, subject: URIRef, predicate: URIRef, default=None):
-        """Llegeix un literal RDF i retorna un valor Python normal."""
-        value = self.graph.value(subject, predicate)
-        return value.toPython() if value is not None else default
-
-    def _producte_des_de_graf(self, subject: URIRef) -> ProducteModel:
-        """Reconstrueix un ProducteModel a partir de les seves propietats RDF."""
-        return ProducteModel(
-            id=str(self._literal(subject, AGENTZON.IdProducte, subject.split("/")[-1])),
-            nom=str(self._literal(subject, AGENTZON.NomProducte, "")),
-            preu=float(self._literal(subject, AGENTZON.PreuProducte, 0.0)),
-            descr=str(self._literal(subject, AGENTZON.DescripcióProducte, "")),
-            categ=str(self._literal(subject, AGENTZON.CategoriaProducte, "")),
-            marca=str(self._literal(subject, AGENTZON.MarcaProducte, "")),
-            pes=int(float(self._literal(subject, AGENTZON.PesProducte, 0))),
-        )
+        """Retorna l'inventari de productes carregat des del catàleg JSON."""
+        return self._inventari_cache
 
     def processar_cerca(self, peticio: PeticioCerca) -> ResultatCerca:
         """Executa el pla de cerca: obté l'inventari i aplica els filtres."""
