@@ -99,7 +99,20 @@ input {
     outline: none;
 }
 
-input:focus {
+select {
+    width: 100%;
+    margin-top: 8px;
+    padding: 13px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+}
+
+input:focus,
+select:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
 }
@@ -151,6 +164,63 @@ button:hover {
     color: var(--muted);
 }
 
+.form-title {
+    margin-bottom: 10px;
+    color: #344054;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.selectable-products {
+    display: grid;
+    gap: 10px;
+}
+
+.product-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+}
+
+.product-option input {
+    width: auto;
+    margin: 0;
+}
+
+.product-option span {
+    display: grid;
+    gap: 4px;
+}
+
+.product-option small {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.summary-grid p {
+    margin: 0;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--muted);
+}
+
+.summary-grid strong {
+    color: var(--text);
+}
+
 .products {
     display: grid;
     gap: 14px;
@@ -158,11 +228,20 @@ button:hover {
 
 .product-card {
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "info shipping"
+        "meta shipping"
+        "price shipping";
+    gap: 12px 18px;
+    align-items: start;
     padding: 18px;
     border: 1px solid var(--border);
     border-radius: 14px;
+}
+
+.product-info {
+    grid-area: info;
 }
 
 .product-id {
@@ -182,9 +261,9 @@ button:hover {
 }
 
 .product-meta {
+    grid-area: meta;
     display: flex;
     gap: 8px;
-    grid-column: 1 / -1;
 }
 
 .product-meta span {
@@ -196,7 +275,28 @@ button:hover {
     font-weight: 700;
 }
 
-.product-card strong {
+.shipping-owner {
+    grid-area: shipping;
+    justify-self: end;
+    align-self: start;
+    text-align: right;
+}
+
+.shipping-owner span {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.shipping-owner strong {
+    font-size: 16px;
+}
+
+.product-price {
+    grid-area: price;
+    justify-self: start;
     color: var(--text);
     font-size: 20px;
     white-space: nowrap;
@@ -204,11 +304,25 @@ button:hover {
 
 @media (max-width: 720px) {
     .grid,
-    .product-card {
+    .product-card,
+    .summary-grid {
         grid-template-columns: 1fr;
+    }
+
+    .product-card {
+        grid-template-areas:
+            "shipping"
+            "info"
+            "meta"
+            "price";
     }
 
     button {
         width: 100%;
+    }
+
+    .shipping-owner {
+        justify-self: start;
+        text-align: left;
     }
 }

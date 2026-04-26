@@ -1,0 +1,18 @@
+{
+  "p001": {
+    "magatzem": "magatzem-bcn",
+    "ciutat": "Barcelona"
+  },
+  "p002": {
+    "magatzem": "magatzem-bcn",
+    "ciutat": "Barcelona"
+  },
+  "p003": {
+    "magatzem": "magatzem-mad",
+    "ciutat": "Madrid"
+  },
+  "p004": {
+    "magatzem": "magatzem-bcn",
+    "ciutat": "Barcelona"
+  }
+}

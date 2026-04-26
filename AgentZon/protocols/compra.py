@@ -53,14 +53,14 @@ class InformacioUsuari:
 
 # ------------------------------------------------------------------
 
-# amb les dues peticions de l'agent a l'usuari creem el model
-def processar_peticio_final(compra: PeticioCompra, info: PeticioInfoUsuari) -> ComandaModel:
+# amb la petició de compra i la resposta d'informació de l'usuari creem el model
+def processar_peticio_final(compra: PeticioCompra, resposta_info: InformacioUsuari) -> ComandaModel:
     return ComandaModel(
         userid=compra.userid,
         llista_productes=compra.llista_productes,
-        adreça=info.adreça,
-        prioritat=info.prioritat,
-        metodepagament=info.metodepagament
+        adreça=resposta_info.adreça,
+        prioritat=resposta_info.prioritat,
+        metodepagament=resposta_info.metodepagament
     )
 
 # validar que la comanda sigui correcte

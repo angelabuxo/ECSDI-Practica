@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ca">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AgentZon - Compra</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <p class="eyebrow">AgentZon</p>
+            <h1>Compra de productes</h1>
+            <p class="subtitle">Selecciona productes del cataleg RDF i completa les dades d'enviament i pagament.</p>
+        </section>
+
+        <section class="card">
+            <form method="post" class="search-form">
+                <div>
+                    <p class="form-title">Productes seleccionats</p>
+                    <div class="selectable-products">
+                        {% for producte in productes %}
+                            <label class="product-option">
+                                <input
+                                    type="checkbox"
+                                    name="productes"
+                                    value="{{ producte.id }}"
+                                    {% if producte.id in valors.productes %}checked{% endif %}
+                                >
+                                <span>
+                                    <strong>{{ producte.nom }}</strong>
+                                    <small>{{ producte.id }} · {{ producte.marca }} · {{ "%.2f"|format(producte.preu) }} €</small>
+                                </span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <label>
+                        Id usuari
+                        <input type="text" name="userid" placeholder="Ex: u001" value="{{ valors.userid }}">
+                    </label>
+                    <label>
+                        Metode de pagament
+                        <input type="text" name="metodepagament" placeholder="Ex: targeta" value="{{ valors.metodepagament }}">
+                    </label>
+                </div>
+
+                <label>
+                    Adreca de lliurament
+                    <input type="text" name="adreca" placeholder="Ex: Carrer Exemple 1, Barcelona" value="{{ valors.adreca }}">
+                </label>
+
+                <label>
+                    Prioritat
+                    <select name="prioritat">
+                        <option value="1" {% if valors.prioritat == "1" %}selected{% endif %}>1 - Express (24h)</option>
+                        <option value="2" {% if valors.prioritat == "2" %}selected{% endif %}>2 - Normal (72h)</option>
+                    </select>
+                </label>
+
+                <button type="submit">Confirmar compra</button>
+            </form>
+        </section>
+
+        {% if error %}
+            <p class="alert">{{ error }}</p>
+        {% endif %}
+
+        {% if resultat %}
+            {% set comanda = resultat.comanda %}
+            {% set enviament = resultat.enviament %}
+            <section class="results">
+                <div class="results-header">
+                    <h2>Compra confirmada</h2>
+                    <span>FACTURA</span>
+                </div>
+
+                <div class="summary-grid">
+                    <p><strong>Comanda</strong><br>{{ comanda.id }}</p>
+                    <p><strong>Usuari</strong><br>{{ comanda.userid }}</p>
+                    <p><strong>Total</strong><br>{{ "%.2f"|format(comanda.import_total) }} €</p>
+                </div>
+
+                <div class="products">
+                    {% for producte in comanda.llista_productes %}
+                        <article class="product-card">
+                            <div class="product-info">
+                                <p class="product-id">{{ producte.id }}</p>
+                                <h3>{{ producte.nom }}</h3>
+                                <p>{{ producte.descr }}</p>
+                            </div>
+                            <div class="shipping-owner">
+                                <span>ENVIAT PER</span>
+                                <strong>{{ enviament.responsables[producte.id] }}</strong>
+                            </div>
+                            <div class="product-meta">
+                                <span>{{ producte.categ }}</span>
+                                <span>{{ producte.marca }}</span>
+                            </div>
+                            <strong class="product-price">{{ "%.2f"|format(producte.preu) }} €</strong>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+    </main>
+</body>
+</html>
