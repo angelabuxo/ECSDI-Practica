@@ -5,6 +5,7 @@ __pycache__/
 
 # Virtual environments
 .venv/
+.venv*/
 venv/
 env/
 ENV/
@@ -26,6 +27,8 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+*.log
+AgentZon/ontologia/docs/
 
 # --- Docs policy requested ---
 # Ignore all Markdown files except README.md
