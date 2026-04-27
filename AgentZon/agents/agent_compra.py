@@ -97,17 +97,30 @@ class AgentCompra:
         """Llegeix un literal RDF i retorna un valor Python normal."""
         value = self.graph.value(subject, predicate)
         return value.toPython() if value is not None else default
+    
+    def _literal_de_predicats(self, subject: URIRef, predicates: List[URIRef], default=None):
+        """
+        Cerca un valor literal provant diversos predicats.
+        Serveix per mantenir compatibilitat entre versions de l'ontologia.
+        """
+        for predicate in predicates:
+            value = self.graph.value(subject, predicate)
+            if value is not None:
+                return value.toPython()
+        return default
 
     def _producte_des_de_graf(self, subject: URIRef) -> ProducteModel:
         """Reconstrueix un ProducteModel a partir de les seves propietats RDF."""
         return ProducteModel(
-            id=str(self._literal(subject, AGENTZON.IdProducte, subject.split("/")[-1])),
-            nom=str(self._literal(subject, AGENTZON.NomProducte, "")),
-            preu=float(self._literal(subject, AGENTZON.PreuProducte, 0.0)),
-            descr=str(self._literal(subject, AGENTZON.DescripcióProducte, "")),
-            categ=str(self._literal(subject, AGENTZON.CategoriaProducte, "")),
-            marca=str(self._literal(subject, AGENTZON.MarcaProducte, "")),
-            pes=int(float(self._literal(subject, AGENTZON.PesProducte, 0))),
+            # Nova ontologia: Id, Nom, Preu, Descripció, Categoria, Marca, Pes.
+            # Mantenim fallback als noms antics (*Producte) per no trencar dades heretades.
+            id=str(self._literal_de_predicats(subject, [AGENTZON.Id], subject.split("/")[-1])),
+            nom=str(self._literal_de_predicats(subject, [AGENTZON.Nom], "")),
+            preu=float(self._literal_de_predicats(subject, [AGENTZON.Preu], 0.0)),
+            descr=str(self._literal_de_predicats(subject, [AGENTZON.Descripció], "")),
+            categ=str(self._literal_de_predicats(subject, [AGENTZON.Categoria], "")),
+            marca=str(self._literal_de_predicats(subject, [AGENTZON.Marca], "")),
+            pes=int(float(self._literal_de_predicats(subject, [AGENTZON.Pes], 0))),
         )
 
     def productes_per_ids(self, ids_productes: List[str]) -> List[ProducteModel]:

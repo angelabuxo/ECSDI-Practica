@@ -42,7 +42,6 @@ ECSDI-Practica/
 Per generar la documentació i el graf de l'ontologia també cal:
 
 - `pylode` (documentació HTML de l'ontologia).
-- `owl2else` (comanda `owl2plot` per dibuixar el graf).
 - Graphviz del sistema (`dot`, `unflatten`) per renderitzar el graf.
 
 ## Instal·lació
@@ -74,10 +73,10 @@ python -m pip install -r requirements.txt
 Amb l'entorn virtual actiu:
 
 ```bash
-python -m pip install "pylode==2.13.2" owl2else
+python -m pip install "pylode==3.3.4"
 ```
 
-> Nota: en alguns entorns `pylode` modern pot fallar. La versió `2.13.2` és estable per aquest projecte.
+> Nota: en alguns entorns `pylode` modern pot fallar. La versió `3.3.4` s'ha validat en aquest projecte.
 
 ### 3) Instal·lar Graphviz (binaris de sistema)
 
@@ -161,14 +160,14 @@ Des de l'arrel del repositori, amb l'entorn virtual actiu:
 
 ```bash
 mkdir -p AgentZon/ontologia/docs
-python .venv/bin/pylode -i AgentZon/ontologia/AgentZonOntology.rdf -o AgentZon/ontologia/docs/ontology.html
+pylode AgentZon/ontologia/AgentZonOntology.rdf -o AgentZon/ontologia/docs/ontology.html
 ```
 
 #### Windows (PowerShell)
 
 ```powershell
 New-Item -ItemType Directory -Force AgentZon/ontologia/docs | Out-Null
-python .venv\Scripts\pylode -i AgentZon/ontologia/AgentZonOntology.rdf -o AgentZon/ontologia/docs/ontology.html
+pylode AgentZon/ontologia/AgentZonOntology.rdf -o AgentZon/ontologia/docs/ontology.html
 ```
 
 Obrir resultat:
@@ -184,13 +183,31 @@ Des de l'arrel del repositori, amb l'entorn virtual actiu:
 #### macOS/Linux
 
 ```bash
-python .venv/bin/owl2plot --input AgentZon/ontologia/AgentZonOntology.rdf --format xml --output AgentZon/ontologia/docs/ontology_graph.png
+python -m rdflib.tools.rdf2dot AgentZon/ontologia/AgentZonOntology.rdf > AgentZon/ontologia/docs/ontology_graph.dot
+dot -Tpng AgentZon/ontologia/docs/ontology_graph.dot -o AgentZon/ontologia/docs/ontology_graph.png
 ```
 
 #### Windows (PowerShell)
 
 ```powershell
-python .venv\Scripts\owl2plot --input AgentZon/ontologia/AgentZonOntology.rdf --format xml --output AgentZon/ontologia/docs/ontology_graph.png
+python -m rdflib.tools.rdf2dot AgentZon/ontologia/AgentZonOntology.rdf > AgentZon/ontologia/docs/ontology_graph.dot
+dot -Tpng AgentZon/ontologia/docs/ontology_graph.dot -o AgentZon/ontologia/docs/ontology_graph.png
+```
+
+### Generar-ho tot en una sola comanda (HTML + graf)
+
+Des de l'arrel del repositori, amb l'entorn virtual actiu:
+
+#### macOS/Linux
+
+```bash
+mkdir -p AgentZon/ontologia/docs && pylode AgentZon/ontologia/AgentZonOntology.rdf -o AgentZon/ontologia/docs/ontology.html && python -m rdflib.tools.rdf2dot AgentZon/ontologia/AgentZonOntology.rdf > AgentZon/ontologia/docs/ontology_graph.dot && dot -Tpng AgentZon/ontologia/docs/ontology_graph.dot -o AgentZon/ontologia/docs/ontology_graph.png
+```
+
+#### Windows (PowerShell)
+
+```powershell
+New-Item -ItemType Directory -Force AgentZon/ontologia/docs | Out-Null; pylode AgentZon/ontologia/AgentZonOntology.rdf -o AgentZon/ontologia/docs/ontology.html; python -m rdflib.tools.rdf2dot AgentZon/ontologia/AgentZonOntology.rdf > AgentZon/ontologia/docs/ontology_graph.dot; dot -Tpng AgentZon/ontologia/docs/ontology_graph.dot -o AgentZon/ontologia/docs/ontology_graph.png
 ```
 
 Obrir resultat:
@@ -203,4 +220,5 @@ Obrir resultat:
 
 - `bad interpreter .../Mobile: no such file or directory`: hi ha espais al path; executeu els scripts amb `python <ruta-script>` tal com es mostra al README.
 - `ExecutableNotFound: unflatten`: falta Graphviz de sistema o no està al `PATH`.
-- `pylode` falla en importar (`pyproject.toml`): reinstal·leu amb `python -m pip install --force-reinstall "pylode==2.13.2"`.
+- `owl2plot: command not found` o `No matching distribution found for owl2plot`: useu el flux `rdflib.tools.rdf2dot` + `dot` d'aquest README (no `owl2plot`).
+- `pylode` falla en importar (`pyproject.toml`): reinstal·leu amb `python -m pip install --force-reinstall "pylode==3.3.4"`.
