@@ -35,6 +35,3 @@ AgentZon/ontologia/docs/
 *.md
 !README.md
 !**/README.md
-
-# Ignore all plain text files
-*.txt
