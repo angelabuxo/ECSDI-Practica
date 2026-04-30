@@ -12,10 +12,10 @@ ONTOLOGY_PATH = ROOT_DIR / "ontologia" / "AgentZonOntology.rdf"
 
 # Dades compartides entre agents.
 DATA_DIR = ROOT_DIR / "data"
-PRODUCTES_PATH = DATA_DIR / "productes.json"
-DADES_ENVIAMENT_USUARI_PATH = DATA_DIR / "dades_enviament_usuari.json"
-UBICACIONS_PRODUCTES_PATH = DATA_DIR / "ubicacions_productes.json"
-RESPONSABLE_ENVIAMENT_PRODUCTES_PATH = DATA_DIR / "responsable_enviament_productes.json"
+PRODUCTES_PATH = DATA_DIR / "productes.ttl"
+DADES_ENVIAMENT_USUARI_PATH = DATA_DIR / "dades_enviament_usuari.ttl"
+UBICACIONS_PRODUCTES_PATH = DATA_DIR / "ubicacions_productes.ttl"
+RESPONSABLE_ENVIAMENT_PRODUCTES_PATH = DATA_DIR / "responsable_enviament_productes.ttl"
 
 # Recursos web compartits per les interfícies HTML dels agents.
 WEB_DIR = ROOT_DIR / "web"

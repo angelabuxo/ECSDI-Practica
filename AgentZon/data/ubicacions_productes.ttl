@@ -1,0 +1,21 @@
+@prefix az: <http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#> .
+
+az:ubicacio_producte_p001 a az:UbicacioProducte ;
+    az:IdProducte "p001" ;
+    az:Magatzem "magatzem-bcn" ;
+    az:Ciutat "Barcelona" .
+
+az:ubicacio_producte_p002 a az:UbicacioProducte ;
+    az:IdProducte "p002" ;
+    az:Magatzem "magatzem-bcn" ;
+    az:Ciutat "Barcelona" .
+
+az:ubicacio_producte_p003 a az:UbicacioProducte ;
+    az:IdProducte "p003" ;
+    az:Magatzem "magatzem-mad" ;
+    az:Ciutat "Madrid" .
+
+az:ubicacio_producte_p004 a az:UbicacioProducte ;
+    az:IdProducte "p004" ;
+    az:Magatzem "magatzem-bcn" ;
+    az:Ciutat "Barcelona" .
