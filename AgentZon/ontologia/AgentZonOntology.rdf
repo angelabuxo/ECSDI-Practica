@@ -23,12 +23,12 @@
     
 
 
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Conté -->
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Avalúa -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Conté">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Avalúa">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaFeedback"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback"/>
     </owl:ObjectProperty>
     
 
@@ -43,6 +43,26 @@
     
 
 
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Distribueix -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Distribueix">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Centrelogístic"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Dona -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Dona">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaFeedback"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Envia -->
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Envia">
@@ -53,31 +73,16 @@
     
 
 
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Fa -->
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsFaSobre -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Fa">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsFaSobre">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióCompra"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#FormatPer -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#FormatPer">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Mostra -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Mostra">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResultatCerca"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
     </owl:ObjectProperty>
     
@@ -89,6 +94,8 @@
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióCerca"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióCompra"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióDevolució"/>
     </owl:ObjectProperty>
     
 
@@ -98,18 +105,41 @@
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Rep">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióFeedback"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióInfoUsuari"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaDevolució"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaSuggeriment"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResultatCerca"/>
     </owl:ObjectProperty>
     
 
 
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepPregunta -->
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggereix -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepPregunta">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggereix">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióInfoUsuari"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaSuggeriment"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment"/>
     </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Tramita -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Tramita">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaDevolució"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.w3.org/2002/07/owl#topObjectProperty -->
+
+    <rdf:Description rdf:about="http://www.w3.org/2002/07/owl#topObjectProperty">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
+    </rdf:Description>
     
 
 
@@ -128,7 +158,7 @@
 
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Adreça">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
     </owl:DatatypeProperty>
     
@@ -144,13 +174,32 @@
     
 
 
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CostBase -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CostBase">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesBancàries -->
 
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesBancàries">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#VenedorExtern"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DataEnviament -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DataEnviament">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#dateTime"/>
     </owl:DatatypeProperty>
     
 
@@ -169,23 +218,18 @@
 
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Banc"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Centrelogístic"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EmpresaTransport"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProveïdorPagament"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#VenedorExtern"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Imatge -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Imatge">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
     </owl:DatatypeProperty>
     
 
@@ -195,6 +239,16 @@
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Marca">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#MètodePagament -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#MètodePagament">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
     </owl:DatatypeProperty>
     
@@ -231,6 +285,28 @@
     
 
 
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Prioritat -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Prioritat">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Ubicació -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Ubicació">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Centrelogístic"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -256,11 +332,9 @@
     
 
 
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Banc -->
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Centrelogístic -->
 
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Banc">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor"/>
-    </owl:Class>
+    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Centrelogístic"/>
     
 
 
@@ -279,14 +353,6 @@
     <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EmpresaTransport -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EmpresaTransport">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor"/>
-    </owl:Class>
     
 
 
@@ -334,6 +400,22 @@
     
 
 
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióDevolució -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióDevolució">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Acció"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióFeedback -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióFeedback">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Acció"/>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióInfoUsuari -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióInfoUsuari">
@@ -348,10 +430,42 @@
     
 
 
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProveïdorPagament -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProveïdorPagament">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor"/>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comunicació"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaDevolució -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaDevolució">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaFeedback -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaFeedback">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaSuggeriment -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaSuggeriment">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta"/>
     </owl:Class>
     
 
@@ -367,6 +481,14 @@
     <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment"/>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor"/>
+    </owl:Class>
     
 
 
