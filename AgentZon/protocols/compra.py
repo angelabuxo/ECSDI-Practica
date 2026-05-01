@@ -26,8 +26,8 @@ class ComandaModel:
         if self.prioritat not in [1, 2]:
             raise ValueError("Prioritat ha de ser 1 (Express) o 2 (Normal)")
         dies = 1 if self.prioritat == 1 else 3
-        data = datetime.now() + timedelta(days=dies)
-        return data.strftime("%d/%m/%Y")
+        data = datetime.now().replace(microsecond=0) + timedelta(days=dies)
+        return data.isoformat()
 
 # ------------------------------------------------------------------
 
@@ -50,6 +50,72 @@ class InformacioUsuari:
         self.adreça = adreça                                            # adreça d'enviament
         self.prioritat = prioritat                                      # prioritat d'enviament
         self.metodepagament = metodepagament                            # mètode de pagament
+
+# ------------------------------------------------------------------
+
+# Protocol Agent Compra -> Agent Opinador. Permet registrar una compra per
+# futurs feedbacks o recomanacions.
+class PeticioRegistreCompra:
+    def __init__(self, id_comanda: str, userid: str, llista_productes: List[ProducteModel], data_hora_compra: str):
+        self.id_comanda = id_comanda
+        self.userid = userid
+        self.llista_productes = llista_productes
+        self.data_hora_compra = data_hora_compra
+
+
+# Protocol Agent Compra -> Agent Venedor Extern.
+class PeticioEnviamentVenedorExtern:
+    def __init__(self, producte: ProducteModel, venedor: str, adreça: str, data_limit: str):
+        self.producte = producte
+        self.venedor = venedor
+        self.adreça = adreça
+        self.data_limit = data_limit
+
+
+# Protocol Agent Compra -> Agent Centre Logístic.
+class PeticioEnviamentCentreLogistic:
+    def __init__(self, producte: ProducteModel, centre_logistic: str, adreça: str, data_limit: str):
+        self.producte = producte
+        self.centre_logistic = centre_logistic
+        self.adreça = adreça
+        self.data_limit = data_limit
+
+
+def crear_peticio_registre_compra(comanda: ComandaModel) -> PeticioRegistreCompra:
+    return PeticioRegistreCompra(
+        id_comanda=comanda.id,
+        userid=comanda.userid,
+        llista_productes=comanda.llista_productes,
+        data_hora_compra=datetime.now().isoformat(),
+    )
+
+
+def crear_peticio_enviament_venedor_extern(
+    producte: ProducteModel,
+    venedor: str,
+    adreça: str,
+    data_limit: str,
+) -> PeticioEnviamentVenedorExtern:
+    return PeticioEnviamentVenedorExtern(
+        producte=producte,
+        venedor=venedor,
+        adreça=adreça,
+        data_limit=data_limit,
+    )
+
+
+def crear_peticio_enviament_centre_logistic(
+    producte: ProducteModel,
+    centre_logistic: str,
+    adreça: str,
+    data_limit: str,
+) -> PeticioEnviamentCentreLogistic:
+    return PeticioEnviamentCentreLogistic(
+        producte=producte,
+        centre_logistic=centre_logistic,
+        adreça=adreça,
+        data_limit=data_limit,
+    )
 
 # ------------------------------------------------------------------
 

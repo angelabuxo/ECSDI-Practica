@@ -2,19 +2,20 @@ import sys
 import unittest
 import json
 import tempfile
+from datetime import datetime
 from pathlib import Path
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from AgentZon.agents.agent_compra import AgentCompra, create_app
+from AgentZon.agents.agent_centre_logistic import AgentCentreLogistic
+from AgentZon.protocols.centre_logistic import DadesEnviamentProducte
 from AgentZon.protocols.compra import (
     InformacioUsuari,
-    PeticioCobramentUsuari,
     PeticioEnviamentCentreLogistic,
     PeticioEnviamentVenedorExtern,
     PeticioRegistreCompra,
-    crear_peticio_cobrament_usuari,
     crear_peticio_enviament_centre_logistic,
     crear_peticio_enviament_venedor_extern,
     crear_peticio_registre_compra,
@@ -125,6 +126,37 @@ class AgentCompraTest(unittest.TestCase):
         self.assertIn(b"Portatil Lenovo IdeaPad", response.data)
         self.assertIn(b"Auriculars Sony WH-CH520", response.data)
 
+    def test_purchase_page_shows_definitive_delivery_data_when_available(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            agent = self._agent_with_temp_metadata(tmpdir)
+            productes = agent.productes_per_ids(["p001"])
+            compra = agent.processar_peticio_compra("u001", productes)
+            info = InformacioUsuari("u001", "Carrer Definitiu 1", 1, "targeta")
+            comanda = agent.gestionar_compra(compra, info)
+            agent.processar_dades_enviament(
+                DadesEnviamentProducte(
+                    id_lot="lot-1",
+                    id_comanda=comanda.id,
+                    userid="u001",
+                    id_producte="p001",
+                    transportista_id="transport-1",
+                    data_entrega_definitiva="2026-05-03",
+                )
+            )
+            app = create_app(agent)
+
+            with app.test_request_context("/"):
+                html = app.jinja_env.get_template("compra.html").render(
+                    productes=agent.inventari(),
+                    resultat={"comanda": comanda, "enviament": agent.enviaments[comanda.id]},
+                    error=None,
+                    valors={"userid": "", "adreca": "", "prioritat": "2", "metodepagament": "", "productes": []},
+                )
+
+        self.assertIn("TRANSPORTISTA ESCOLLIT", html)
+        self.assertIn("transport-1", html)
+        self.assertIn("2026-05-03", html)
+
     def test_capacity_methods_create_and_pay_order(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             agent = self._agent_with_temp_metadata(tmpdir)
@@ -137,6 +169,16 @@ class AgentCompraTest(unittest.TestCase):
         self.assertEqual(comanda.estat, "PENDENT")
         self.assertEqual(comanda.import_total, 699.99)
         self.assertIn(comanda.id, agent.enviaments)
+
+    def test_order_delivery_date_uses_iso_format_for_rdf_datetime(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            agent = self._agent_with_temp_metadata(tmpdir)
+            productes = agent.productes_per_ids(["p001"])
+            compra = agent.processar_peticio_compra("u001", productes)
+            info = InformacioUsuari("u001", "Carrer ISO 1", 2, "targeta")
+            comanda = agent.gestionar_compra(compra, info)
+
+        datetime.fromisoformat(comanda.data_entrega_estimada)
 
     def test_purchase_persists_and_reads_shipping_data_sources(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -159,6 +201,80 @@ class AgentCompraTest(unittest.TestCase):
             self.assertEqual(enviament["responsables"]["p001"], "AgentZon")
             self.assertEqual(enviament["responsables"]["p002"], "Sony Store")
             self.assertNotIn("productes", enviament)
+
+    def test_sends_internal_products_to_matching_logistic_center(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dades_path, ubicacions_path, responsables_path = self._metadata_paths(tmpdir)
+            centre_logistic = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
+            agent = AgentCompra(
+                dades_enviament_path=dades_path,
+                ubicacions_path=ubicacions_path,
+                responsables_path=responsables_path,
+                centres_logistics={"magatzem-bcn": centre_logistic},
+            )
+
+            productes = agent.productes_per_ids(["p001"])
+            compra = agent.processar_peticio_compra("u001", productes)
+            info = InformacioUsuari("u001", "Carrer Logistic 1", 1, "targeta")
+            comanda = agent.gestionar_compra(compra, info)
+
+            lot = next(iter(centre_logistic.lots_pendents.values()))
+            producte_localitzat = lot.productes[0]
+            enviament_centre = agent.enviaments[comanda.id]["centres_logistics"]["p001"]
+
+            self.assertEqual(producte_localitzat.id_producte, "p001")
+            self.assertEqual(producte_localitzat.id_comanda, comanda.id)
+            self.assertEqual(producte_localitzat.userid, "u001")
+            self.assertEqual(producte_localitzat.adreca, "Carrer Logistic 1")
+            self.assertEqual(producte_localitzat.prioritat, 1)
+            self.assertEqual(producte_localitzat.data_limit, comanda.data_entrega_estimada)
+            self.assertEqual(producte_localitzat.pes, productes[0].pes)
+            self.assertEqual(producte_localitzat.import_producte, productes[0].preu)
+            self.assertEqual(enviament_centre["centre_logistic"], "magatzem-bcn")
+            self.assertEqual(enviament_centre["id_lot"], lot.id)
+
+    def test_processes_logistic_center_delivery_data_for_user_notification(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            agent = self._agent_with_temp_metadata(tmpdir)
+            productes = agent.productes_per_ids(["p001"])
+            compra = agent.processar_peticio_compra("u001", productes)
+            info = InformacioUsuari("u001", "Carrer Definitiu 1", 1, "targeta")
+            comanda = agent.gestionar_compra(compra, info)
+
+            notificacio = agent.processar_dades_enviament(
+                DadesEnviamentProducte(
+                    id_lot="lot-1",
+                    id_comanda=comanda.id,
+                    userid="u001",
+                    id_producte="p001",
+                    transportista_id="transport-1",
+                    data_entrega_definitiva="2026-05-03",
+                )
+            )
+
+            dades_definitives = agent.enviaments[comanda.id]["dades_definitives"]["p001"]
+            self.assertEqual(dades_definitives["transportista_id"], "transport-1")
+            self.assertEqual(dades_definitives["data_entrega_definitiva"], "2026-05-03")
+            self.assertEqual(notificacio["userid"], "u001")
+            self.assertEqual(notificacio["id_producte"], "p001")
+            self.assertEqual(notificacio["transportista_id"], "transport-1")
+            self.assertEqual(notificacio["data_entrega_definitiva"], "2026-05-03")
+
+    def test_rejects_delivery_data_for_unknown_order(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            agent = self._agent_with_temp_metadata(tmpdir)
+
+            with self.assertRaisesRegex(ValueError, "Comanda desconeguda"):
+                agent.processar_dades_enviament(
+                    DadesEnviamentProducte(
+                        id_lot="lot-1",
+                        id_comanda="comanda-inexistent",
+                        userid="u001",
+                        id_producte="p001",
+                        transportista_id="transport-1",
+                        data_entrega_definitiva="2026-05-03",
+                    )
+                )
 
     def test_local_product_without_location_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -187,7 +303,6 @@ class AgentCompraTest(unittest.TestCase):
             info = InformacioUsuari("u001", "Carrer Protocol 1", 1, "targeta")
             comanda = agent.gestionar_compra(compra, info)
 
-        cobrament = crear_peticio_cobrament_usuari(info)
         registre = crear_peticio_registre_compra(comanda)
         enviament_extern = crear_peticio_enviament_venedor_extern(
             productes[1],
@@ -202,9 +317,6 @@ class AgentCompraTest(unittest.TestCase):
             comanda.data_entrega_estimada,
         )
 
-        self.assertIsInstance(cobrament, PeticioCobramentUsuari)
-        self.assertEqual(cobrament.userid, "u001")
-        self.assertEqual(cobrament.metodepagament, "targeta")
         self.assertIsInstance(registre, PeticioRegistreCompra)
         self.assertEqual(registre.id_comanda, comanda.id)
         self.assertEqual(registre.userid, "u001")

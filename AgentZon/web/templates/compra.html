@@ -95,6 +95,17 @@
                                 <span>ENVIAT PER</span>
                                 <strong>{{ enviament.responsables[producte.id] }}</strong>
                             </div>
+                            {% if enviament.dades_definitives and producte.id in enviament.dades_definitives %}
+                                {% set dades_definitives = enviament.dades_definitives[producte.id] %}
+                                <div class="shipping-owner">
+                                    <span>TRANSPORTISTA ESCOLLIT</span>
+                                    <strong>{{ dades_definitives.transportista_id }}</strong>
+                                </div>
+                                <div class="shipping-owner">
+                                    <span>DATA D'ENTREGA DEFINITIVA</span>
+                                    <strong>{{ dades_definitives.data_entrega_definitiva }}</strong>
+                                </div>
+                            {% endif %}
                             <div class="product-meta">
                                 <span>{{ producte.categ }}</span>
                                 <span>{{ producte.marca }}</span>
