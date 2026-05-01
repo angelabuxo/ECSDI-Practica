@@ -9,7 +9,10 @@ from rdflib import RDF
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from AgentZon.config import AGENTZON
-from AgentZon.agents.agent_centre_logistic import AgentCentreLogistic
+from AgentZon.agents.agent_directory import AgentDirectory
+from AgentZon.agents.agent_centre_logistic import AgentCentreLogistic, create_app
+from AgentZon.agents.agent_transportista import AgentTransportista, create_app as create_transportista_app
+from AgentZon.protocols.directory import build_register_action
 from AgentZon.protocols.centre_logistic import (
     DadesEnviamentProducte,
     EleccioTransportista,
@@ -17,7 +20,10 @@ from AgentZon.protocols.centre_logistic import (
     PeticioTransport,
     ProducteLocalitzat,
     RespostaOfertaTransport,
+    build_producte_localitzat_action,
+    read_lot_assignat_response,
 )
+from AgentZon.protocols.fipa_acl import build_message, get_message_properties, parse_message
 
 
 class AgentCentreLogisticTest(unittest.TestCase):
@@ -68,6 +74,38 @@ class AgentCentreLogisticTest(unittest.TestCase):
         self.assertIn((AGENTZON[f"lot_{lot_1.id}"], RDF.type, AGENTZON.Lot), agent.graph)
         self.assertEqual([p.id_producte for p in lot_1.productes], ["p001", "p002"])
         self.assertEqual(lot_1.pes_total, 3.5)
+
+    def test_comm_assigns_producte_localitzat_to_lot(self):
+        agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
+        app = create_app(agent)
+        producte = ProducteLocalitzat(
+            id_producte="p001",
+            id_comanda="c001",
+            userid="u001",
+            adreca="Carrer Test 1, Barcelona",
+            prioritat=1,
+            data_limit="2026-05-03T10:00:00",
+            pes=2.5,
+            import_producte=99.95,
+        )
+        message = build_message(
+            "request",
+            AGENTZON.agent_compra,
+            AGENTZON.agent_centre_logistic_bcn,
+            build_producte_localitzat_action(producte),
+            msgcnt=1,
+        )
+
+        response = app.test_client().get("/comm", query_string={"content": message.serialize(format="xml")})
+        response_graph = parse_message(response.data.decode("utf-8"))
+        props = get_message_properties(response_graph)
+        lot_response = read_lot_assignat_response(response_graph, props["content"])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(props["performative"], "confirm")
+        self.assertEqual(lot_response["id_producte"], "p001")
+        self.assertIn(lot_response["id_lot"], agent.lots_pendents)
+        self.assertEqual(agent.lots_pendents[lot_response["id_lot"]].productes[0].id_producte, "p001")
 
     def test_prepares_transport_request_for_pending_lot(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
@@ -175,6 +213,65 @@ class AgentCentreLogisticTest(unittest.TestCase):
         self.assertEqual([missatge.userid for missatge in missatges], ["u001", "u002"])
         self.assertEqual({missatge.transportista_id for missatge in missatges}, {"transport-1"})
         self.assertEqual({missatge.data_entrega_definitiva for missatge in missatges}, {"2026-05-03"})
+
+    def test_discovers_transport_agents_and_selects_best_offer(self):
+        directory = AgentDirectory()
+        directory.register_agent(
+            name="transport-a",
+            uri=AGENTZON.agent_transportista_a,
+            address="memory://transport-a/comm",
+            agent_type="AgentTransportista",
+        )
+        directory.register_agent(
+            name="transport-b",
+            uri=AGENTZON.agent_transportista_b,
+            address="memory://transport-b/comm",
+            agent_type="AgentTransportista",
+        )
+        transport_a = create_transportista_app(
+            AgentTransportista("transport-a", cost_base=8.0, dies_extra=0, address="memory://transport-a/comm")
+        )
+        transport_b = create_transportista_app(
+            AgentTransportista("transport-b", cost_base=5.0, dies_extra=0, address="memory://transport-b/comm")
+        )
+        transport_apps = {
+            "memory://transport-a/comm": transport_a,
+            "memory://transport-b/comm": transport_b,
+        }
+
+        def send_in_memory(address, graph):
+            if address == "memory://directory/Register":
+                return directory.process_message(graph)
+            response = transport_apps[address].test_client().get(
+                "/comm",
+                query_string={"content": graph.serialize(format="xml")},
+            )
+            return parse_message(response.data.decode("utf-8"))
+
+        agent = AgentCentreLogistic(
+            centre_logistic_id="magatzem-bcn",
+            ubicacio="Barcelona",
+            directory_address="memory://directory/Register",
+            message_sender=send_in_memory,
+        )
+        producte = ProducteLocalitzat(
+            id_producte="p001",
+            id_comanda="c001",
+            userid="u001",
+            adreca="Carrer Test 1, Barcelona",
+            prioritat=1,
+            data_limit="2026-05-03T10:00:00",
+            pes=2.0,
+            import_producte=99.95,
+        )
+        lot = agent.pla_assignar_producte_a_lot(producte)
+
+        eleccio, missatges = agent.negociar_transport_amb_transportistes(lot.id)
+
+        self.assertEqual(eleccio.transportista_id, "transport-b")
+        self.assertEqual(eleccio.cost, 7.0)
+        self.assertEqual(len(agent.ofertes_rebudes[lot.id]), 2)
+        self.assertEqual(missatges[0].transportista_id, "transport-b")
 
     def test_rejects_transport_selection_when_no_offer_meets_deadline(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")

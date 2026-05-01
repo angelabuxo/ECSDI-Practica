@@ -1,15 +1,18 @@
+import argparse
 import sys
 import uuid
 from datetime import date
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from flask import Flask, Response, request
 from rdflib import Graph, Literal, RDF, URIRef, XSD
 from rdflib.exceptions import ParserError
 
 # Aquest mòdul s'ha d'executar com a part del paquet, per exemple amb:
 # `python -m AgentZon.agents.agent_centre_logistic`
 from AgentZon.config import AGENTZON, ONTOLOGY_PATH
+from AgentZon.protocols.directory import build_register_action, build_search_action, read_directory_responses
 from AgentZon.protocols.centre_logistic import (
     DadesEnviamentProducte,
     EleccioTransportista,
@@ -17,6 +20,17 @@ from AgentZon.protocols.centre_logistic import (
     PeticioTransport,
     ProducteLocalitzat,
     RespostaOfertaTransport,
+    build_lot_assignat_response,
+    build_peticio_transport_action,
+    read_resposta_oferta_transport,
+    read_producte_localitzat,
+)
+from AgentZon.protocols.fipa_acl import (
+    build_message,
+    build_not_understood,
+    get_message_properties,
+    parse_message,
+    send_message,
 )
 
 
@@ -68,10 +82,14 @@ class AgentCentreLogistic:
         centre_logistic_id: str,
         ubicacio: str,
         ontology_path: Path = ONTOLOGY_PATH,
+        directory_address: str = "http://127.0.0.1:9000/Register",
+        message_sender=send_message,
     ):
         self.centre_logistic_id = centre_logistic_id
         self.ubicacio = ubicacio
         self.ontology_path = ontology_path
+        self.directory_address = directory_address
+        self.message_sender = message_sender
 
         self.lots_pendents: Dict[str, LotLogistic] = {}
         self.ofertes_rebudes: Dict[str, List[RespostaOfertaTransport]] = {}
@@ -80,7 +98,7 @@ class AgentCentreLogistic:
         self.graph = Graph()
         self.graph.bind("az", AGENTZON)
         self._carregar_ontologia()
-        self._registrar_centre_logistic()
+        self._registrar_instancia_centre_logistic()
 
         self.capacitats = {
             "Gestionar magatzem": [
@@ -95,6 +113,21 @@ class AgentCentreLogistic:
             ],
         }
 
+    @property
+    def uri(self) -> URIRef:
+        return AGENTZON[f"agent_centre_logistic_{self.centre_logistic_id}"]
+
+    def registrar_al_directori(self, address: str) -> dict:
+        content = build_register_action(
+            name=self.centre_logistic_id,
+            uri=self.uri,
+            address=address,
+            agent_type="AgentCentreLogistic",
+        )
+        message = build_message("request", self.uri, AGENTZON.directory_agent, content, msgcnt=1)
+        response = self.message_sender(self.directory_address, message)
+        return get_message_properties(response)
+
     def _carregar_ontologia(self) -> None:
         """Carrega l'ontologia RDF/XML compartida pels agents."""
         if self.ontology_path.exists():
@@ -106,7 +139,7 @@ class AgentCentreLogistic:
                     file=sys.stderr,
                 )
 
-    def _registrar_centre_logistic(self) -> None:
+    def _registrar_instancia_centre_logistic(self) -> None:
         """Afegeix la instància local del centre logístic al graf de treball."""
         subject = self._az(f"centre_logistic_{self.centre_logistic_id}")
         self.graph.add((subject, RDF.type, AGENTZON.CentreLogístic))
@@ -241,6 +274,43 @@ class AgentCentreLogistic:
 
         return peticions_cobrament
 
+    def cercar_transportistes(self) -> List[Dict[str, object]]:
+        content = build_search_action(agent_type="AgentTransportista")
+        request = build_message(
+            "request",
+            self.uri,
+            AGENTZON.directory_agent,
+            content,
+            msgcnt=1,
+        )
+        response = self.message_sender(self.directory_address, request)
+        props = get_message_properties(response)
+        if not props or props.get("performative") != "inform":
+            return []
+        return read_directory_responses(response)
+
+    def negociar_transport_amb_transportistes(self, id_lot: str) -> tuple[EleccioTransportista, List[DadesEnviamentProducte]]:
+        peticio = self.pla_cerca_transportista(id_lot)
+        transportistes = self.cercar_transportistes()
+        if not transportistes:
+            raise ValueError("No s'ha trobat cap AgentTransportista al DirectoryAgent.")
+
+        for transportista in transportistes:
+            request = build_message(
+                "request",
+                self.uri,
+                transportista["uri"],
+                build_peticio_transport_action(peticio),
+                msgcnt=1,
+            )
+            response = self.message_sender(transportista["address"], request)
+            props = get_message_properties(response)
+            if props and props.get("performative") == "inform" and props.get("content") is not None:
+                oferta = read_resposta_oferta_transport(response, props["content"])
+                self.registrar_oferta_transport(oferta)
+
+        return self.pla_transportista_escollit(id_lot)
+
     def _obtenir_lot(self, id_lot: str) -> LotLogistic:
         if id_lot not in self.lots_pendents:
             raise ValueError(f"Lot desconegut: {id_lot}")
@@ -305,3 +375,71 @@ class AgentCentreLogistic:
         self.graph.add((eleccio_subject, RDF.type, AGENTZON.EleccióTransportista))
         self.graph.add((transportista_subject, RDF.type, AGENTZON.Transportista))
         self.graph.add((transportista_subject, AGENTZON.ÉsEscollit, eleccio_subject))
+
+
+def create_app(centre_logistic: Optional[AgentCentreLogistic] = None) -> Flask:
+    centre_logistic = centre_logistic or AgentCentreLogistic("magatzem-bcn", "Barcelona")
+    app = Flask(__name__)
+
+    @app.route("/comm", methods=["GET"])
+    def comm():
+        try:
+            incoming = parse_message(request.args.get("content", ""))
+            props = get_message_properties(incoming)
+            if not props or props.get("performative") != "request" or props.get("content") is None:
+                response = build_not_understood(
+                    AGENTZON[f"agent_centre_logistic_{centre_logistic.centre_logistic_id}"],
+                    props.get("sender", AGENTZON.unknown_agent) if props else AGENTZON.unknown_agent,
+                    msgcnt=1,
+                )
+            elif (props["content"], RDF.type, AGENTZON.ProducteLocalitzat) in incoming:
+                producte = read_producte_localitzat(incoming, props["content"])
+                lot = centre_logistic.pla_assignar_producte_a_lot(producte)
+                content = build_lot_assignat_response(lot.id, producte.id_producte)
+                response = build_message(
+                    "confirm",
+                    AGENTZON[f"agent_centre_logistic_{centre_logistic.centre_logistic_id}"],
+                    props.get("sender", AGENTZON.unknown_agent),
+                    content,
+                    msgcnt=1,
+                )
+            else:
+                response = build_not_understood(
+                    AGENTZON[f"agent_centre_logistic_{centre_logistic.centre_logistic_id}"],
+                    props.get("sender", AGENTZON.unknown_agent),
+                    msgcnt=1,
+                )
+        except Exception:
+            response = build_not_understood(
+                AGENTZON[f"agent_centre_logistic_{centre_logistic.centre_logistic_id}"],
+                AGENTZON.unknown_agent,
+                msgcnt=1,
+            )
+
+        return Response(response.serialize(format="xml"), mimetype="application/rdf+xml")
+
+    return app
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="AgentZon Agent Centre Logístic")
+    parser.add_argument("--id", default="magatzem-bcn")
+    parser.add_argument("--ubicacio", default="Barcelona")
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=9003)
+    parser.add_argument("--directory", default="http://127.0.0.1:9000/Register")
+    parser.add_argument("--address", default=None)
+    args = parser.parse_args()
+
+    agent = AgentCentreLogistic(
+        centre_logistic_id=args.id,
+        ubicacio=args.ubicacio,
+        directory_address=args.directory,
+    )
+    advertised_address = args.address or f"http://127.0.0.1:{args.port}/comm"
+    try:
+        agent.registrar_al_directori(advertised_address)
+    except Exception as exc:
+        print(f"Avís: no s'ha pogut registrar el centre logístic al directori: {exc}", file=sys.stderr)
+
+    create_app(agent).run(host=args.host, port=args.port, debug=True)

@@ -1,9 +1,10 @@
+import argparse
 import json
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from flask import Flask, render_template, request
+from flask import Flask, Response, render_template, request
 from rdflib import Graph, Literal, RDF, URIRef, XSD
 from rdflib.exceptions import ParserError
 
@@ -18,8 +19,15 @@ from AgentZon.config import (
     UBICACIONS_PRODUCTES_PATH,
     WEB_DIR,
 )
+from AgentZon.protocols.directory import build_register_action, build_search_action, read_directory_responses
 from AgentZon.protocols.cerca import ProducteModel
-from AgentZon.protocols.centre_logistic import DadesEnviamentProducte, ProducteLocalitzat
+from AgentZon.protocols.centre_logistic import (
+    DadesEnviamentProducte,
+    ProducteLocalitzat,
+    build_producte_localitzat_action,
+    read_dades_enviament,
+    read_lot_assignat_response,
+)
 from AgentZon.protocols.compra import (
     ComandaModel,
     InformacioUsuari,
@@ -27,6 +35,13 @@ from AgentZon.protocols.compra import (
     PeticioInfoUsuari,
     processar_peticio_final,
     validar_comanda,
+)
+from AgentZon.protocols.fipa_acl import (
+    build_message,
+    build_not_understood,
+    get_message_properties,
+    parse_message,
+    send_message,
 )
 
 
@@ -44,15 +59,16 @@ class AgentCompra:
         dades_enviament_path: Path = DADES_ENVIAMENT_USUARI_PATH,
         ubicacions_path: Path = UBICACIONS_PRODUCTES_PATH,
         responsables_path: Path = RESPONSABLE_ENVIAMENT_PRODUCTES_PATH,
-        centres_logistics: Optional[Dict[str, object]] = None,
+        directory_address: Optional[str] = None,
+        message_sender=send_message,
     ):
         self.ontology_path = ontology_path
         self.productes_path = productes_path
         self.dades_enviament_path = Path(dades_enviament_path)
         self.ubicacions_path = Path(ubicacions_path)
         self.responsables_path = Path(responsables_path)
-        self.centres_logistics = centres_logistics or {}
-        self.peticions_enviament_centre_logistic: Dict[str, List[ProducteLocalitzat]] = {}
+        self.directory_address = directory_address
+        self.message_sender = message_sender
         self.enviaments: Dict[str, Dict[str, object]] = {}
 
         self.graph = Graph()
@@ -307,9 +323,67 @@ class AgentCompra:
         self.localitzar_productes(comanda)
         return comanda
 
-    def registrar_centre_logistic(self, centre_logistic_id: str, centre_logistic: object) -> None:
-        """Registra un Agent Centre Logístic disponible per rebre ProducteLocalitzat."""
-        self.centres_logistics[centre_logistic_id] = centre_logistic
+    def registrar_al_directori(self, address: str) -> dict:
+        if not self.directory_address:
+            raise ValueError("Cal configurar directory_address per registrar l'Agent Compra.")
+        content = build_register_action(
+            name="agent-compra",
+            uri=AGENTZON.agent_compra,
+            address=address,
+            agent_type="AgentCompra",
+        )
+        message = build_message("request", AGENTZON.agent_compra, AGENTZON.directory_agent, content, msgcnt=1)
+        response = self.message_sender(self.directory_address, message)
+        return get_message_properties(response)
+
+    def _cercar_centre_logistic_al_directori(self, centre_logistic_id: str) -> Optional[Dict[str, object]]:
+        if not self.directory_address:
+            return None
+
+        search = build_search_action(agent_type="AgentCentreLogistic", name=centre_logistic_id)
+        request_graph = build_message(
+            "request",
+            AGENTZON.agent_compra,
+            AGENTZON.directory_agent,
+            search,
+            msgcnt=1,
+        )
+        response = self.message_sender(self.directory_address, request_graph)
+        props = get_message_properties(response)
+        if not props or props.get("performative") != "inform":
+            return None
+
+        results = read_directory_responses(response)
+        return results[0] if results else None
+
+    def _enviar_producte_a_centre_logistic(
+        self,
+        centre_logistic_id: str,
+        producte_localitzat: ProducteLocalitzat,
+    ) -> Dict[str, object]:
+        directory_entry = self._cercar_centre_logistic_al_directori(centre_logistic_id)
+        if directory_entry is not None:
+            request_graph = build_message(
+                "request",
+                AGENTZON.agent_compra,
+                directory_entry["uri"],
+                build_producte_localitzat_action(producte_localitzat),
+                msgcnt=1,
+            )
+            response = self.message_sender(directory_entry["address"], request_graph)
+            props = get_message_properties(response)
+            if props and props.get("performative") == "confirm" and props.get("content") is not None:
+                lot_assignat = read_lot_assignat_response(response, props["content"])
+                return {
+                    "centre_logistic": centre_logistic_id,
+                    "id_lot": lot_assignat["id_lot"],
+                    "estat": "PENDENT",
+                }
+
+        return {
+            "centre_logistic": centre_logistic_id,
+            "estat": "PENDENT_AGENT",
+        }
 
     def localitzar_productes(self, comanda: ComandaModel) -> Dict[str, object]:
         """
@@ -353,22 +427,10 @@ class AgentCompra:
                     pes=productes_per_id[producte_id].pes,
                     import_producte=productes_per_id[producte_id].preu,
                 )
-                centre_logistic = self.centres_logistics.get(centre_logistic_id)
-                if centre_logistic is None:
-                    self.peticions_enviament_centre_logistic.setdefault(centre_logistic_id, []).append(
-                        producte_localitzat
-                    )
-                    centres_logistics_enviament[producte_id] = {
-                        "centre_logistic": centre_logistic_id,
-                        "estat": "PENDENT_AGENT",
-                    }
-                else:
-                    lot = centre_logistic.pla_assignar_producte_a_lot(producte_localitzat)
-                    centres_logistics_enviament[producte_id] = {
-                        "centre_logistic": centre_logistic_id,
-                        "id_lot": lot.id,
-                        "estat": lot.estat,
-                    }
+                centres_logistics_enviament[producte_id] = self._enviar_producte_a_centre_logistic(
+                    centre_logistic_id,
+                    producte_localitzat,
+                )
 
         enviament = {
             "data_entrega_estimada": comanda.data_entrega_estimada,
@@ -425,6 +487,34 @@ def create_app(compra_agent: Optional[AgentCompra] = None) -> Flask:
     )
     compra_agent = compra_agent or AgentCompra()
 
+    @app.route("/comm", methods=["GET"])
+    def comm():
+        try:
+            incoming = parse_message(request.args.get("content", ""))
+            props = get_message_properties(incoming)
+            if not props or props.get("performative") != "request" or props.get("content") is None:
+                response = build_not_understood(AGENTZON.agent_compra, AGENTZON.unknown_agent, msgcnt=1)
+            elif (props["content"], RDF.type, AGENTZON.DadesEnviamentProducte) in incoming:
+                dades = read_dades_enviament(incoming, props["content"])
+                compra_agent.processar_dades_enviament(dades)
+                response = build_message(
+                    "confirm",
+                    AGENTZON.agent_compra,
+                    props.get("sender", AGENTZON.unknown_agent),
+                    None,
+                    msgcnt=1,
+                )
+            else:
+                response = build_not_understood(
+                    AGENTZON.agent_compra,
+                    props.get("sender", AGENTZON.unknown_agent),
+                    msgcnt=1,
+                )
+        except Exception:
+            response = build_not_understood(AGENTZON.agent_compra, AGENTZON.unknown_agent, msgcnt=1)
+
+        return Response(response.serialize(format="xml"), mimetype="application/rdf+xml")
+
     @app.route("/", methods=["GET", "POST"])
     def index():
         resultat = None
@@ -471,4 +561,18 @@ def create_app(compra_agent: Optional[AgentCompra] = None) -> Flask:
 
 
 if __name__ == "__main__":
-    create_app().run(host="127.0.0.1", port=9002, debug=True)
+    parser = argparse.ArgumentParser(description="AgentZon Agent Compra")
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=9002)
+    parser.add_argument("--directory", default="http://127.0.0.1:9000/Register")
+    parser.add_argument("--address", default=None)
+    args = parser.parse_args()
+
+    agent = AgentCompra(directory_address=args.directory)
+    advertised_address = args.address or f"http://127.0.0.1:{args.port}/comm"
+    try:
+        agent.registrar_al_directori(advertised_address)
+    except Exception as exc:
+        print(f"Avís: no s'ha pogut registrar l'Agent Compra al directori: {exc}", file=sys.stderr)
+
+    create_app(agent).run(host=args.host, port=args.port, debug=True)
