@@ -19,6 +19,7 @@ from AgentZon.config import (
     WEB_DIR,
 )
 from AgentZon.protocols.cerca import ProducteModel
+from AgentZon.protocols.centre_logistic import DadesEnviamentProducte, ProducteLocalitzat
 from AgentZon.protocols.compra import (
     ComandaModel,
     InformacioUsuari,
@@ -43,12 +44,15 @@ class AgentCompra:
         dades_enviament_path: Path = DADES_ENVIAMENT_USUARI_PATH,
         ubicacions_path: Path = UBICACIONS_PRODUCTES_PATH,
         responsables_path: Path = RESPONSABLE_ENVIAMENT_PRODUCTES_PATH,
+        centres_logistics: Optional[Dict[str, object]] = None,
     ):
         self.ontology_path = ontology_path
         self.productes_path = productes_path
         self.dades_enviament_path = Path(dades_enviament_path)
         self.ubicacions_path = Path(ubicacions_path)
         self.responsables_path = Path(responsables_path)
+        self.centres_logistics = centres_logistics or {}
+        self.peticions_enviament_centre_logistic: Dict[str, List[ProducteLocalitzat]] = {}
         self.enviaments: Dict[str, Dict[str, object]] = {}
 
         self.graph = Graph()
@@ -303,18 +307,23 @@ class AgentCompra:
         self.localitzar_productes(comanda)
         return comanda
 
+    def registrar_centre_logistic(self, centre_logistic_id: str, centre_logistic: object) -> None:
+        """Registra un Agent Centre Logístic disponible per rebre ProducteLocalitzat."""
+        self.centres_logistics[centre_logistic_id] = centre_logistic
+
     def localitzar_productes(self, comanda: ComandaModel) -> Dict[str, object]:
         """
         Cp. Localitzar productes: verifica disponibilitat al catàleg i prepara
         una resposta local d'enviament per a aquesta entrega.
         """
         ids_comanda = [producte.id for producte in comanda.llista_productes]
-
+        productes_per_id = {producte.id: producte for producte in comanda.llista_productes}
 
         dades_usuari = self._carregar_mapa(self.dades_enviament_path, "dades_enviament")
         ubicacions = self._carregar_mapa(self.ubicacions_path, "ubicacions")
         responsables = self._carregar_mapa(self.responsables_path, "responsables")
         responsables_enviament = {}
+        centres_logistics_enviament = {}
 
         for producte_id in ids_comanda:
             responsable = responsables.get(producte_id, {"responsable": "agentzon"})
@@ -327,16 +336,77 @@ class AgentCompra:
                 if producte_id not in ubicacions:
                     raise ValueError(f"No hi ha ubicació persistent per al producte {producte_id}.")
                 responsables_enviament[producte_id] = "AgentZon"
-                # TODO: Protocol per avisar al centre logístic de que producte X s'ha denviar a Y abans de Z.
+                ubicacio = ubicacions[producte_id]
+                centre_logistic_id = ubicacio.get("magatzem")
+                if not centre_logistic_id:
+                    raise ValueError(f"No hi ha centre logístic persistent per al producte {producte_id}.")
+
+                # De moment assumim que cada producte només està en un centre logístic.
+                # En el futur caldrà resoldre productes disponibles en diversos centres.
+                producte_localitzat = ProducteLocalitzat(
+                    id_producte=producte_id,
+                    id_comanda=comanda.id,
+                    userid=comanda.userid,
+                    adreca=dades_usuari[comanda.userid]["adreca"],
+                    prioritat=dades_usuari[comanda.userid]["prioritat"],
+                    data_limit=comanda.data_entrega_estimada,
+                    pes=productes_per_id[producte_id].pes,
+                    import_producte=productes_per_id[producte_id].preu,
+                )
+                centre_logistic = self.centres_logistics.get(centre_logistic_id)
+                if centre_logistic is None:
+                    self.peticions_enviament_centre_logistic.setdefault(centre_logistic_id, []).append(
+                        producte_localitzat
+                    )
+                    centres_logistics_enviament[producte_id] = {
+                        "centre_logistic": centre_logistic_id,
+                        "estat": "PENDENT_AGENT",
+                    }
+                else:
+                    lot = centre_logistic.pla_assignar_producte_a_lot(producte_localitzat)
+                    centres_logistics_enviament[producte_id] = {
+                        "centre_logistic": centre_logistic_id,
+                        "id_lot": lot.id,
+                        "estat": lot.estat,
+                    }
 
         enviament = {
             "data_entrega_estimada": comanda.data_entrega_estimada,
             "adreca": dades_usuari[comanda.userid]["adreca"],
             "prioritat": dades_usuari[comanda.userid]["prioritat"],
             "responsables": responsables_enviament,
+            "centres_logistics": centres_logistics_enviament,
         }
         self.enviaments[comanda.id] = enviament
         return enviament
+
+    def processar_dades_enviament(self, dades: DadesEnviamentProducte) -> Dict[str, object]:
+        """
+        Pla informar usuari sobre l'enviament: processa el protocol Dades
+        Enviament rebut de l'Agent Centre Logístic i prepara la notificació.
+        """
+        if dades.id_comanda not in self.enviaments:
+            raise ValueError(f"Comanda desconeguda: {dades.id_comanda}")
+
+        enviament = self.enviaments[dades.id_comanda]
+        responsables = enviament.get("responsables", {})
+        if dades.id_producte not in responsables:
+            raise ValueError(f"Producte desconegut per a la comanda {dades.id_comanda}: {dades.id_producte}")
+
+        dades_definitives = enviament.setdefault("dades_definitives", {})
+        dades_definitives[dades.id_producte] = {
+            "id_lot": dades.id_lot,
+            "transportista_id": dades.transportista_id,
+            "data_entrega_definitiva": dades.data_entrega_definitiva,
+        }
+
+        return {
+            "userid": dades.userid,
+            "id_comanda": dades.id_comanda,
+            "id_producte": dades.id_producte,
+            "transportista_id": dades.transportista_id,
+            "data_entrega_definitiva": dades.data_entrega_definitiva,
+        }
 
 def _int_obligatori(valor: str, missatge: str) -> int:
     """Converteix un camp obligatori del formulari a enter."""
