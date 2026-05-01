@@ -28,7 +28,6 @@ build/
 dist/
 *.egg-info/
 *.log
-AgentZon/ontologia/docs/
 
 # --- Docs policy requested ---
 # Ignore all Markdown files except README.md

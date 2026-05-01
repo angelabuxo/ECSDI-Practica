@@ -1,0 +1,412 @@
+digraph { 
+ node [ fontname="DejaVu Sans" ] ; 
+	node0 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node2 -> node3 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node4 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node5 -> node6 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node3 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node7 -> node8 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node9 -> node10 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node11 -> node12 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node13 -> node14 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node15 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node17 -> node18 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node0 -> node19 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node20 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node22 -> node23 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node24 -> node25 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node26 -> node27 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node28 -> node17 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node29 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node26 -> node30 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node31 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node32 -> node33 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node34 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node23 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node35 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node36 -> node37 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node38 -> node27 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node39 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node29 -> node18 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node40 -> node41 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node26 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node42 -> node37 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node26 -> node3 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node43 -> node31 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node26 -> node37 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node44 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node46 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node47 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node15 -> node48 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node23 -> node49 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node2 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node5 -> node33 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node19 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node50 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node28 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node24 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node51 -> node3 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node52 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node53 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node36 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node40 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node11 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node39 -> node18 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node26 -> node33 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node12 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node55 -> node56 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node43 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node24 -> node57 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node58 -> node59 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node33 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node35 -> node30 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node60 -> node6 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node32 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node24 -> node4 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node13 -> node61 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node62 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node55 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node12 -> node18 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node63 -> node8 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node58 -> node64 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node62 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node32 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node17 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node11 -> node59 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node15 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node65 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node66 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node43 -> node3 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node52 -> node67 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node68 -> node39 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node68 -> node69 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node51 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node63 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node63 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node46 -> node29 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node38 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node70 -> node23 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node34 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node61 -> node71 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node60 -> node12 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node69 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node26 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node13 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node66 -> node33 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node72 -> node37 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node70 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node50 -> node56 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node46 -> node0 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node66 -> node73 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node24 -> node27 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node53 -> node19 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node57 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node35 -> node4 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node47 -> node48 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node52 -> node64 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node26 -> node56 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node36 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node38 -> node70 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node68 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node32 -> node8 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node74 -> node17 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node75 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node50 -> node48 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node26 -> node64 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node66 -> node8 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node76 -> node18 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node7 -> node27 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node66 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node36 -> node30 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node44 -> node61 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node26 -> node0 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node5 -> node8 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node26 -> node48 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node2 -> node61 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node77 -> node3 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node20 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node26 -> node53 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node7 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node42 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node67 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node34 -> node12 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node72 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node26 -> node8 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node7 -> node37 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node72 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node20 -> node0 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node78 -> node8 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node22 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node44 -> node64 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node44 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node5 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node78 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node35 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node46 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node5 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node60 -> node79 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node78 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node51 -> node6 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node2 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node36 -> node33 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node74 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node14 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node80 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node66 -> node81 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node28 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node49 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node24 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node80 -> node37 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node40 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node47 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node43 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node82 -> node64 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node4 -> node23 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node80 -> node17 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node26 -> node31 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node18 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node24 -> node22 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node50 -> node6 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node76 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node77 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node56 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node24 -> node76 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node36 -> node22 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node77 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node67 -> node71 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node18 -> node49 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node75 -> node53 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node81 -> node18 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node30 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node68 -> node27 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node62 -> node37 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node65 -> node12 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node27 -> node19 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node65 -> node14 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node60 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node65 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node25 -> node23 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node51 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node47 -> node41 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node63 -> node37 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node7 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node60 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node27 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node72 -> node8 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node50 -> node37 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node74 -> node0 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node6 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node78 -> node48 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node15 -> node73 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node60 -> node14 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node13 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node60 -> node31 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node48 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node38 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node58 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node36 -> node31 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node55 -> node25 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node58 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node75 -> node17 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node74 -> node8 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node28 -> node33 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node74 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node71 -> node23 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node37 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node80 -> node54 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node77 -> node64 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node25 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node69 -> node18 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node50 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node6 -> node18 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node82 -> node12 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node52 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node20 -> node42 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node81 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node68 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node71 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node11 -> node16 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node62 -> node8 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node82 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node75 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node40 -> node27 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node41 -> node23 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node11 -> node37 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node61 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node64 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node68 -> node81 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node34 -> node3 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:domain</font> > ] ;
+	node82 -> node45 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node57 -> node18 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node80 -> node59 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+	node64 -> node19 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subClassOf</font> > ] ;
+	node55 -> node21 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:subPropertyOf</font> > ] ;
+	node41 -> node1 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdf:type</font> > ] ;
+	node77 -> node8 [ color=BLACK, label=< <font point-size='10' color='#336633'>rdfs:range</font> > ] ;
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#VenedorExtern node0
+node0 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>VenedorExtern</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#VenedorExtern' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#VenedorExtern</font></td></tr></table> > ] 
+# http://www.w3.org/2002/07/owl#Class node1
+node1 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Class</B></td></tr><tr><td href='http://www.w3.org/2002/07/owl#Class' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.w3.org/2002/07/owl#Class</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepOferta node2
+node2 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>RepOferta</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepOferta' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepOferta</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogístic node3
+node3 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>CentreLogístic</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogístic' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogístic</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaSuggeriment node4
+node4 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>RespostaSuggeriment</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaSuggeriment' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaSuggeriment</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Adreça node5
+node5 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Adreça</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Adreça' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Adreça</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat node6
+node6 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>ProducteLocalitzat</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Nom node7
+node7 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Nom</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Nom' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Nom</font></td></tr></table> > ] 
+# http://www.w3.org/2001/XMLSchema#string node8
+node8 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>string</B></td></tr><tr><td href='http://www.w3.org/2001/XMLSchema#string' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.w3.org/2001/XMLSchema#string</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15 node9
+node9 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>AgentZon Ontology</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15</font></td></tr></table> > ] 
+# http://www.w3.org/2002/07/owl#Ontology node10
+node10 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Ontology</B></td></tr><tr><td href='http://www.w3.org/2002/07/owl#Ontology' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.w3.org/2002/07/owl#Ontology</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Pes node11
+node11 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Pes</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Pes' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Pes</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióTransport node12
+node12 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>PeticióTransport</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióTransport' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióTransport</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Proposa node13
+node13 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Proposa</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Proposa' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Proposa</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport node14
+node14 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>OfertaTransport</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Puntuació node15
+node15 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Puntuació</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Puntuació' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Puntuació</font></td></tr></table> > ] 
+# http://www.w3.org/2002/07/owl#DatatypeProperty node16
+node16 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>DatatypeProperty</B></td></tr><tr><td href='http://www.w3.org/2002/07/owl#DatatypeProperty' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.w3.org/2002/07/owl#DatatypeProperty</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióPagament node17
+node17 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>PeticióPagament</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióPagament' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióPagament</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Acció node18
+node18 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Acció</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Acció' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Acció</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor node19
+node19 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Actor</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Gestiona node20
+node20 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Gestiona</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Gestiona' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Gestiona</font></td></tr></table> > ] 
+# http://www.w3.org/2002/07/owl#topObjectProperty node21
+node21 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>topObjectProperty</B></td></tr><tr><td href='http://www.w3.org/2002/07/owl#topObjectProperty' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.w3.org/2002/07/owl#topObjectProperty</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResultatCerca node22
+node22 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>ResultatCerca</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResultatCerca' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResultatCerca</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta node23
+node23 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Resposta</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Rep node24
+node24 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Rep</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Rep' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Rep</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaDevolució node25
+node25 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>RespostaDevolució</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaDevolució' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaDevolució</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id node26
+node26 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Id</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari node27
+node27 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Usuari</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Paga node28
+node28 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Paga</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Paga' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Paga</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióAfegirProducteExtern node29
+node29 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>PeticióAfegirProducteExtern</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióAfegirProducteExtern' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióAfegirProducteExtern</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment node30
+node30 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Suggeriment</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot node31
+node31 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Lot</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#MètodePagament node32
+node32 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>MètodePagament</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#MètodePagament' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#MètodePagament</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda node33
+node33 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Comanda</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Negocia node34
+node34 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Negocia</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Negocia' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Negocia</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggereix node35
+node35 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Suggereix</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggereix' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggereix</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsFaSobreMolts node36
+node36 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>EsFaSobreMolts</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsFaSobreMolts' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsFaSobreMolts</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte node37
+node37 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Producte</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Envia node38
+node38 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Envia</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Envia' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Envia</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióDevolució node39
+node39 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>PeticióDevolució</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióDevolució' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióDevolució</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Dona node40
+node40 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Dona</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Dona' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Dona</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaFeedback node41
+node41 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>RespostaFeedback</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaFeedback' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaFeedback</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteExtern node42
+node42 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>ProducteExtern</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteExtern' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteExtern</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Distribueix node43
+node43 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Distribueix</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Distribueix' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Distribueix</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Genera node44
+node44 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Genera</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Genera' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Genera</font></td></tr></table> > ] 
+# http://www.w3.org/2002/07/owl#ObjectProperty node45
+node45 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>ObjectProperty</B></td></tr><tr><td href='http://www.w3.org/2002/07/owl#ObjectProperty' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.w3.org/2002/07/owl#ObjectProperty</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DemanaAfegir node46
+node46 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>DemanaAfegir</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DemanaAfegir' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DemanaAfegir</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Avalúa node47
+node47 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Avalúa</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Avalúa' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Avalúa</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback node48
+node48 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Feedback</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comunicació node49
+node49 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Comunicació</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comunicació' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comunicació</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsFaSobre node50
+node50 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>EsFaSobre</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsFaSobre' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsFaSobre</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepAvís node51
+node51 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>RepAvís</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepAvís' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepAvís</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ÉsEscollit node52
+node52 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>ÉsEscollit</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ÉsEscollit' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ÉsEscollit</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProveïdorPagament node53
+node53 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>ProveïdorPagament</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProveïdorPagament' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProveïdorPagament</font></td></tr></table> > ] 
+# http://www.w3.org/2002/07/owl#topDataProperty node54
+node54 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>topDataProperty</B></td></tr><tr><td href='http://www.w3.org/2002/07/owl#topDataProperty' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.w3.org/2002/07/owl#topDataProperty</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Tramita node55
+node55 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Tramita</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Tramita' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Tramita</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució node56
+node56 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Devolució</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióFeedback node57
+node57 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>PeticióFeedback</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióFeedback' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióFeedback</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CostBase node58
+node58 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>CostBase</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CostBase' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CostBase</font></td></tr></table> > ] 
+# http://www.w3.org/2001/XMLSchema#float node59
+node59 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>float</B></td></tr><tr><td href='http://www.w3.org/2001/XMLSchema#float' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.w3.org/2001/XMLSchema#float</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DataEnviament node60
+node60 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>DataEnviament</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DataEnviament' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DataEnviament</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport node61
+node61 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>RespostaOfertaTransport</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Descripció node62
+node62 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Descripció</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Descripció' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Descripció</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Categoria node63
+node63 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Categoria</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Categoria' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Categoria</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista node64
+node64 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Transportista</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Demana node65
+node65 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Demana</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Demana' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Demana</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Prioritat node66
+node66 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Prioritat</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Prioritat' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Prioritat</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EleccióTransportista node67
+node67 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>EleccióTransportista</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EleccióTransportista' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EleccióTransportista</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Realitza node68
+node68 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Realitza</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Realitza' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Realitza</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióCerca node69
+node69 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>PeticióCerca</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióCerca' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióCerca</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#InfoUsuari node70
+node70 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>InfoUsuari</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#InfoUsuari' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#InfoUsuari</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#NegociacióTransport node71
+node71 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>NegociacióTransport</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#NegociacióTransport' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#NegociacióTransport</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Marca node72
+node72 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Marca</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Marca' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Marca</font></td></tr></table> > ] 
+# http://www.w3.org/2001/XMLSchema#int node73
+node73 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>int</B></td></tr><tr><td href='http://www.w3.org/2001/XMLSchema#int' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.w3.org/2001/XMLSchema#int</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesBancàries node74
+node74 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>DadesBancàries</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesBancàries' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesBancàries</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepPagament node75
+node75 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>RepPagament</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepPagament' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepPagament</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióInfoUsuari node76
+node76 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>PeticióInfoUsuari</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióInfoUsuari' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióInfoUsuari</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Ubicació node77
+node77 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Ubicació</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Ubicació' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Ubicació</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comentari node78
+node78 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Comentari</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comentari' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comentari</font></td></tr></table> > ] 
+# http://www.w3.org/2001/XMLSchema#dateTime node79
+node79 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>dateTime</B></td></tr><tr><td href='http://www.w3.org/2001/XMLSchema#dateTime' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.w3.org/2001/XMLSchema#dateTime</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Preu node80
+node80 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>Preu</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Preu' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Preu</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióCompra node81
+node81 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>PeticióCompra</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióCompra' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticióCompra</font></td></tr></table> > ] 
+# http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepUna node82
+node82 [ shape=none, color=black label=< <table color='#666666' cellborder='0' cellspacing='0' border='1'><tr><td colspan='2' bgcolor='grey'><B>RepUna</B></td></tr><tr><td href='http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepUna' bgcolor='#eeeeee' colspan='2'><font point-size='10' color='#6666ff'>http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepUna</font></td></tr></table> > ] 
+}
