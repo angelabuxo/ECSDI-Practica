@@ -12,7 +12,7 @@
 - Paula Mas
 - Pol Montanera</rdfs:isDefinedBy>
         <rdfs:label xml:lang="ca">AgentZon Ontology</rdfs:label>
-        <owl:versionInfo>code-aligned-2026-05</owl:versionInfo>
+        <owl:versionInfo>code-aligned-2026-05-02-transport-doc</owl:versionInfo>
     </owl:Ontology>
     
 
@@ -59,8 +59,9 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Demana">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogistic"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport"/>
+        <rdfs:comment xml:lang="ca">El centre relaciona amb la petició de cotització de transport (concepte PeticioTransport contingut dels missatges request). Equivalent conceptual a Negocia. La contra-resposta dels transportistes es modela amb RespostaOfertaTransport</rdfs:comment>
     </owl:ObjectProperty>
     
 
@@ -315,6 +316,7 @@
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentUsuari"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#UbicacioProducte"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
@@ -437,7 +439,6 @@
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentProducte"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
     </owl:DatatypeProperty>
@@ -711,7 +712,9 @@
 
     <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport -->
 
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport"/>
+    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport">
+        <rdfs:comment xml:lang="ca">Model abstracte d&apos;oferta de servei de transport. El contingut concret cotització que envia l&apos;agent transportista en RDF usa la classe RespostaOfertaTransport (subclasse).</rdfs:comment>
+    </owl:Class>
     
 
 
@@ -791,6 +794,7 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio"/>
+        <rdfs:comment xml:lang="ca">Cotització inicial de transport als transportistes via ACL request: destinació Ciutat, Pes, IdCentreLogistic, DataEnviament opcional pel termini. El missatge intercanviat no ha d&apos;exigir IdLot als transportistes (el centre correlaciona internament).</rdfs:comment>
     </owl:Class>
     
 
@@ -859,6 +863,8 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#NegociacioTransport"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport"/>
+        <rdfs:comment xml:lang="ca">Resposta cotització (ACL inform): CostBase i DataEnviament; IdLot opcional quan cal vincular oferta a un lot només internament.</rdfs:comment>
     </owl:Class>
     
 

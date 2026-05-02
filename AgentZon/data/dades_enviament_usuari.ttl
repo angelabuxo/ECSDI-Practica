@@ -53,6 +53,12 @@ az:dades_enviament_usuari_4321 a az:DadesEnviamentUsuari ;
     az:IdUsuari "4321" ;
     az:Prioritat 1 .
 
+az:dades_enviament_usuari_u0010 a az:DadesEnviamentUsuari ;
+    az:Adreça "Carrer Aribau 1" ;
+    az:Ciutat "Matadepera" ;
+    az:IdUsuari "u0010" ;
+    az:Prioritat 1 .
+
 az:dades_enviament_usuari_u1 a az:DadesEnviamentUsuari ;
     az:Adreça "Carrer 1" ;
     az:IdUsuari "u1" ;

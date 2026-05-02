@@ -70,8 +70,8 @@ class AgentCentreLogistic:
     Implementa els plans definits a Prometheus per a l'Agent Centre Logístic:
     gestionar magatzem, negociar transport i gestionar el post-enviament.
 
-    Els protocols reals encara no estan implementats. Per això els plans reben
-    objectes amb els atributs esperats dels futurs missatges.
+    La negociació de transport es fa amb missatges FIPA-ACL RDF usant
+    conceptes de l'ontologia comuna.
     """
 
     def __init__(
@@ -151,7 +151,7 @@ class AgentCentreLogistic:
     def _registrar_instancia_centre_logistic(self) -> None:
         """Afegeix la instància local del centre logístic al graf de treball."""
         subject = self._az(f"centre_logistic_{self.centre_logistic_id}")
-        self.graph.add((subject, RDF.type, AGENTZON.CentreLogístic))
+        self.graph.add((subject, RDF.type, AGENTZON.CentreLogistic))
         self.graph.add((subject, AGENTZON.Id, Literal(self.centre_logistic_id)))
         self.graph.add((subject, AGENTZON.Ubicació, Literal(self.ubicacio)))
 
@@ -216,8 +216,9 @@ class AgentCentreLogistic:
         """
         Pla cerca de transportista.
 
-        Prepara la PeticióTransport associada a un Lot pendent. No contacta
-        transportistes; aquesta comunicació pertany al protocol futur.
+        Construeix el contingut RDF d'una instància PeticioTransport (ciutat de
+        destí, pes, termini, identificador de centre) per enviar-la als
+        transportistes des de negociar_transport_amb_transportistes o tests.
         """
         lot = self._obtenir_lot(id_lot)
         if not lot.productes:
@@ -225,15 +226,16 @@ class AgentCentreLogistic:
 
         lot.estat = "NEGOCIANT_TRANSPORT"
         peticio = PeticioTransport(
-            id_lot=lot.id,
             centre_logistic_id=self.centre_logistic_id,
+            ciutat_desti=lot.ciutat,
             data_enviament=lot.data_enviament,
             pes=lot.pes_total,
         )
         self._afegir_peticio_transport_al_graf(peticio)
         logger.debug(
-            "peticio transport lot=%s pes=%s data=%s",
-            peticio.id_lot,
+            "peticio transport lot=%s ciutat=%s pes=%s data=%s",
+            lot.id,
+            peticio.ciutat_desti,
             peticio.pes,
             peticio.data_enviament,
         )
@@ -243,8 +245,8 @@ class AgentCentreLogistic:
         """
         Registra una RespostaOfertaTransport rebuda pel centre logístic.
 
-        Aquest mètode representa la recepció via RepOferta, però no implementa
-        cap agent transportista.
+        Aquest mètode representa la recepció via RepOferta quan els
+        AgentTransportista responen per missatges FIPA-ACL (inform).
         """
         id_lot = resposta_oferta_transport.id_lot
         self._obtenir_lot(id_lot)
@@ -367,7 +369,13 @@ class AgentCentreLogistic:
             response = self.message_sender(transportista["address"], request)
             props = get_message_properties(response)
             if props and props.get("performative") == "inform" and props.get("content") is not None:
-                oferta = read_resposta_oferta_transport(response, props["content"])
+                oferta_rebuda = read_resposta_oferta_transport(response, props["content"])
+                oferta = RespostaOfertaTransport(
+                    id_lot=id_lot,
+                    transportista_id=oferta_rebuda.transportista_id,
+                    cost=oferta_rebuda.cost,
+                    data_enviament=oferta_rebuda.data_enviament,
+                )
                 self.registrar_oferta_transport(oferta)
             else:
                 logger.debug(
@@ -437,9 +445,11 @@ class AgentCentreLogistic:
         self.graph.add((centre_subject, AGENTZON.RepAvís, producte_subject))
 
     def _afegir_peticio_transport_al_graf(self, peticio: PeticioTransport) -> None:
-        peticio_subject = self._az(f"peticio_transport_{peticio.id_lot}")
+        token = f"{self.centre_logistic_id}_{peticio.ciutat_desti}_{peticio.data_enviament}_{peticio.pes}".replace(" ", "_")
+        peticio_subject = self._az(f"peticio_transport_{token}")
         centre_subject = self._az(f"centre_logistic_{self.centre_logistic_id}")
-        self.graph.add((peticio_subject, RDF.type, AGENTZON.PeticióTransport))
+        self.graph.add((peticio_subject, RDF.type, AGENTZON.PeticioTransport))
+        self.graph.add((peticio_subject, AGENTZON.Ciutat, Literal(peticio.ciutat_desti)))
         self.graph.add((peticio_subject, AGENTZON.Pes, Literal(peticio.pes, datatype=XSD.float)))
         self.graph.add(
             (peticio_subject, AGENTZON.DataEnviament, Literal(peticio.data_enviament, datatype=XSD.date))

@@ -1,6 +1,7 @@
 # Aquest fitxer defineix els objectes que viatgen dins dels protocols de
-# l'Agent Centre Logístic. La comunicació FIPA-ACL es podrà afegir més endavant;
-# aquí només representem el contingut dels missatges segons l'ontologia.
+# l'Agent Centre Logístic. El contingut dels missatges es serialitza en RDF
+# tipat amb concepts de l'ontologia AgentZon; la capçalera FIPA-ACL es construeix
+# amb build_message (veure protocols.fipa_acl).
 from datetime import datetime, timedelta
 
 from rdflib import Graph, Literal, RDF, URIRef, XSD
@@ -35,11 +36,11 @@ class ProducteLocalitzat:
 
 
 class PeticioTransport:
-    """Petició que el Centre Logístic prepara per negociar el transport d'un lot."""
+    """Petició de cotització per transport basada en destinació i pes."""
 
-    def __init__(self, id_lot: str, centre_logistic_id: str, data_enviament: str, pes: float):
-        self.id_lot = id_lot
+    def __init__(self, centre_logistic_id: str, ciutat_desti: str, data_enviament: str, pes: float):
         self.centre_logistic_id = centre_logistic_id
+        self.ciutat_desti = ciutat_desti
         self.data_enviament = data_enviament
         self.pes = pes
 
@@ -146,10 +147,11 @@ def read_lot_assignat_response(graph: Graph, subject: URIRef) -> dict:
 def build_peticio_transport_action(peticio: PeticioTransport) -> Graph:
     graph = Graph()
     graph.bind("az", AGENTZON)
-    subject = URIRef(f"{AGENTZON}peticio_transport_{peticio.id_lot}")
-    graph.add((subject, RDF.type, AGENTZON.PeticióTransport))
-    graph.add((subject, AGENTZON.IdLot, Literal(peticio.id_lot)))
+    token = f"{peticio.centre_logistic_id}_{peticio.ciutat_desti}_{peticio.data_enviament}_{peticio.pes}".replace(" ", "_")
+    subject = URIRef(f"{AGENTZON}peticio_transport_{token}")
+    graph.add((subject, RDF.type, AGENTZON.PeticioTransport))
     graph.add((subject, AGENTZON.IdCentreLogistic, Literal(peticio.centre_logistic_id)))
+    graph.add((subject, AGENTZON.Ciutat, Literal(peticio.ciutat_desti)))
     graph.add((subject, AGENTZON.DataEnviament, Literal(peticio.data_enviament, datatype=XSD.date)))
     graph.add((subject, AGENTZON.Pes, Literal(peticio.pes, datatype=XSD.float)))
     return graph
@@ -157,8 +159,8 @@ def build_peticio_transport_action(peticio: PeticioTransport) -> Graph:
 
 def read_peticio_transport(graph: Graph, subject: URIRef) -> PeticioTransport:
     return PeticioTransport(
-        id_lot=str(graph.value(subject, AGENTZON.IdLot)),
         centre_logistic_id=str(graph.value(subject, AGENTZON.IdCentreLogistic)),
+        ciutat_desti=str(graph.value(subject, AGENTZON.Ciutat)),
         data_enviament=str(graph.value(subject, AGENTZON.DataEnviament)),
         pes=float(graph.value(subject, AGENTZON.Pes).toPython()),
     )
@@ -167,9 +169,11 @@ def read_peticio_transport(graph: Graph, subject: URIRef) -> PeticioTransport:
 def build_resposta_oferta_transport_action(oferta: RespostaOfertaTransport) -> Graph:
     graph = Graph()
     graph.bind("az", AGENTZON)
-    subject = URIRef(f"{AGENTZON}resposta_oferta_transport_{oferta.id_lot}_{oferta.transportista_id}")
+    id_oferta = oferta.id_lot if oferta.id_lot else "sense_lot"
+    subject = URIRef(f"{AGENTZON}resposta_oferta_transport_{id_oferta}_{oferta.transportista_id}")
     graph.add((subject, RDF.type, AGENTZON.RespostaOfertaTransport))
-    graph.add((subject, AGENTZON.IdLot, Literal(oferta.id_lot)))
+    if oferta.id_lot:
+        graph.add((subject, AGENTZON.IdLot, Literal(oferta.id_lot)))
     graph.add((subject, AGENTZON.IdTransportista, Literal(oferta.transportista_id)))
     graph.add((subject, AGENTZON.CostBase, Literal(oferta.cost, datatype=XSD.float)))
     graph.add((subject, AGENTZON.DataEnviament, Literal(oferta.data_enviament, datatype=XSD.date)))
@@ -177,8 +181,9 @@ def build_resposta_oferta_transport_action(oferta: RespostaOfertaTransport) -> G
 
 
 def read_resposta_oferta_transport(graph: Graph, subject: URIRef) -> RespostaOfertaTransport:
+    id_lot = graph.value(subject, AGENTZON.IdLot)
     return RespostaOfertaTransport(
-        id_lot=str(graph.value(subject, AGENTZON.IdLot)),
+        id_lot=str(id_lot) if id_lot is not None else "",
         transportista_id=str(graph.value(subject, AGENTZON.IdTransportista)),
         cost=float(graph.value(subject, AGENTZON.CostBase).toPython()),
         data_enviament=str(graph.value(subject, AGENTZON.DataEnviament)),

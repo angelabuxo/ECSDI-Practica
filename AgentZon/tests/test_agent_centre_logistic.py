@@ -30,7 +30,7 @@ class AgentCentreLogisticTest(unittest.TestCase):
     def test_loads_ontology_with_logistic_center_class(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
 
-        self.assertIn((AGENTZON.CentreLogístic, RDF.type, None), agent.graph)
+        self.assertIn((AGENTZON.CentreLogistic, RDF.type, None), agent.graph)
 
     def test_declares_prometheus_capabilities_and_plans(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
@@ -195,7 +195,7 @@ class AgentCentreLogisticTest(unittest.TestCase):
         peticio = agent.pla_cerca_transportista(lot.id)
 
         self.assertIsInstance(peticio, PeticioTransport)
-        self.assertEqual(peticio.id_lot, lot.id)
+        self.assertEqual(peticio.ciutat_desti, "Barcelona")
         self.assertEqual(peticio.pes, 2.0)
         self.assertEqual(peticio.data_enviament, "2026-05-04")
         self.assertEqual(lot.estat, "NEGOCIANT_TRANSPORT")

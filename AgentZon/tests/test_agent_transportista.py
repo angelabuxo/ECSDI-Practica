@@ -46,8 +46,8 @@ class AgentTransportistaTest(unittest.TestCase):
         )
         app = create_app(transportista)
         peticio = PeticioTransport(
-            id_lot="lot-1",
             centre_logistic_id="magatzem-bcn",
+            ciutat_desti="Barcelona",
             data_enviament="2026-05-03",
             pes=2.0,
         )
@@ -66,7 +66,7 @@ class AgentTransportistaTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(props["performative"], "inform")
-        self.assertEqual(oferta.id_lot, "lot-1")
+        self.assertEqual(oferta.id_lot, "")
         self.assertEqual(oferta.transportista_id, "transport-a")
         self.assertEqual(oferta.cost, 7.0)
         self.assertEqual(oferta.data_enviament, "2026-05-03")

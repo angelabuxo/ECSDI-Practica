@@ -41,8 +41,8 @@ class ProtocolCentreLogisticTest(unittest.TestCase):
 
     def test_transport_protocol_messages_keep_negotiation_data(self):
         peticio = PeticioTransport(
-            id_lot="lot-1",
             centre_logistic_id="magatzem-bcn",
+            ciutat_desti="Barcelona",
             data_enviament="2026-05-03",
             pes=3.5,
         )
@@ -60,6 +60,7 @@ class ProtocolCentreLogisticTest(unittest.TestCase):
         )
 
         self.assertEqual(peticio.pes, 3.5)
+        self.assertEqual(peticio.ciutat_desti, "Barcelona")
         self.assertEqual(peticio.data_enviament, "2026-05-03")
         self.assertEqual(resposta.transportista_id, "transport-1")
         self.assertEqual(eleccio.data_enviament, "2026-05-02")

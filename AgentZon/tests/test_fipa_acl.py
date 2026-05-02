@@ -15,7 +15,7 @@ class FipaAclTest(unittest.TestCase):
     def test_builds_and_reads_acl_message_with_rdf_content(self):
         content = Graph()
         action = AGENTZON.test_action_1
-        content.add((action, RDF.type, AGENTZON.PeticióTransport))
+        content.add((action, RDF.type, AGENTZON.PeticioTransport))
         content.add((action, AGENTZON.Id, Literal("lot-1")))
 
         message = build_message(
@@ -34,7 +34,7 @@ class FipaAclTest(unittest.TestCase):
         self.assertEqual(props["receiver"], URIRef(f"{AGENTZON}agent_centre_logistic_bcn"))
         self.assertEqual(props["content"], action)
         self.assertIn((props["message"], ACL.performative, Literal("request")), parsed)
-        self.assertIn((action, RDF.type, AGENTZON.PeticióTransport), parsed)
+        self.assertIn((action, RDF.type, AGENTZON.PeticioTransport), parsed)
 
     def test_returns_empty_properties_for_invalid_message(self):
         props = get_message_properties(Graph())

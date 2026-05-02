@@ -30,7 +30,7 @@ class AgentTransportista:
 
     def preparar_oferta(self, peticio) -> RespostaOfertaTransport:
         return RespostaOfertaTransport(
-            id_lot=peticio.id_lot,
+            id_lot="",
             transportista_id=self.transportista_id,
             cost=round(self.cost_base + peticio.pes, 2),
             data_enviament=sumar_dies_iso(peticio.data_enviament, self.dies_extra),
@@ -64,7 +64,7 @@ def create_app(transportista: Optional[AgentTransportista] = None) -> Flask:
             props = get_message_properties(incoming)
             if not props or props.get("performative") != "request" or props.get("content") is None:
                 response = build_not_understood(transportista.uri, AGENTZON.unknown_agent, msgcnt=1)
-            elif (props["content"], RDF.type, AGENTZON.PeticióTransport) in incoming:
+            elif (props["content"], RDF.type, AGENTZON.PeticioTransport) in incoming:
                 peticio = read_peticio_transport(incoming, props["content"])
                 oferta = transportista.preparar_oferta(peticio)
                 response = build_message(
