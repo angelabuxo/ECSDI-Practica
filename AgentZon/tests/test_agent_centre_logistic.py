@@ -75,6 +75,39 @@ class AgentCentreLogisticTest(unittest.TestCase):
         self.assertEqual([p.id_producte for p in lot_1.productes], ["p001", "p002"])
         self.assertEqual(lot_1.pes_total, 3.5)
 
+    def test_emits_debug_logs_for_lot_assignment_and_transport_selection(self):
+        agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
+        producte = ProducteLocalitzat(
+            id_producte="p001",
+            id_comanda="c001",
+            userid="u001",
+            adreca="Carrer Test 1, Barcelona",
+            prioritat=1,
+            data_limit="2026-05-03",
+            pes=2.0,
+            import_producte=99.95,
+        )
+
+        with self.assertLogs("AgentZon.agents.agent_centre_logistic", level="DEBUG") as logs:
+            lot = agent.pla_assignar_producte_a_lot(producte)
+            agent.pla_cerca_transportista(lot.id)
+            agent.registrar_oferta_transport(
+                RespostaOfertaTransport(
+                    id_lot=lot.id,
+                    transportista_id="transport-1",
+                    cost=9.0,
+                    data_enviament="2026-05-03",
+                )
+            )
+            agent.pla_transportista_escollit(lot.id)
+
+        log_text = "\n".join(logs.output)
+        self.assertIn("assignant producte", log_text)
+        self.assertIn(lot.id, log_text)
+        self.assertIn("peticio transport", log_text)
+        self.assertIn("oferta transport rebuda", log_text)
+        self.assertIn("transportista escollit", log_text)
+
     def test_comm_assigns_producte_localitzat_to_lot(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
         app = create_app(agent)

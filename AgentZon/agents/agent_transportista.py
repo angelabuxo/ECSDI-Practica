@@ -5,6 +5,7 @@ from typing import Optional
 from flask import Flask, Response, request
 from rdflib import RDF
 
+from AgentZon.agents.logging_utils import configure_pretty_logging
 from AgentZon.config import AGENTZON
 from AgentZon.protocols.centre_logistic import (
     RespostaOfertaTransport,
@@ -94,6 +95,7 @@ if __name__ == "__main__":
     parser.add_argument("--address", default=None)
     args = parser.parse_args()
 
+    configure_pretty_logging()
     advertised_address = args.address or f"http://127.0.0.1:{args.port}/comm"
     agent = AgentTransportista(
         transportista_id=args.id,

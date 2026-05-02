@@ -206,6 +206,23 @@ class AgentCompraTest(unittest.TestCase):
             self.assertEqual(enviament["responsables"]["p002"], "Sony Store")
             self.assertNotIn("productes", enviament)
 
+    def test_purchase_emits_debug_logs_for_order_and_shipping(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            agent = self._agent_with_temp_metadata(tmpdir)
+            productes = agent.productes_per_ids(["p001"])
+            compra = agent.processar_peticio_compra("u001", productes)
+            info = InformacioUsuari("u001", "Carrer Logs 1", 1, "targeta")
+
+            with self.assertLogs("AgentZon.agents.agent_compra", level="DEBUG") as logs:
+                comanda = agent.gestionar_compra(compra, info)
+
+        log_text = "\n".join(logs.output)
+        self.assertIn("gestionant compra", log_text)
+        self.assertIn(comanda.id, log_text)
+        self.assertIn("localitzant productes", log_text)
+        self.assertIn("producte intern", log_text)
+        self.assertIn("producte pendent d'agent", log_text)
+
     def test_does_not_expose_local_logistic_center_registry(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             agent = self._agent_with_temp_metadata(tmpdir)

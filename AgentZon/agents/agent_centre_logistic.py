@@ -1,4 +1,5 @@
 import argparse
+import logging
 import sys
 import uuid
 from datetime import date
@@ -32,6 +33,10 @@ from AgentZon.protocols.fipa_acl import (
     parse_message,
     send_message,
 )
+from AgentZon.agents.logging_utils import configure_pretty_logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class LotLogistic:
@@ -62,7 +67,7 @@ class LotLogistic:
     def es_compatible(self, adreca: str, prioritat: int, data_enviament: str) -> bool:
         return (
             self.estat == "PENDENT"
-            and self.adreca == adreca
+            and self.adreca == adreca # nomes els que coincideixen en adreca
             and self.prioritat == prioritat
             and self.data_enviament == data_enviament
         )
@@ -118,6 +123,12 @@ class AgentCentreLogistic:
         return AGENTZON[f"agent_centre_logistic_{self.centre_logistic_id}"]
 
     def registrar_al_directori(self, address: str) -> dict:
+        logger.debug(
+            "registrant centre logistic al directori centre_logistic=%s address=%s directory=%s",
+            self.centre_logistic_id,
+            address,
+            self.directory_address,
+        )
         content = build_register_action(
             name=self.centre_logistic_id,
             uri=self.uri,
@@ -126,7 +137,9 @@ class AgentCentreLogistic:
         )
         message = build_message("request", self.uri, AGENTZON.directory_agent, content, msgcnt=1)
         response = self.message_sender(self.directory_address, message)
-        return get_message_properties(response)
+        props = get_message_properties(response)
+        logger.debug("resposta registre centre logistic performative=%s", props.get("performative") if props else None)
+        return props
 
     def _carregar_ontologia(self) -> None:
         """Carrega l'ontologia RDF/XML compartida pels agents."""
@@ -160,11 +173,23 @@ class AgentCentreLogistic:
         adreca = producte_localitzat.adreca.strip()
         prioritat = producte_localitzat.prioritat
         data_enviament = producte_localitzat.data_limit
+        logger.debug(
+            "assignant producte producte=%s comanda=%s centre_logistic=%s",
+            producte_localitzat.id_producte,
+            producte_localitzat.id_comanda,
+            self.centre_logistic_id,
+        )
 
         for lot in self.lots_pendents.values():
             if lot.es_compatible(adreca, prioritat, data_enviament):
                 lot.productes.append(producte_localitzat)
                 self._afegir_producte_localitzat_al_graf(producte_localitzat, lot)
+                logger.debug(
+                    "producte afegit a lot existent lot=%s producte=%s total_productes=%s",
+                    lot.id,
+                    producte_localitzat.id_producte,
+                    len(lot.productes),
+                )
                 return lot
 
         lot = LotLogistic(
@@ -179,6 +204,15 @@ class AgentCentreLogistic:
         self.ofertes_rebudes[lot.id] = []
         self._afegir_lot_al_graf(lot)
         self._afegir_producte_localitzat_al_graf(producte_localitzat, lot)
+        logger.debug(
+            "lot creat lot=%s centre_logistic=%s producte=%s adreca=%s prioritat=%s data=%s",
+            lot.id,
+            self.centre_logistic_id,
+            producte_localitzat.id_producte,
+            adreca,
+            prioritat,
+            data_enviament,
+        )
         return lot
 
     def pla_cerca_transportista(self, id_lot: str) -> PeticioTransport:
@@ -202,6 +236,13 @@ class AgentCentreLogistic:
             prioritat=lot.prioritat,
         )
         self._afegir_peticio_transport_al_graf(peticio)
+        logger.debug(
+            "peticio transport lot=%s pes=%s prioritat=%s data=%s",
+            peticio.id_lot,
+            peticio.pes,
+            peticio.prioritat,
+            peticio.data_enviament,
+        )
         return peticio
 
     def registrar_oferta_transport(self, resposta_oferta_transport: RespostaOfertaTransport) -> RespostaOfertaTransport:
@@ -216,6 +257,13 @@ class AgentCentreLogistic:
 
         self.ofertes_rebudes.setdefault(id_lot, []).append(resposta_oferta_transport)
         self._afegir_oferta_al_graf(resposta_oferta_transport)
+        logger.debug(
+            "oferta transport rebuda lot=%s transportista=%s cost=%s data=%s",
+            resposta_oferta_transport.id_lot,
+            resposta_oferta_transport.transportista_id,
+            resposta_oferta_transport.cost,
+            resposta_oferta_transport.data_enviament,
+        )
         return resposta_oferta_transport
 
     def pla_transportista_escollit(self, id_lot: str) -> tuple[EleccioTransportista, List[DadesEnviamentProducte]]:
@@ -227,6 +275,7 @@ class AgentCentreLogistic:
         """
         lot = self._obtenir_lot(id_lot)
         ofertes = self.ofertes_rebudes.get(id_lot, [])
+        logger.debug("avaluant ofertes transport lot=%s ofertes=%s", id_lot, len(ofertes))
         if not ofertes:
             raise ValueError(f"No hi ha ofertes de transport per al lot {id_lot}.")
 
@@ -246,6 +295,13 @@ class AgentCentreLogistic:
         self.eleccions_transportista[id_lot] = eleccio
         lot.estat = "TRANSPORTISTA_ESCOLLIT"
         self._afegir_eleccio_al_graf(eleccio)
+        logger.debug(
+            "transportista escollit lot=%s transportista=%s cost=%s data=%s",
+            eleccio.id_lot,
+            eleccio.transportista_id,
+            eleccio.cost,
+            eleccio.data_enviament,
+        )
         return eleccio, self._crear_dades_enviament_productes(lot, eleccio)
 
     def pla_producte_sha_enviat(self, today: Optional[str] = None) -> List[PeticioCobramentProducte]:
@@ -262,6 +318,7 @@ class AgentCentreLogistic:
         for lot in self.lots_pendents.values():
             if lot.data_enviament == today and lot.estat != "ENVIAT":
                 lot.estat = "ENVIAT"
+                logger.debug("lot enviat lot=%s productes=%s data=%s", lot.id, len(lot.productes), today)
                 for producte in lot.productes:
                     peticions_cobrament.append(
                         PeticioCobramentProducte(
@@ -275,6 +332,7 @@ class AgentCentreLogistic:
         return peticions_cobrament
 
     def cercar_transportistes(self) -> List[Dict[str, object]]:
+        logger.debug("cercant transportistes al directori centre_logistic=%s", self.centre_logistic_id)
         content = build_search_action(agent_type="AgentTransportista")
         request = build_message(
             "request",
@@ -286,8 +344,11 @@ class AgentCentreLogistic:
         response = self.message_sender(self.directory_address, request)
         props = get_message_properties(response)
         if not props or props.get("performative") != "inform":
+            logger.debug("resposta cerca transportistes no inform performative=%s", props.get("performative") if props else None)
             return []
-        return read_directory_responses(response)
+        transportistes = read_directory_responses(response)
+        logger.debug("transportistes trobats count=%s", len(transportistes))
+        return transportistes
 
     def negociar_transport_amb_transportistes(self, id_lot: str) -> tuple[EleccioTransportista, List[DadesEnviamentProducte]]:
         peticio = self.pla_cerca_transportista(id_lot)
@@ -296,6 +357,12 @@ class AgentCentreLogistic:
             raise ValueError("No s'ha trobat cap AgentTransportista al DirectoryAgent.")
 
         for transportista in transportistes:
+            logger.debug(
+                "enviant peticio transport lot=%s transportista=%s address=%s",
+                id_lot,
+                transportista["name"],
+                transportista["address"],
+            )
             request = build_message(
                 "request",
                 self.uri,
@@ -308,6 +375,13 @@ class AgentCentreLogistic:
             if props and props.get("performative") == "inform" and props.get("content") is not None:
                 oferta = read_resposta_oferta_transport(response, props["content"])
                 self.registrar_oferta_transport(oferta)
+            else:
+                logger.debug(
+                    "transportista sense oferta valida lot=%s transportista=%s performative=%s",
+                    id_lot,
+                    transportista["name"],
+                    props.get("performative") if props else None,
+                )
 
         return self.pla_transportista_escollit(id_lot)
 
@@ -431,6 +505,7 @@ if __name__ == "__main__":
     parser.add_argument("--address", default=None)
     args = parser.parse_args()
 
+    configure_pretty_logging()
     agent = AgentCentreLogistic(
         centre_logistic_id=args.id,
         ubicacio=args.ubicacio,

@@ -1,9 +1,34 @@
 @prefix az: <http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+az:dades_enviament_usuari_01 a az:DadesEnviamentUsuari ;
+    az:Adreça "Barcelona" ;
+    az:IdUsuari "01" ;
+    az:Prioritat 2 .
+
+az:dades_enviament_usuari_02 a az:DadesEnviamentUsuari ;
+    az:Adreça "Barcelona" ;
+    az:IdUsuari "02" ;
+    az:Prioritat 1 .
+
+az:dades_enviament_usuari_03 a az:DadesEnviamentUsuari ;
+    az:Adreça "StQ" ;
+    az:IdUsuari "03" ;
+    az:Prioritat 1 .
+
 az:dades_enviament_usuari_1234 a az:DadesEnviamentUsuari ;
     az:Adreça "Eixample" ;
     az:IdUsuari "1234" ;
+    az:Prioritat 2 .
+
+az:dades_enviament_usuari_123456 a az:DadesEnviamentUsuari ;
+    az:Adreça "Madrid" ;
+    az:IdUsuari "123456" ;
+    az:Prioritat 2 .
+
+az:dades_enviament_usuari_234 a az:DadesEnviamentUsuari ;
+    az:Adreça "Barcelona" ;
+    az:IdUsuari "234" ;
     az:Prioritat 2 .
 
 az:dades_enviament_usuari_4321 a az:DadesEnviamentUsuari ;

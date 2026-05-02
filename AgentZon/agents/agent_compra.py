@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -43,6 +44,10 @@ from AgentZon.protocols.fipa_acl import (
     parse_message,
     send_message,
 )
+from AgentZon.agents.logging_utils import configure_pretty_logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class AgentCompra:
@@ -313,11 +318,25 @@ class AgentCompra:
 
     def gestionar_compra(self, compra: PeticioCompra, info_usuari: InformacioUsuari) -> ComandaModel:
         """Cp. Gestionar compra: crea, valida i registra la comanda."""
+        logger.debug(
+            "gestionant compra userid=%s productes=%s",
+            compra.userid,
+            [producte.id for producte in compra.llista_productes],
+        )
         info_persistida = self.registrar_dades_usuari(info_usuari)
         comanda = processar_peticio_final(compra, info_persistida)
+        logger.debug(
+            "comanda creada id=%s userid=%s total=%s estat=%s entrega_estimada=%s",
+            comanda.id,
+            comanda.userid,
+            comanda.import_total,
+            comanda.estat,
+            comanda.data_entrega_estimada,
+        )
         if not validar_comanda(comanda):
             raise ValueError("La comanda no és vàlida.")
 
+        logger.debug("comanda validada id=%s", comanda.id)
         # TODO: Protocol per avisar a l'Ag. Cobrador sobre les dades bancàries de l'usuari.
         # TODO: Protocol per avisar a Ag. Opinador per registrar la comanda a BD.
         self.localitzar_productes(comanda)
@@ -326,6 +345,7 @@ class AgentCompra:
     def registrar_al_directori(self, address: str) -> dict:
         if not self.directory_address:
             raise ValueError("Cal configurar directory_address per registrar l'Agent Compra.")
+        logger.debug("registrant agent compra al directori address=%s directory=%s", address, self.directory_address)
         content = build_register_action(
             name="agent-compra",
             uri=AGENTZON.agent_compra,
@@ -334,12 +354,16 @@ class AgentCompra:
         )
         message = build_message("request", AGENTZON.agent_compra, AGENTZON.directory_agent, content, msgcnt=1)
         response = self.message_sender(self.directory_address, message)
-        return get_message_properties(response)
+        props = get_message_properties(response)
+        logger.debug("resposta registre directori performative=%s", props.get("performative") if props else None)
+        return props
 
     def _cercar_centre_logistic_al_directori(self, centre_logistic_id: str) -> Optional[Dict[str, object]]:
         if not self.directory_address:
+            logger.debug("directori no configurat per centre_logistic=%s", centre_logistic_id)
             return None
 
+        logger.debug("cercant centre logistic al directori centre_logistic=%s", centre_logistic_id)
         search = build_search_action(agent_type="AgentCentreLogistic", name=centre_logistic_id)
         request_graph = build_message(
             "request",
@@ -351,9 +375,15 @@ class AgentCompra:
         response = self.message_sender(self.directory_address, request_graph)
         props = get_message_properties(response)
         if not props or props.get("performative") != "inform":
+            logger.debug(
+                "resposta cerca centre logistic no inform centre_logistic=%s performative=%s",
+                centre_logistic_id,
+                props.get("performative") if props else None,
+            )
             return None
 
         results = read_directory_responses(response)
+        logger.debug("resultats directori centre_logistic=%s count=%s", centre_logistic_id, len(results))
         return results[0] if results else None
 
     def _enviar_producte_a_centre_logistic(
@@ -363,6 +393,12 @@ class AgentCompra:
     ) -> Dict[str, object]:
         directory_entry = self._cercar_centre_logistic_al_directori(centre_logistic_id)
         if directory_entry is not None:
+            logger.debug(
+                "enviant producte a centre logistic centre_logistic=%s producte=%s address=%s",
+                centre_logistic_id,
+                producte_localitzat.id_producte,
+                directory_entry["address"],
+            )
             request_graph = build_message(
                 "request",
                 AGENTZON.agent_compra,
@@ -374,12 +410,30 @@ class AgentCompra:
             props = get_message_properties(response)
             if props and props.get("performative") == "confirm" and props.get("content") is not None:
                 lot_assignat = read_lot_assignat_response(response, props["content"])
+                logger.debug(
+                    "centre logistic confirma lot centre_logistic=%s producte=%s lot=%s",
+                    centre_logistic_id,
+                    producte_localitzat.id_producte,
+                    lot_assignat["id_lot"],
+                )
                 return {
                     "centre_logistic": centre_logistic_id,
                     "id_lot": lot_assignat["id_lot"],
                     "estat": "PENDENT",
                 }
 
+            logger.debug(
+                "centre logistic no confirma producte centre_logistic=%s producte=%s performative=%s",
+                centre_logistic_id,
+                producte_localitzat.id_producte,
+                props.get("performative") if props else None,
+            )
+
+        logger.debug(
+            "producte pendent d'agent centre_logistic=%s producte=%s",
+            centre_logistic_id,
+            producte_localitzat.id_producte,
+        )
         return {
             "centre_logistic": centre_logistic_id,
             "estat": "PENDENT_AGENT",
@@ -392,6 +446,7 @@ class AgentCompra:
         """
         ids_comanda = [producte.id for producte in comanda.llista_productes]
         productes_per_id = {producte.id: producte for producte in comanda.llista_productes}
+        logger.debug("localitzant productes comanda=%s productes=%s", comanda.id, ids_comanda)
 
         dades_usuari = self._carregar_mapa(self.dades_enviament_path, "dades_enviament")
         ubicacions = self._carregar_mapa(self.ubicacions_path, "ubicacions")
@@ -405,6 +460,12 @@ class AgentCompra:
 
             if responsable_tipus == "extern":
                 responsables_enviament[producte_id] = responsable.get("venedor", "Venedor extern")
+                logger.debug(
+                    "producte extern producte=%s venedor=%s comanda=%s",
+                    producte_id,
+                    responsables_enviament[producte_id],
+                    comanda.id,
+                )
                 # TODO: Protocol per avisar al venedor extern de que producte X s'ha d'enviar a Y abans de Z.
             else:
                 if producte_id not in ubicacions:
@@ -415,6 +476,12 @@ class AgentCompra:
                 if not centre_logistic_id:
                     raise ValueError(f"No hi ha centre logístic persistent per al producte {producte_id}.")
 
+                logger.debug(
+                    "producte intern producte=%s centre_logistic=%s comanda=%s",
+                    producte_id,
+                    centre_logistic_id,
+                    comanda.id,
+                )
                 # De moment assumim que cada producte només està en un centre logístic.
                 # En el futur caldrà resoldre productes disponibles en diversos centres.
                 producte_localitzat = ProducteLocalitzat(
@@ -440,6 +507,12 @@ class AgentCompra:
             "centres_logistics": centres_logistics_enviament,
         }
         self.enviaments[comanda.id] = enviament
+        logger.debug(
+            "enviament preparat comanda=%s responsables=%s centres=%s",
+            comanda.id,
+            responsables_enviament,
+            centres_logistics_enviament,
+        )
         return enviament
 
     def processar_dades_enviament(self, dades: DadesEnviamentProducte) -> Dict[str, object]:
@@ -450,6 +523,14 @@ class AgentCompra:
         if dades.id_comanda not in self.enviaments:
             raise ValueError(f"Comanda desconeguda: {dades.id_comanda}")
 
+        logger.debug(
+            "processant dades enviament comanda=%s producte=%s lot=%s transportista=%s data=%s",
+            dades.id_comanda,
+            dades.id_producte,
+            dades.id_lot,
+            dades.transportista_id,
+            dades.data_entrega_definitiva,
+        )
         enviament = self.enviaments[dades.id_comanda]
         responsables = enviament.get("responsables", {})
         if dades.id_producte not in responsables:
@@ -461,6 +542,11 @@ class AgentCompra:
             "transportista_id": dades.transportista_id,
             "data_entrega_definitiva": dades.data_entrega_definitiva,
         }
+        logger.debug(
+            "dades definitives guardades comanda=%s producte=%s",
+            dades.id_comanda,
+            dades.id_producte,
+        )
 
         return {
             "userid": dades.userid,
@@ -568,6 +654,7 @@ if __name__ == "__main__":
     parser.add_argument("--address", default=None)
     args = parser.parse_args()
 
+    configure_pretty_logging()
     agent = AgentCompra(directory_address=args.directory)
     advertised_address = args.address or f"http://127.0.0.1:{args.port}/comm"
     try:
