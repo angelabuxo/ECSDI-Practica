@@ -75,6 +75,7 @@ class AgentCompra:
         self.directory_address = directory_address
         self.message_sender = message_sender
         self.enviaments: Dict[str, Dict[str, object]] = {}
+        self._seguent_id_comanda = 0
 
         self.graph = Graph()
         self.graph.bind("az", AGENTZON)
@@ -185,7 +186,7 @@ class AgentCompra:
                     path,
                     subject_type="DadesEnviamentUsuari",
                     id_predicate="IdUsuari",
-                    camp_predicates={"adreca": "Adreça", "prioritat": "Prioritat"},
+                    camp_predicates={"adreca": "Adreça", "ciutat": "Ciutat", "prioritat": "Prioritat"},
                 )
             if tipus == "ubicacions":
                 return self._carregar_ttl_indexat(
@@ -214,7 +215,7 @@ class AgentCompra:
                     dades,
                     subject_type="DadesEnviamentUsuari",
                     id_predicate="IdUsuari",
-                    camp_predicates={"adreca": "Adreça", "prioritat": "Prioritat"},
+                    camp_predicates={"adreca": "Adreça", "ciutat": "Ciutat", "prioritat": "Prioritat"},
                     subject_prefix="dades_enviament_usuari",
                 )
                 return
@@ -312,6 +313,7 @@ class AgentCompra:
         dades = self._carregar_mapa(self.dades_enviament_path, "dades_enviament")
         dades[info.userid] = {
             "adreca": info.adreça,
+            "ciutat": info.ciutat,
             "prioritat": info.prioritat,
         }
         self._guardar_mapa(self.dades_enviament_path, dades, "dades_enviament")
@@ -324,7 +326,7 @@ class AgentCompra:
             [producte.id for producte in compra.llista_productes],
         )
         info_persistida = self.registrar_dades_usuari(info_usuari)
-        comanda = processar_peticio_final(compra, info_persistida)
+        comanda = processar_peticio_final(compra, info_persistida, self._nou_id_comanda())
         logger.debug(
             "comanda creada id=%s userid=%s total=%s estat=%s entrega_estimada=%s",
             comanda.id,
@@ -341,6 +343,14 @@ class AgentCompra:
         # TODO: Protocol per avisar a Ag. Opinador per registrar la comanda a BD.
         self.localitzar_productes(comanda)
         return comanda
+
+    def _nou_id_comanda(self) -> str:
+        if self._seguent_id_comanda > 9999:
+            raise ValueError("S'ha esgotat el rang d'identificadors de comanda (0000-9999).")
+
+        id_comanda = f"{self._seguent_id_comanda:04d}"
+        self._seguent_id_comanda += 1
+        return id_comanda
 
     def registrar_al_directori(self, address: str) -> dict:
         if not self.directory_address:
@@ -489,6 +499,7 @@ class AgentCompra:
                     id_comanda=comanda.id,
                     userid=comanda.userid,
                     adreca=dades_usuari[comanda.userid]["adreca"],
+                    ciutat=dades_usuari[comanda.userid].get("ciutat", dades_usuari[comanda.userid]["adreca"]),
                     prioritat=dades_usuari[comanda.userid]["prioritat"],
                     data_limit=comanda.data_entrega_estimada,
                     pes=productes_per_id[producte_id].pes,
@@ -502,6 +513,7 @@ class AgentCompra:
         enviament = {
             "data_entrega_estimada": comanda.data_entrega_estimada,
             "adreca": dades_usuari[comanda.userid]["adreca"],
+            "ciutat": dades_usuari[comanda.userid].get("ciutat", dades_usuari[comanda.userid]["adreca"]),
             "prioritat": dades_usuari[comanda.userid]["prioritat"],
             "responsables": responsables_enviament,
             "centres_logistics": centres_logistics_enviament,
@@ -609,6 +621,7 @@ def create_app(compra_agent: Optional[AgentCompra] = None) -> Flask:
         valors = {
             "userid": "",
             "adreca": "",
+            "ciutat": "",
             "prioritat": "2",
             "metodepagament": "",
             "productes": [],
@@ -618,6 +631,7 @@ def create_app(compra_agent: Optional[AgentCompra] = None) -> Flask:
             valors = {
                 "userid": request.form.get("userid", ""),
                 "adreca": request.form.get("adreca", ""),
+                "ciutat": request.form.get("ciutat", ""),
                 "prioritat": request.form.get("prioritat", "2"),
                 "metodepagament": request.form.get("metodepagament", ""),
                 "productes": request.form.getlist("productes"),
@@ -630,6 +644,7 @@ def create_app(compra_agent: Optional[AgentCompra] = None) -> Flask:
                 info_usuari = InformacioUsuari(
                     userid=compra.userid,
                     adreça=valors["adreca"],
+                    ciutat=valors["ciutat"],
                     prioritat=_int_obligatori(valors["prioritat"], "La prioritat ha de ser numèrica."),
                     metodepagament=valors["metodepagament"],
                 )

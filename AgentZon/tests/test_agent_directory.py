@@ -55,6 +55,31 @@ class AgentDirectoryTest(unittest.TestCase):
         self.assertEqual(directory_response["address"], "http://127.0.0.1:9003/comm")
         self.assertEqual(directory_response["agent_type"], "AgentCentreLogistic")
 
+    def test_reregistering_agent_replaces_previous_address(self):
+        directory = AgentDirectory()
+
+        directory.register_agent(
+            name="magatzem-bcn",
+            uri=AGENTZON.agent_centre_logistic_bcn,
+            address="http://127.0.0.1:9003/comm",
+            agent_type="AgentCentreLogistic",
+        )
+        directory.register_agent(
+            name="magatzem-bcn",
+            uri=AGENTZON.agent_centre_logistic_bcn,
+            address="http://192.168.1.20:9003/comm",
+            agent_type="AgentCentreLogistic",
+        )
+
+        result = directory.search_agent("AgentCentreLogistic", name="magatzem-bcn")
+
+        self.assertIsNotNone(result)
+        self.assertEqual(result["address"], "http://192.168.1.20:9003/comm")
+        self.assertEqual(
+            list(directory.graph.objects(AGENTZON["directory_entry_magatzem-bcn"], DSO.Address)),
+            [Literal("http://192.168.1.20:9003/comm")],
+        )
+
     def test_register_endpoint_rejects_invalid_acl_message(self):
         app = create_app(AgentDirectory())
 

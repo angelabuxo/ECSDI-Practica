@@ -16,6 +16,17 @@ az:dades_enviament_usuari_03 a az:DadesEnviamentUsuari ;
     az:IdUsuari "03" ;
     az:Prioritat 1 .
 
+az:dades_enviament_usuari_1 a az:DadesEnviamentUsuari ;
+    az:Adreça "Eixample 425" ;
+    az:Ciutat "Barcelona" ;
+    az:IdUsuari "1" ;
+    az:Prioritat 2 .
+
+az:dades_enviament_usuari_12 a az:DadesEnviamentUsuari ;
+    az:Adreça "Barcelona" ;
+    az:IdUsuari "12" ;
+    az:Prioritat 2 .
+
 az:dades_enviament_usuari_1234 a az:DadesEnviamentUsuari ;
     az:Adreça "Eixample" ;
     az:IdUsuari "1234" ;
@@ -24,6 +35,12 @@ az:dades_enviament_usuari_1234 a az:DadesEnviamentUsuari ;
 az:dades_enviament_usuari_123456 a az:DadesEnviamentUsuari ;
     az:Adreça "Madrid" ;
     az:IdUsuari "123456" ;
+    az:Prioritat 2 .
+
+az:dades_enviament_usuari_2 a az:DadesEnviamentUsuari ;
+    az:Adreça "Balmes 284" ;
+    az:Ciutat "Barcelona" ;
+    az:IdUsuari "2" ;
     az:Prioritat 2 .
 
 az:dades_enviament_usuari_234 a az:DadesEnviamentUsuari ;

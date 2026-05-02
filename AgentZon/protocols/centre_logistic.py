@@ -17,6 +17,7 @@ class ProducteLocalitzat:
         id_comanda: str,
         userid: str,
         adreca: str,
+        ciutat: str,
         prioritat: int,
         data_limit: str,
         pes: float,
@@ -26,6 +27,7 @@ class ProducteLocalitzat:
         self.id_comanda = id_comanda
         self.userid = userid
         self.adreca = adreca
+        self.ciutat = ciutat
         self.prioritat = prioritat
         self.data_limit = data_limit
         self.pes = pes
@@ -35,13 +37,11 @@ class ProducteLocalitzat:
 class PeticioTransport:
     """Petició que el Centre Logístic prepara per negociar el transport d'un lot."""
 
-    def __init__(self, id_lot: str, centre_logistic_id: str, adreca: str, data_enviament: str, pes: float, prioritat: int):
+    def __init__(self, id_lot: str, centre_logistic_id: str, data_enviament: str, pes: float):
         self.id_lot = id_lot
         self.centre_logistic_id = centre_logistic_id
-        self.adreca = adreca
         self.data_enviament = data_enviament
         self.pes = pes
-        self.prioritat = prioritat
 
 
 class RespostaOfertaTransport:
@@ -103,19 +103,22 @@ def build_producte_localitzat_action(producte: ProducteLocalitzat) -> Graph:
     graph.add((subject, AGENTZON.IdComanda, Literal(producte.id_comanda)))
     graph.add((subject, AGENTZON.IdUsuari, Literal(producte.userid)))
     graph.add((subject, AGENTZON.Adreça, Literal(producte.adreca)))
+    graph.add((subject, AGENTZON.Ciutat, Literal(producte.ciutat)))
     graph.add((subject, AGENTZON.Prioritat, Literal(producte.prioritat, datatype=XSD.integer)))
-    graph.add((subject, AGENTZON.DataEnviament, Literal(producte.data_limit, datatype=XSD.dateTime)))
+    graph.add((subject, AGENTZON.DataEnviament, Literal(producte.data_limit, datatype=XSD.date)))
     graph.add((subject, AGENTZON.Pes, Literal(producte.pes, datatype=XSD.float)))
     graph.add((subject, AGENTZON.Preu, Literal(producte.import_producte, datatype=XSD.float)))
     return graph
 
 
 def read_producte_localitzat(graph: Graph, subject: URIRef) -> ProducteLocalitzat:
+    ciutat = graph.value(subject, AGENTZON.Ciutat)
     return ProducteLocalitzat(
         id_producte=str(graph.value(subject, AGENTZON.IdProducte)),
         id_comanda=str(graph.value(subject, AGENTZON.IdComanda)),
         userid=str(graph.value(subject, AGENTZON.IdUsuari)),
         adreca=str(graph.value(subject, AGENTZON.Adreça)),
+        ciutat=str(ciutat if ciutat is not None else graph.value(subject, AGENTZON.Adreça)),
         prioritat=int(graph.value(subject, AGENTZON.Prioritat).toPython()),
         data_limit=str(graph.value(subject, AGENTZON.DataEnviament)),
         pes=float(graph.value(subject, AGENTZON.Pes).toPython()),
@@ -147,10 +150,8 @@ def build_peticio_transport_action(peticio: PeticioTransport) -> Graph:
     graph.add((subject, RDF.type, AGENTZON.PeticióTransport))
     graph.add((subject, AGENTZON.IdLot, Literal(peticio.id_lot)))
     graph.add((subject, AGENTZON.IdCentreLogistic, Literal(peticio.centre_logistic_id)))
-    graph.add((subject, AGENTZON.Adreça, Literal(peticio.adreca)))
-    graph.add((subject, AGENTZON.DataEnviament, Literal(peticio.data_enviament, datatype=XSD.dateTime)))
+    graph.add((subject, AGENTZON.DataEnviament, Literal(peticio.data_enviament, datatype=XSD.date)))
     graph.add((subject, AGENTZON.Pes, Literal(peticio.pes, datatype=XSD.float)))
-    graph.add((subject, AGENTZON.Prioritat, Literal(peticio.prioritat, datatype=XSD.integer)))
     return graph
 
 
@@ -158,10 +159,8 @@ def read_peticio_transport(graph: Graph, subject: URIRef) -> PeticioTransport:
     return PeticioTransport(
         id_lot=str(graph.value(subject, AGENTZON.IdLot)),
         centre_logistic_id=str(graph.value(subject, AGENTZON.IdCentreLogistic)),
-        adreca=str(graph.value(subject, AGENTZON.Adreça)),
         data_enviament=str(graph.value(subject, AGENTZON.DataEnviament)),
         pes=float(graph.value(subject, AGENTZON.Pes).toPython()),
-        prioritat=int(graph.value(subject, AGENTZON.Prioritat).toPython()),
     )
 
 
@@ -173,7 +172,7 @@ def build_resposta_oferta_transport_action(oferta: RespostaOfertaTransport) -> G
     graph.add((subject, AGENTZON.IdLot, Literal(oferta.id_lot)))
     graph.add((subject, AGENTZON.IdTransportista, Literal(oferta.transportista_id)))
     graph.add((subject, AGENTZON.CostBase, Literal(oferta.cost, datatype=XSD.float)))
-    graph.add((subject, AGENTZON.DataEnviament, Literal(oferta.data_enviament, datatype=XSD.dateTime)))
+    graph.add((subject, AGENTZON.DataEnviament, Literal(oferta.data_enviament, datatype=XSD.date)))
     return graph
 
 
@@ -196,7 +195,7 @@ def build_dades_enviament_action(dades: DadesEnviamentProducte) -> Graph:
     graph.add((subject, AGENTZON.IdUsuari, Literal(dades.userid)))
     graph.add((subject, AGENTZON.IdProducte, Literal(dades.id_producte)))
     graph.add((subject, AGENTZON.IdTransportista, Literal(dades.transportista_id)))
-    graph.add((subject, AGENTZON.DataEnviament, Literal(dades.data_entrega_definitiva, datatype=XSD.dateTime)))
+    graph.add((subject, AGENTZON.DataEnviament, Literal(dades.data_entrega_definitiva, datatype=XSD.date)))
     return graph
 
 
@@ -213,4 +212,5 @@ def read_dades_enviament(graph: Graph, subject: URIRef) -> DadesEnviamentProduct
 
 def sumar_dies_iso(data_iso: str, dies: int) -> str:
     data = datetime.fromisoformat(data_iso)
-    return (data + timedelta(days=dies)).isoformat()
+    resultat = data + timedelta(days=dies)
+    return resultat.date().isoformat()

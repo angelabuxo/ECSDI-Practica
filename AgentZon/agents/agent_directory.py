@@ -26,6 +26,7 @@ class AgentDirectory:
 
     def register_agent(self, name: str, uri: URIRef, address: str, agent_type: str) -> None:
         subject = URIRef(f"{AGENTZON}directory_entry_{name}")
+        self.graph.remove((subject, None, None))
         self.graph.add((subject, RDF.type, DSO.RegisteredAgent))
         self.graph.add((subject, DSO.Name, Literal(name)))
         self.graph.add((subject, DSO.Uri, uri))

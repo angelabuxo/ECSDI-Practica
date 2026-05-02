@@ -48,10 +48,8 @@ class AgentTransportistaTest(unittest.TestCase):
         peticio = PeticioTransport(
             id_lot="lot-1",
             centre_logistic_id="magatzem-bcn",
-            adreca="Carrer Test 1",
-            data_enviament="2026-05-03T10:00:00",
+            data_enviament="2026-05-03",
             pes=2.0,
-            prioritat=1,
         )
         message = build_message(
             "request",
@@ -71,7 +69,7 @@ class AgentTransportistaTest(unittest.TestCase):
         self.assertEqual(oferta.id_lot, "lot-1")
         self.assertEqual(oferta.transportista_id, "transport-a")
         self.assertEqual(oferta.cost, 7.0)
-        self.assertEqual(oferta.data_enviament, "2026-05-03T10:00:00")
+        self.assertEqual(oferta.data_enviament, "2026-05-03")
 
 
 if __name__ == "__main__":

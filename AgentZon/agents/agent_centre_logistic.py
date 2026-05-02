@@ -1,7 +1,6 @@
 import argparse
 import logging
 import sys
-import uuid
 from datetime import date
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -46,16 +45,14 @@ class LotLogistic:
         self,
         id: str,
         centre_logistic_id: str,
-        adreca: str,
-        prioritat: int,
+        ciutat: str,
         data_enviament: str,
         productes: Optional[List[ProducteLocalitzat]] = None,
         estat: str = "PENDENT",
     ):
         self.id = id
         self.centre_logistic_id = centre_logistic_id
-        self.adreca = adreca
-        self.prioritat = prioritat
+        self.ciutat = ciutat
         self.data_enviament = data_enviament
         self.productes = productes or []
         self.estat = estat
@@ -64,13 +61,8 @@ class LotLogistic:
     def pes_total(self) -> float:
         return sum(float(getattr(producte, "pes", 0.0) or 0.0) for producte in self.productes)
 
-    def es_compatible(self, adreca: str, prioritat: int, data_enviament: str) -> bool:
-        return (
-            self.estat == "PENDENT"
-            and self.adreca == adreca # nomes els que coincideixen en adreca
-            and self.prioritat == prioritat
-            and self.data_enviament == data_enviament
-        )
+    def es_compatible(self, ciutat: str, data_enviament: str) -> bool:
+        return self.estat == "PENDENT" and self.ciutat == ciutat and self.data_enviament == data_enviament
 
 
 class AgentCentreLogistic:
@@ -99,13 +91,16 @@ class AgentCentreLogistic:
         self.lots_pendents: Dict[str, LotLogistic] = {}
         self.ofertes_rebudes: Dict[str, List[RespostaOfertaTransport]] = {}
         self.eleccions_transportista: Dict[str, EleccioTransportista] = {}
+        self._seguent_num_lot = 1
 
         self.graph = Graph()
         self.graph.bind("az", AGENTZON)
         self._carregar_ontologia()
         self._registrar_instancia_centre_logistic()
 
-        self.capacitats = {
+    @property
+    def capacitats(self) -> Dict[str, List[object]]:
+        return {
             "Gestionar magatzem": [
                 self.pla_assignar_producte_a_lot,
             ],
@@ -117,6 +112,7 @@ class AgentCentreLogistic:
                 self.pla_producte_sha_enviat,
             ],
         }
+
 
     @property
     def uri(self) -> URIRef:
@@ -163,25 +159,28 @@ class AgentCentreLogistic:
         """Construeix un URIRef dins del namespace de l'ontologia AgentZon."""
         return URIRef(f"{AGENTZON}{term}")
 
+    def _data_lot(self, data_enviament: str) -> str:
+        return date.fromisoformat(data_enviament.split("T")[0]).isoformat()
+
     def pla_assignar_producte_a_lot(self, producte_localitzat: ProducteLocalitzat) -> LotLogistic:
         """
         Pla assignar producte a lot.
 
         Rep un ProducteLocalitzat de l'Agent Compra i l'agrupa en un Lot
-        compatible per adreça de destí, prioritat i data d'enviament.
+        compatible per ciutat i dia d'enviament, ignorant l'hora exacta.
         """
-        adreca = producte_localitzat.adreca.strip()
-        prioritat = producte_localitzat.prioritat
-        data_enviament = producte_localitzat.data_limit
+        ciutat = producte_localitzat.ciutat.strip()
+        data_enviament = self._data_lot(producte_localitzat.data_limit)
         logger.debug(
-            "assignant producte producte=%s comanda=%s centre_logistic=%s",
+            "assignant producte producte=%s comanda=%s centre_logistic=%s ciutat=%s",
             producte_localitzat.id_producte,
             producte_localitzat.id_comanda,
             self.centre_logistic_id,
+            ciutat,
         )
 
         for lot in self.lots_pendents.values():
-            if lot.es_compatible(adreca, prioritat, data_enviament):
+            if lot.es_compatible(ciutat, data_enviament):
                 lot.productes.append(producte_localitzat)
                 self._afegir_producte_localitzat_al_graf(producte_localitzat, lot)
                 logger.debug(
@@ -193,10 +192,9 @@ class AgentCentreLogistic:
                 return lot
 
         lot = LotLogistic(
-            id=str(uuid.uuid4()),
+            id=self._nou_id_lot(),
             centre_logistic_id=self.centre_logistic_id,
-            adreca=adreca,
-            prioritat=prioritat,
+            ciutat=ciutat,
             data_enviament=data_enviament,
             productes=[producte_localitzat],
         )
@@ -205,12 +203,11 @@ class AgentCentreLogistic:
         self._afegir_lot_al_graf(lot)
         self._afegir_producte_localitzat_al_graf(producte_localitzat, lot)
         logger.debug(
-            "lot creat lot=%s centre_logistic=%s producte=%s adreca=%s prioritat=%s data=%s",
+            "lot creat lot=%s centre_logistic=%s ciutat=%s producte=%s data=%s",
             lot.id,
             self.centre_logistic_id,
+            ciutat,
             producte_localitzat.id_producte,
-            adreca,
-            prioritat,
             data_enviament,
         )
         return lot
@@ -230,17 +227,14 @@ class AgentCentreLogistic:
         peticio = PeticioTransport(
             id_lot=lot.id,
             centre_logistic_id=self.centre_logistic_id,
-            adreca=lot.adreca,
             data_enviament=lot.data_enviament,
             pes=lot.pes_total,
-            prioritat=lot.prioritat,
         )
         self._afegir_peticio_transport_al_graf(peticio)
         logger.debug(
-            "peticio transport lot=%s pes=%s prioritat=%s data=%s",
+            "peticio transport lot=%s pes=%s data=%s",
             peticio.id_lot,
             peticio.pes,
-            peticio.prioritat,
             peticio.data_enviament,
         )
         return peticio
@@ -280,7 +274,7 @@ class AgentCentreLogistic:
             raise ValueError(f"No hi ha ofertes de transport per al lot {id_lot}.")
 
         ofertes_dins_termini = [
-            oferta for oferta in ofertes if oferta.data_enviament <= lot.data_enviament
+            oferta for oferta in ofertes if self._data_lot(oferta.data_enviament) <= lot.data_enviament
         ]
         if not ofertes_dins_termini:
             raise ValueError(f"No hi ha ofertes de transport dins del termini per al lot {id_lot}.")
@@ -316,7 +310,7 @@ class AgentCentreLogistic:
         peticions_cobrament = []
 
         for lot in self.lots_pendents.values():
-            if lot.data_enviament == today and lot.estat != "ENVIAT":
+            if self._data_lot(lot.data_enviament) == self._data_lot(today) and lot.estat != "ENVIAT":
                 lot.estat = "ENVIAT"
                 logger.debug("lot enviat lot=%s productes=%s data=%s", lot.id, len(lot.productes), today)
                 for producte in lot.productes:
@@ -385,6 +379,19 @@ class AgentCentreLogistic:
 
         return self.pla_transportista_escollit(id_lot)
 
+    def _prefix_lot(self) -> str:
+        prefix = self.centre_logistic_id.strip().lower().split("-")[-1]
+        prefix = "".join(char for char in prefix if char.isalnum())
+        return prefix or "lot"
+
+    def _nou_id_lot(self) -> str:
+        if self._seguent_num_lot > 9999:
+            raise ValueError("S'ha esgotat el rang d'identificadors de lot (0001-9999).")
+
+        id_lot = f"{self._prefix_lot()}-{self._seguent_num_lot:04d}"
+        self._seguent_num_lot += 1
+        return id_lot
+
     def _obtenir_lot(self, id_lot: str) -> LotLogistic:
         if id_lot not in self.lots_pendents:
             raise ValueError(f"Lot desconegut: {id_lot}")
@@ -412,7 +419,8 @@ class AgentCentreLogistic:
         centre_subject = self._az(f"centre_logistic_{self.centre_logistic_id}")
         self.graph.add((lot_subject, RDF.type, AGENTZON.Lot))
         self.graph.add((lot_subject, AGENTZON.Id, Literal(lot.id)))
-        self.graph.add((lot_subject, AGENTZON.DataEnviament, Literal(lot.data_enviament, datatype=XSD.dateTime)))
+        self.graph.add((lot_subject, AGENTZON.Ciutat, Literal(lot.ciutat)))
+        self.graph.add((lot_subject, AGENTZON.DataEnviament, Literal(lot.data_enviament, datatype=XSD.date)))
         self.graph.add((centre_subject, AGENTZON.Distribueix, lot_subject))
 
     def _afegir_producte_localitzat_al_graf(self, producte_localitzat: ProducteLocalitzat, lot: LotLogistic) -> None:
@@ -423,8 +431,9 @@ class AgentCentreLogistic:
         producte_subject = self._az(f"producte_localitzat_{lot.id}_{producte_id}")
         centre_subject = self._az(f"centre_logistic_{self.centre_logistic_id}")
         self.graph.add((producte_subject, RDF.type, AGENTZON.ProducteLocalitzat))
-        self.graph.add((producte_subject, AGENTZON.Adreça, Literal(lot.adreca)))
-        self.graph.add((producte_subject, AGENTZON.DataEnviament, Literal(lot.data_enviament, datatype=XSD.dateTime)))
+        self.graph.add((producte_subject, AGENTZON.Adreça, Literal(producte_localitzat.adreca)))
+        self.graph.add((producte_subject, AGENTZON.Ciutat, Literal(producte_localitzat.ciutat)))
+        self.graph.add((producte_subject, AGENTZON.DataEnviament, Literal(lot.data_enviament, datatype=XSD.date)))
         self.graph.add((centre_subject, AGENTZON.RepAvís, producte_subject))
 
     def _afegir_peticio_transport_al_graf(self, peticio: PeticioTransport) -> None:
@@ -433,7 +442,7 @@ class AgentCentreLogistic:
         self.graph.add((peticio_subject, RDF.type, AGENTZON.PeticióTransport))
         self.graph.add((peticio_subject, AGENTZON.Pes, Literal(peticio.pes, datatype=XSD.float)))
         self.graph.add(
-            (peticio_subject, AGENTZON.DataEnviament, Literal(peticio.data_enviament, datatype=XSD.dateTime))
+            (peticio_subject, AGENTZON.DataEnviament, Literal(peticio.data_enviament, datatype=XSD.date))
         )
         self.graph.add((centre_subject, AGENTZON.Negocia, peticio_subject))
 

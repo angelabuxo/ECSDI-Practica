@@ -22,6 +22,7 @@ class ProtocolCentreLogisticTest(unittest.TestCase):
             id_comanda="c001",
             userid="u001",
             adreca="Carrer Test 1",
+            ciutat="Barcelona",
             prioritat=1,
             data_limit="2026-05-03",
             pes=2.5,
@@ -32,6 +33,7 @@ class ProtocolCentreLogisticTest(unittest.TestCase):
         self.assertEqual(missatge.id_comanda, "c001")
         self.assertEqual(missatge.userid, "u001")
         self.assertEqual(missatge.adreca, "Carrer Test 1")
+        self.assertEqual(missatge.ciutat, "Barcelona")
         self.assertEqual(missatge.prioritat, 1)
         self.assertEqual(missatge.data_limit, "2026-05-03")
         self.assertEqual(missatge.pes, 2.5)
@@ -41,10 +43,8 @@ class ProtocolCentreLogisticTest(unittest.TestCase):
         peticio = PeticioTransport(
             id_lot="lot-1",
             centre_logistic_id="magatzem-bcn",
-            adreca="Carrer Test 1",
             data_enviament="2026-05-03",
             pes=3.5,
-            prioritat=1,
         )
         resposta = RespostaOfertaTransport(
             id_lot="lot-1",
@@ -60,6 +60,7 @@ class ProtocolCentreLogisticTest(unittest.TestCase):
         )
 
         self.assertEqual(peticio.pes, 3.5)
+        self.assertEqual(peticio.data_enviament, "2026-05-03")
         self.assertEqual(resposta.transportista_id, "transport-1")
         self.assertEqual(eleccio.data_enviament, "2026-05-02")
 

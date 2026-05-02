@@ -44,14 +44,15 @@ class AgentCentreLogisticTest(unittest.TestCase):
             {capacitat: [pla.__name__ for pla in plans] for capacitat, plans in agent.capacitats.items()},
         )
 
-    def test_assigns_products_to_compatible_lot_by_destination_and_priority(self):
+    def test_assigns_products_to_compatible_lot_by_shipping_day(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
         producte_1 = ProducteLocalitzat(
             id_producte="p001",
             id_comanda="c001",
             userid="u001",
             adreca="Carrer Test 1, Barcelona",
-            prioritat=1,
+            ciutat="Barcelona",
+            prioritat=2,
             data_limit="2026-05-03",
             pes=2.5,
             import_producte=99.95,
@@ -60,7 +61,8 @@ class AgentCentreLogisticTest(unittest.TestCase):
             id_producte="p002",
             id_comanda="c002",
             userid="u002",
-            adreca="Carrer Test 1, Barcelona",
+            adreca="Carrer Diferent 8, Girona",
+            ciutat="Barcelona",
             prioritat=1,
             data_limit="2026-05-03",
             pes=1.0,
@@ -71,9 +73,42 @@ class AgentCentreLogisticTest(unittest.TestCase):
         lot_2 = agent.pla_assignar_producte_a_lot(producte_2)
 
         self.assertEqual(lot_1.id, lot_2.id)
+        self.assertEqual(lot_1.id, "bcn-0001")
         self.assertIn((AGENTZON[f"lot_{lot_1.id}"], RDF.type, AGENTZON.Lot), agent.graph)
         self.assertEqual([p.id_producte for p in lot_1.productes], ["p001", "p002"])
         self.assertEqual(lot_1.pes_total, 3.5)
+        self.assertEqual(lot_1.data_enviament, "2026-05-03")
+
+    def test_creates_sequential_lot_ids_with_centre_suffix_prefix(self):
+        agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
+        producte_1 = ProducteLocalitzat(
+            id_producte="p001",
+            id_comanda="c001",
+            userid="u001",
+            adreca="Carrer Test 1, Barcelona",
+            ciutat="Barcelona",
+            prioritat=1,
+            data_limit="2026-05-03",
+            pes=2.5,
+            import_producte=99.95,
+        )
+        producte_2 = ProducteLocalitzat(
+            id_producte="p002",
+            id_comanda="c002",
+            userid="u002",
+            adreca="Carrer Diferent 2, Barcelona",
+            ciutat="Girona",
+            prioritat=1,
+            data_limit="2026-05-04",
+            pes=1.0,
+            import_producte=49.95,
+        )
+
+        lot_1 = agent.pla_assignar_producte_a_lot(producte_1)
+        lot_2 = agent.pla_assignar_producte_a_lot(producte_2)
+
+        self.assertEqual(lot_1.id, "bcn-0001")
+        self.assertEqual(lot_2.id, "bcn-0002")
 
     def test_emits_debug_logs_for_lot_assignment_and_transport_selection(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
@@ -82,6 +117,7 @@ class AgentCentreLogisticTest(unittest.TestCase):
             id_comanda="c001",
             userid="u001",
             adreca="Carrer Test 1, Barcelona",
+            ciutat="Barcelona",
             prioritat=1,
             data_limit="2026-05-03",
             pes=2.0,
@@ -116,8 +152,9 @@ class AgentCentreLogisticTest(unittest.TestCase):
             id_comanda="c001",
             userid="u001",
             adreca="Carrer Test 1, Barcelona",
+            ciutat="Barcelona",
             prioritat=1,
-            data_limit="2026-05-03T10:00:00",
+            data_limit="2026-05-03",
             pes=2.5,
             import_producte=99.95,
         )
@@ -147,6 +184,7 @@ class AgentCentreLogisticTest(unittest.TestCase):
             id_comanda="c001",
             userid="u001",
             adreca="Carrer Test 1, Barcelona",
+            ciutat="Barcelona",
             prioritat=2,
             data_limit="2026-05-04",
             pes=2.0,
@@ -169,6 +207,7 @@ class AgentCentreLogisticTest(unittest.TestCase):
             id_comanda="c001",
             userid="u001",
             adreca="Carrer Test 1, Barcelona",
+            ciutat="Barcelona",
             prioritat=1,
             data_limit="2026-05-03",
             pes=2.0,
@@ -209,6 +248,7 @@ class AgentCentreLogisticTest(unittest.TestCase):
             id_comanda="c001",
             userid="u001",
             adreca="Carrer Test 1, Barcelona",
+            ciutat="Barcelona",
             prioritat=1,
             data_limit="2026-05-03",
             pes=2.0,
@@ -219,6 +259,7 @@ class AgentCentreLogisticTest(unittest.TestCase):
             id_comanda="c002",
             userid="u002",
             adreca="Carrer Test 1, Barcelona",
+            ciutat="Barcelona",
             prioritat=1,
             data_limit="2026-05-03",
             pes=1.0,
@@ -292,8 +333,9 @@ class AgentCentreLogisticTest(unittest.TestCase):
             id_comanda="c001",
             userid="u001",
             adreca="Carrer Test 1, Barcelona",
+            ciutat="Barcelona",
             prioritat=1,
-            data_limit="2026-05-03T10:00:00",
+            data_limit="2026-05-03",
             pes=2.0,
             import_producte=99.95,
         )
@@ -313,6 +355,7 @@ class AgentCentreLogisticTest(unittest.TestCase):
             id_comanda="c001",
             userid="u001",
             adreca="Carrer Test 1, Barcelona",
+            ciutat="Barcelona",
             prioritat=1,
             data_limit="2026-05-03",
             pes=2.0,
@@ -341,6 +384,7 @@ class AgentCentreLogisticTest(unittest.TestCase):
             id_comanda="c001",
             userid="u001",
             adreca="Carrer Test 1, Barcelona",
+            ciutat="Barcelona",
             prioritat=1,
             data_limit=today,
             pes=2.0,
@@ -351,6 +395,7 @@ class AgentCentreLogisticTest(unittest.TestCase):
             id_comanda="c002",
             userid="u002",
             adreca="Carrer Test 2, Barcelona",
+            ciutat="Barcelona",
             prioritat=1,
             data_limit=tomorrow,
             pes=1.0,
