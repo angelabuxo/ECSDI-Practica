@@ -74,7 +74,12 @@ class AgentCentreLogisticTest(unittest.TestCase):
 
         self.assertEqual(lot_1.id, lot_2.id)
         self.assertEqual(lot_1.id, "bcn-0001")
-        self.assertIn((AGENTZON[f"lot_{lot_1.id}"], RDF.type, AGENTZON.Lot), agent.graph)
+        lot_node = AGENTZON[f"lot_{lot_1.id}"]
+        self.assertIn((lot_node, RDF.type, AGENTZON.Lot), agent.graph)
+        self.assertIn((lot_node, AGENTZON.TeProducte, AGENTZON["p001"]), agent.graph)
+        self.assertIn((lot_node, AGENTZON.TeProducte, AGENTZON["p002"]), agent.graph)
+        self.assertIn((AGENTZON[f"producte_localitzat_{lot_1.id}_p001"], AGENTZON.Localitza, AGENTZON["p001"]), agent.graph)
+        self.assertIn((AGENTZON[f"producte_localitzat_{lot_1.id}_p002"], AGENTZON.Localitza, AGENTZON["p002"]), agent.graph)
         self.assertEqual([p.id_producte for p in lot_1.productes], ["p001", "p002"])
         self.assertEqual(lot_1.pes_total, 3.5)
         self.assertEqual(lot_1.data_enviament, "2026-05-03")

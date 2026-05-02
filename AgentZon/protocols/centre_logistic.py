@@ -101,6 +101,7 @@ def build_producte_localitzat_action(producte: ProducteLocalitzat) -> Graph:
     subject = URIRef(f"{AGENTZON}producte_localitzat_{producte.id_comanda}_{producte.id_producte}")
     graph.add((subject, RDF.type, AGENTZON.ProducteLocalitzat))
     graph.add((subject, AGENTZON.IdProducte, Literal(producte.id_producte)))
+    graph.add((subject, AGENTZON.Localitza, AGENTZON[producte.id_producte]))
     graph.add((subject, AGENTZON.IdComanda, Literal(producte.id_comanda)))
     graph.add((subject, AGENTZON.IdUsuari, Literal(producte.userid)))
     graph.add((subject, AGENTZON.Adreça, Literal(producte.adreca)))
@@ -130,17 +131,21 @@ def read_producte_localitzat(graph: Graph, subject: URIRef) -> ProducteLocalitza
 def build_lot_assignat_response(id_lot: str, id_producte: str) -> Graph:
     graph = Graph()
     graph.bind("az", AGENTZON)
-    subject = URIRef(f"{AGENTZON}lot_assignat_{id_lot}_{id_producte}")
+    subject = URIRef(f"{AGENTZON}lot_{id_lot}")
     graph.add((subject, RDF.type, AGENTZON.Lot))
     graph.add((subject, AGENTZON.IdLot, Literal(id_lot)))
-    graph.add((subject, AGENTZON.IdProducte, Literal(id_producte)))
+    graph.add((subject, AGENTZON.TeProducte, AGENTZON[id_producte]))
     return graph
 
 
 def read_lot_assignat_response(graph: Graph, subject: URIRef) -> dict:
+    id_lot = graph.value(subject, AGENTZON.IdLot)
+    prod = graph.value(subject, AGENTZON.TeProducte)
+    prod_str = str(prod) if prod is not None else ""
+    fragment = prod_str.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
     return {
-        "id_lot": str(graph.value(subject, AGENTZON.IdLot)),
-        "id_producte": str(graph.value(subject, AGENTZON.IdProducte)),
+        "id_lot": str(id_lot) if id_lot is not None else "",
+        "id_producte": fragment,
     }
 
 
@@ -170,23 +175,40 @@ def build_resposta_oferta_transport_action(oferta: RespostaOfertaTransport) -> G
     graph = Graph()
     graph.bind("az", AGENTZON)
     id_oferta = oferta.id_lot if oferta.id_lot else "sense_lot"
-    subject = URIRef(f"{AGENTZON}resposta_oferta_transport_{id_oferta}_{oferta.transportista_id}")
-    graph.add((subject, RDF.type, AGENTZON.RespostaOfertaTransport))
+    resposta = URIRef(f"{AGENTZON}resposta_oferta_transport_{id_oferta}_{oferta.transportista_id}")
+    nucli_oferta = URIRef(f"{AGENTZON}oferta_transport_{id_oferta}_{oferta.transportista_id}")
+
+    graph.add((resposta, RDF.type, AGENTZON.RespostaOfertaTransport))
+    graph.add((resposta, AGENTZON.Proposa, nucli_oferta))
+
+    graph.add((nucli_oferta, RDF.type, AGENTZON.OfertaTransport))
+    graph.add((nucli_oferta, AGENTZON.CostBase, Literal(oferta.cost, datatype=XSD.float)))
+    graph.add((nucli_oferta, AGENTZON.DataEnviament, Literal(oferta.data_enviament, datatype=XSD.date)))
+
     if oferta.id_lot:
-        graph.add((subject, AGENTZON.IdLot, Literal(oferta.id_lot)))
-    graph.add((subject, AGENTZON.IdTransportista, Literal(oferta.transportista_id)))
-    graph.add((subject, AGENTZON.CostBase, Literal(oferta.cost, datatype=XSD.float)))
-    graph.add((subject, AGENTZON.DataEnviament, Literal(oferta.data_enviament, datatype=XSD.date)))
+        graph.add((resposta, AGENTZON.IdLot, Literal(oferta.id_lot)))
+    graph.add((resposta, AGENTZON.IdTransportista, Literal(oferta.transportista_id)))
     return graph
 
 
 def read_resposta_oferta_transport(graph: Graph, subject: URIRef) -> RespostaOfertaTransport:
     id_lot = graph.value(subject, AGENTZON.IdLot)
+    nucli = graph.value(subject, AGENTZON.Proposa)
+    if nucli is not None:
+        cost_n = graph.value(nucli, AGENTZON.CostBase)
+        data_n = graph.value(nucli, AGENTZON.DataEnviament)
+        cost = float(cost_n.toPython()) if cost_n is not None else 0.0
+        data_enviament = str(data_n) if data_n is not None else ""
+    else:
+        cost_n = graph.value(subject, AGENTZON.CostBase)
+        data_n = graph.value(subject, AGENTZON.DataEnviament)
+        cost = float(cost_n.toPython()) if cost_n is not None else 0.0
+        data_enviament = str(data_n) if data_n is not None else ""
     return RespostaOfertaTransport(
         id_lot=str(id_lot) if id_lot is not None else "",
         transportista_id=str(graph.value(subject, AGENTZON.IdTransportista)),
-        cost=float(graph.value(subject, AGENTZON.CostBase).toPython()),
-        data_enviament=str(graph.value(subject, AGENTZON.DataEnviament)),
+        cost=cost,
+        data_enviament=data_enviament,
     )
 
 
@@ -200,18 +222,21 @@ def build_dades_enviament_action(dades: DadesEnviamentProducte) -> Graph:
     graph.add((subject, AGENTZON.IdUsuari, Literal(dades.userid)))
     graph.add((subject, AGENTZON.IdProducte, Literal(dades.id_producte)))
     graph.add((subject, AGENTZON.IdTransportista, Literal(dades.transportista_id)))
-    graph.add((subject, AGENTZON.DataEnviament, Literal(dades.data_entrega_definitiva, datatype=XSD.date)))
+    graph.add((subject, AGENTZON.DataEntregaDefinitiva, Literal(dades.data_entrega_definitiva, datatype=XSD.date)))
     return graph
 
 
 def read_dades_enviament(graph: Graph, subject: URIRef) -> DadesEnviamentProducte:
+    data_def = graph.value(subject, AGENTZON.DataEntregaDefinitiva)
+    if data_def is None:
+        data_def = graph.value(subject, AGENTZON.DataEnviament)
     return DadesEnviamentProducte(
         id_lot=str(graph.value(subject, AGENTZON.IdLot)),
         id_comanda=str(graph.value(subject, AGENTZON.IdComanda)),
         userid=str(graph.value(subject, AGENTZON.IdUsuari)),
         id_producte=str(graph.value(subject, AGENTZON.IdProducte)),
         transportista_id=str(graph.value(subject, AGENTZON.IdTransportista)),
-        data_entrega_definitiva=str(graph.value(subject, AGENTZON.DataEnviament)),
+        data_entrega_definitiva=str(data_def) if data_def is not None else "",
     )
 
 

@@ -11,6 +11,20 @@ ACL = Namespace("http://www.nuin.org/ontology/fipa/acl#")
 
 
 def _first_content_subject(graph: Graph) -> Optional[URIRef]:
+    """Trie el subjecte principal del contingut ACL (no FIPA). Preferim RespostaOfertaTransport si hi ha
+    més d'un tipus (p.ex. OfertaTransport + RespostaOfertaTransport al mateix graf)."""
+    for subject in graph.subjects(RDF.type, AGENTZON.RespostaOfertaTransport):
+        if not str(subject).startswith(str(ACL)):
+            return subject
+    for subject in graph.subjects(RDF.type, AGENTZON.DadesEnviamentProducte):
+        if not str(subject).startswith(str(ACL)):
+            return subject
+    for subject in graph.subjects(RDF.type, AGENTZON.ProducteLocalitzat):
+        if not str(subject).startswith(str(ACL)):
+            return subject
+    for subject in graph.subjects(RDF.type, AGENTZON.PeticioTransport):
+        if not str(subject).startswith(str(ACL)):
+            return subject
     for subject in graph.subjects(RDF.type, None):
         if not str(subject).startswith(str(ACL)):
             return subject

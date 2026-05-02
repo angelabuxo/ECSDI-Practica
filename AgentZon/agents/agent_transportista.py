@@ -3,7 +3,7 @@ import sys
 from typing import Optional
 
 from flask import Flask, Response, request
-from rdflib import RDF
+from rdflib import Graph, RDF
 
 from AgentZon.agents.logging_utils import configure_pretty_logging
 from AgentZon.config import AGENTZON
@@ -27,6 +27,8 @@ class AgentTransportista:
         self.dies_extra = dies_extra
         self.address = address
         self.uri = AGENTZON[f"agent_{transportista_id}"]
+        self.estat = Graph()
+        self.estat.bind("az", AGENTZON)
 
     def preparar_oferta(self, peticio) -> RespostaOfertaTransport:
         return RespostaOfertaTransport(
@@ -65,13 +67,19 @@ def create_app(transportista: Optional[AgentTransportista] = None) -> Flask:
             if not props or props.get("performative") != "request" or props.get("content") is None:
                 response = build_not_understood(transportista.uri, AGENTZON.unknown_agent, msgcnt=1)
             elif (props["content"], RDF.type, AGENTZON.PeticioTransport) in incoming:
-                peticio = read_peticio_transport(incoming, props["content"])
+                peticio_subj = props["content"]
+                peticio = read_peticio_transport(incoming, peticio_subj)
+                transportista.estat.add((transportista.uri, AGENTZON.RepUna, peticio_subj))
                 oferta = transportista.preparar_oferta(peticio)
+                oferta_graph = build_resposta_oferta_transport_action(oferta)
+                oferta_graph.add((transportista.uri, AGENTZON.RepUna, peticio_subj))
+                oferta_subj = next(oferta_graph.subjects(RDF.type, AGENTZON.RespostaOfertaTransport))
+                oferta_graph.add((transportista.uri, AGENTZON.Genera, oferta_subj))
                 response = build_message(
                     "inform",
                     transportista.uri,
                     props.get("sender", AGENTZON.unknown_agent),
-                    build_resposta_oferta_transport_action(oferta),
+                    oferta_graph,
                     msgcnt=1,
                 )
             else:

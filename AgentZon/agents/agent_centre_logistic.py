@@ -153,7 +153,7 @@ class AgentCentreLogistic:
         subject = self._az(f"centre_logistic_{self.centre_logistic_id}")
         self.graph.add((subject, RDF.type, AGENTZON.CentreLogistic))
         self.graph.add((subject, AGENTZON.Id, Literal(self.centre_logistic_id)))
-        self.graph.add((subject, AGENTZON.Ubicació, Literal(self.ubicacio)))
+        self.graph.add((subject, AGENTZON.Ubicacio, Literal(self.ubicacio)))
 
     def _az(self, term: str) -> URIRef:
         """Construeix un URIRef dins del namespace de l'ontologia AgentZon."""
@@ -437,12 +437,15 @@ class AgentCentreLogistic:
             return
 
         producte_subject = self._az(f"producte_localitzat_{lot.id}_{producte_id}")
+        lot_subject = self._az(f"lot_{lot.id}")
         centre_subject = self._az(f"centre_logistic_{self.centre_logistic_id}")
+        self.graph.add((lot_subject, AGENTZON.TeProducte, self._az(producte_id)))
         self.graph.add((producte_subject, RDF.type, AGENTZON.ProducteLocalitzat))
+        self.graph.add((producte_subject, AGENTZON.Localitza, self._az(producte_id)))
         self.graph.add((producte_subject, AGENTZON.Adreça, Literal(producte_localitzat.adreca)))
         self.graph.add((producte_subject, AGENTZON.Ciutat, Literal(producte_localitzat.ciutat)))
         self.graph.add((producte_subject, AGENTZON.DataEnviament, Literal(lot.data_enviament, datatype=XSD.date)))
-        self.graph.add((centre_subject, AGENTZON.RepAvís, producte_subject))
+        self.graph.add((centre_subject, AGENTZON.RepAvis, producte_subject))
 
     def _afegir_peticio_transport_al_graf(self, peticio: PeticioTransport) -> None:
         token = f"{self.centre_logistic_id}_{peticio.ciutat_desti}_{peticio.data_enviament}_{peticio.pes}".replace(" ", "_")
@@ -467,7 +470,7 @@ class AgentCentreLogistic:
         transportista_subject = self._az(f"transportista_{eleccio.transportista_id}")
         self.graph.add((eleccio_subject, RDF.type, AGENTZON.EleccióTransportista))
         self.graph.add((transportista_subject, RDF.type, AGENTZON.Transportista))
-        self.graph.add((transportista_subject, AGENTZON.ÉsEscollit, eleccio_subject))
+        self.graph.add((transportista_subject, AGENTZON.EsEscollit, eleccio_subject))
 
 
 def create_app(centre_logistic: Optional[AgentCentreLogistic] = None) -> Flask:

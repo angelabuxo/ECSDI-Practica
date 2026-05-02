@@ -266,12 +266,12 @@ class AgentCompra:
     def _producte_des_de_graf(self, subject: URIRef) -> ProducteModel:
         """Reconstrueix un ProducteModel a partir de les seves propietats RDF."""
         return ProducteModel(
-            # Nova ontologia: Id, Nom, Preu, Descripció, Categoria, Marca, Pes.
+            # Nova ontologia: Id, Nom, Preu, Descripcio, Categoria, Marca, Pes.
             # Mantenim fallback als noms antics (*Producte) per no trencar dades heretades.
             id=str(self._literal_de_predicats(subject, [AGENTZON.Id], subject.split("/")[-1])),
             nom=str(self._literal_de_predicats(subject, [AGENTZON.Nom], "")),
             preu=float(self._literal_de_predicats(subject, [AGENTZON.Preu], 0.0)),
-            descr=str(self._literal_de_predicats(subject, [AGENTZON.Descripció], "")),
+            descr=str(self._literal_de_predicats(subject, [AGENTZON.Descripcio], "")),
             categ=str(self._literal_de_predicats(subject, [AGENTZON.Categoria], "")),
             marca=str(self._literal_de_predicats(subject, [AGENTZON.Marca], "")),
             pes=int(float(self._literal_de_predicats(subject, [AGENTZON.Pes], 0))),

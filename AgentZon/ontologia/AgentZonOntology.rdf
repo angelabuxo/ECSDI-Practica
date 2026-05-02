@@ -8,11 +8,13 @@
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
     <owl:Ontology rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15">
         <rdfs:comment xml:lang="ca">Per definir el coneixement i el vocabulari que els agents d’AgentZon han de compartir per poder comunicar-se i entendre&apos;s, hem dissenyat la nostra pròpia ontologia. L&apos;objectiu d&apos;aquesta és modelar formalment els conceptes del domini i el contingut dels missatges intercanviats.</rdfs:comment>
-        <rdfs:isDefinedBy>- Àngela Buxó
+        <rdfs:isDefinedBy>
+- Àngela Buxó
 - Paula Mas
-- Pol Montanera</rdfs:isDefinedBy>
+- Pol Montanera
+        </rdfs:isDefinedBy>
         <rdfs:label xml:lang="ca">AgentZon Ontology</rdfs:label>
-        <owl:versionInfo>code-aligned-2026-05-02-transport-doc</owl:versionInfo>
+        <owl:versionInfo>2026-05-02-localitza-te-model</owl:versionInfo>
     </owl:Ontology>
     
 
@@ -58,6 +60,7 @@
     <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Demana -->
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Demana">
+        <owl:equivalentProperty rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Negocia"/>
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogistic"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport"/>
@@ -116,31 +119,6 @@
     
 
 
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsFaSobre -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsFaSobre">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsFaSobreMolts -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsFaSobreMolts">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResultatCerca"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-    </owl:ObjectProperty>
-    
-
-
     <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Genera -->
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Genera">
@@ -157,6 +135,26 @@
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#VenedorExtern"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteExtern"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Localitza -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Localitza">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Mostra -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Mostra">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResultatCerca"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
     </owl:ObjectProperty>
     
 
@@ -267,6 +265,26 @@
     
 
 
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Te -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Te">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#TeProducte -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#TeProducte">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Tramita -->
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Tramita">
@@ -338,9 +356,11 @@
 
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CostBase">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:comment xml:lang="ca">En missatges amb node OfertaTransport separat (patró Proposa), el preu cotitzat va sobre OfertaTransport; RespostaOfertaTransport ⊑ OfertaTransport continua sent vàlid però el contingut RDF recomanat separa l&apos;oferta abstracta de la resposta de negociació.</rdfs:comment>
     </owl:DatatypeProperty>
     
 
@@ -450,11 +470,11 @@
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdProducte">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentProducte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResponsableEnviamentProducte"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#UbicacioProducte"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="ca">Identificador de producte com a literal en missatges o taules auxiliars. Els lots poden enllaçar productes del catàleg amb TeProducte.</rdfs:comment>
     </owl:DatatypeProperty>
     
 
@@ -713,7 +733,7 @@
     <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport">
-        <rdfs:comment xml:lang="ca">Model abstracte d&apos;oferta de servei de transport. El contingut concret cotització que envia l&apos;agent transportista en RDF usa la classe RespostaOfertaTransport (subclasse).</rdfs:comment>
+        <rdfs:comment xml:lang="ca">Model abstracte d&apos;oferta de servei (preu CostBase i DataEnviament). En RDF, un node OfertaTransport pot ser l&apos;objecte de Proposa des d&apos;una RespostaOfertaTransport; aquesta última afegeix identificadors de negociació (IdLot, IdTransportista). Com que RespostaOfertaTransport ⊑ OfertaTransport, un sol node tipat només com a resposta també és OWL-vàlid, però el patró amb dos nodes reflecteix millor la propietat Proposa.</rdfs:comment>
     </owl:Class>
     
 
@@ -864,7 +884,7 @@
     <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#NegociacioTransport"/>
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport"/>
-        <rdfs:comment xml:lang="ca">Resposta cotització (ACL inform): CostBase i DataEnviament; IdLot opcional quan cal vincular oferta a un lot només internament.</rdfs:comment>
+        <rdfs:comment xml:lang="ca">Resposta cotització (ACL inform): enllaça Proposa cap a un node OfertaTransport amb CostBase i DataEnviament; IdLot i IdTransportista sobre la resposta quan cal. Alternativa OWL-equivalent: un sol node amb ambdós tipus (ja que ⊑ OfertaTransport), sense Proposa.</rdfs:comment>
     </owl:Class>
     
 
