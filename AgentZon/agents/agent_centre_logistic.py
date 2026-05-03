@@ -1,6 +1,7 @@
 import argparse
 import logging
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -352,7 +353,7 @@ class AgentCentreLogistic:
         if not transportistes:
             raise ValueError("No s'ha trobat cap AgentTransportista al DirectoryAgent.")
 
-        for transportista in transportistes:
+        def _demanar_oferta(transportista: Dict[str, object]) -> Optional[RespostaOfertaTransport]:
             logger.debug(
                 "enviant peticio transport lot=%s transportista=%s address=%s",
                 id_lot,
@@ -370,20 +371,28 @@ class AgentCentreLogistic:
             props = get_message_properties(response)
             if props and props.get("performative") == "inform" and props.get("content") is not None:
                 oferta_rebuda = read_resposta_oferta_transport(response, props["content"])
-                oferta = RespostaOfertaTransport(
+                return RespostaOfertaTransport(
                     id_lot=id_lot,
                     transportista_id=oferta_rebuda.transportista_id,
                     cost=oferta_rebuda.cost,
                     data_enviament=oferta_rebuda.data_enviament,
                 )
-                self.registrar_oferta_transport(oferta)
-            else:
-                logger.debug(
-                    "transportista sense oferta valida lot=%s transportista=%s performative=%s",
-                    id_lot,
-                    transportista["name"],
-                    props.get("performative") if props else None,
-                )
+            logger.debug(
+                "transportista sense oferta valida lot=%s transportista=%s performative=%s",
+                id_lot,
+                transportista["name"],
+                props.get("performative") if props else None,
+            )
+            return None
+
+        # Les peticions a transportistes es fan en paral.lel per evitar una
+        # negociacio estrictament seqüencial i aprofitar el desplegament distribuït.
+        with ThreadPoolExecutor(max_workers=max(1, len(transportistes))) as executor:
+            futures = [executor.submit(_demanar_oferta, transportista) for transportista in transportistes]
+            for future in as_completed(futures):
+                oferta = future.result()
+                if oferta is not None:
+                    self.registrar_oferta_transport(oferta)
 
         return self.pla_transportista_escollit(id_lot)
 

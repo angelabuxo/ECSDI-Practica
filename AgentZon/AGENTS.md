@@ -3,9 +3,11 @@ Vull que revisis l'estat actual del projecte AgentZon com si fossis un assessor 
 - @Enunciat.pdf, especialment la secció "3.3 Tareas básicas" i la part de "Segunda Fase".
 - @LabDoc.pdf, especialment les seccions sobre Flask, requests, rdflib, RDF/OWL, Turtle, SPARQL, SPARQLWrapper i agents d'exemple amb FIPA-ACL/Directory Service.
 - @README.md per entendre com s'executa el projecte ara mateix.
-- @AgentZon/FLUX_AGENT_CERCADOR.md per entendre el flux actual de l'Agent Cercador.
+- @JavierBejar/ com a carpeta de referència del professor (estructura, exemples d'agents i patrons de comunicació).
 - @AgentZon/ontologia/AgentZonOntology.rdf i @AgentZon/data/productes.ttl per veure ontologia i dades.
 - Els agents i protocols actuals dins @AgentZon/agents/ i @AgentZon/protocols/.
+- @AgentZon/DISTRIBUTED_RUN.md per validar el desplegament distribuït i l'ordre d'arrencada dels agents.
+- @AgentZon/Entrega-2.md on s'explica què necessitem per aquesta entrega.
 
 Objectiu de la revisió:
 
@@ -32,6 +34,8 @@ en paralelo
 
 Context actual del projecte:
 
+- La carpeta @JavierBejar/ s'utilitza com a plantilla de referència per contrastar arquitectura, protocols i estil d'implementació.
+- Volem refactoritzar @AgentZon/ perquè s'alineï amb les restriccions de la pràctica i la Segona Fase, mantenint simplicitat i coherència.
 - L'Agent Cercador està a @AgentZon/agents/agent_cercador.py.
 - La interfície web del Cercador és @AgentZon/web/templates/cercador.html i els estils són @AgentZon/web/static/style.css.
 - La cerca carrega l'ontologia RDF/XML i el catàleg Turtle amb rdflib.

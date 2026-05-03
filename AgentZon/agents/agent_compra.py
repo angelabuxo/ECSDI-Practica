@@ -1,12 +1,11 @@
 import argparse
-import json
 import logging
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
 from flask import Flask, Response, render_template, request
-from rdflib import Graph, Literal, RDF, URIRef, XSD
+from rdflib import Graph, RDF, URIRef
 from rdflib.exceptions import ParserError
 
 # Aquest mòdul s'ha d'executar com a part del paquet, per exemple amb:
@@ -45,6 +44,7 @@ from AgentZon.protocols.fipa_acl import (
     send_message,
 )
 from AgentZon.agents.logging_utils import configure_pretty_logging
+from AgentZon.services.map_data_store import MapDataStore
 
 
 logger = logging.getLogger(__name__)
@@ -76,6 +76,7 @@ class AgentCompra:
         self.message_sender = message_sender
         self.enviaments: Dict[str, Dict[str, object]] = {}
         self._seguent_id_comanda = 0
+        self.map_data_store = MapDataStore(str(AGENTZON))
 
         self.graph = Graph()
         self.graph.bind("az", AGENTZON)
@@ -104,144 +105,13 @@ class AgentCompra:
         """Construeix un URIRef dins del namespace de l'ontologia AgentZon."""
         return URIRef(f"{AGENTZON}{term}")
 
-    def _carregar_json(self, path: Path, default: Optional[Dict] = None) -> Dict:
-        """Carrega una font de dades JSON persistent."""
-        if not path.exists():
-            return default or {}
-
-        with path.open("r", encoding="utf-8") as file:
-            return json.load(file)
-
-    def _guardar_json(self, path: Path, dades: Dict) -> None:
-        """Guarda una font de dades JSON persistent."""
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w", encoding="utf-8") as file:
-            json.dump(dades, file, ensure_ascii=False, indent=2)
-            file.write("\n")
-
-    def _carregar_ttl_indexat(self, path: Path, subject_type: str, id_predicate: str, camp_predicates: Dict[str, str]) -> Dict:
-        """
-        Carrega una font Turtle com a diccionari indexat per id.
-        Exemple de sortida: {"p001": {"responsable": "agentzon", "venedor": "X"}}.
-        """
-        if not path.exists():
-            return {}
-
-        graph = Graph()
-        graph.parse(path, format="turtle")
-        resultat = {}
-
-        for subject in graph.subjects(RDF.type, self._az(subject_type)):
-            entity_id = graph.value(subject, self._az(id_predicate))
-            if entity_id is None:
-                continue
-
-            key = str(entity_id.toPython())
-            row = {}
-            for camp, predicate in camp_predicates.items():
-                value = graph.value(subject, self._az(predicate))
-                if value is not None:
-                    row[camp] = value.toPython()
-
-            resultat[key] = row
-
-        return resultat
-
-    def _guardar_ttl_indexat(
-        self,
-        path: Path,
-        dades: Dict[str, Dict[str, object]],
-        subject_type: str,
-        id_predicate: str,
-        camp_predicates: Dict[str, str],
-        subject_prefix: str,
-    ) -> None:
-        """Guarda un diccionari indexat per id en format Turtle."""
-        graph = Graph()
-        graph.bind("az", AGENTZON)
-
-        for key, row in dades.items():
-            subject = self._az(f"{subject_prefix}_{key}")
-            graph.add((subject, RDF.type, self._az(subject_type)))
-            graph.add((subject, self._az(id_predicate), Literal(str(key))))
-
-            for camp, predicate in camp_predicates.items():
-                if camp not in row:
-                    continue
-
-                value = row[camp]
-                if camp == "prioritat":
-                    graph.add((subject, self._az(predicate), Literal(int(value), datatype=XSD.integer)))
-                else:
-                    graph.add((subject, self._az(predicate), Literal(value)))
-
-        path.parent.mkdir(parents=True, exist_ok=True)
-        graph.serialize(destination=path, format="turtle")
-
     def _carregar_mapa(self, path: Path, tipus: str) -> Dict:
-        """Carrega dades persistides des de JSON o Turtle, segons extensió."""
-        if path.suffix.lower() == ".ttl":
-            if tipus == "dades_enviament":
-                return self._carregar_ttl_indexat(
-                    path,
-                    subject_type="DadesEnviamentUsuari",
-                    id_predicate="IdUsuari",
-                    camp_predicates={"adreca": "Adreça", "ciutat": "Ciutat", "prioritat": "Prioritat"},
-                )
-            if tipus == "ubicacions":
-                return self._carregar_ttl_indexat(
-                    path,
-                    subject_type="UbicacioProducte",
-                    id_predicate="IdProducte",
-                    camp_predicates={"magatzem": "Magatzem", "ciutat": "Ciutat"},
-                )
-            if tipus == "responsables":
-                return self._carregar_ttl_indexat(
-                    path,
-                    subject_type="ResponsableEnviamentProducte",
-                    id_predicate="IdProducte",
-                    camp_predicates={"responsable": "Responsable", "venedor": "Venedor"},
-                )
-            raise ValueError(f"Tipus de mapa desconegut: {tipus}")
-
-        return self._carregar_json(path)
+        """Carrega dades persistides des de JSON o Turtle."""
+        return self.map_data_store.load_map(path, tipus)
 
     def _guardar_mapa(self, path: Path, dades: Dict, tipus: str) -> None:
-        """Guarda dades persistides en JSON o Turtle, segons extensió."""
-        if path.suffix.lower() == ".ttl":
-            if tipus == "dades_enviament":
-                self._guardar_ttl_indexat(
-                    path,
-                    dades,
-                    subject_type="DadesEnviamentUsuari",
-                    id_predicate="IdUsuari",
-                    camp_predicates={"adreca": "Adreça", "ciutat": "Ciutat", "prioritat": "Prioritat"},
-                    subject_prefix="dades_enviament_usuari",
-                )
-                return
-            if tipus == "ubicacions":
-                self._guardar_ttl_indexat(
-                    path,
-                    dades,
-                    subject_type="UbicacioProducte",
-                    id_predicate="IdProducte",
-                    camp_predicates={"magatzem": "Magatzem", "ciutat": "Ciutat"},
-                    subject_prefix="ubicacio_producte",
-                )
-                return
-            if tipus == "responsables":
-                self._guardar_ttl_indexat(
-                    path,
-                    dades,
-                    subject_type="ResponsableEnviamentProducte",
-                    id_predicate="IdProducte",
-                    camp_predicates={"responsable": "Responsable", "venedor": "Venedor"},
-                    subject_prefix="responsable_enviament_producte",
-                )
-                return
-            raise ValueError(f"Tipus de mapa desconegut: {tipus}")
-
-        self._guardar_json(path, dades)
+        """Guarda dades persistides en JSON o Turtle."""
+        self.map_data_store.save_map(path, dades, tipus)
 
     def inventari(self) -> List[ProducteModel]:
         """Converteix totes les instàncies RDF de Producte a models Python."""
