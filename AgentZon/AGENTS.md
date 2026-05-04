@@ -38,9 +38,11 @@ Context actual del projecte:
 - Volem refactoritzar @AgentZon/ perquè s'alineï amb les restriccions de la pràctica i la Segona Fase, mantenint simplicitat i coherència.
 - L'Agent Cercador està a @AgentZon/agents/agent_cercador.py.
 - La interfície web del Cercador és @AgentZon/web/templates/cercador.html i els estils són @AgentZon/web/static/style.css.
-- La cerca carrega l'ontologia RDF/XML i el catàleg Turtle amb rdflib.
-- Encara no hem implementat completament comunicació FIPA-ACL, DirectoryAgent ni agents separats per ports, però el LabDoc i FiberZone poden servir com a referència per quan calgui avançar cap a multiagent real.
-- El següent agent important serà @AgentZon/agents/agent_compra.py, que haurà d'alinear-se amb @AgentZon/protocols/compra.py i amb el disseny Prometheus documentat.
+- La cerca carrega l'ontologia RDF/XML i el catàleg Turtle amb rdflib, i retorna resultats construïts també sobre RDF.
+- DirectoryAgent, comunicació FIPA-ACL RDF/XML i agents separats per ports ja estan implementats per al flux actual.
+- L'estat dels agents implementats es pot inspeccionar via endpoints `/Info` serialitzats en Turtle.
+- L'Agent Compra, l'Agent Centre Logístic i els transportistes ja intercanvien contingut RDF tipat per gestionar el flux de compra fins a l'enviament.
+- El subset implementat actual cobreix cerca i compra fins a l'enviament. El pagament, devolucions, opinions i recomanacions continuen fora del flux funcional actual i s'han de tractar com a pendents o disseny futur.
 
 Quan revisis el projecte, respon en català i estructura la resposta així:
 

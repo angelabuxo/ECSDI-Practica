@@ -2,14 +2,12 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 from flask import Flask, Response, render_template, request
-from rdflib import Graph, RDF, URIRef
+from rdflib import BNode, Graph, Literal, RDF, URIRef
 from rdflib.exceptions import ParserError
 
-# Aquest mòdul s'ha d'executar com a part del paquet, per exemple amb:
-# `python -m AgentZon.agents.agent_compra`
 from AgentZon.config import (
     AGENTZON,
     DADES_ENVIAMENT_USUARI_PATH,
@@ -19,23 +17,26 @@ from AgentZon.config import (
     UBICACIONS_PRODUCTES_PATH,
     WEB_DIR,
 )
-from AgentZon.protocols.directory import build_register_action, build_search_action, read_directory_responses
-from AgentZon.protocols.cerca import ProducteModel
+from AgentZon.protocols.cerca import iter_productes, productes_per_ids
 from AgentZon.protocols.centre_logistic import (
-    DadesEnviamentProducte,
-    ProducteLocalitzat,
+    build_dades_enviament_action,
     build_producte_localitzat_action,
     read_dades_enviament,
     read_lot_assignat_response,
 )
 from AgentZon.protocols.compra import (
-    ComandaModel,
-    InformacioUsuari,
-    PeticioCompra,
-    PeticioInfoUsuari,
-    processar_peticio_final,
+    BUY,
+    build_comanda,
+    build_dades_enviament_usuari,
+    build_info_usuari,
+    build_peticio_info_usuari,
+    get_comanda_subject,
+    read_comanda,
+    read_info_usuari,
+    read_dades_enviament_usuari,
     validar_comanda,
 )
+from AgentZon.protocols.directory import build_register_action, build_search_action, read_directory_responses
 from AgentZon.protocols.fipa_acl import (
     build_message,
     build_not_understood,
@@ -44,7 +45,6 @@ from AgentZon.protocols.fipa_acl import (
     send_message,
 )
 from AgentZon.agents.logging_utils import configure_pretty_logging
-from AgentZon.services.map_data_store import MapDataStore
 
 
 logger = logging.getLogger(__name__)
@@ -53,8 +53,8 @@ logger = logging.getLogger(__name__)
 class AgentCompra:
     """
     Implementa els plans definits a Prometheus per a l'Agent Compra:
-    processar la compra, registrar les dades de l'usuari, confirmar la comanda,
-    localitzar els productes i simular el cobrament.
+    processar la compra, registrar les dades de l'usuari, confirmar la comanda
+    i coordinar l'enviament sobre estat RDF.
     """
 
     def __init__(
@@ -74,17 +74,15 @@ class AgentCompra:
         self.responsables_path = Path(responsables_path)
         self.directory_address = directory_address
         self.message_sender = message_sender
-        self.enviaments: Dict[str, Dict[str, object]] = {}
         self._seguent_id_comanda = 0
-        self.map_data_store = MapDataStore(str(AGENTZON))
 
         self.graph = Graph()
         self.graph.bind("az", AGENTZON)
+        self.graph.bind("buy", BUY)
         self._carregar_ontologia()
-        self._carregar_productes()
+        self._carregar_dades_base()
 
     def _carregar_ontologia(self) -> None:
-        """Carrega l'ontologia RDF/XML per tenir disponibles classes i propietats."""
         if self.ontology_path.exists():
             try:
                 self.graph.parse(self.ontology_path, format="xml")
@@ -94,133 +92,107 @@ class AgentCompra:
                     file=sys.stderr,
                 )
 
-    def _carregar_productes(self) -> None:
-        """Carrega el catàleg Turtle que actua com a font de dades de productes."""
-        if not self.productes_path.exists():
-            raise FileNotFoundError(f"No s'ha trobat el catàleg de productes: {self.productes_path}")
+    def _carregar_dades_base(self) -> None:
+        self._parse_optional(self.productes_path, "turtle")
+        self._parse_optional(self.dades_enviament_path, "turtle")
+        self._parse_optional(self.ubicacions_path, "turtle")
+        self._parse_optional(self.responsables_path, "turtle")
 
-        self.graph.parse(self.productes_path, format="turtle")
+    def _parse_optional(self, path: Path, rdf_format: str) -> None:
+        if path.exists() and path.stat().st_size:
+            self.graph.parse(path, format=rdf_format)
 
-    def _az(self, term: str) -> URIRef:
-        """Construeix un URIRef dins del namespace de l'ontologia AgentZon."""
-        return URIRef(f"{AGENTZON}{term}")
+    def _load_graph_from_path(self, path: Path) -> Graph:
+        graph = Graph()
+        graph.bind("az", AGENTZON)
+        if path.exists() and path.stat().st_size:
+            graph.parse(path, format="turtle")
+        return graph
 
-    def _carregar_mapa(self, path: Path, tipus: str) -> Dict:
-        """Carrega dades persistides des de JSON o Turtle."""
-        return self.map_data_store.load_map(path, tipus)
+    def _persist_subject(self, path: Path, subject: URIRef | BNode, fragment: Graph) -> None:
+        graph = self._load_graph_from_path(path)
+        graph.remove((subject, None, None))
+        for triple in fragment.triples((subject, None, None)):
+            graph.add(triple)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        graph.serialize(destination=path, format="turtle")
 
-    def _guardar_mapa(self, path: Path, dades: Dict, tipus: str) -> None:
-        """Guarda dades persistides en JSON o Turtle."""
-        self.map_data_store.save_map(path, dades, tipus)
+        self.graph.remove((subject, None, None))
+        for triple in fragment.triples((subject, None, None)):
+            self.graph.add(triple)
 
-    def inventari(self) -> List[ProducteModel]:
-        """Converteix totes les instàncies RDF de Producte a models Python."""
-        return [self._producte_des_de_graf(subject) for subject in self.graph.subjects(RDF.type, AGENTZON.Producte)]
-
-    def _literal(self, subject: URIRef, predicate: URIRef, default=None):
-        """Llegeix un literal RDF i retorna un valor Python normal."""
+    def _literal(self, subject: URIRef | BNode, predicate: URIRef, default=None):
         value = self.graph.value(subject, predicate)
         return value.toPython() if value is not None else default
-    
-    def _literal_de_predicats(self, subject: URIRef, predicates: List[URIRef], default=None):
-        """
-        Cerca un valor literal provant diversos predicats.
-        Serveix per mantenir compatibilitat entre versions de l'ontologia.
-        """
-        for predicate in predicates:
-            value = self.graph.value(subject, predicate)
-            if value is not None:
-                return value.toPython()
-        return default
 
-    def _producte_des_de_graf(self, subject: URIRef) -> ProducteModel:
-        """Reconstrueix un ProducteModel a partir de les seves propietats RDF."""
-        return ProducteModel(
-            # Nova ontologia: Id, Nom, Preu, Descripcio, Categoria, Marca, Pes.
-            # Mantenim fallback als noms antics (*Producte) per no trencar dades heretades.
-            id=str(self._literal_de_predicats(subject, [AGENTZON.Id], subject.split("/")[-1])),
-            nom=str(self._literal_de_predicats(subject, [AGENTZON.Nom], "")),
-            preu=float(self._literal_de_predicats(subject, [AGENTZON.Preu], 0.0)),
-            descr=str(self._literal_de_predicats(subject, [AGENTZON.Descripcio], "")),
-            categ=str(self._literal_de_predicats(subject, [AGENTZON.Categoria], "")),
-            marca=str(self._literal_de_predicats(subject, [AGENTZON.Marca], "")),
-            pes=int(float(self._literal_de_predicats(subject, [AGENTZON.Pes], 0))),
-        )
+    def inventari(self) -> list[dict]:
+        return iter_productes(self.graph)
 
-    def productes_per_ids(self, ids_productes: List[str]) -> List[ProducteModel]:
-        """Localitza els productes seleccionats dins del catàleg RDF."""
-        productes_per_id = {producte.id: producte for producte in self.inventari()}
-        productes = []
+    def productes_per_ids(self, ids_productes: list[str]) -> list[dict]:
+        return productes_per_ids(self.graph, ids_productes)
 
-        for producte_id in ids_productes:
-            if producte_id not in productes_per_id:
-                raise ValueError(f"Producte desconegut: {producte_id}")
-            productes.append(productes_per_id[producte_id])
-
-        return productes
-
-    def processar_peticio_compra(self, userid: str, productes: List[ProducteModel]) -> PeticioCompra:
-        """Cp. Processar petició compra: rep la selecció inicial de productes."""
+    def processar_peticio_compra(self, userid: str, productes: list[dict]) -> dict:
         userid = userid.strip()
         if not userid:
             raise ValueError("Cal indicar l'id de l'usuari.")
         if not productes:
             raise ValueError("Cal seleccionar almenys un producte.")
+        return {"userid": userid, "llista_productes": productes}
 
-        return PeticioCompra(userid=userid, llista_productes=productes)
+    def demanar_informacio_usuari(self, userid: str) -> Graph:
+        return build_peticio_info_usuari(userid)
 
-    def demanar_informacio_usuari(self, userid: str) -> PeticioInfoUsuari:
-        """Pla demanar informació usuari: demana adreça, prioritat i pagament."""
-        return PeticioInfoUsuari(userid=userid)
-
-    def registrar_dades_usuari(self, info: InformacioUsuari) -> InformacioUsuari:
-        """Pla registrar dades d'usuari: desa la resposta de l'usuari al protocol."""
-        self._persistir_dades_enviament(info)
-        return info
-
-    def _persistir_dades_enviament(self, info: InformacioUsuari) -> None:
-        """Escriu la font persistent Dades d'enviament Usuari."""
-        dades = self._carregar_mapa(self.dades_enviament_path, "dades_enviament")
-        dades[info.userid] = {
-            "adreca": info.adreça,
-            "ciutat": info.ciutat,
-            "prioritat": info.prioritat,
-        }
-        self._guardar_mapa(self.dades_enviament_path, dades, "dades_enviament")
-
-    def gestionar_compra(self, compra: PeticioCompra, info_usuari: InformacioUsuari) -> ComandaModel:
-        """Cp. Gestionar compra: crea, valida i registra la comanda."""
-        logger.debug(
-            "gestionant compra userid=%s productes=%s",
-            compra.userid,
-            [producte.id for producte in compra.llista_productes],
+    def registrar_dades_usuari(self, info_usuari: dict) -> dict:
+        fragment = build_dades_enviament_usuari(
+            info_usuari["userid"],
+            info_usuari["adreca"],
+            info_usuari["ciutat"],
+            int(info_usuari["prioritat"]),
         )
-        info_persistida = self.registrar_dades_usuari(info_usuari)
-        comanda = processar_peticio_final(compra, info_persistida, self._nou_id_comanda())
-        logger.debug(
-            "comanda creada id=%s userid=%s total=%s estat=%s entrega_estimada=%s",
-            comanda.id,
-            comanda.userid,
-            comanda.import_total,
-            comanda.estat,
-            comanda.data_entrega_estimada,
-        )
-        if not validar_comanda(comanda):
-            raise ValueError("La comanda no és vàlida.")
-
-        logger.debug("comanda validada id=%s", comanda.id)
-        # TODO: Protocol per avisar a l'Ag. Cobrador sobre les dades bancàries de l'usuari.
-        # TODO: Protocol per avisar a Ag. Opinador per registrar la comanda a BD.
-        self.localitzar_productes(comanda)
-        return comanda
+        subject = next(fragment.subjects(RDF.type, AGENTZON.DadesEnviamentUsuari))
+        self._persist_subject(self.dades_enviament_path, subject, fragment)
+        return read_dades_enviament_usuari(self.graph, subject)
 
     def _nou_id_comanda(self) -> str:
         if self._seguent_id_comanda > 9999:
             raise ValueError("S'ha esgotat el rang d'identificadors de comanda (0000-9999).")
-
         id_comanda = f"{self._seguent_id_comanda:04d}"
         self._seguent_id_comanda += 1
         return id_comanda
+
+    def _read_info_usuari_input(self, info_usuari: dict | Graph) -> dict:
+        if isinstance(info_usuari, Graph):
+            subject = next(info_usuari.subjects(RDF.type, AGENTZON.InfoUsuari))
+            return read_info_usuari(info_usuari, subject)
+        return info_usuari
+
+    def gestionar_compra(self, compra: dict, info_usuari: dict | Graph) -> dict:
+        logger.debug(
+            "gestionant compra userid=%s productes=%s",
+            compra["userid"],
+            [producte["id"] for producte in compra["llista_productes"]],
+        )
+        info = self._read_info_usuari_input(info_usuari)
+        self.registrar_dades_usuari(info)
+        comanda_graph = build_comanda(self.graph, self._nou_id_comanda(), compra["llista_productes"], info)
+        comanda_subject = get_comanda_subject(comanda_graph)
+        for triple in comanda_graph:
+            self.graph.add(triple)
+        comanda = read_comanda(self.graph, comanda_subject)
+        logger.debug(
+            "comanda creada id=%s userid=%s total=%s estat=%s entrega_estimada=%s",
+            comanda["id"],
+            comanda["userid"],
+            comanda["import_total"],
+            comanda["estat"],
+            comanda["data_entrega_estimada"],
+        )
+        if not validar_comanda(self.graph, comanda_subject):
+            raise ValueError("La comanda no és vàlida.")
+
+        logger.debug("comanda validada id=%s", comanda["id"])
+        self.localitzar_productes(comanda)
+        return comanda
 
     def registrar_al_directori(self, address: str) -> dict:
         if not self.directory_address:
@@ -238,7 +210,7 @@ class AgentCompra:
         logger.debug("resposta registre directori performative=%s", props.get("performative") if props else None)
         return props
 
-    def _cercar_centre_logistic_al_directori(self, centre_logistic_id: str) -> Optional[Dict[str, object]]:
+    def _cercar_centre_logistic_al_directori(self, centre_logistic_id: str) -> Optional[dict]:
         if not self.directory_address:
             logger.debug("directori no configurat per centre_logistic=%s", centre_logistic_id)
             return None
@@ -266,17 +238,89 @@ class AgentCompra:
         logger.debug("resultats directori centre_logistic=%s count=%s", centre_logistic_id, len(results))
         return results[0] if results else None
 
-    def _enviar_producte_a_centre_logistic(
+    def _find_subject_by_id(self, rdf_type: URIRef, predicate: URIRef, value: str) -> Optional[URIRef]:
+        for subject in self.graph.subjects(predicate, Literal(value)):
+            if (subject, RDF.type, rdf_type) in self.graph:
+                return subject
+        return None
+
+    def _read_responsable(self, producte_id: str) -> dict:
+        subject = self._find_subject_by_id(AGENTZON.ResponsableEnviamentProducte, AGENTZON.IdProducte, producte_id)
+        if subject is None:
+            return {"responsable": "agentzon", "venedor": None}
+        return {
+            "responsable": str(self._literal(subject, AGENTZON.Responsable, "agentzon")),
+            "venedor": self._literal(subject, AGENTZON.Venedor),
+        }
+
+    def _read_ubicacio(self, producte_id: str) -> dict:
+        subject = self._find_subject_by_id(AGENTZON.UbicacioProducte, AGENTZON.IdProducte, producte_id)
+        if subject is None:
+            raise ValueError(f"No hi ha ubicació persistent per al producte {producte_id}.")
+        return {
+            "magatzem": str(self._literal(subject, AGENTZON.Magatzem, "")),
+            "ciutat": str(self._literal(subject, AGENTZON.Ciutat, "")),
+        }
+
+    def _read_dades_usuari(self, userid: str) -> dict:
+        subject = self._find_subject_by_id(AGENTZON.DadesEnviamentUsuari, AGENTZON.IdUsuari, userid)
+        if subject is None:
+            raise ValueError(f"No hi ha dades d'enviament persistides per a l'usuari {userid}.")
+        return read_dades_enviament_usuari(self.graph, subject)
+
+    def _save_assignacio_centre_logistic(
         self,
-        centre_logistic_id: str,
-        producte_localitzat: ProducteLocalitzat,
-    ) -> Dict[str, object]:
+        comanda_id: str,
+        producte_id: str,
+        centre_logistic: str,
+        estat: str,
+        id_lot: str | None = None,
+    ) -> None:
+        subject = AGENTZON[f"assignacio_centre_logistic_{comanda_id}_{producte_id}"]
+        self.graph.remove((subject, None, None))
+        self.graph.add((subject, RDF.type, BUY.AssignacioCentreLogistic))
+        self.graph.add((subject, AGENTZON.IdComanda, Literal(comanda_id)))
+        self.graph.add((subject, AGENTZON.IdProducte, Literal(producte_id)))
+        self.graph.add((subject, BUY.centre_logistic, Literal(centre_logistic)))
+        self.graph.add((subject, BUY.estat, Literal(estat)))
+        if id_lot:
+            self.graph.set((subject, AGENTZON.IdLot, Literal(id_lot)))
+
+    def _read_assignacions_centre_logistic(self, comanda_id: str) -> dict:
+        result = {}
+        for subject in self.graph.subjects(RDF.type, BUY.AssignacioCentreLogistic):
+            if str(self._literal(subject, AGENTZON.IdComanda, "")) != comanda_id:
+                continue
+            producte_id = str(self._literal(subject, AGENTZON.IdProducte, ""))
+            result[producte_id] = {
+                "centre_logistic": str(self._literal(subject, BUY.centre_logistic, "")),
+                "estat": str(self._literal(subject, BUY.estat, "")),
+            }
+            id_lot = self._literal(subject, AGENTZON.IdLot)
+            if id_lot is not None:
+                result[producte_id]["id_lot"] = str(id_lot)
+        return result
+
+    def _read_dades_definitives(self, comanda_id: str) -> dict:
+        result = {}
+        for subject in self.graph.subjects(RDF.type, AGENTZON.DadesEnviamentProducte):
+            if str(self._literal(subject, AGENTZON.IdComanda, "")) != comanda_id:
+                continue
+            producte_id = str(self._literal(subject, AGENTZON.IdProducte, ""))
+            result[producte_id] = {
+                "id_lot": str(self._literal(subject, AGENTZON.IdLot, "")),
+                "transportista_id": str(self._literal(subject, AGENTZON.IdTransportista, "")),
+                "data_entrega_definitiva": str(self._literal(subject, AGENTZON.DataEntregaDefinitiva, "")),
+            }
+        return result
+
+    def _enviar_producte_a_centre_logistic(self, centre_logistic_id: str, producte_localitzat: dict) -> dict:
         directory_entry = self._cercar_centre_logistic_al_directori(centre_logistic_id)
         if directory_entry is not None:
             logger.debug(
                 "enviant producte a centre logistic centre_logistic=%s producte=%s address=%s",
                 centre_logistic_id,
-                producte_localitzat.id_producte,
+                producte_localitzat["id_producte"],
                 directory_entry["address"],
             )
             request_graph = build_message(
@@ -293,7 +337,7 @@ class AgentCompra:
                 logger.debug(
                     "centre logistic confirma lot centre_logistic=%s producte=%s lot=%s",
                     centre_logistic_id,
-                    producte_localitzat.id_producte,
+                    producte_localitzat["id_producte"],
                     lot_assignat["id_lot"],
                 )
                 return {
@@ -305,141 +349,145 @@ class AgentCompra:
             logger.debug(
                 "centre logistic no confirma producte centre_logistic=%s producte=%s performative=%s",
                 centre_logistic_id,
-                producte_localitzat.id_producte,
+                producte_localitzat["id_producte"],
                 props.get("performative") if props else None,
             )
 
         logger.debug(
             "producte pendent d'agent centre_logistic=%s producte=%s",
             centre_logistic_id,
-            producte_localitzat.id_producte,
+            producte_localitzat["id_producte"],
         )
         return {
             "centre_logistic": centre_logistic_id,
             "estat": "PENDENT_AGENT",
         }
 
-    def localitzar_productes(self, comanda: ComandaModel) -> Dict[str, object]:
-        """
-        Cp. Localitzar productes: verifica disponibilitat al catàleg i prepara
-        una resposta local d'enviament per a aquesta entrega.
-        """
-        ids_comanda = [producte.id for producte in comanda.llista_productes]
-        productes_per_id = {producte.id: producte for producte in comanda.llista_productes}
-        logger.debug("localitzant productes comanda=%s productes=%s", comanda.id, ids_comanda)
+    def localitzar_productes(self, comanda: dict) -> dict:
+        ids_comanda = [producte["id"] for producte in comanda["llista_productes"]]
+        productes_per_id = {producte["id"]: producte for producte in comanda["llista_productes"]}
+        logger.debug("localitzant productes comanda=%s productes=%s", comanda["id"], ids_comanda)
 
-        dades_usuari = self._carregar_mapa(self.dades_enviament_path, "dades_enviament")
-        ubicacions = self._carregar_mapa(self.ubicacions_path, "ubicacions")
-        responsables = self._carregar_mapa(self.responsables_path, "responsables")
+        dades_usuari = self._read_dades_usuari(comanda["userid"])
         responsables_enviament = {}
         centres_logistics_enviament = {}
 
         for producte_id in ids_comanda:
-            responsable = responsables.get(producte_id, {"responsable": "agentzon"})
+            responsable = self._read_responsable(producte_id)
             responsable_tipus = responsable.get("responsable", "agentzon")
 
             if responsable_tipus == "extern":
-                responsables_enviament[producte_id] = responsable.get("venedor", "Venedor extern")
+                responsables_enviament[producte_id] = responsable.get("venedor") or "Venedor extern"
                 logger.debug(
                     "producte extern producte=%s venedor=%s comanda=%s",
                     producte_id,
                     responsables_enviament[producte_id],
-                    comanda.id,
+                    comanda["id"],
                 )
-                # TODO: Protocol per avisar al venedor extern de que producte X s'ha d'enviar a Y abans de Z.
             else:
-                if producte_id not in ubicacions:
-                    raise ValueError(f"No hi ha ubicació persistent per al producte {producte_id}.")
-                responsables_enviament[producte_id] = "AgentZon"
-                ubicacio = ubicacions[producte_id]
+                ubicacio = self._read_ubicacio(producte_id)
                 centre_logistic_id = ubicacio.get("magatzem")
                 if not centre_logistic_id:
                     raise ValueError(f"No hi ha centre logístic persistent per al producte {producte_id}.")
 
+                responsables_enviament[producte_id] = "AgentZon"
                 logger.debug(
                     "producte intern producte=%s centre_logistic=%s comanda=%s",
                     producte_id,
                     centre_logistic_id,
-                    comanda.id,
+                    comanda["id"],
                 )
-                # De moment assumim que cada producte només està en un centre logístic.
-                # En el futur caldrà resoldre productes disponibles en diversos centres.
-                producte_localitzat = ProducteLocalitzat(
-                    id_producte=producte_id,
-                    id_comanda=comanda.id,
-                    userid=comanda.userid,
-                    adreca=dades_usuari[comanda.userid]["adreca"],
-                    ciutat=dades_usuari[comanda.userid].get("ciutat", dades_usuari[comanda.userid]["adreca"]),
-                    prioritat=dades_usuari[comanda.userid]["prioritat"],
-                    data_limit=comanda.data_entrega_estimada,
-                    pes=productes_per_id[producte_id].pes,
-                    import_producte=productes_per_id[producte_id].preu,
-                )
+                producte_localitzat = {
+                    "id_producte": producte_id,
+                    "id_comanda": comanda["id"],
+                    "userid": comanda["userid"],
+                    "adreca": dades_usuari["adreca"],
+                    "ciutat": dades_usuari["ciutat"] or dades_usuari["adreca"],
+                    "prioritat": dades_usuari["prioritat"],
+                    "data_limit": comanda["data_entrega_estimada"],
+                    "pes": productes_per_id[producte_id]["pes"],
+                    "import_producte": productes_per_id[producte_id]["preu"],
+                }
                 centres_logistics_enviament[producte_id] = self._enviar_producte_a_centre_logistic(
                     centre_logistic_id,
                     producte_localitzat,
                 )
+                self._save_assignacio_centre_logistic(
+                    comanda["id"],
+                    producte_id,
+                    centre_logistic_id,
+                    centres_logistics_enviament[producte_id]["estat"],
+                    centres_logistics_enviament[producte_id].get("id_lot"),
+                )
 
         enviament = {
-            "data_entrega_estimada": comanda.data_entrega_estimada,
-            "adreca": dades_usuari[comanda.userid]["adreca"],
-            "ciutat": dades_usuari[comanda.userid].get("ciutat", dades_usuari[comanda.userid]["adreca"]),
-            "prioritat": dades_usuari[comanda.userid]["prioritat"],
+            "data_entrega_estimada": comanda["data_entrega_estimada"],
+            "adreca": dades_usuari["adreca"],
+            "ciutat": dades_usuari["ciutat"] or dades_usuari["adreca"],
+            "prioritat": dades_usuari["prioritat"],
             "responsables": responsables_enviament,
             "centres_logistics": centres_logistics_enviament,
+            "dades_definitives": self._read_dades_definitives(comanda["id"]),
         }
-        self.enviaments[comanda.id] = enviament
         logger.debug(
             "enviament preparat comanda=%s responsables=%s centres=%s",
-            comanda.id,
+            comanda["id"],
             responsables_enviament,
             centres_logistics_enviament,
         )
         return enviament
 
-    def processar_dades_enviament(self, dades: DadesEnviamentProducte) -> Dict[str, object]:
-        """
-        Pla informar usuari sobre l'enviament: processa el protocol Dades
-        Enviament rebut de l'Agent Centre Logístic i prepara la notificació.
-        """
-        if dades.id_comanda not in self.enviaments:
-            raise ValueError(f"Comanda desconeguda: {dades.id_comanda}")
+    def render_enviament(self, comanda_id: str) -> dict:
+        comanda_subject = AGENTZON[f"comanda_{comanda_id}"]
+        comanda = read_comanda(self.graph, comanda_subject)
+        dades_usuari = self._read_dades_usuari(comanda["userid"])
+        responsables = {}
+        for producte in comanda["llista_productes"]:
+            responsable = self._read_responsable(producte["id"])
+            responsables[producte["id"]] = (
+                responsable.get("venedor") if responsable.get("responsable") == "extern" else "AgentZon"
+            ) or "AgentZon"
+
+        return {
+            "data_entrega_estimada": comanda["data_entrega_estimada"],
+            "adreca": dades_usuari["adreca"],
+            "ciutat": dades_usuari["ciutat"] or dades_usuari["adreca"],
+            "prioritat": dades_usuari["prioritat"],
+            "responsables": responsables,
+            "centres_logistics": self._read_assignacions_centre_logistic(comanda_id),
+            "dades_definitives": self._read_dades_definitives(comanda_id),
+        }
+
+    def processar_dades_enviament(self, dades) -> dict:
+        id_comanda = dades["id_comanda"]
+        if (AGENTZON[f"comanda_{id_comanda}"], RDF.type, AGENTZON.Comanda) not in self.graph:
+            raise ValueError(f"Comanda desconeguda: {id_comanda}")
 
         logger.debug(
             "processant dades enviament comanda=%s producte=%s lot=%s transportista=%s data=%s",
-            dades.id_comanda,
-            dades.id_producte,
-            dades.id_lot,
-            dades.transportista_id,
-            dades.data_entrega_definitiva,
+            id_comanda,
+            dades["id_producte"],
+            dades["id_lot"],
+            dades["transportista_id"],
+            dades["data_entrega_definitiva"],
         )
-        enviament = self.enviaments[dades.id_comanda]
-        responsables = enviament.get("responsables", {})
-        if dades.id_producte not in responsables:
-            raise ValueError(f"Producte desconegut per a la comanda {dades.id_comanda}: {dades.id_producte}")
-
-        dades_definitives = enviament.setdefault("dades_definitives", {})
-        dades_definitives[dades.id_producte] = {
-            "id_lot": dades.id_lot,
-            "transportista_id": dades.transportista_id,
-            "data_entrega_definitiva": dades.data_entrega_definitiva,
-        }
-        logger.debug(
-            "dades definitives guardades comanda=%s producte=%s",
-            dades.id_comanda,
-            dades.id_producte,
-        )
+        dades_graph = build_dades_enviament_action(dades)
+        dades_subject = next(dades_graph.subjects(RDF.type, AGENTZON.DadesEnviamentProducte))
+        self.graph.remove((dades_subject, None, None))
+        for triple in dades_graph:
+            self.graph.add(triple)
+        logger.debug("dades definitives guardades comanda=%s producte=%s", id_comanda, dades["id_producte"])
 
         return {
-            "userid": dades.userid,
-            "id_comanda": dades.id_comanda,
-            "id_producte": dades.id_producte,
-            "transportista_id": dades.transportista_id,
-            "data_entrega_definitiva": dades.data_entrega_definitiva,
+            "userid": dades["userid"],
+            "id_comanda": id_comanda,
+            "id_producte": dades["id_producte"],
+            "transportista_id": dades["transportista_id"],
+            "data_entrega_definitiva": dades["data_entrega_definitiva"],
         }
 
+
 def _int_obligatori(valor: str, missatge: str) -> int:
-    """Converteix un camp obligatori del formulari a enter."""
     try:
         return int(valor)
     except (TypeError, ValueError) as exc:
@@ -447,7 +495,6 @@ def _int_obligatori(valor: str, missatge: str) -> int:
 
 
 def create_app(compra_agent: Optional[AgentCompra] = None) -> Flask:
-    """Crea la interfície HTML que pertany a l'Agent Compra."""
     app = Flask(
         __name__,
         template_folder=str(WEB_DIR / "templates"),
@@ -510,23 +557,27 @@ def create_app(compra_agent: Optional[AgentCompra] = None) -> Flask:
             try:
                 productes_seleccionats = compra_agent.productes_per_ids(valors["productes"])
                 compra = compra_agent.processar_peticio_compra(valors["userid"], productes_seleccionats)
-                compra_agent.demanar_informacio_usuari(compra.userid)
-                info_usuari = InformacioUsuari(
-                    userid=compra.userid,
-                    adreça=valors["adreca"],
+                compra_agent.demanar_informacio_usuari(compra["userid"])
+                info_graph = build_info_usuari(
+                    userid=compra["userid"],
+                    adreca=valors["adreca"],
                     ciutat=valors["ciutat"],
                     prioritat=_int_obligatori(valors["prioritat"], "La prioritat ha de ser numèrica."),
                     metodepagament=valors["metodepagament"],
                 )
-                comanda = compra_agent.gestionar_compra(compra, info_usuari)
+                comanda = compra_agent.gestionar_compra(compra, info_graph)
                 resultat = {
                     "comanda": comanda,
-                    "enviament": compra_agent.enviaments[comanda.id],
+                    "enviament": compra_agent.render_enviament(comanda["id"]),
                 }
             except ValueError as exc:
                 error = str(exc)
 
         return render_template("compra.html", productes=productes, resultat=resultat, error=error, valors=valors)
+
+    @app.route("/Info", methods=["GET"])
+    def info():
+        return Response(compra_agent.graph.serialize(format="turtle"), mimetype="text/turtle")
 
     return app
 

@@ -1,5 +1,6 @@
 import argparse
 import logging
+import re
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
@@ -7,25 +8,34 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from flask import Flask, Response, request
-from rdflib import Graph, Literal, RDF, URIRef, XSD
+from rdflib import Graph, Literal, Namespace, RDF, URIRef, XSD
 from rdflib.exceptions import ParserError
 
-# Aquest mòdul s'ha d'executar com a part del paquet, per exemple amb:
-# `python -m AgentZon.agents.agent_centre_logistic`
+from AgentZon.agents.logging_utils import configure_pretty_logging
 from AgentZon.config import AGENTZON, ONTOLOGY_PATH
-from AgentZon.protocols.directory import build_register_action, build_search_action, read_directory_responses
 from AgentZon.protocols.centre_logistic import (
-    DadesEnviamentProducte,
-    EleccioTransportista,
-    PeticioCobramentProducte,
-    PeticioTransport,
-    ProducteLocalitzat,
-    RespostaOfertaTransport,
+    LOG,
+    build_dades_enviament_action,
+    build_eleccio_transportista_action,
     build_lot_assignat_response,
+    build_peticio_cobrament_action,
     build_peticio_transport_action,
-    read_resposta_oferta_transport,
+    build_producte_localitzat_action,
+    build_resposta_oferta_transport_action,
+    get_dades_enviament_subject,
+    get_eleccio_transportista_subject,
+    get_peticio_cobrament_subject,
+    get_peticio_transport_subject,
+    get_producte_localitzat_subject,
+    get_resposta_oferta_transport_subject,
+    read_dades_enviament,
+    read_eleccio_transportista,
+    read_lot_assignat_response,
+    read_peticio_cobrament,
     read_producte_localitzat,
+    read_resposta_oferta_transport,
 )
+from AgentZon.protocols.directory import build_register_action, build_search_action, read_directory_responses
 from AgentZon.protocols.fipa_acl import (
     build_message,
     build_not_understood,
@@ -33,46 +43,16 @@ from AgentZon.protocols.fipa_acl import (
     parse_message,
     send_message,
 )
-from AgentZon.agents.logging_utils import configure_pretty_logging
 
 
 logger = logging.getLogger(__name__)
-
-
-class LotLogistic:
-    """Estat intern d'un Lot gestionat per l'Agent Centre Logístic."""
-
-    def __init__(
-        self,
-        id: str,
-        centre_logistic_id: str,
-        ciutat: str,
-        data_enviament: str,
-        productes: Optional[List[ProducteLocalitzat]] = None,
-        estat: str = "PENDENT",
-    ):
-        self.id = id
-        self.centre_logistic_id = centre_logistic_id
-        self.ciutat = ciutat
-        self.data_enviament = data_enviament
-        self.productes = productes or []
-        self.estat = estat
-
-    @property
-    def pes_total(self) -> float:
-        return sum(float(getattr(producte, "pes", 0.0) or 0.0) for producte in self.productes)
-
-    def es_compatible(self, ciutat: str, data_enviament: str) -> bool:
-        return self.estat == "PENDENT" and self.ciutat == ciutat and self.data_enviament == data_enviament
+STATE = Namespace("urn:agentzon:logistics:state:")
 
 
 class AgentCentreLogistic:
     """
-    Implementa els plans definits a Prometheus per a l'Agent Centre Logístic:
-    gestionar magatzem, negociar transport i gestionar el post-enviament.
-
-    La negociació de transport es fa amb missatges FIPA-ACL RDF usant
-    conceptes de l'ontologia comuna.
+    Implementa els plans definits a Prometheus per a l'Agent Centre Logístic
+    amb el graf RDF com a únic estat de treball.
     """
 
     def __init__(
@@ -89,31 +69,20 @@ class AgentCentreLogistic:
         self.directory_address = directory_address
         self.message_sender = message_sender
 
-        self.lots_pendents: Dict[str, LotLogistic] = {}
-        self.ofertes_rebudes: Dict[str, List[RespostaOfertaTransport]] = {}
-        self.eleccions_transportista: Dict[str, EleccioTransportista] = {}
-        self._seguent_num_lot = 1
-
         self.graph = Graph()
         self.graph.bind("az", AGENTZON)
+        self.graph.bind("log", LOG)
+        self.graph.bind("state", STATE)
         self._carregar_ontologia()
         self._registrar_instancia_centre_logistic()
 
     @property
     def capacitats(self) -> Dict[str, List[object]]:
         return {
-            "Gestionar magatzem": [
-                self.pla_assignar_producte_a_lot,
-            ],
-            "Negociar transport": [
-                self.pla_cerca_transportista,
-                self.pla_transportista_escollit,
-            ],
-            "Gestionar post-enviament": [
-                self.pla_producte_sha_enviat,
-            ],
+            "Gestionar magatzem": [self.pla_assignar_producte_a_lot],
+            "Negociar transport": [self.pla_cerca_transportista, self.pla_transportista_escollit],
+            "Gestionar post-enviament": [self.pla_producte_sha_enviat],
         }
-
 
     @property
     def uri(self) -> URIRef:
@@ -139,7 +108,6 @@ class AgentCentreLogistic:
         return props
 
     def _carregar_ontologia(self) -> None:
-        """Carrega l'ontologia RDF/XML compartida pels agents."""
         if self.ontology_path.exists():
             try:
                 self.graph.parse(self.ontology_path, format="xml")
@@ -150,179 +118,292 @@ class AgentCentreLogistic:
                 )
 
     def _registrar_instancia_centre_logistic(self) -> None:
-        """Afegeix la instància local del centre logístic al graf de treball."""
-        subject = self._az(f"centre_logistic_{self.centre_logistic_id}")
+        subject = self._centre_subject()
         self.graph.add((subject, RDF.type, AGENTZON.CentreLogistic))
-        self.graph.add((subject, AGENTZON.Id, Literal(self.centre_logistic_id)))
-        self.graph.add((subject, AGENTZON.Ubicacio, Literal(self.ubicacio)))
+        self.graph.set((subject, AGENTZON.Id, Literal(self.centre_logistic_id)))
+        self.graph.set((subject, AGENTZON.Ubicacio, Literal(self.ubicacio)))
 
-    def _az(self, term: str) -> URIRef:
-        """Construeix un URIRef dins del namespace de l'ontologia AgentZon."""
-        return URIRef(f"{AGENTZON}{term}")
+    def _centre_subject(self) -> URIRef:
+        return AGENTZON[f"centre_logistic_{self.centre_logistic_id}"]
+
+    def _lot_subject(self, id_lot: str) -> URIRef:
+        return AGENTZON[f"lot_{id_lot}"]
+
+    def _literal(self, subject: URIRef, predicate: URIRef, default=None):
+        value = self.graph.value(subject, predicate)
+        return value.toPython() if value is not None else default
+
+    def _merge_graph(self, fragment: Graph) -> None:
+        for subject in set(fragment.subjects()):
+            self.graph.remove((subject, None, None))
+        for triple in fragment:
+            self.graph.add(triple)
+
+    def _set_lot_state(self, lot_subject: URIRef, estat: str) -> None:
+        self.graph.set((lot_subject, LOG.estat, Literal(estat)))
 
     def _data_lot(self, data_enviament: str) -> str:
         return date.fromisoformat(data_enviament.split("T")[0]).isoformat()
 
-    def pla_assignar_producte_a_lot(self, producte_localitzat: ProducteLocalitzat) -> LotLogistic:
-        """
-        Pla assignar producte a lot.
+    def _iter_lot_subjects(self):
+        centre_subject = self._centre_subject()
+        for lot_subject in self.graph.objects(centre_subject, AGENTZON.Distribueix):
+            if (lot_subject, RDF.type, AGENTZON.Lot) in self.graph:
+                yield lot_subject
 
-        Rep un ProducteLocalitzat de l'Agent Compra i l'agrupa en un Lot
-        compatible per ciutat i dia d'enviament, ignorant l'hora exacta.
-        """
-        ciutat = producte_localitzat.ciutat.strip()
-        data_enviament = self._data_lot(producte_localitzat.data_limit)
+    def _read_lot(self, lot_subject: URIRef) -> dict:
+        productes = [
+            read_producte_localitzat(self.graph, subject)
+            for subject in sorted(self.graph.objects(lot_subject, LOG.producte_localitzat), key=str)
+        ]
+        return {
+            "subject": lot_subject,
+            "id": str(self._literal(lot_subject, AGENTZON.Id, "")),
+            "centre_logistic_id": self.centre_logistic_id,
+            "ciutat": str(self._literal(lot_subject, AGENTZON.Ciutat, "")),
+            "data_enviament": str(self._literal(lot_subject, AGENTZON.DataEnviament, "")),
+            "estat": str(self._literal(lot_subject, LOG.estat, "PENDENT")),
+            "productes": productes,
+            "pes_total": sum(float(producte["pes"]) for producte in productes),
+        }
+
+    def _obtenir_lot_subject(self, id_lot: str) -> URIRef:
+        lot_subject = self._lot_subject(id_lot)
+        if (lot_subject, RDF.type, AGENTZON.Lot) not in self.graph:
+            raise ValueError(f"Lot desconegut: {id_lot}")
+        if (self._centre_subject(), AGENTZON.Distribueix, lot_subject) not in self.graph:
+            raise ValueError(f"Lot desconegut: {id_lot}")
+        return lot_subject
+
+    def _obtenir_lot(self, id_lot: str) -> dict:
+        return self._read_lot(self._obtenir_lot_subject(id_lot))
+
+    def _cercar_lot_compatible(self, ciutat: str, data_enviament: str) -> Optional[URIRef]:
+        for lot_subject in self._iter_lot_subjects():
+            lot = self._read_lot(lot_subject)
+            if lot["estat"] == "PENDENT" and lot["ciutat"] == ciutat and lot["data_enviament"] == data_enviament:
+                return lot_subject
+        return None
+
+    def _prefix_lot(self) -> str:
+        prefix = self.centre_logistic_id.strip().lower().split("-")[-1]
+        prefix = "".join(char for char in prefix if char.isalnum())
+        return prefix or "lot"
+
+    def _nou_id_lot(self) -> str:
+        pattern = re.compile(rf"^{re.escape(self._prefix_lot())}-(\d{{4}})$")
+        maxim = 0
+        for lot_subject in self._iter_lot_subjects():
+            lot_id = str(self._literal(lot_subject, AGENTZON.Id, ""))
+            match = pattern.match(lot_id)
+            if match:
+                maxim = max(maxim, int(match.group(1)))
+        if maxim >= 9999:
+            raise ValueError("S'ha esgotat el rang d'identificadors de lot (0001-9999).")
+        return f"{self._prefix_lot()}-{maxim + 1:04d}"
+
+    def _crear_lot(self, ciutat: str, data_enviament: str) -> URIRef:
+        id_lot = self._nou_id_lot()
+        lot_subject = self._lot_subject(id_lot)
+        self.graph.add((lot_subject, RDF.type, AGENTZON.Lot))
+        self.graph.set((lot_subject, AGENTZON.Id, Literal(id_lot)))
+        self.graph.set((lot_subject, AGENTZON.Ciutat, Literal(ciutat)))
+        self.graph.set((lot_subject, AGENTZON.DataEnviament, Literal(data_enviament, datatype=XSD.date)))
+        self._set_lot_state(lot_subject, "PENDENT")
+        self.graph.add((self._centre_subject(), AGENTZON.Distribueix, lot_subject))
+        return lot_subject
+
+    def _afegir_producte_localitzat(self, lot_subject: URIRef, producte_localitzat: dict) -> None:
+        fragment = build_producte_localitzat_action(producte_localitzat)
+        producte_subject = get_producte_localitzat_subject(fragment)
+        for existent in list(self.graph.subjects(LOG.producte_localitzat, producte_subject)):
+            self.graph.remove((existent, LOG.producte_localitzat, producte_subject))
+        self._merge_graph(fragment)
+        self.graph.add((lot_subject, LOG.producte_localitzat, producte_subject))
+        self.graph.add((lot_subject, AGENTZON.TeProducte, AGENTZON[producte_localitzat["id_producte"]]))
+        self.graph.add((self._centre_subject(), AGENTZON.RepAvis, producte_subject))
+
+    def _read_ofertes(self, id_lot: str) -> list[dict]:
+        ofertes = []
+        for subject in self.graph.subjects(RDF.type, AGENTZON.RespostaOfertaTransport):
+            if str(self._literal(subject, AGENTZON.IdLot, "")) != id_lot:
+                continue
+            ofertes.append(read_resposta_oferta_transport(self.graph, subject))
+        return sorted(ofertes, key=lambda oferta: (float(oferta["cost"]), oferta["transportista_id"]))
+
+    def _guardar_peticio_transport(self, peticio: dict) -> None:
+        fragment = build_peticio_transport_action(peticio)
+        peticio_subject = get_peticio_transport_subject(fragment)
+        self._merge_graph(fragment)
+        self.graph.add((self._centre_subject(), AGENTZON.Negocia, peticio_subject))
+
+    def _guardar_oferta(self, oferta: dict) -> dict:
+        fragment = build_resposta_oferta_transport_action(oferta)
+        oferta_subject = get_resposta_oferta_transport_subject(fragment)
+        self._merge_graph(fragment)
+        self.graph.add((self._centre_subject(), AGENTZON.RepOferta, oferta_subject))
+        return read_resposta_oferta_transport(self.graph, oferta_subject)
+
+    def _guardar_eleccio(self, eleccio: dict) -> dict:
+        fragment = build_eleccio_transportista_action(eleccio)
+        eleccio_subject = get_eleccio_transportista_subject(fragment)
+        self._merge_graph(fragment)
+        transportista_subject = AGENTZON[f"agent_{eleccio['transportista_id']}"]
+        self.graph.add((transportista_subject, RDF.type, AGENTZON.Transportista))
+        self.graph.add((transportista_subject, AGENTZON.EsEscollit, eleccio_subject))
+        return read_eleccio_transportista(self.graph, eleccio_subject)
+
+    def _guardar_dades_enviament(self, dades: dict) -> dict:
+        fragment = build_dades_enviament_action(dades)
+        dades_subject = get_dades_enviament_subject(fragment)
+        self._merge_graph(fragment)
+        self.graph.add((self._centre_subject(), AGENTZON.Genera, dades_subject))
+        return read_dades_enviament(self.graph, dades_subject)
+
+    def _guardar_peticio_cobrament(self, peticio: dict) -> dict:
+        fragment = build_peticio_cobrament_action(peticio)
+        peticio_subject = get_peticio_cobrament_subject(fragment)
+        self._merge_graph(fragment)
+        self.graph.add((self._centre_subject(), LOG.peticio_cobrament, peticio_subject))
+        return read_peticio_cobrament(self.graph, peticio_subject)
+
+    def pla_assignar_producte_a_lot(self, producte_localitzat: dict) -> dict:
+        ciutat = producte_localitzat["ciutat"].strip()
+        data_enviament = self._data_lot(producte_localitzat["data_limit"])
         logger.debug(
             "assignant producte producte=%s comanda=%s centre_logistic=%s ciutat=%s",
-            producte_localitzat.id_producte,
-            producte_localitzat.id_comanda,
+            producte_localitzat["id_producte"],
+            producte_localitzat["id_comanda"],
             self.centre_logistic_id,
             ciutat,
         )
 
-        for lot in self.lots_pendents.values():
-            if lot.es_compatible(ciutat, data_enviament):
-                lot.productes.append(producte_localitzat)
-                self._afegir_producte_localitzat_al_graf(producte_localitzat, lot)
-                logger.debug(
-                    "producte afegit a lot existent lot=%s producte=%s total_productes=%s",
-                    lot.id,
-                    producte_localitzat.id_producte,
-                    len(lot.productes),
-                )
-                return lot
+        lot_subject = self._cercar_lot_compatible(ciutat, data_enviament)
+        if lot_subject is None:
+            lot_subject = self._crear_lot(ciutat, data_enviament)
+            logger.debug(
+                "lot creat lot=%s centre_logistic=%s ciutat=%s producte=%s data=%s",
+                self._literal(lot_subject, AGENTZON.Id, ""),
+                self.centre_logistic_id,
+                ciutat,
+                producte_localitzat["id_producte"],
+                data_enviament,
+            )
 
-        lot = LotLogistic(
-            id=self._nou_id_lot(),
-            centre_logistic_id=self.centre_logistic_id,
-            ciutat=ciutat,
-            data_enviament=data_enviament,
-            productes=[producte_localitzat],
-        )
-        self.lots_pendents[lot.id] = lot
-        self.ofertes_rebudes[lot.id] = []
-        self._afegir_lot_al_graf(lot)
-        self._afegir_producte_localitzat_al_graf(producte_localitzat, lot)
+        self._afegir_producte_localitzat(lot_subject, {**producte_localitzat, "data_limit": data_enviament})
+        lot = self._read_lot(lot_subject)
         logger.debug(
-            "lot creat lot=%s centre_logistic=%s ciutat=%s producte=%s data=%s",
-            lot.id,
-            self.centre_logistic_id,
-            ciutat,
-            producte_localitzat.id_producte,
-            data_enviament,
+            "producte assignat a lot lot=%s producte=%s total_productes=%s",
+            lot["id"],
+            producte_localitzat["id_producte"],
+            len(lot["productes"]),
         )
         return lot
 
-    def pla_cerca_transportista(self, id_lot: str) -> PeticioTransport:
-        """
-        Pla cerca de transportista.
-
-        Construeix el contingut RDF d'una instància PeticioTransport (ciutat de
-        destí, pes, termini, identificador de centre) per enviar-la als
-        transportistes des de negociar_transport_amb_transportistes o tests.
-        """
-        lot = self._obtenir_lot(id_lot)
-        if not lot.productes:
+    def pla_cerca_transportista(self, id_lot: str) -> dict:
+        lot_subject = self._obtenir_lot_subject(id_lot)
+        lot = self._read_lot(lot_subject)
+        if not lot["productes"]:
             raise ValueError(f"El lot {id_lot} no té productes.")
 
-        lot.estat = "NEGOCIANT_TRANSPORT"
-        peticio = PeticioTransport(
-            centre_logistic_id=self.centre_logistic_id,
-            ciutat_desti=lot.ciutat,
-            data_enviament=lot.data_enviament,
-            pes=lot.pes_total,
-        )
-        self._afegir_peticio_transport_al_graf(peticio)
+        self._set_lot_state(lot_subject, "NEGOCIANT_TRANSPORT")
+        peticio = {
+            "centre_logistic_id": self.centre_logistic_id,
+            "ciutat_desti": lot["ciutat"],
+            "data_enviament": lot["data_enviament"],
+            "pes": lot["pes_total"],
+        }
+        self._guardar_peticio_transport(peticio)
         logger.debug(
             "peticio transport lot=%s ciutat=%s pes=%s data=%s",
-            lot.id,
-            peticio.ciutat_desti,
-            peticio.pes,
-            peticio.data_enviament,
+            lot["id"],
+            peticio["ciutat_desti"],
+            peticio["pes"],
+            peticio["data_enviament"],
         )
         return peticio
 
-    def registrar_oferta_transport(self, resposta_oferta_transport: RespostaOfertaTransport) -> RespostaOfertaTransport:
-        """
-        Registra una RespostaOfertaTransport rebuda pel centre logístic.
-
-        Aquest mètode representa la recepció via RepOferta quan els
-        AgentTransportista responen per missatges FIPA-ACL (inform).
-        """
-        id_lot = resposta_oferta_transport.id_lot
-        self._obtenir_lot(id_lot)
-
-        self.ofertes_rebudes.setdefault(id_lot, []).append(resposta_oferta_transport)
-        self._afegir_oferta_al_graf(resposta_oferta_transport)
+    def registrar_oferta_transport(self, resposta_oferta_transport: dict) -> dict:
+        id_lot = resposta_oferta_transport["id_lot"]
+        self._obtenir_lot_subject(id_lot)
+        oferta = self._guardar_oferta(resposta_oferta_transport)
         logger.debug(
             "oferta transport rebuda lot=%s transportista=%s cost=%s data=%s",
-            resposta_oferta_transport.id_lot,
-            resposta_oferta_transport.transportista_id,
-            resposta_oferta_transport.cost,
-            resposta_oferta_transport.data_enviament,
+            oferta["id_lot"],
+            oferta["transportista_id"],
+            oferta["cost"],
+            oferta["data_enviament"],
         )
-        return resposta_oferta_transport
+        return oferta
 
-    def pla_transportista_escollit(self, id_lot: str) -> tuple[EleccioTransportista, List[DadesEnviamentProducte]]:
-        """
-        Pla transportista escollit.
+    def _crear_dades_enviament_productes(self, lot: dict, eleccio: dict) -> list[dict]:
+        dades = []
+        for producte in lot["productes"]:
+            dades.append(
+                self._guardar_dades_enviament(
+                    {
+                        "id_lot": lot["id"],
+                        "id_comanda": producte["id_comanda"],
+                        "userid": producte["userid"],
+                        "id_producte": producte["id_producte"],
+                        "transportista_id": eleccio["transportista_id"],
+                        "data_entrega_definitiva": eleccio["data_enviament"],
+                    }
+                )
+            )
+        return dades
 
-        Selecciona l'oferta més barata rebuda per al Lot i registra una
-        EleccióTransportista. El centre logístic no fa la feina del transportista.
-        """
-        lot = self._obtenir_lot(id_lot)
-        ofertes = self.ofertes_rebudes.get(id_lot, [])
+    def pla_transportista_escollit(self, id_lot: str) -> tuple[dict, list[dict]]:
+        lot_subject = self._obtenir_lot_subject(id_lot)
+        lot = self._read_lot(lot_subject)
+        ofertes = self._read_ofertes(id_lot)
         logger.debug("avaluant ofertes transport lot=%s ofertes=%s", id_lot, len(ofertes))
         if not ofertes:
             raise ValueError(f"No hi ha ofertes de transport per al lot {id_lot}.")
 
         ofertes_dins_termini = [
-            oferta for oferta in ofertes if self._data_lot(oferta.data_enviament) <= lot.data_enviament
+            oferta for oferta in ofertes if self._data_lot(oferta["data_enviament"]) <= lot["data_enviament"]
         ]
         if not ofertes_dins_termini:
             raise ValueError(f"No hi ha ofertes de transport dins del termini per al lot {id_lot}.")
 
-        millor_oferta = min(ofertes_dins_termini, key=lambda oferta: oferta.cost)
-        eleccio = EleccioTransportista(
-            id_lot=id_lot,
-            transportista_id=millor_oferta.transportista_id,
-            cost=millor_oferta.cost,
-            data_enviament=millor_oferta.data_enviament,
+        millor_oferta = min(ofertes_dins_termini, key=lambda oferta: float(oferta["cost"]))
+        eleccio = self._guardar_eleccio(
+            {
+                "id_lot": id_lot,
+                "transportista_id": millor_oferta["transportista_id"],
+                "cost": millor_oferta["cost"],
+                "data_enviament": millor_oferta["data_enviament"],
+            }
         )
-        self.eleccions_transportista[id_lot] = eleccio
-        lot.estat = "TRANSPORTISTA_ESCOLLIT"
-        self._afegir_eleccio_al_graf(eleccio)
+        self._set_lot_state(lot_subject, "TRANSPORTISTA_ESCOLLIT")
         logger.debug(
             "transportista escollit lot=%s transportista=%s cost=%s data=%s",
-            eleccio.id_lot,
-            eleccio.transportista_id,
-            eleccio.cost,
-            eleccio.data_enviament,
+            eleccio["id_lot"],
+            eleccio["transportista_id"],
+            eleccio["cost"],
+            eleccio["data_enviament"],
         )
-        return eleccio, self._crear_dades_enviament_productes(lot, eleccio)
+        return eleccio, self._crear_dades_enviament_productes(self._read_lot(lot_subject), eleccio)
 
-    def pla_producte_sha_enviat(self, today: Optional[str] = None) -> List[PeticioCobramentProducte]:
-        """
-        Pla producte s'ha enviat.
-
-        Identifica els lots amb data d'enviament igual a avui i els marca com
-        enviats. Retorna les peticions que cal enviar a l'Agent Cobrador perquè
-        cobri cada producte enviat al seu usuari.
-        """
+    def pla_producte_sha_enviat(self, today: Optional[str] = None) -> list[dict]:
         today = today or date.today().isoformat()
         peticions_cobrament = []
 
-        for lot in self.lots_pendents.values():
-            if self._data_lot(lot.data_enviament) == self._data_lot(today) and lot.estat != "ENVIAT":
-                lot.estat = "ENVIAT"
-                logger.debug("lot enviat lot=%s productes=%s data=%s", lot.id, len(lot.productes), today)
-                for producte in lot.productes:
+        for lot_subject in self._iter_lot_subjects():
+            lot = self._read_lot(lot_subject)
+            if self._data_lot(lot["data_enviament"]) == self._data_lot(today) and lot["estat"] != "ENVIAT":
+                self._set_lot_state(lot_subject, "ENVIAT")
+                logger.debug("lot enviat lot=%s productes=%s data=%s", lot["id"], len(lot["productes"]), today)
+                for producte in lot["productes"]:
                     peticions_cobrament.append(
-                        PeticioCobramentProducte(
-                            userid=producte.userid,
-                            id_comanda=producte.id_comanda,
-                            id_producte=producte.id_producte,
-                            import_cobrament=producte.import_producte,
+                        self._guardar_peticio_cobrament(
+                            {
+                                "userid": producte["userid"],
+                                "id_comanda": producte["id_comanda"],
+                                "id_producte": producte["id_producte"],
+                                "import_cobrament": producte["import_producte"],
+                            }
                         )
                     )
 
@@ -331,13 +412,7 @@ class AgentCentreLogistic:
     def cercar_transportistes(self) -> List[Dict[str, object]]:
         logger.debug("cercant transportistes al directori centre_logistic=%s", self.centre_logistic_id)
         content = build_search_action(agent_type="AgentTransportista")
-        request = build_message(
-            "request",
-            self.uri,
-            AGENTZON.directory_agent,
-            content,
-            msgcnt=1,
-        )
+        request = build_message("request", self.uri, AGENTZON.directory_agent, content, msgcnt=1)
         response = self.message_sender(self.directory_address, request)
         props = get_message_properties(response)
         if not props or props.get("performative") != "inform":
@@ -347,13 +422,13 @@ class AgentCentreLogistic:
         logger.debug("transportistes trobats count=%s", len(transportistes))
         return transportistes
 
-    def negociar_transport_amb_transportistes(self, id_lot: str) -> tuple[EleccioTransportista, List[DadesEnviamentProducte]]:
+    def negociar_transport_amb_transportistes(self, id_lot: str) -> tuple[dict, list[dict]]:
         peticio = self.pla_cerca_transportista(id_lot)
         transportistes = self.cercar_transportistes()
         if not transportistes:
             raise ValueError("No s'ha trobat cap AgentTransportista al DirectoryAgent.")
 
-        def _demanar_oferta(transportista: Dict[str, object]) -> Optional[RespostaOfertaTransport]:
+        def _demanar_oferta(transportista: Dict[str, object]) -> Optional[dict]:
             logger.debug(
                 "enviant peticio transport lot=%s transportista=%s address=%s",
                 id_lot,
@@ -371,12 +446,8 @@ class AgentCentreLogistic:
             props = get_message_properties(response)
             if props and props.get("performative") == "inform" and props.get("content") is not None:
                 oferta_rebuda = read_resposta_oferta_transport(response, props["content"])
-                return RespostaOfertaTransport(
-                    id_lot=id_lot,
-                    transportista_id=oferta_rebuda.transportista_id,
-                    cost=oferta_rebuda.cost,
-                    data_enviament=oferta_rebuda.data_enviament,
-                )
+                oferta_rebuda["id_lot"] = id_lot
+                return oferta_rebuda
             logger.debug(
                 "transportista sense oferta valida lot=%s transportista=%s performative=%s",
                 id_lot,
@@ -385,8 +456,6 @@ class AgentCentreLogistic:
             )
             return None
 
-        # Les peticions a transportistes es fan en paral.lel per evitar una
-        # negociacio estrictament seqüencial i aprofitar el desplegament distribuït.
         with ThreadPoolExecutor(max_workers=max(1, len(transportistes))) as executor:
             futures = [executor.submit(_demanar_oferta, transportista) for transportista in transportistes]
             for future in as_completed(futures):
@@ -395,91 +464,6 @@ class AgentCentreLogistic:
                     self.registrar_oferta_transport(oferta)
 
         return self.pla_transportista_escollit(id_lot)
-
-    def _prefix_lot(self) -> str:
-        prefix = self.centre_logistic_id.strip().lower().split("-")[-1]
-        prefix = "".join(char for char in prefix if char.isalnum())
-        return prefix or "lot"
-
-    def _nou_id_lot(self) -> str:
-        if self._seguent_num_lot > 9999:
-            raise ValueError("S'ha esgotat el rang d'identificadors de lot (0001-9999).")
-
-        id_lot = f"{self._prefix_lot()}-{self._seguent_num_lot:04d}"
-        self._seguent_num_lot += 1
-        return id_lot
-
-    def _obtenir_lot(self, id_lot: str) -> LotLogistic:
-        if id_lot not in self.lots_pendents:
-            raise ValueError(f"Lot desconegut: {id_lot}")
-        return self.lots_pendents[id_lot]
-
-    def _crear_dades_enviament_productes(
-        self,
-        lot: LotLogistic,
-        eleccio: EleccioTransportista,
-    ) -> List[DadesEnviamentProducte]:
-        return [
-            DadesEnviamentProducte(
-                id_lot=lot.id,
-                id_comanda=producte.id_comanda,
-                userid=producte.userid,
-                id_producte=producte.id_producte,
-                transportista_id=eleccio.transportista_id,
-                data_entrega_definitiva=eleccio.data_enviament,
-            )
-            for producte in lot.productes
-        ]
-
-    def _afegir_lot_al_graf(self, lot: LotLogistic) -> None:
-        lot_subject = self._az(f"lot_{lot.id}")
-        centre_subject = self._az(f"centre_logistic_{self.centre_logistic_id}")
-        self.graph.add((lot_subject, RDF.type, AGENTZON.Lot))
-        self.graph.add((lot_subject, AGENTZON.Id, Literal(lot.id)))
-        self.graph.add((lot_subject, AGENTZON.Ciutat, Literal(lot.ciutat)))
-        self.graph.add((lot_subject, AGENTZON.DataEnviament, Literal(lot.data_enviament, datatype=XSD.date)))
-        self.graph.add((centre_subject, AGENTZON.Distribueix, lot_subject))
-
-    def _afegir_producte_localitzat_al_graf(self, producte_localitzat: ProducteLocalitzat, lot: LotLogistic) -> None:
-        producte_id = getattr(producte_localitzat, "id_producte", "")
-        if not producte_id:
-            return
-
-        producte_subject = self._az(f"producte_localitzat_{lot.id}_{producte_id}")
-        lot_subject = self._az(f"lot_{lot.id}")
-        centre_subject = self._az(f"centre_logistic_{self.centre_logistic_id}")
-        self.graph.add((lot_subject, AGENTZON.TeProducte, self._az(producte_id)))
-        self.graph.add((producte_subject, RDF.type, AGENTZON.ProducteLocalitzat))
-        self.graph.add((producte_subject, AGENTZON.Localitza, self._az(producte_id)))
-        self.graph.add((producte_subject, AGENTZON.Adreça, Literal(producte_localitzat.adreca)))
-        self.graph.add((producte_subject, AGENTZON.Ciutat, Literal(producte_localitzat.ciutat)))
-        self.graph.add((producte_subject, AGENTZON.DataEnviament, Literal(lot.data_enviament, datatype=XSD.date)))
-        self.graph.add((centre_subject, AGENTZON.RepAvis, producte_subject))
-
-    def _afegir_peticio_transport_al_graf(self, peticio: PeticioTransport) -> None:
-        token = f"{self.centre_logistic_id}_{peticio.ciutat_desti}_{peticio.data_enviament}_{peticio.pes}".replace(" ", "_")
-        peticio_subject = self._az(f"peticio_transport_{token}")
-        centre_subject = self._az(f"centre_logistic_{self.centre_logistic_id}")
-        self.graph.add((peticio_subject, RDF.type, AGENTZON.PeticioTransport))
-        self.graph.add((peticio_subject, AGENTZON.Ciutat, Literal(peticio.ciutat_desti)))
-        self.graph.add((peticio_subject, AGENTZON.Pes, Literal(peticio.pes, datatype=XSD.float)))
-        self.graph.add(
-            (peticio_subject, AGENTZON.DataEnviament, Literal(peticio.data_enviament, datatype=XSD.date))
-        )
-        self.graph.add((centre_subject, AGENTZON.Negocia, peticio_subject))
-
-    def _afegir_oferta_al_graf(self, oferta: RespostaOfertaTransport) -> None:
-        oferta_subject = self._az(f"resposta_oferta_transport_{oferta.id_lot}_{oferta.transportista_id}")
-        centre_subject = self._az(f"centre_logistic_{self.centre_logistic_id}")
-        self.graph.add((oferta_subject, RDF.type, AGENTZON.RespostaOfertaTransport))
-        self.graph.add((centre_subject, AGENTZON.RepOferta, oferta_subject))
-
-    def _afegir_eleccio_al_graf(self, eleccio: EleccioTransportista) -> None:
-        eleccio_subject = self._az(f"eleccio_transportista_{eleccio.id_lot}")
-        transportista_subject = self._az(f"transportista_{eleccio.transportista_id}")
-        self.graph.add((eleccio_subject, RDF.type, AGENTZON.EleccióTransportista))
-        self.graph.add((transportista_subject, RDF.type, AGENTZON.Transportista))
-        self.graph.add((transportista_subject, AGENTZON.EsEscollit, eleccio_subject))
 
 
 def create_app(centre_logistic: Optional[AgentCentreLogistic] = None) -> Flask:
@@ -500,7 +484,7 @@ def create_app(centre_logistic: Optional[AgentCentreLogistic] = None) -> Flask:
             elif (props["content"], RDF.type, AGENTZON.ProducteLocalitzat) in incoming:
                 producte = read_producte_localitzat(incoming, props["content"])
                 lot = centre_logistic.pla_assignar_producte_a_lot(producte)
-                content = build_lot_assignat_response(lot.id, producte.id_producte)
+                content = build_lot_assignat_response(lot["id"], producte["id_producte"])
                 response = build_message(
                     "confirm",
                     AGENTZON[f"agent_centre_logistic_{centre_logistic.centre_logistic_id}"],
@@ -522,6 +506,10 @@ def create_app(centre_logistic: Optional[AgentCentreLogistic] = None) -> Flask:
             )
 
         return Response(response.serialize(format="xml"), mimetype="application/rdf+xml")
+
+    @app.route("/Info", methods=["GET"])
+    def info():
+        return Response(centre_logistic.graph.serialize(format="turtle"), mimetype="text/turtle")
 
     return app
 

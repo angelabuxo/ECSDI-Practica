@@ -3,13 +3,13 @@ import sys
 from typing import Optional
 
 from flask import Flask, Response, request
-from rdflib import Graph, RDF
+from rdflib import Graph, Literal, RDF
 
 from AgentZon.agents.logging_utils import configure_pretty_logging
 from AgentZon.config import AGENTZON
 from AgentZon.protocols.centre_logistic import (
-    RespostaOfertaTransport,
     build_resposta_oferta_transport_action,
+    get_resposta_oferta_transport_subject,
     read_peticio_transport,
     sumar_dies_iso,
 )
@@ -29,14 +29,16 @@ class AgentTransportista:
         self.uri = AGENTZON[f"agent_{transportista_id}"]
         self.estat = Graph()
         self.estat.bind("az", AGENTZON)
+        self.estat.add((self.uri, RDF.type, AGENTZON.Transportista))
+        self.estat.add((self.uri, AGENTZON.Id, Literal(self.transportista_id)))
 
-    def preparar_oferta(self, peticio) -> RespostaOfertaTransport:
-        return RespostaOfertaTransport(
-            id_lot="",
-            transportista_id=self.transportista_id,
-            cost=round(self.cost_base + peticio.pes, 2),
-            data_enviament=sumar_dies_iso(peticio.data_enviament, self.dies_extra),
-        )
+    def preparar_oferta(self, peticio: dict) -> dict:
+        return {
+            "id_lot": "",
+            "transportista_id": self.transportista_id,
+            "cost": round(self.cost_base + float(peticio["pes"]), 2),
+            "data_enviament": sumar_dies_iso(peticio["data_enviament"], self.dies_extra),
+        }
 
     def registrar_al_directori(self, directory_address: str, message_sender=http_send_message) -> dict:
         content = build_register_action(
@@ -70,10 +72,18 @@ def create_app(transportista: Optional[AgentTransportista] = None) -> Flask:
                 peticio_subj = props["content"]
                 peticio = read_peticio_transport(incoming, peticio_subj)
                 transportista.estat.add((transportista.uri, AGENTZON.RepUna, peticio_subj))
+                for triple in incoming.triples((peticio_subj, None, None)):
+                    transportista.estat.add(triple)
+
                 oferta = transportista.preparar_oferta(peticio)
                 oferta_graph = build_resposta_oferta_transport_action(oferta)
+                oferta_subj = get_resposta_oferta_transport_subject(oferta_graph)
+
+                transportista.estat.add((transportista.uri, AGENTZON.Genera, oferta_subj))
+                for triple in oferta_graph:
+                    transportista.estat.add(triple)
+
                 oferta_graph.add((transportista.uri, AGENTZON.RepUna, peticio_subj))
-                oferta_subj = next(oferta_graph.subjects(RDF.type, AGENTZON.RespostaOfertaTransport))
                 oferta_graph.add((transportista.uri, AGENTZON.Genera, oferta_subj))
                 response = build_message(
                     "inform",
@@ -83,11 +93,19 @@ def create_app(transportista: Optional[AgentTransportista] = None) -> Flask:
                     msgcnt=1,
                 )
             else:
-                response = build_not_understood(transportista.uri, props.get("sender", AGENTZON.unknown_agent), msgcnt=1)
+                response = build_not_understood(
+                    transportista.uri,
+                    props.get("sender", AGENTZON.unknown_agent),
+                    msgcnt=1,
+                )
         except Exception:
             response = build_not_understood(transportista.uri, AGENTZON.unknown_agent, msgcnt=1)
 
         return Response(response.serialize(format="xml"), mimetype="application/rdf+xml")
+
+    @app.route("/Info", methods=["GET"])
+    def info():
+        return Response(transportista.estat.serialize(format="turtle"), mimetype="text/turtle")
 
     return app
 

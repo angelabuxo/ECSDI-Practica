@@ -8,18 +8,11 @@ from rdflib import RDF
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from AgentZon.config import AGENTZON
+from AgentZon.agents.agent_centre_logistic import AgentCentreLogistic, LOG, create_app
 from AgentZon.agents.agent_directory import AgentDirectory
-from AgentZon.agents.agent_centre_logistic import AgentCentreLogistic, create_app
 from AgentZon.agents.agent_transportista import AgentTransportista, create_app as create_transportista_app
-from AgentZon.protocols.directory import build_register_action
+from AgentZon.config import AGENTZON
 from AgentZon.protocols.centre_logistic import (
-    DadesEnviamentProducte,
-    EleccioTransportista,
-    PeticioCobramentProducte,
-    PeticioTransport,
-    ProducteLocalitzat,
-    RespostaOfertaTransport,
     build_producte_localitzat_action,
     read_lot_assignat_response,
 )
@@ -27,6 +20,21 @@ from AgentZon.protocols.fipa_acl import build_message, get_message_properties, p
 
 
 class AgentCentreLogisticTest(unittest.TestCase):
+    def _producte(self, **overrides):
+        payload = {
+            "id_producte": "p001",
+            "id_comanda": "c001",
+            "userid": "u001",
+            "adreca": "Carrer Test 1, Barcelona",
+            "ciutat": "Barcelona",
+            "prioritat": 1,
+            "data_limit": "2026-05-03",
+            "pes": 2.0,
+            "import_producte": 99.95,
+        }
+        payload.update(overrides)
+        return payload
+
     def test_loads_ontology_with_logistic_center_class(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
 
@@ -46,105 +54,64 @@ class AgentCentreLogisticTest(unittest.TestCase):
 
     def test_assigns_products_to_compatible_lot_by_shipping_day(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
-        producte_1 = ProducteLocalitzat(
-            id_producte="p001",
-            id_comanda="c001",
-            userid="u001",
-            adreca="Carrer Test 1, Barcelona",
-            ciutat="Barcelona",
-            prioritat=2,
-            data_limit="2026-05-03",
-            pes=2.5,
-            import_producte=99.95,
-        )
-        producte_2 = ProducteLocalitzat(
-            id_producte="p002",
-            id_comanda="c002",
-            userid="u002",
-            adreca="Carrer Diferent 8, Girona",
-            ciutat="Barcelona",
-            prioritat=1,
-            data_limit="2026-05-03",
-            pes=1.0,
-            import_producte=49.95,
+        lot_1 = agent.pla_assignar_producte_a_lot(self._producte(id_producte="p001", pes=2.5))
+        lot_2 = agent.pla_assignar_producte_a_lot(
+            self._producte(
+                id_producte="p002",
+                id_comanda="c002",
+                userid="u002",
+                adreca="Carrer Diferent 8, Girona",
+                pes=1.0,
+            )
         )
 
-        lot_1 = agent.pla_assignar_producte_a_lot(producte_1)
-        lot_2 = agent.pla_assignar_producte_a_lot(producte_2)
-
-        self.assertEqual(lot_1.id, lot_2.id)
-        self.assertEqual(lot_1.id, "bcn-0001")
-        lot_node = AGENTZON[f"lot_{lot_1.id}"]
+        lot_node = AGENTZON[f"lot_{lot_1['id']}"]
+        self.assertEqual(lot_1["id"], lot_2["id"])
+        self.assertEqual(lot_1["id"], "bcn-0001")
         self.assertIn((lot_node, RDF.type, AGENTZON.Lot), agent.graph)
         self.assertIn((lot_node, AGENTZON.TeProducte, AGENTZON["p001"]), agent.graph)
         self.assertIn((lot_node, AGENTZON.TeProducte, AGENTZON["p002"]), agent.graph)
-        self.assertIn((AGENTZON[f"producte_localitzat_{lot_1.id}_p001"], AGENTZON.Localitza, AGENTZON["p001"]), agent.graph)
-        self.assertIn((AGENTZON[f"producte_localitzat_{lot_1.id}_p002"], AGENTZON.Localitza, AGENTZON["p002"]), agent.graph)
-        self.assertEqual([p.id_producte for p in lot_1.productes], ["p001", "p002"])
-        self.assertEqual(lot_1.pes_total, 3.5)
-        self.assertEqual(lot_1.data_enviament, "2026-05-03")
+        self.assertEqual(sorted(producte["id_producte"] for producte in lot_2["productes"]), ["p001", "p002"])
+        self.assertEqual(lot_2["pes_total"], 3.5)
+        self.assertEqual(lot_2["data_enviament"], "2026-05-03")
 
     def test_creates_sequential_lot_ids_with_centre_suffix_prefix(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
-        producte_1 = ProducteLocalitzat(
-            id_producte="p001",
-            id_comanda="c001",
-            userid="u001",
-            adreca="Carrer Test 1, Barcelona",
-            ciutat="Barcelona",
-            prioritat=1,
-            data_limit="2026-05-03",
-            pes=2.5,
-            import_producte=99.95,
-        )
-        producte_2 = ProducteLocalitzat(
-            id_producte="p002",
-            id_comanda="c002",
-            userid="u002",
-            adreca="Carrer Diferent 2, Barcelona",
-            ciutat="Girona",
-            prioritat=1,
-            data_limit="2026-05-04",
-            pes=1.0,
-            import_producte=49.95,
+        lot_1 = agent.pla_assignar_producte_a_lot(self._producte(id_producte="p001", data_limit="2026-05-03"))
+        lot_2 = agent.pla_assignar_producte_a_lot(
+            self._producte(
+                id_producte="p002",
+                id_comanda="c002",
+                userid="u002",
+                ciutat="Girona",
+                data_limit="2026-05-04",
+                pes=1.0,
+                import_producte=49.95,
+            )
         )
 
-        lot_1 = agent.pla_assignar_producte_a_lot(producte_1)
-        lot_2 = agent.pla_assignar_producte_a_lot(producte_2)
-
-        self.assertEqual(lot_1.id, "bcn-0001")
-        self.assertEqual(lot_2.id, "bcn-0002")
+        self.assertEqual(lot_1["id"], "bcn-0001")
+        self.assertEqual(lot_2["id"], "bcn-0002")
 
     def test_emits_debug_logs_for_lot_assignment_and_transport_selection(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
-        producte = ProducteLocalitzat(
-            id_producte="p001",
-            id_comanda="c001",
-            userid="u001",
-            adreca="Carrer Test 1, Barcelona",
-            ciutat="Barcelona",
-            prioritat=1,
-            data_limit="2026-05-03",
-            pes=2.0,
-            import_producte=99.95,
-        )
 
         with self.assertLogs("AgentZon.agents.agent_centre_logistic", level="DEBUG") as logs:
-            lot = agent.pla_assignar_producte_a_lot(producte)
-            agent.pla_cerca_transportista(lot.id)
+            lot = agent.pla_assignar_producte_a_lot(self._producte())
+            agent.pla_cerca_transportista(lot["id"])
             agent.registrar_oferta_transport(
-                RespostaOfertaTransport(
-                    id_lot=lot.id,
-                    transportista_id="transport-1",
-                    cost=9.0,
-                    data_enviament="2026-05-03",
-                )
+                {
+                    "id_lot": lot["id"],
+                    "transportista_id": "transport-1",
+                    "cost": 9.0,
+                    "data_enviament": "2026-05-03",
+                }
             )
-            agent.pla_transportista_escollit(lot.id)
+            agent.pla_transportista_escollit(lot["id"])
 
         log_text = "\n".join(logs.output)
         self.assertIn("assignant producte", log_text)
-        self.assertIn(lot.id, log_text)
+        self.assertIn(lot["id"], log_text)
         self.assertIn("peticio transport", log_text)
         self.assertIn("oferta transport rebuda", log_text)
         self.assertIn("transportista escollit", log_text)
@@ -152,22 +119,11 @@ class AgentCentreLogisticTest(unittest.TestCase):
     def test_comm_assigns_producte_localitzat_to_lot(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
         app = create_app(agent)
-        producte = ProducteLocalitzat(
-            id_producte="p001",
-            id_comanda="c001",
-            userid="u001",
-            adreca="Carrer Test 1, Barcelona",
-            ciutat="Barcelona",
-            prioritat=1,
-            data_limit="2026-05-03",
-            pes=2.5,
-            import_producte=99.95,
-        )
         message = build_message(
             "request",
             AGENTZON.agent_compra,
             AGENTZON.agent_centre_logistic_bcn,
-            build_producte_localitzat_action(producte),
+            build_producte_localitzat_action(self._producte(pes=2.5)),
             msgcnt=1,
         )
 
@@ -179,119 +135,81 @@ class AgentCentreLogisticTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(props["performative"], "confirm")
         self.assertEqual(lot_response["id_producte"], "p001")
-        self.assertIn(lot_response["id_lot"], agent.lots_pendents)
-        self.assertEqual(agent.lots_pendents[lot_response["id_lot"]].productes[0].id_producte, "p001")
+        lot_node = AGENTZON[f"lot_{lot_response['id_lot']}"]
+        self.assertIn((lot_node, RDF.type, AGENTZON.Lot), agent.graph)
+        self.assertIn((lot_node, AGENTZON.TeProducte, AGENTZON["p001"]), agent.graph)
 
     def test_prepares_transport_request_for_pending_lot(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
-        producte = ProducteLocalitzat(
-            id_producte="p001",
-            id_comanda="c001",
-            userid="u001",
-            adreca="Carrer Test 1, Barcelona",
-            ciutat="Barcelona",
-            prioritat=2,
-            data_limit="2026-05-04",
-            pes=2.0,
-            import_producte=99.95,
-        )
-        lot = agent.pla_assignar_producte_a_lot(producte)
+        lot = agent.pla_assignar_producte_a_lot(self._producte(data_limit="2026-05-04"))
 
-        peticio = agent.pla_cerca_transportista(lot.id)
+        peticio = agent.pla_cerca_transportista(lot["id"])
+        lot_node = AGENTZON[f"lot_{lot['id']}"]
 
-        self.assertIsInstance(peticio, PeticioTransport)
-        self.assertEqual(peticio.ciutat_desti, "Barcelona")
-        self.assertEqual(peticio.pes, 2.0)
-        self.assertEqual(peticio.data_enviament, "2026-05-04")
-        self.assertEqual(lot.estat, "NEGOCIANT_TRANSPORT")
+        self.assertEqual(peticio["ciutat_desti"], "Barcelona")
+        self.assertEqual(peticio["pes"], 2.0)
+        self.assertEqual(peticio["data_enviament"], "2026-05-04")
+        self.assertEqual(str(agent.graph.value(lot_node, LOG.estat)), "NEGOCIANT_TRANSPORT")
 
     def test_selects_cheapest_transport_offer_before_lot_deadline(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
-        producte = ProducteLocalitzat(
-            id_producte="p001",
-            id_comanda="c001",
-            userid="u001",
-            adreca="Carrer Test 1, Barcelona",
-            ciutat="Barcelona",
-            prioritat=1,
-            data_limit="2026-05-03",
-            pes=2.0,
-            import_producte=99.95,
-        )
-        lot = agent.pla_assignar_producte_a_lot(producte)
-        agent.pla_cerca_transportista(lot.id)
+        lot = agent.pla_assignar_producte_a_lot(self._producte())
+        agent.pla_cerca_transportista(lot["id"])
         agent.registrar_oferta_transport(
-            RespostaOfertaTransport(
-                id_lot=lot.id,
-                transportista_id="transport-1",
-                cost=9.0,
-                data_enviament="2026-05-03",
-            )
+            {
+                "id_lot": lot["id"],
+                "transportista_id": "transport-1",
+                "cost": 9.0,
+                "data_enviament": "2026-05-03",
+            }
         )
         agent.registrar_oferta_transport(
-            RespostaOfertaTransport(
-                id_lot=lot.id,
-                transportista_id="transport-2",
-                cost=6.5,
-                data_enviament="2026-05-04",
-            )
+            {
+                "id_lot": lot["id"],
+                "transportista_id": "transport-2",
+                "cost": 6.5,
+                "data_enviament": "2026-05-04",
+            }
         )
 
-        eleccio, missatges = agent.pla_transportista_escollit(lot.id)
+        eleccio, missatges = agent.pla_transportista_escollit(lot["id"])
+        lot_node = AGENTZON[f"lot_{lot['id']}"]
 
-        self.assertIsInstance(eleccio, EleccioTransportista)
         self.assertEqual(len(missatges), 1)
-        self.assertEqual(eleccio.id_lot, lot.id)
-        self.assertEqual(eleccio.transportista_id, "transport-1")
-        self.assertEqual(eleccio.cost, 9.0)
-        self.assertEqual(lot.estat, "TRANSPORTISTA_ESCOLLIT")
+        self.assertEqual(eleccio["id_lot"], lot["id"])
+        self.assertEqual(eleccio["transportista_id"], "transport-1")
+        self.assertEqual(eleccio["cost"], 9.0)
+        self.assertEqual(str(agent.graph.value(lot_node, LOG.estat)), "TRANSPORTISTA_ESCOLLIT")
 
     def test_transport_selection_creates_delivery_messages_for_compra(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
-        producte_1 = ProducteLocalitzat(
-            id_producte="p001",
-            id_comanda="c001",
-            userid="u001",
-            adreca="Carrer Test 1, Barcelona",
-            ciutat="Barcelona",
-            prioritat=1,
-            data_limit="2026-05-03",
-            pes=2.0,
-            import_producte=99.95,
-        )
-        producte_2 = ProducteLocalitzat(
-            id_producte="p002",
-            id_comanda="c002",
-            userid="u002",
-            adreca="Carrer Test 1, Barcelona",
-            ciutat="Barcelona",
-            prioritat=1,
-            data_limit="2026-05-03",
-            pes=1.0,
-            import_producte=49.95,
-        )
-        lot = agent.pla_assignar_producte_a_lot(producte_1)
-        agent.pla_assignar_producte_a_lot(producte_2)
-        agent.pla_cerca_transportista(lot.id)
-        agent.registrar_oferta_transport(
-            RespostaOfertaTransport(
-                id_lot=lot.id,
-                transportista_id="transport-1",
-                cost=9.0,
-                data_enviament="2026-05-03",
+        lot = agent.pla_assignar_producte_a_lot(self._producte(id_producte="p001", id_comanda="c001"))
+        agent.pla_assignar_producte_a_lot(
+            self._producte(
+                id_producte="p002",
+                id_comanda="c002",
+                userid="u002",
+                pes=1.0,
+                import_producte=49.95,
             )
         )
+        agent.pla_cerca_transportista(lot["id"])
+        agent.registrar_oferta_transport(
+            {
+                "id_lot": lot["id"],
+                "transportista_id": "transport-1",
+                "cost": 9.0,
+                "data_enviament": "2026-05-03",
+            }
+        )
 
-        eleccio, missatges = agent.pla_transportista_escollit(lot.id)
+        eleccio, missatges = agent.pla_transportista_escollit(lot["id"])
 
-        self.assertIsInstance(eleccio, EleccioTransportista)
+        self.assertEqual(eleccio["transportista_id"], "transport-1")
         self.assertEqual(len(missatges), 2)
-        self.assertTrue(all(isinstance(missatge, DadesEnviamentProducte) for missatge in missatges))
-        self.assertEqual([missatge.id_producte for missatge in missatges], ["p001", "p002"])
-        self.assertEqual([missatge.id_comanda for missatge in missatges], ["c001", "c002"])
-        self.assertEqual([missatge.userid for missatge in missatges], ["u001", "u002"])
-        self.assertEqual({missatge.transportista_id for missatge in missatges}, {"transport-1"})
-        self.assertEqual({missatge.data_entrega_definitiva for missatge in missatges}, {"2026-05-03"})
+        self.assertEqual(sorted(missatge["id_producte"] for missatge in missatges), ["p001", "p002"])
+        self.assertEqual({missatge["transportista_id"] for missatge in missatges}, {"transport-1"})
+        self.assertEqual({missatge["data_entrega_definitiva"] for missatge in missatges}, {"2026-05-03"})
 
     def test_discovers_transport_agents_and_selects_best_offer(self):
         directory = AgentDirectory()
@@ -333,91 +251,64 @@ class AgentCentreLogisticTest(unittest.TestCase):
             directory_address="memory://directory/Register",
             message_sender=send_in_memory,
         )
-        producte = ProducteLocalitzat(
-            id_producte="p001",
-            id_comanda="c001",
-            userid="u001",
-            adreca="Carrer Test 1, Barcelona",
-            ciutat="Barcelona",
-            prioritat=1,
-            data_limit="2026-05-03",
-            pes=2.0,
-            import_producte=99.95,
-        )
-        lot = agent.pla_assignar_producte_a_lot(producte)
+        lot = agent.pla_assignar_producte_a_lot(self._producte())
 
-        eleccio, missatges = agent.negociar_transport_amb_transportistes(lot.id)
+        eleccio, missatges = agent.negociar_transport_amb_transportistes(lot["id"])
 
-        self.assertEqual(eleccio.transportista_id, "transport-b")
-        self.assertEqual(eleccio.cost, 7.0)
-        self.assertEqual(len(agent.ofertes_rebudes[lot.id]), 2)
-        self.assertEqual(missatges[0].transportista_id, "transport-b")
+        self.assertEqual(eleccio["transportista_id"], "transport-b")
+        self.assertEqual(eleccio["cost"], 7.0)
+        self.assertEqual(len(agent._read_ofertes(lot["id"])), 2)
+        self.assertEqual(missatges[0]["transportista_id"], "transport-b")
 
     def test_rejects_transport_selection_when_no_offer_meets_deadline(self):
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
-        producte = ProducteLocalitzat(
-            id_producte="p001",
-            id_comanda="c001",
-            userid="u001",
-            adreca="Carrer Test 1, Barcelona",
-            ciutat="Barcelona",
-            prioritat=1,
-            data_limit="2026-05-03",
-            pes=2.0,
-            import_producte=99.95,
-        )
-        lot = agent.pla_assignar_producte_a_lot(producte)
-        agent.pla_cerca_transportista(lot.id)
+        lot = agent.pla_assignar_producte_a_lot(self._producte())
+        agent.pla_cerca_transportista(lot["id"])
         agent.registrar_oferta_transport(
-            RespostaOfertaTransport(
-                id_lot=lot.id,
-                transportista_id="transport-1",
-                cost=6.5,
-                data_enviament="2026-05-04",
-            )
+            {
+                "id_lot": lot["id"],
+                "transportista_id": "transport-1",
+                "cost": 6.5,
+                "data_enviament": "2026-05-04",
+            }
         )
 
         with self.assertRaisesRegex(ValueError, "dins del termini"):
-            agent.pla_transportista_escollit(lot.id)
+            agent.pla_transportista_escollit(lot["id"])
 
     def test_shipping_today_creates_charging_requests_for_sent_products(self):
         today = date.today().isoformat()
         tomorrow = (date.today() + timedelta(days=1)).isoformat()
         agent = AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona")
-        producte_avui = ProducteLocalitzat(
-            id_producte="p001",
-            id_comanda="c001",
-            userid="u001",
-            adreca="Carrer Test 1, Barcelona",
-            ciutat="Barcelona",
-            prioritat=1,
-            data_limit=today,
-            pes=2.0,
-            import_producte=99.95,
+        lot_avui = agent.pla_assignar_producte_a_lot(self._producte(data_limit=today))
+        agent.pla_assignar_producte_a_lot(
+            self._producte(
+                id_producte="p002",
+                id_comanda="c002",
+                userid="u002",
+                data_limit=tomorrow,
+                pes=1.0,
+                import_producte=49.95,
+            )
         )
-        producte_dema = ProducteLocalitzat(
-            id_producte="p002",
-            id_comanda="c002",
-            userid="u002",
-            adreca="Carrer Test 2, Barcelona",
-            ciutat="Barcelona",
-            prioritat=1,
-            data_limit=tomorrow,
-            pes=1.0,
-            import_producte=49.95,
-        )
-        lot_avui = agent.pla_assignar_producte_a_lot(producte_avui)
-        agent.pla_assignar_producte_a_lot(producte_dema)
 
         peticions = agent.pla_producte_sha_enviat(today=today)
+        lot_node = AGENTZON[f"lot_{lot_avui['id']}"]
 
         self.assertEqual(len(peticions), 1)
-        self.assertIsInstance(peticions[0], PeticioCobramentProducte)
-        self.assertEqual(peticions[0].userid, "u001")
-        self.assertEqual(peticions[0].id_comanda, "c001")
-        self.assertEqual(peticions[0].id_producte, "p001")
-        self.assertEqual(peticions[0].import_cobrament, 99.95)
-        self.assertEqual(lot_avui.estat, "ENVIAT")
+        self.assertEqual(peticions[0]["userid"], "u001")
+        self.assertEqual(peticions[0]["id_comanda"], "c001")
+        self.assertEqual(peticions[0]["id_producte"], "p001")
+        self.assertEqual(peticions[0]["import_cobrament"], 99.95)
+        self.assertEqual(str(agent.graph.value(lot_node, LOG.estat)), "ENVIAT")
+
+    def test_info_endpoint_returns_turtle_runtime_graph(self):
+        app = create_app(AgentCentreLogistic(centre_logistic_id="magatzem-bcn", ubicacio="Barcelona"))
+
+        response = app.test_client().get("/Info")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"@prefix az:", response.data)
 
 
 if __name__ == "__main__":
