@@ -70,7 +70,7 @@ class AgentCercador:
             id=str(self._literal_de_predicats(subject, [AGENTZON.Id], subject.split("/")[-1])),
             nom=str(self._literal_de_predicats(subject, [AGENTZON.Nom], "")),
             preu=float(self._literal_de_predicats(subject, [AGENTZON.Preu], 0.0)),
-            descr=str(self._literal_de_predicats(subject, [AGENTZON.Descripció], "")),
+            descr=str(self._literal_de_predicats(subject, [AGENTZON.Descripcio], "")),
             categ=str(self._literal_de_predicats(subject, [AGENTZON.Categoria], "")),
             marca=str(self._literal_de_predicats(subject, [AGENTZON.Marca], "")),
             pes=int(float(self._literal_de_predicats(subject, [AGENTZON.Pes], 0))),

@@ -19,3 +19,23 @@ az:ubicacio_producte_p004 a az:UbicacioProducte ;
     az:IdProducte "p004" ;
     az:Magatzem "magatzem-bcn" ;
     az:Ciutat "Barcelona" .
+
+az:ubicacio_producte_p005 a az:UbicacioProducte ;
+    az:IdProducte "p005" ;
+    az:Magatzem "magatzem-bcn" ;
+    az:Ciutat "Barcelona" .
+
+az:ubicacio_producte_p006 a az:UbicacioProducte ;
+    az:IdProducte "p006" ;
+    az:Magatzem "magatzem-bcn" ;
+    az:Ciutat "Barcelona" .
+
+az:ubicacio_producte_p007 a az:UbicacioProducte ;
+    az:IdProducte "p007" ;
+    az:Magatzem "magatzem-bcn" ;
+    az:Ciutat "Barcelona" .
+
+az:ubicacio_producte_p008 a az:UbicacioProducte ;
+    az:IdProducte "p008" ;
+    az:Magatzem "magatzem-bcn" ;
+    az:Ciutat "Barcelona" .

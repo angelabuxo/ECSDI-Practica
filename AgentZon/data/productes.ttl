@@ -5,7 +5,7 @@ az:p001 a az:Producte ;
     az:Id "p001" ;
     az:Nom "Portatil Lenovo IdeaPad" ;
     az:Preu "699.99"^^xsd:decimal ;
-    az:Descripció "Portatil lleuger per estudi i oficina" ;
+    az:Descripcio "Portatil lleuger per estudi i oficina" ;
     az:Categoria "informatica" ;
     az:Marca "Lenovo" ;
     az:Pes "1600"^^xsd:integer .
@@ -14,7 +14,7 @@ az:p002 a az:Producte ;
     az:Id "p002" ;
     az:Nom "Auriculars Sony WH-CH520" ;
     az:Preu "49.9"^^xsd:decimal ;
-    az:Descripció "Auriculars bluetooth amb bateria de llarga durada" ;
+    az:Descripcio "Auriculars bluetooth amb bateria de llarga durada" ;
     az:Categoria "audio" ;
     az:Marca "Sony" ;
     az:Pes "147"^^xsd:integer .
@@ -23,7 +23,7 @@ az:p003 a az:Producte ;
     az:Id "p003" ;
     az:Nom "Cafetera Philips Series 2200" ;
     az:Preu "329.0"^^xsd:decimal ;
-    az:Descripció "Cafetera automatica per cafe espresso" ;
+    az:Descripcio "Cafetera automatica per cafe espresso" ;
     az:Categoria "llar" ;
     az:Marca "Philips" ;
     az:Pes "7500"^^xsd:integer .
@@ -32,7 +32,7 @@ az:p004 a az:Producte ;
     az:Id "p004" ;
     az:Nom "Kindle Paperwhite" ;
     az:Preu "159.99"^^xsd:decimal ;
-    az:Descripció "Lector de llibres electronics amb pantalla antireflexos" ;
+    az:Descripcio "Lector de llibres electronics amb pantalla antireflexos" ;
     az:Categoria "llibres" ;
     az:Marca "Amazon" ;
     az:Pes "205"^^xsd:integer .
@@ -41,7 +41,7 @@ az:p005 a az:Producte ;
     az:Id "p005" ;
     az:Nom "AirPods Pro" ;
     az:Preu "279.0"^^xsd:decimal ;
-    az:Descripció "Auriculars sense fil amb cancellacio activa de soroll" ;
+    az:Descripcio "Auriculars sense fil amb cancellacio activa de soroll" ;
     az:Categoria "audio" ;
     az:Marca "Apple" ;
     az:Pes "56"^^xsd:integer .
@@ -50,7 +50,7 @@ az:p006 a az:Producte ;
     az:Id "p006" ;
     az:Nom "MacBook Pro M4" ;
     az:Preu "2399.0"^^xsd:decimal ;
-    az:Descripció "Portatil Apple d'alt rendiment amb xip M4 per professionals" ;
+    az:Descripcio "Portatil Apple d'alt rendiment amb xip M4 per professionals" ;
     az:Categoria "informatica" ;
     az:Marca "Apple" ;
     az:Pes "1550"^^xsd:integer .
@@ -59,7 +59,7 @@ az:p007 a az:Producte ;
     az:Id "p007" ;
     az:Nom "MacBook Pro M5" ;
     az:Preu "2699.0"^^xsd:decimal ;
-    az:Descripció "Portatil Apple de nova generacio amb xip M5" ;
+    az:Descripcio "Portatil Apple de nova generacio amb xip M5" ;
     az:Categoria "informatica" ;
     az:Marca "Apple" ;
     az:Pes "1540"^^xsd:integer .
@@ -68,7 +68,7 @@ az:p008 a az:Producte ;
     az:Id "p008" ;
     az:Nom "iPhone 17 Pro" ;
     az:Preu "1399.0"^^xsd:decimal ;
-    az:Descripció "Smartphone Apple amb sistema de cameres avancat i alt rendiment" ;
+    az:Descripcio "Smartphone Apple amb sistema de cameres avancat i alt rendiment" ;
     az:Categoria "telefonia" ;
     az:Marca "Apple" ;
     az:Pes "210"^^xsd:integer .

@@ -1,14 +1,62 @@
 @prefix az: <http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+az:dades_enviament_usuari_01 a az:DadesEnviamentUsuari ;
+    az:Adreça "Barcelona" ;
+    az:IdUsuari "01" ;
+    az:Prioritat 2 .
+
+az:dades_enviament_usuari_02 a az:DadesEnviamentUsuari ;
+    az:Adreça "Barcelona" ;
+    az:IdUsuari "02" ;
+    az:Prioritat 1 .
+
+az:dades_enviament_usuari_03 a az:DadesEnviamentUsuari ;
+    az:Adreça "StQ" ;
+    az:IdUsuari "03" ;
+    az:Prioritat 1 .
+
+az:dades_enviament_usuari_1 a az:DadesEnviamentUsuari ;
+    az:Adreça "Eixample 425" ;
+    az:Ciutat "Barcelona" ;
+    az:IdUsuari "1" ;
+    az:Prioritat 2 .
+
+az:dades_enviament_usuari_12 a az:DadesEnviamentUsuari ;
+    az:Adreça "Barcelona" ;
+    az:IdUsuari "12" ;
+    az:Prioritat 2 .
+
 az:dades_enviament_usuari_1234 a az:DadesEnviamentUsuari ;
     az:Adreça "Eixample" ;
     az:IdUsuari "1234" ;
     az:Prioritat 2 .
 
+az:dades_enviament_usuari_123456 a az:DadesEnviamentUsuari ;
+    az:Adreça "Madrid" ;
+    az:IdUsuari "123456" ;
+    az:Prioritat 2 .
+
+az:dades_enviament_usuari_2 a az:DadesEnviamentUsuari ;
+    az:Adreça "Balmes 284" ;
+    az:Ciutat "Barcelona" ;
+    az:IdUsuari "2" ;
+    az:Prioritat 2 .
+
+az:dades_enviament_usuari_234 a az:DadesEnviamentUsuari ;
+    az:Adreça "Barcelona" ;
+    az:IdUsuari "234" ;
+    az:Prioritat 2 .
+
 az:dades_enviament_usuari_4321 a az:DadesEnviamentUsuari ;
     az:Adreça "Barcelona" ;
     az:IdUsuari "4321" ;
+    az:Prioritat 1 .
+
+az:dades_enviament_usuari_u0010 a az:DadesEnviamentUsuari ;
+    az:Adreça "Carrer Aribau 1" ;
+    az:Ciutat "Matadepera" ;
+    az:IdUsuari "u0010" ;
     az:Prioritat 1 .
 
 az:dades_enviament_usuari_u1 a az:DadesEnviamentUsuari ;
