@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>AgentZon Purchase</title>
+</head>
+<body>
+  <h1>Confirm purchase</h1>
+  <ul>
+    {% for product in products %}
+    <li>{{ product.name }} - {{ product.price }}</li>
+    <input type="hidden" name="selected_product_ids" value="{{ product.product_id }}">
+    {% endfor %}
+  </ul>
+
+  <form method="post" action="/confirm-purchase">
+    {% for product in products %}
+    <input type="hidden" name="selected_product_ids" value="{{ product.product_id }}">
+    {% endfor %}
+    <label>User ID <input type="text" name="user_id" required></label>
+    <label>User name <input type="text" name="user_name" required></label>
+    <label>Street address <input type="text" name="street_address" required></label>
+    <label>City <input type="text" name="city" required></label>
+    <label>Priority
+      <select name="priority">
+        <option value="urgent">urgent</option>
+        <option value="standard">standard</option>
+        <option value="relaxed">relaxed</option>
+      </select>
+    </label>
+    <label>Payment method placeholder <input type="text" name="payment_method" required></label>
+    <button type="submit">Confirm purchase</button>
+  </form>
+</body>
+</html>

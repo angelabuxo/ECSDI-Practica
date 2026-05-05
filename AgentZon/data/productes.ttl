@@ -1,0 +1,39 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:product-P1001 a azon:Producte ;
+    azon:categoria "audio" ;
+    azon:descripcio "Wireless over-ear headphones with noise isolation" ;
+    azon:idProducte "P1001" ;
+    azon:marca "AuralMax" ;
+    azon:nom "Wireless Headphones" ;
+    azon:pes "1.5"^^xsd:float ;
+    azon:preu "89.99"^^xsd:float .
+
+azon:product-P1002 a azon:Producte ;
+    azon:categoria "audio" ;
+    azon:descripcio "Compact bluetooth speaker for travel" ;
+    azon:idProducte "P1002" ;
+    azon:marca "AuralMax" ;
+    azon:nom "Portable Speaker" ;
+    azon:pes "1.1"^^xsd:float ;
+    azon:preu "59.99"^^xsd:float .
+
+azon:product-P2001 a azon:Producte ;
+    azon:categoria "peripherals" ;
+    azon:descripcio "Mechanical keyboard with tactile switches" ;
+    azon:idProducte "P2001" ;
+    azon:marca "KeyForge" ;
+    azon:nom "Mechanical Keyboard" ;
+    azon:pes "2.4"^^xsd:float ;
+    azon:preu "129.0"^^xsd:float .
+
+azon:product-P3001 a azon:Producte ;
+    azon:categoria "home" ;
+    azon:descripcio "Ceramic mug for hot drinks" ;
+    azon:idProducte "P3001" ;
+    azon:marca "CasaNova" ;
+    azon:nom "Ceramic Coffee Mug" ;
+    azon:pes "0.6"^^xsd:float ;
+    azon:preu "15.5"^^xsd:float .
+
