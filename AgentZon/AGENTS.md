@@ -1,13 +1,9 @@
 Vull que revisis l'estat actual del projecte AgentZon com si fossis un assessor tècnic de la pràctica d'ECSDI. Abans de proposar o fer canvis, llegeix aquests fitxers:
 
 - @Enunciat.pdf, especialment la secció "3.3 Tareas básicas" i la part de "Segunda Fase".
-- @LabDoc.pdf, especialment les seccions sobre Flask, requests, rdflib, RDF/OWL, Turtle, SPARQL, SPARQLWrapper i agents d'exemple amb FIPA-ACL/Directory Service.
-- @README.md per entendre com s'executa el projecte ara mateix.
-- @JavierBejar/ com a carpeta de referència del professor (estructura, exemples d'agents i patrons de comunicació).
+- @REFERENCE/ com a carpeta de referència del professor (estructura, exemples d'agents i patrons de comunicació). És important utilitzar les mateixes eines (Flask, requests, rdflib, RDF/OWL, Turtle, SPARQL, SPARQLWrapper i agents d'exemple amb FIPA-ACL/Directory Service)
 - @AgentZon/ontologia/AgentZonOntology.rdf i @AgentZon/data/productes.ttl per veure ontologia i dades.
-- Els agents i protocols actuals dins @AgentZon/agents/ i @AgentZon/protocols/.
-- @AgentZon/DISTRIBUTED_RUN.md per validar el desplegament distribuït i l'ordre d'arrencada dels agents.
-- @AgentZon/Entrega-2.md on s'explica què necessitem per aquesta entrega.
+- @AgentZon/Entrega-3.md on s'explica la implementació per escrit del nostre sistema.
 
 Objectiu de la revisió:
 
@@ -32,23 +28,6 @@ en paralelo
 - El día de la demostración, no ejecutarla de manera realmente distribuida (todo en un único PC)
 
 
-Context actual del projecte:
-
-- La carpeta @JavierBejar/ s'utilitza com a plantilla de referència per contrastar arquitectura, protocols i estil d'implementació.
-- Volem refactoritzar @AgentZon/ perquè s'alineï amb les restriccions de la pràctica i la Segona Fase, mantenint simplicitat i coherència.
-- L'Agent Cercador està a @AgentZon/agents/agent_cercador.py.
-- La interfície web del Cercador és @AgentZon/web/templates/cercador.html i els estils són @AgentZon/web/static/style.css.
-- La cerca carrega l'ontologia RDF/XML i el catàleg Turtle amb rdflib.
-- Encara no hem implementat completament comunicació FIPA-ACL, DirectoryAgent ni agents separats per ports, però el LabDoc i FiberZone poden servir com a referència per quan calgui avançar cap a multiagent real.
-- El següent agent important serà @AgentZon/agents/agent_compra.py, que haurà d'alinear-se amb @AgentZon/protocols/compra.py i amb el disseny Prometheus documentat.
-
-Quan revisis el projecte, respon en català i estructura la resposta així:
-
-1. "Estat actual": què està ben encaminat i quines peces ja compleixen l'enunciat.
-2. "Riscos o desviacions": coses que poden penalitzar o allunyar-nos del que demanen.
-3. "Canvis recomanats ara": només canvis concrets i prioritzats que tinguin sentit en aquest moment.
-4. "No fer encara": coses que serien massa avançades o innecessàries ara mateix.
-5. "Següent pas proposat": una acció clara per continuar.
 
 Important:
 
