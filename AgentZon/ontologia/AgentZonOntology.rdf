@@ -669,8 +669,8 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Banc">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
-        <rdfs:comment xml:lang="ca">Proveïdor extern responsable de l’autorització i liquidació dels pagaments.</rdfs:comment>
-        <rdfs:label xml:lang="ca">Banc</rdfs:label>
+        <rdfs:comment xml:lang="ca">Concepte que representa un proveïdor de pagament que interactua amb el sistema per realitzar el cobrament als usuaris corresponents.</rdfs:comment>
+        <rdfs:label xml:lang="ca">ProveidorPagament</rdfs:label>
     </owl:Class>
     
 
@@ -678,7 +678,7 @@
     <!-- http://www.semanticweb.org/agentzon#CentreLogistic -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#CentreLogistic">
-        <rdfs:comment xml:lang="ca">Ubicació física o virtual on es preparen comandes i lots.</rdfs:comment>
+        <rdfs:comment xml:lang="ca">Concepte que representa un centre logístic físic que emmagatzema productes.</rdfs:comment>
         <rdfs:label xml:lang="ca">Centre logístic</rdfs:label>
     </owl:Class>
     
@@ -687,7 +687,7 @@
     <!-- http://www.semanticweb.org/agentzon#Comanda -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Comanda">
-        <rdfs:comment xml:lang="ca">Unitat de compra confirmada per un usuari.</rdfs:comment>
+        <rdfs:comment xml:lang="ca">Concepte que representa una comanda al sistema.</rdfs:comment>
         <rdfs:label xml:lang="ca">Comanda</rdfs:label>
     </owl:Class>
     
@@ -753,7 +753,7 @@
     <!-- http://www.semanticweb.org/agentzon#Devolucio -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Devolucio">
-        <rdfs:comment xml:lang="ca">Procés de retorn d’un producte i possible reemborsament.</rdfs:comment>
+        <rdfs:comment xml:lang="ca">Concepte que representa una devolució d’un producte per un usuari.</rdfs:comment>
         <rdfs:label xml:lang="ca">Devolució</rdfs:label>
     </owl:Class>
     
@@ -762,7 +762,7 @@
     <!-- http://www.semanticweb.org/agentzon#Feedback -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Feedback">
-        <rdfs:comment xml:lang="ca">Valoració o opinió d’un usuari després d’una compra.</rdfs:comment>
+        <rdfs:comment xml:lang="ca">Concepte que representa l’opinió i valoració d’un consumidor sobre un article adquirit.</rdfs:comment>
         <rdfs:label xml:lang="ca">Feedback</rdfs:label>
     </owl:Class>
     
@@ -789,7 +789,7 @@
     <!-- http://www.semanticweb.org/agentzon#Lot -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Lot">
-        <rdfs:comment xml:lang="ca">Agrupació logística de productes per negociar-ne l’enviament.</rdfs:comment>
+        <rdfs:comment xml:lang="ca">Concepte que representa una agrupació logística de productes al sistema.</rdfs:comment>
         <rdfs:label xml:lang="ca">Lot</rdfs:label>
     </owl:Class>
     
@@ -887,7 +887,7 @@
     <!-- http://www.semanticweb.org/agentzon#Producte -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Producte">
-        <rdfs:comment xml:lang="ca">Producte publicat al catàleg i susceptible de cerca, compra o recomanació.</rdfs:comment>
+        <rdfs:comment xml:lang="ca">Concepte que representa un producte en el sistema.</rdfs:comment>
         <rdfs:label xml:lang="ca">Producte</rdfs:label>
     </owl:Class>
     
@@ -986,7 +986,7 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Transportista">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
-        <rdfs:comment xml:lang="ca">Actor extern que envia ofertes i lliura lots de productes.</rdfs:comment>
+        <rdfs:comment xml:lang="ca">Concepte que representa un transportista que rep ofertes per lliurar comandes i envia la seva contraoferta esperant saber si és escollit o no.</rdfs:comment>
         <rdfs:label xml:lang="ca">Transportista</rdfs:label>
     </owl:Class>
     
@@ -1005,7 +1005,7 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Usuari">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
-        <rdfs:comment xml:lang="ca">Client final que cerca, compra, retorna i rep suggeriments.</rdfs:comment>
+        <rdfs:comment xml:lang="ca">Concepte que representa un usuari que pot interactuar amb el sistema, fent una cerca de productes, comprant-ne, donant feedback o sol·licitant una devolució.</rdfs:comment>
         <rdfs:label xml:lang="ca">Usuari</rdfs:label>
     </owl:Class>
     
@@ -1015,7 +1015,7 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#VenedorExtern">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
-        <rdfs:comment xml:lang="ca">Tercer que publica productes i pot assumir la logística externa.</rdfs:comment>
+        <rdfs:comment xml:lang="ca">Concepte que representa un venedor extern que interactua amb el sistema per afegir-hi productes o gestionar la venda d’aquests.</rdfs:comment>
         <rdfs:label xml:lang="ca">Venedor extern</rdfs:label>
     </owl:Class>
 </rdf:RDF>
