@@ -1,1 +1,9 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+
+azon:purchase-ORDER-9D288FCB azon:IdComanda "ORDER-9D288FCB" ;
+    azon:IdUsuari "1" ;
+    azon:SobreComanda azon:order-ORDER-9D288FCB ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P2001 .
 

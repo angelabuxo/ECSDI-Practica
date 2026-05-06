@@ -96,6 +96,24 @@ Run the six core agent roles in separate terminals from the repository root.
 
 Once everything is running, open `http://127.0.0.1:9001/`.
 
+## Logging
+
+Agent entrypoints now initialize the shared logger utility from `AgentZon/AgentUtil/Logging.py`, aligned with the `REFERENCE` and `ecsdi-amazon` style.
+
+- Logger initialization used by agents:
+
+```python
+from AgentZon.AgentUtil.Logging import config_logger
+
+logger = config_logger(level=1)
+```
+
+- `level=1` enables `INFO` and `ERROR` events.
+- `level=0` keeps only `ERROR` events.
+- Logs are emitted to the console with the format `[timestamp] - file - level - message`.
+
+To start logging in a new agent, initialize `logger = config_logger(level=1)` near the Flask app creation and use `logger.info(...)`, `logger.warning(...)`, and `logger.error(...)` in lifecycle and communication handlers.
+
 ## Hostname Notes
 
 - `--host` forces the bind and published host used by an agent. This is the recommended option for local development and tests.

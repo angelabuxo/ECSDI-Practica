@@ -1,1 +1,16 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+
+azon:order-ORDER-9D288FCB a azon:Comanda ;
+    azon:Carrer "passeig manuel girona" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-05-07" ;
+    azon:DataEntregaDefinitiva "2026-05-09" ;
+    azon:IdComanda "ORDER-9D288FCB" ;
+    azon:IdUsuari "1" ;
+    azon:MetodePagament "visa" ;
+    azon:Nom "jordi" ;
+    azon:Prioritat "24h" ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P2001 .
 

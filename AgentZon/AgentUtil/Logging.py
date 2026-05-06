@@ -23,4 +23,14 @@ def config_logger(level=0, file=None):
     console.setFormatter(formatter)
     logging.getLogger("log").handlers.clear()
     logging.getLogger("log").addHandler(console)
+    logger.propagate = False
+
+    # Silence Flask/Werkzeug per-request access logs such as:
+    # 127.0.0.1 - - [..] "GET /comm?content=... HTTP/1.1" 200 -
+    werkzeug_logger = logging.getLogger("werkzeug")
+    werkzeug_logger.handlers.clear()
+    werkzeug_logger.disabled = True
+    flask_app_logger = logging.getLogger("flask.app")
+    flask_app_logger.handlers.clear()
+    flask_app_logger.disabled = True
     return logger

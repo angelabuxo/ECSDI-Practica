@@ -1,1 +1,31 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:search-0 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:TextConsulta "aa" ;
+    azon:TotalResultats 0 .
+
+azon:search-12 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:TextConsulta "aa" ;
+    azon:TotalResultats 0 .
+
+azon:search-16 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P2001,
+        azon:product-P3001 ;
+    azon:TextConsulta "a" ;
+    azon:TotalResultats 4 .
+
+azon:search-4 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P2001,
+        azon:product-P3001 ;
+    azon:TextConsulta "a" ;
+    azon:TotalResultats 4 .
 
