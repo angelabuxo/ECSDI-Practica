@@ -55,7 +55,7 @@ def generar_oferta_transport(request_data):
         "transport_name": AGENT.name,
         "city": request_data["city"],
         "delivery_date": (date.today() + timedelta(days=DELIVERY_DAYS)).isoformat(),
-        "price": round(request_data["weight"] * PRICE_PER_KG, 2),
+        "price": round(request_data["total_weight"] * PRICE_PER_KG, 2),
     }
 
 
@@ -87,6 +87,7 @@ def comm():
         offer,
         sender=AGENT.uri,
         receiver=properties.get("sender"),
+        request_content=content,
         msgcnt=next_counter(),
     )
     return response.serialize(format="xml")

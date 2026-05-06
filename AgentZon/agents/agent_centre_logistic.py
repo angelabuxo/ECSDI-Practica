@@ -72,11 +72,7 @@ def pla_assignar_producte_a_lot(request_data):
 def pla_cerca_de_transportista(lot):
     def query_transport(transport_agent):
         message, _ = build_peticio_transport(
-            lot["lot_id"],
-            lot["order_id"],
-            lot["city"],
-            lot["priority"],
-            lot["total_weight"],
+            lot,
             sender=AGENT.uri,
             receiver=transport_agent.uri,
             msgcnt=next_counter(),
@@ -88,7 +84,7 @@ def pla_cerca_de_transportista(lot):
         return [future.result() for future in futures]
 
 
-def pla_de_transportista_escollit(lot, offers, receiver):
+def pla_de_transportista_escollit(lot, offers, receiver, request_content=None):
     selected = choose_best_offer(offers)
     return build_shipping_details_response(
         lot["order_id"],
@@ -96,6 +92,7 @@ def pla_de_transportista_escollit(lot, offers, receiver):
         selected,
         sender=AGENT.uri,
         receiver=receiver,
+        request_content=request_content,
         msgcnt=next_counter(),
     )
 
@@ -121,7 +118,7 @@ def comm():
     request_data = parse_productes_localitzats(message_graph, content)
     lot = pla_assignar_producte_a_lot(request_data)
     offers = pla_cerca_de_transportista(lot)
-    response = pla_de_transportista_escollit(lot, offers, properties.get("sender"))
+    response = pla_de_transportista_escollit(lot, offers, properties.get("sender"), request_content=content)
     return response.serialize(format="xml")
 
 

@@ -42,14 +42,14 @@ class LogisticsFlowTests(unittest.TestCase):
             self.assertEqual(first_lot["lot_id"], second_lot["lot_id"])
 
             lot = lots[0]
-            self.assertEqual(float(graph.value(lot, AZON.pes)), 3.5)
+            self.assertEqual(float(graph.value(lot, AZON.PesTotal)), 3.5)
             self.assertEqual(
-                {str(value) for value in graph.objects(lot, AZON.idComanda)},
-                {"ORDER-1", "ORDER-2"},
+                {str(value) for value in graph.objects(lot, AZON.TeProducte)},
+                {str(AZON["product-P1"]), str(AZON["product-P2"])},
             )
             self.assertEqual(
-                {str(value) for value in graph.objects(lot, AZON.idProducte)},
-                {"P1", "P2"},
+                {str(value) for value in graph.objects(lot, AZON.SobreComanda)},
+                {str(AZON["order-ORDER-1"]), str(AZON["order-ORDER-2"])},
             )
 
     def test_create_lot_creates_new_lot_for_different_city_or_priority(self):
@@ -85,7 +85,9 @@ class LogisticsFlowTests(unittest.TestCase):
             self.assertNotEqual(second_lot["lot_id"], third_lot["lot_id"])
 
     def test_centre_logistic_queries_two_transport_agents_and_picks_the_cheapest_offer(self):
+        from AgentZon.AgentUtil.ACLMessages import get_message_properties
         from AgentZon.AgentUtil.Agent import Agent
+        from AgentZon.AgentUtil.OntoNamespaces import AZON
         from AgentZon.agents import agent_centre_logistic
         from AgentZon.protocols.centre_logistic import (
             build_productes_localitzats,
@@ -119,6 +121,7 @@ class LogisticsFlowTests(unittest.TestCase):
                 return build_resposta_oferta_transport(
                     {
                         "lot_id": "LOT-1",
+                        "order_id": "ORDER-1",
                         "transport_id": "fast",
                         "transport_name": fast_transport.name,
                         "city": "Barcelona",
@@ -133,6 +136,7 @@ class LogisticsFlowTests(unittest.TestCase):
                 return build_resposta_oferta_transport(
                     {
                         "lot_id": "LOT-1",
+                        "order_id": "ORDER-1",
                         "transport_id": "economy",
                         "transport_name": economy_transport.name,
                         "city": "Barcelona",
@@ -156,19 +160,19 @@ class LogisticsFlowTests(unittest.TestCase):
                 message_sender=fake_send_message,
             )
 
-            request_graph, content = build_productes_localitzats(
-                order_id="ORDER-1",
-                user_id="USER-1",
-                city="Barcelona",
-                priority="urgent",
-                products=[
+            order = {
+                "order_id": "ORDER-1",
+                "user_id": "USER-1",
+                "shipping_data": {"city": "Barcelona", "priority": "urgent"},
+                "products": [
                     {
                         "product_id": "P1001",
                         "name": "Wireless Headphones",
                         "weight": 1.5,
                     }
                 ],
-            )
+            }
+            request_graph, _ = build_productes_localitzats(order)
 
             client = agent_centre_logistic.app.test_client()
             response = client.get(
@@ -187,6 +191,11 @@ class LogisticsFlowTests(unittest.TestCase):
             self.assertEqual(details["order_id"], "ORDER-1")
             self.assertEqual(details["city"], "Barcelona")
             self.assertGreater(details["price"], 0.0)
+
+            content = get_message_properties(parsed_graph)["content"]
+            self.assertIsNotNone(parsed_graph.value(content, AZON.SobreLot))
+            self.assertIsNotNone(parsed_graph.value(content, AZON.AssignatATransportista))
+            self.assertIsNotNone(parsed_graph.value(content, AZON.EsRespostaA))
 
 
 if __name__ == "__main__":

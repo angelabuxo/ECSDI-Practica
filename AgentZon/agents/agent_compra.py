@@ -91,20 +91,8 @@ def pla_registrar_dades_d_usuari(selected_product_ids, form_data):
 
 def pla_producte_als_nostres_magatzems(order):
     centre_agent = resolve_agent(DSO.CentreLogisticAgent)
-    localized_products = [
-        {
-            "product_id": product["product_id"],
-            "name": product["name"],
-            "weight": product["weight"],
-        }
-        for product in order["products"]
-    ]
     message, _ = build_productes_localitzats(
-        order["order_id"],
-        order["user_id"],
-        order["shipping_data"]["city"],
-        order["shipping_data"]["priority"],
-        localized_products,
+        order,
         sender=AGENT.uri,
         receiver=centre_agent.uri,
         msgcnt=next_counter(),
