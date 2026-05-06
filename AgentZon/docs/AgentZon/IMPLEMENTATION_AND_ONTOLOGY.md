@@ -9,10 +9,11 @@ The current codebase implements the Phase 2 core: product search, purchase captu
 ### Main hierarchies
 
 - `Actor`
-- `Usuari`, `VenedorExtern`, `Transportista`, `Banc`, `AgentIntern`
-- `AgentIntern` is specialized into `AgentCercador`, `AgentCompra`, `AgentCentreLogistic`, `AgentOpinador`, `AgentCobrador`, `AgentRetornador`, and `AgentVenedorExtern`
+- `Usuari`, `VenedorExtern`, `Transportista`, `Banc`
 - `Comunicacio`
 - `Accio` and `Resposta`
+
+`Actor` keeps only external entities. AgentZon's runtime agents (`AgentCercador`, `AgentCompra`, `AgentCentreLogistic`, `AgentOpinador`, etc.) are deployment artifacts, not ontology classes — they communicate using `acl:sender` and `acl:receiver` on the FIPA-ACL envelope.
 
 ### Implemented communication concepts
 
@@ -43,19 +44,21 @@ The current codebase implements the Phase 2 core: product search, purchase captu
 
 ### Key object properties
 
-- `mostraProducte`: links a search result to returned products
-- `teProducte`: reused by orders, lots, and logistics communications
-- `teDadesEnviament`: links an order to shipping data
-- `sobreComanda`, `sobreLot`, `sobreProducte`: keep messages tied to the domain entities they affect
-- `emissor`, `receptor`, `esRespostaA`: capture message semantics
-- `ubicatACentre`, `assignatATransportista`, `teFeedback`, `generaRecomanacio`: model logistics and post-sale processes
+- `MostraProducte`: links a search result to the returned products
+- `TeProducte`: reused by `Comanda`, `Lot`, `HistorialCompra`, `PeticioRegistreCompra`, and `ProducteLocalitzat`
+- `TeDadesEnviament`: links a `Comanda` to its `DadesEnviamentUsuari`
+- `SobreComanda`, `SobreLot`, `SobreProducte`: keep messages tied to the domain entities they affect
+- `EsRespostaA`: ties a `Resposta` to the originating `Accio`
+- `UbicatACentre`, `AssignatATransportista`, `TeFeedback`, `GeneraRecomanacio`: model logistics and post-sale processes
+
+`acl:sender` and `acl:receiver` belong to the FIPA-ACL envelope and are not AgentZon ontology relations. `TeProducte`, `TeDadesEnviament`, `SobreComanda`, `SobreLot`, and `UbicatACentre` are the canonical runtime relations. `PesTotal` belongs to `Lot` and `PeticioTransport`; `Pes` stays on `Producte`.
 
 ### Key datatype properties
 
-- Product attributes: `idProducte`, `nom`, `descripcio`, `categoria`, `marca`, `preu`, `pes`, `skuExtern`
-- Order and logistics attributes: `idComanda`, `idLot`, `idCentreLogistic`, `prioritat`, `ciutat`, `carrer`, `dataEntrega`, `costTransport`, `nomTransportista`
-- Search attributes: `teText`, `teCategoria`, `teMarca`, `preuMinim`, `preuMaxim`, `totalResultats`
-- Future process attributes: `idPagament`, `idDevolucio`, `importPagament`, `estat`, `motiuDevolucio`, `puntuacio`, `comentari`, `acceptada`, `requereixLogisticaExterna`
+- Product attributes: `IdProducte`, `Nom`, `Descripcio`, `Categoria`, `Marca`, `Preu`, `Pes`, `SkuExtern`
+- Order and logistics attributes: `IdComanda`, `IdLot`, `IdCentreLogistic`, `Prioritat`, `Ciutat`, `Carrer`, `DataEntrega`, `CostTransport`, `NomTransportista`, `PesTotal`
+- Search attributes: `TextConsulta`, `CategoriaConsulta`, `MarcaConsulta`, `PreuMinim`, `PreuMaxim`, `TotalResultats`
+- Future process attributes: `IdPagament`, `IdDevolucio`, `ImportPagament`, `Estat`, `MotiuDevolucio`, `Puntuacio`, `Comentari`, `Acceptada`, `RequereixLogisticaExterna`
 
 ## Implemented Agents
 

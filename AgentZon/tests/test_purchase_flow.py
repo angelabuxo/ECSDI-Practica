@@ -11,13 +11,14 @@ class PurchaseFlowTests(unittest.TestCase):
     def test_browser_search_and_simple_order_flow_records_history_and_returns_shipping_summary(self):
         from AgentZon.AgentUtil.Agent import Agent
         from AgentZon.AgentUtil.DSO import DSO
-        from AgentZon.AgentUtil.ACLMessages import get_message_properties
-        from AgentZon.agents import agent_cercador, agent_compra, agent_directory, agent_opinador
-        from AgentZon.protocols.centre_logistic import (
-            build_shipping_details_response,
-            parse_productes_localitzats,
+        from AgentZon.agents import (
+            agent_centre_logistic,
+            agent_cercador,
+            agent_compra,
+            agent_directory,
+            agent_opinador,
         )
-        from AgentZon.protocols.compra import build_confirmacio_registre_compra
+        from AgentZon.protocols.centre_logistic import build_resposta_oferta_transport
         from AgentZon.protocols.directory import build_register_message
         from AgentZon.services.bootstrap import bootstrap_phase2_data
         from AgentZon.tests.support import LocalMessageRouter
@@ -77,29 +78,52 @@ class PurchaseFlowTests(unittest.TestCase):
             agent_opinador.configure_runtime({"agent": opinador, "data_dir": data_dir})
             router.register_app(opinador.address, agent_opinador.app)
 
-            def fake_send_message(message, address):
-                if address == directory.address:
-                    return router.send_message(message, address)
-                if address == opinador.address:
-                    return router.send_message(message, address)
-                if address == centre.address:
-                    props = get_message_properties(message)
-                    localized = parse_productes_localitzats(message, props["content"])
-                    return build_shipping_details_response(
-                        localized["order_id"],
-                        localized["city"],
+            def transport_offer_sender(message, address):
+                if address == transport_fast.address:
+                    return build_resposta_oferta_transport(
                         {
                             "lot_id": "LOT-TEST",
+                            "order_id": "ORDER-TEST",
+                            "transport_id": "fast",
+                            "transport_name": transport_fast.name,
+                            "city": "Barcelona",
+                            "delivery_date": "2026-05-06",
+                            "price": 12.0,
+                        },
+                        sender=transport_fast.uri,
+                        receiver=centre.uri,
+                        msgcnt=10,
+                    )
+                if address == transport_economy.address:
+                    return build_resposta_oferta_transport(
+                        {
+                            "lot_id": "LOT-TEST",
+                            "order_id": "ORDER-TEST",
                             "transport_id": "economy",
-                            "transport_name": "TransportEconomy",
-                            "city": localized["city"],
+                            "transport_name": transport_economy.name,
+                            "city": "Barcelona",
                             "delivery_date": "2026-05-08",
                             "price": 6.0,
                         },
-                        sender=centre.uri,
-                        receiver=compra.uri,
-                        msgcnt=2,
+                        sender=transport_economy.uri,
+                        receiver=centre.uri,
+                        msgcnt=11,
                     )
+                raise AssertionError(f"Unexpected transport address {address}")
+
+            agent_centre_logistic.configure_runtime(
+                {
+                    "agent": centre,
+                    "data_dir": data_dir,
+                    "transport_agents": [transport_fast, transport_economy],
+                },
+                message_sender=transport_offer_sender,
+            )
+            router.register_app(centre.address, agent_centre_logistic.app)
+
+            def fake_send_message(message, address):
+                if address in {directory.address, opinador.address, centre.address}:
+                    return router.send_message(message, address)
                 raise AssertionError(f"Unexpected address {address}")
 
             agent_compra.configure_runtime(
@@ -178,6 +202,16 @@ class PurchaseFlowTests(unittest.TestCase):
             self.assertNotIn("teText", search_history_text)
             self.assertNotIn("teCategoria", search_history_text)
             self.assertNotIn("teMarca", search_history_text)
+
+            orders_text = (data_dir / "comandes.ttl").read_text(encoding="utf-8")
+            lots_text = (data_dir / "lots.ttl").read_text(encoding="utf-8")
+
+            self.assertIn("TeDadesEnviament", orders_text)
+            self.assertIn("SobreComanda", history_text)
+            self.assertIn("TeProducte", lots_text)
+            self.assertIn("PesTotal", lots_text)
+            self.assertNotIn("teProducte", orders_text)
+            self.assertNotIn("idComanda", history_text)
 
 
 if __name__ == "__main__":

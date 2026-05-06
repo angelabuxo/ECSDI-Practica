@@ -1,26 +1,22 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 
-azon:centre-BCN a azon:CentreLogistic ;
-    azon:ciutat "Barcelona" ;
-    azon:idCentreLogistic "CL-BCN" .
-
 azon:location-P1001 a azon:UbicacioProducte ;
-    azon:ciutat "Barcelona" ;
-    azon:idCentreLogistic "CL-BCN" ;
-    azon:idProducte "P1001" .
+    azon:SobreProducte azon:product-P1001 ;
+    azon:UbicatACentre azon:centre-BCN .
 
 azon:location-P1002 a azon:UbicacioProducte ;
-    azon:ciutat "Barcelona" ;
-    azon:idCentreLogistic "CL-BCN" ;
-    azon:idProducte "P1002" .
+    azon:SobreProducte azon:product-P1002 ;
+    azon:UbicatACentre azon:centre-BCN .
 
 azon:location-P2001 a azon:UbicacioProducte ;
-    azon:ciutat "Barcelona" ;
-    azon:idCentreLogistic "CL-BCN" ;
-    azon:idProducte "P2001" .
+    azon:SobreProducte azon:product-P2001 ;
+    azon:UbicatACentre azon:centre-BCN .
 
 azon:location-P3001 a azon:UbicacioProducte ;
-    azon:ciutat "Barcelona" ;
-    azon:idCentreLogistic "CL-BCN" ;
-    azon:idProducte "P3001" .
+    azon:SobreProducte azon:product-P3001 ;
+    azon:UbicatACentre azon:centre-BCN .
+
+azon:centre-BCN a azon:CentreLogistic ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdCentreLogistic "CL-BCN" .
 
