@@ -35,10 +35,48 @@ azon:search-27 a azon:PeticioCerca ;
     azon:teText "a" ;
     azon:totalResultats 4 .
 
+azon:search-36 a azon:PeticioCerca ;
+    azon:teCategoria "" ;
+    azon:teMarca "" ;
+    azon:teText "iphone" ;
+    azon:totalResultats 0 .
+
+azon:search-41 a azon:PeticioCerca ;
+    azon:mostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P2001,
+        azon:product-P3001 ;
+    azon:teCategoria "" ;
+    azon:teMarca "" ;
+    azon:teText "a" ;
+    azon:totalResultats 4 .
+
 azon:search-5 a azon:PeticioCerca ;
     azon:mostraProducte azon:product-P2001 ;
     azon:teCategoria "" ;
     azon:teMarca "KeyForge" ;
     azon:teText "" ;
     azon:totalResultats 1 .
+
+azon:search-50 a azon:PeticioCerca ;
+    azon:teCategoria "" ;
+    azon:teMarca "Apple" ;
+    azon:teText "" ;
+    azon:totalResultats 0 .
+
+azon:search-55 a azon:PeticioCerca ;
+    azon:teCategoria "" ;
+    azon:teMarca "Apple" ;
+    azon:teText "" ;
+    azon:totalResultats 0 .
+
+azon:search-60 a azon:PeticioCerca ;
+    azon:mostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P2001,
+        azon:product-P3001 ;
+    azon:teCategoria "" ;
+    azon:teMarca "" ;
+    azon:teText "a" ;
+    azon:totalResultats 4 .
 

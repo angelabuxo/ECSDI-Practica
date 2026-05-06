@@ -1,5 +1,15 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 
+azon:order-ORDER-0F4752BD a azon:Comanda ;
+    azon:carrer "hola" ;
+    azon:ciutat "Barcelona" ;
+    azon:idComanda "ORDER-0F4752BD" ;
+    azon:idUsuari "1" ;
+    azon:nom "angi" ;
+    azon:prioritat "standard" ;
+    azon:teProducte azon:product-P1002,
+        azon:product-P2001 .
+
 azon:order-ORDER-102054C3 a azon:Comanda ;
     azon:carrer "Guillem Tell 42" ;
     azon:ciutat "Barcelona" ;

@@ -14,10 +14,12 @@ azon:lot-LOT-1DC61B a azon:Lot ;
 
 azon:lot-LOT-2B34C3 a azon:Lot ;
     azon:ciutat "Barcelona" ;
-    azon:idComanda "ORDER-8BB9C37B" ;
+    azon:idComanda "ORDER-0F4752BD",
+        "ORDER-8BB9C37B" ;
     azon:idLot "LOT-2B34C3" ;
-    azon:idProducte "P1002" ;
-    azon:pes 1.1e+00 ;
+    azon:idProducte "P1002",
+        "P2001" ;
+    azon:pes 4.6e+00 ;
     azon:prioritat "standard" .
 
 azon:lot-LOT-FAAD84 a azon:Lot ;

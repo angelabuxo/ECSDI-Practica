@@ -1,5 +1,13 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 
+azon:shipping-1 a azon:DadesEnviamentUsuari ;
+    azon:carrer "hola" ;
+    azon:ciutat "Barcelona" ;
+    azon:idUsuari "1" ;
+    azon:metodePagament "Targeta" ;
+    azon:nom "angi" ;
+    azon:prioritat "standard" .
+
 azon:shipping-1234 a azon:DadesEnviamentUsuari ;
     azon:carrer "Guillem Tell 42" ;
     azon:ciutat "Barcelona" ;
