@@ -22,7 +22,7 @@ Generar la documentació HTML de l'ontologia:
 Generar el graf de l'ontologia:
 
 ```bash
-owl2plot AgentZon/ontologia/AgentZonOntology.rdf -o AgentZon/ontologia/docs/ontology_graph
+./AgentZon/.venv/bin/rdf2dot AgentZon/ontologia/AgentZonOntology.rdf | dot -Tpng -o AgentZon/ontologia/docs/ontology_graph.png
 ```
 
 ## 2) Executar el sistema distribuït
