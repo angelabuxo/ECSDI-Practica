@@ -1,3 +1,5 @@
+"""External transport agent that answers shipping-offer requests."""
+
 import argparse
 from datetime import date, timedelta
 
@@ -8,102 +10,125 @@ from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentZon.AgentUtil.FlaskServer import shutdown_server
 from AgentZon.AgentUtil.OntoNamespaces import bind_namespaces
-from AgentZon.config import DEFAULT_PORTS, build_agent
-from AgentZon.domain import TransportOffer
-from AgentZon.protocols.centre_logistic import (
-    build_resposta_oferta_transport,
-    parse_peticio_transport,
+from AgentZon.config import (
+    DEFAULT_PORTS,
+    add_runtime_arguments,
+    build_agent,
+    resolve_runtime_hostname,
 )
+from AgentZon.protocols.centre_logistic import build_resposta_oferta_transport, parse_peticio_transport
 
 
-class TransportistaAgent:
-    def __init__(self, agent, transport_id, price_per_kg, delivery_days):
-        self.agent = agent
-        self.transport_id = transport_id
-        self.price_per_kg = price_per_kg
-        self.delivery_days = delivery_days
-        self.counter = 0
+app = Flask(__name__)
 
-    def next_counter(self):
-        current = self.counter
-        self.counter += 1
-        return current
-
-    def generar_oferta_transport(self, request_data):
-        delivery_date = (date.today() + timedelta(days=self.delivery_days)).isoformat()
-        return TransportOffer(
-            lot_id=request_data["lot_id"],
-            transport_id=self.transport_id,
-            transport_name=self.agent.name,
-            city=request_data["city"],
-            delivery_date=delivery_date,
-            price=round(request_data["weight"] * self.price_per_kg, 2),
-        )
+# Agent attributes -----------------------------------------------------------------
+AGENT = None
+TRANSPORT_ID = "fast"
+PRICE_PER_KG = 8.0
+DELIVERY_DAYS = 1
+COUNTER = 0
 
 
-def create_app(settings):
-    service = TransportistaAgent(
-        settings["agent"],
-        settings["transport_id"],
-        settings["price_per_kg"],
-        settings["delivery_days"],
+# Runtime configuration ------------------------------------------------------------
+def configure_runtime(settings):
+    global AGENT, TRANSPORT_ID, PRICE_PER_KG, DELIVERY_DAYS, COUNTER
+    AGENT = settings["agent"]
+    TRANSPORT_ID = settings["transport_id"]
+    PRICE_PER_KG = settings["price_per_kg"]
+    DELIVERY_DAYS = settings["delivery_days"]
+    COUNTER = 0
+
+
+def next_counter():
+    global COUNTER
+    current = COUNTER
+    COUNTER += 1
+    return current
+
+
+# Agent logic ----------------------------------------------------------------------
+def generar_oferta_transport(request_data):
+    return {
+        "lot_id": request_data["lot_id"],
+        "order_id": request_data["order_id"],
+        "transport_id": TRANSPORT_ID,
+        "transport_name": AGENT.name,
+        "city": request_data["city"],
+        "delivery_date": (date.today() + timedelta(days=DELIVERY_DAYS)).isoformat(),
+        "price": round(request_data["weight"] * PRICE_PER_KG, 2),
+    }
+
+
+# Communication handling -----------------------------------------------------------
+@app.route("/comm")
+def comm():
+    message_graph = Graph()
+    message_graph.parse(data=request.args["content"], format="xml")
+    properties = get_message_properties(message_graph)
+    if not properties or properties.get("performative") != ACL.request:
+        return build_message(
+            Graph(),
+            ACL["not-understood"],
+            sender=AGENT.uri,
+            msgcnt=next_counter(),
+        ).serialize(format="xml")
+    content = properties["content"]
+    action = message_graph.value(content, RDF.type)
+    if action is None:
+        return build_message(
+            Graph(),
+            ACL["not-understood"],
+            sender=AGENT.uri,
+            msgcnt=next_counter(),
+        ).serialize(format="xml")
+    request_data = parse_peticio_transport(message_graph, content)
+    offer = generar_oferta_transport(request_data)
+    response = build_resposta_oferta_transport(
+        offer,
+        sender=AGENT.uri,
+        receiver=properties.get("sender"),
+        msgcnt=next_counter(),
     )
-    app = Flask(__name__)
-
-    @app.route("/comm")
-    def comm():
-        gm = Graph()
-        gm.parse(data=request.args["content"], format="xml")
-        props = get_message_properties(gm)
-        if not props or props.get("performative") != ACL.request:
-            return build_message(Graph(), ACL["not-understood"], sender=service.agent.uri, msgcnt=service.next_counter()).serialize(format="xml")
-        content = props["content"]
-        action = gm.value(content, RDF.type)
-        if action is None:
-            return build_message(Graph(), ACL["not-understood"], sender=service.agent.uri, msgcnt=service.next_counter()).serialize(format="xml")
-        request_data = parse_peticio_transport(gm, content)
-        offer = service.generar_oferta_transport(request_data)
-        response = build_resposta_oferta_transport(
-            offer,
-            sender=service.agent.uri,
-            receiver=props.get("sender"),
-            msgcnt=service.next_counter(),
-        )
-        return response.serialize(format="xml")
-
-    @app.route("/info")
-    def info():
-        graph = Graph()
-        bind_namespaces(graph)
-        return graph.serialize(format="turtle")
-
-    @app.route("/stop")
-    def stop():
-        shutdown_server()
-        return "Stopping"
-
-    return app
+    return response.serialize(format="xml")
 
 
+@app.route("/info")
+def info():
+    graph = Graph()
+    bind_namespaces(graph)
+    return graph.serialize(format="turtle")
+
+
+@app.route("/stop")
+def stop():
+    shutdown_server()
+    return "Stopping"
+
+
+# Bootstrap -----------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=DEFAULT_PORTS["transport_fast"])
+    add_runtime_arguments(parser, DEFAULT_PORTS["transport_fast"])
     parser.add_argument("--transport-id", default="fast")
     parser.add_argument("--price-per-kg", type=float, default=8.0)
     parser.add_argument("--delivery-days", type=int, default=1)
     args = parser.parse_args()
+    hostname = resolve_runtime_hostname(args)
 
-    agent = build_agent(f"Transportista-{args.transport_id}", f"Transport{args.transport_id.title()}", args.port, host=args.host)
-    app = create_app(
+    configure_runtime(
         {
-            "agent": agent,
+            "agent": build_agent(
+                f"Transportista-{args.transport_id}",
+                f"Transport{args.transport_id.title()}",
+                args.port,
+                host=hostname,
+            ),
             "transport_id": args.transport_id,
             "price_per_kg": args.price_per_kg,
             "delivery_days": args.delivery_days,
         }
     )
-    app.run(host=args.host, port=args.port, debug=False, use_reloader=False)
+    app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,5 @@
+"""Messages exchanged with the local directory service agent."""
+
 from rdflib import Graph, Literal, Namespace, RDF
 from rdflib.namespace import FOAF
 
@@ -8,6 +10,7 @@ from AgentZon.AgentUtil.DSO import DSO
 from AgentZon.AgentUtil.OntoNamespaces import AGN, bind_namespaces
 
 
+# Directory requests ---------------------------------------------------------------
 def build_register_message(agent, agent_type, directory_agent, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
@@ -46,6 +49,7 @@ def build_search_message(requester_agent, agent_type, directory_agent, msgcnt=0)
     )
 
 
+# Directory responses --------------------------------------------------------------
 def parse_directory_response(graph):
     properties = get_message_properties(graph)
     content = properties.get("content")

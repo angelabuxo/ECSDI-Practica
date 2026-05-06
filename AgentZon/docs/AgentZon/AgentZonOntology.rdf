@@ -1,946 +1,465 @@
-<?xml version="1.0"?>
-<rdf:RDF xmlns="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15/"
-     xml:base="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15/"
-     xmlns:owl="http://www.w3.org/2002/07/owl#"
-     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-     xmlns:xml="http://www.w3.org/XML/1998/namespace"
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
-     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
-    <owl:Ontology rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15">
-        <rdfs:comment xml:lang="ca">Per definir el coneixement i el vocabulari que els agents d’AgentZon han de compartir per poder comunicar-se i entendre&apos;s, hem dissenyat la nostra pròpia ontologia. L&apos;objectiu d&apos;aquesta és modelar formalment els conceptes del domini i el contingut dels missatges intercanviats.</rdfs:comment>
-        <rdfs:isDefinedBy>
-- Àngela Buxó
-- Paula Mas
-- Pol Montanera
-        </rdfs:isDefinedBy>
-        <rdfs:label xml:lang="ca">AgentZon Ontology</rdfs:label>
-        <owl:versionInfo>2026-05-02-localitza-te-model</owl:versionInfo>
-    </owl:Ontology>
-    
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+    xmlns:azon="http://www.semanticweb.org/agentzon#">
+
+  <owl:Ontology rdf:about="http://www.semanticweb.org/agentzon">
+    <rdfs:label xml:lang="ca">Ontologia AgentZon</rdfs:label>
+    <rdfs:comment xml:lang="ca">
+      Ontologia compartida del sistema AgentZon. Modela actors, agents interns,
+      productes, comandes, logística, devolucions, pagaments, suggeriments i les
+      comunicacions RDF/FIPA-ACL que connecten tot el sistema distribuït.
+    </rdfs:comment>
+  </owl:Ontology>
+
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Actor">
+    <rdfs:label xml:lang="ca">Actor</rdfs:label>
+    <rdfs:comment xml:lang="ca">Entitat que participa en el sistema, humana, externa o software.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentIntern">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
+    <rdfs:label xml:lang="ca">Agent intern</rdfs:label>
+    <rdfs:comment xml:lang="ca">Agent desplegat per AgentZon per coordinar processos interns.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Usuari">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
+    <rdfs:label xml:lang="ca">Usuari</rdfs:label>
+    <rdfs:comment xml:lang="ca">Client final que cerca, compra, retorna i rep suggeriments.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#VenedorExtern">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
+    <rdfs:label xml:lang="ca">Venedor extern</rdfs:label>
+    <rdfs:comment xml:lang="ca">Tercer que publica productes i pot assumir la logística externa.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Transportista">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
+    <rdfs:label xml:lang="ca">Transportista</rdfs:label>
+    <rdfs:comment xml:lang="ca">Actor extern que envia ofertes i lliura lots de productes.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Banc">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
+    <rdfs:label xml:lang="ca">Banc</rdfs:label>
+    <rdfs:comment xml:lang="ca">Proveïdor extern responsable de l’autorització i liquidació dels pagaments.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentCercador">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
+    <rdfs:label xml:lang="ca">Agent Cercador</rdfs:label>
+    <rdfs:comment xml:lang="ca">Agent que gestiona les restriccions de cerca i presenta resultats.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentCompra">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
+    <rdfs:label xml:lang="ca">Agent Compra</rdfs:label>
+    <rdfs:comment xml:lang="ca">Agent que coordina el flux de compra i la informació d’enviament.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentCentreLogistic">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
+    <rdfs:label xml:lang="ca">Agent Centre Logístic</rdfs:label>
+    <rdfs:comment xml:lang="ca">Agent que agrupa productes en lots i negocia el transport.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentOpinador">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
+    <rdfs:label xml:lang="ca">Agent Opinador</rdfs:label>
+    <rdfs:comment xml:lang="ca">Agent que registra l’historial de compra i pot iniciar fluxos de feedback.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentCobrador">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
+    <rdfs:label xml:lang="ca">Agent Cobrador</rdfs:label>
+    <rdfs:comment xml:lang="ca">Agent que coordina el pagament, la factura i les transferències externes.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentRetornador">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
+    <rdfs:label xml:lang="ca">Agent Retornador</rdfs:label>
+    <rdfs:comment xml:lang="ca">Agent que avalua devolucions i coordina la recollida i el reemborsament.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentVenedorExtern">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
+    <rdfs:label xml:lang="ca">Agent Venedor Extern</rdfs:label>
+    <rdfs:comment xml:lang="ca">Agent responsable de la integració de productes de tercers.</rdfs:comment>
+  </owl:Class>
+
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Producte">
+    <rdfs:label xml:lang="ca">Producte</rdfs:label>
+    <rdfs:comment xml:lang="ca">Producte publicat al catàleg i susceptible de cerca, compra o recomanació.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ProducteExtern">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Producte"/>
+    <rdfs:label xml:lang="ca">Producte extern</rdfs:label>
+    <rdfs:comment xml:lang="ca">Producte proporcionat per un venedor extern.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Comanda">
+    <rdfs:label xml:lang="ca">Comanda</rdfs:label>
+    <rdfs:comment xml:lang="ca">Unitat de compra confirmada per un usuari.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Lot">
+    <rdfs:label xml:lang="ca">Lot</rdfs:label>
+    <rdfs:comment xml:lang="ca">Agrupació logística de productes per negociar-ne l’enviament.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#CentreLogistic">
+    <rdfs:label xml:lang="ca">Centre logístic</rdfs:label>
+    <rdfs:comment xml:lang="ca">Ubicació física o virtual on es preparen comandes i lots.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#DadesEnviamentUsuari">
+    <rdfs:label xml:lang="ca">Dades d’enviament d’usuari</rdfs:label>
+    <rdfs:comment xml:lang="ca">Informació d’adreça, prioritat i preferències de lliurament.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#DadesBancaries">
+    <rdfs:label xml:lang="ca">Dades bancàries</rdfs:label>
+    <rdfs:comment xml:lang="ca">Informació bancària o de pagament associada a un actor o a una operació.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#HistorialCompra">
+    <rdfs:label xml:lang="ca">Historial de compra</rdfs:label>
+    <rdfs:comment xml:lang="ca">Registre de les comandes finalitzades per un usuari.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#HistorialCerca">
+    <rdfs:label xml:lang="ca">Historial de cerca</rdfs:label>
+    <rdfs:comment xml:lang="ca">Registre de consultes i restriccions utilitzades per l’usuari.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#UbicacioProducte">
+    <rdfs:label xml:lang="ca">Ubicació de producte</rdfs:label>
+    <rdfs:comment xml:lang="ca">Relació entre un producte i el centre logístic on es troba.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Devolucio">
+    <rdfs:label xml:lang="ca">Devolució</rdfs:label>
+    <rdfs:comment xml:lang="ca">Procés de retorn d’un producte i possible reemborsament.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Feedback">
+    <rdfs:label xml:lang="ca">Feedback</rdfs:label>
+    <rdfs:comment xml:lang="ca">Valoració o opinió d’un usuari després d’una compra.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Recomanacio">
+    <rdfs:label xml:lang="ca">Recomanació</rdfs:label>
+    <rdfs:comment xml:lang="ca">Conjunt de suggeriments personalitzats per a un usuari.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Pagament">
+    <rdfs:label xml:lang="ca">Pagament</rdfs:label>
+    <rdfs:comment xml:lang="ca">Operació de cobrament associada a una comanda o devolució.</rdfs:comment>
+  </owl:Class>
+
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Comunicacio">
+    <rdfs:label xml:lang="ca">Comunicació</rdfs:label>
+    <rdfs:comment xml:lang="ca">Missatge semàntic intercanviat entre actors i agents del sistema.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Accio">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Comunicacio"/>
+    <rdfs:label xml:lang="ca">Acció</rdfs:label>
+    <rdfs:comment xml:lang="ca">Comunicació que inicia un procés o demana una operació a un altre agent.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Resposta">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Comunicacio"/>
+    <rdfs:label xml:lang="ca">Resposta</rdfs:label>
+    <rdfs:comment xml:lang="ca">Comunicació que informa del resultat d’una acció prèvia.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioCerca">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    <rdfs:label xml:lang="ca">Petició de cerca</rdfs:label>
+    <rdfs:comment xml:lang="ca">Missatge amb restriccions de text, categoria, marca i rang de preus.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ResultatCerca">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    <rdfs:label xml:lang="ca">Resultat de cerca</rdfs:label>
+    <rdfs:comment xml:lang="ca">Resposta que retorna els productes compatibles amb una petició de cerca.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioCompra">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    <rdfs:label xml:lang="ca">Petició de compra</rdfs:label>
+    <rdfs:comment xml:lang="ca">Inici del flux de compra per una selecció de productes.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioRegistreCompra">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    <rdfs:label xml:lang="ca">Petició de registre de compra</rdfs:label>
+    <rdfs:comment xml:lang="ca">Missatge que demana registrar una compra en l’historial.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ConfirmacioRegistreCompra">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    <rdfs:label xml:lang="ca">Confirmació de registre de compra</rdfs:label>
+    <rdfs:comment xml:lang="ca">Resposta que confirma que una compra ha estat persistida.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ProducteLocalitzat">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    <rdfs:label xml:lang="ca">Producte localitzat</rdfs:label>
+    <rdfs:comment xml:lang="ca">Missatge que trasllada al centre logístic els productes a preparar per a l’enviament.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioTransport">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    <rdfs:label xml:lang="ca">Petició de transport</rdfs:label>
+    <rdfs:comment xml:lang="ca">Missatge enviat a transportistes per demanar ofertes sobre un lot.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#RespostaOfertaTransport">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    <rdfs:label xml:lang="ca">Resposta d’oferta de transport</rdfs:label>
+    <rdfs:comment xml:lang="ca">Resposta amb cost, data prevista i identificació del transportista.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioPagament">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    <rdfs:label xml:lang="ca">Petició de pagament</rdfs:label>
+    <rdfs:comment xml:lang="ca">Missatge que activa l’autorització o captura del cobrament.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ConfirmacioPagament">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    <rdfs:label xml:lang="ca">Confirmació de pagament</rdfs:label>
+    <rdfs:comment xml:lang="ca">Resposta que confirma o rebutja un cobrament.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioDevolucio">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    <rdfs:label xml:lang="ca">Petició de devolució</rdfs:label>
+    <rdfs:comment xml:lang="ca">Missatge que inicia el flux de retorn d’un producte comprat.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ResolucioDevolucio">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    <rdfs:label xml:lang="ca">Resolució de devolució</rdfs:label>
+    <rdfs:comment xml:lang="ca">Resposta que accepta o rebutja una devolució i en descriu l’estat.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioFeedback">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    <rdfs:label xml:lang="ca">Petició de feedback</rdfs:label>
+    <rdfs:comment xml:lang="ca">Missatge que sol·licita una valoració a l’usuari després d’una compra.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#RespostaFeedback">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    <rdfs:label xml:lang="ca">Resposta de feedback</rdfs:label>
+    <rdfs:comment xml:lang="ca">Resposta que encapsula l’opinió o valoració aportada per l’usuari.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioRecomanacio">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    <rdfs:label xml:lang="ca">Petició de recomanació</rdfs:label>
+    <rdfs:comment xml:lang="ca">Missatge que demana generar suggeriments per a un usuari.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#RespostaRecomanacio">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    <rdfs:label xml:lang="ca">Resposta de recomanació</rdfs:label>
+    <rdfs:comment xml:lang="ca">Resposta que retorna una llista de suggeriments personalitzats.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AltaProducteExtern">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    <rdfs:label xml:lang="ca">Alta de producte extern</rdfs:label>
+    <rdfs:comment xml:lang="ca">Missatge que introdueix un nou producte d’un venedor extern.</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ConfirmacioAltaProducteExtern">
+    <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    <rdfs:label xml:lang="ca">Confirmació d’alta de producte extern</rdfs:label>
+    <rdfs:comment xml:lang="ca">Resposta que confirma la integració d’un producte extern al sistema.</rdfs:comment>
+  </owl:Class>
+
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#mostraProducte">
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ResultatCerca"/>
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Producte"/>
+    <rdfs:label xml:lang="ca">mostra producte</rdfs:label>
+    <rdfs:comment xml:lang="ca">Relaciona un resultat de cerca amb els productes retornats.</rdfs:comment>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#teProducte">
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Producte"/>
+    <rdfs:label xml:lang="ca">té producte</rdfs:label>
+    <rdfs:comment xml:lang="ca">Relaciona una comanda, un lot o una comunicació amb els seus productes.</rdfs:comment>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#teDadesEnviament">
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comanda"/>
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#DadesEnviamentUsuari"/>
+    <rdfs:label xml:lang="ca">té dades d’enviament</rdfs:label>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#teDadesBancaries">
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#DadesBancaries"/>
+    <rdfs:label xml:lang="ca">té dades bancàries</rdfs:label>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#sobreComanda">
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Comanda"/>
+    <rdfs:label xml:lang="ca">sobre comanda</rdfs:label>
+    <rdfs:comment xml:lang="ca">Relaciona una comunicació amb la comanda sobre la qual opera.</rdfs:comment>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#sobreLot">
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Lot"/>
+    <rdfs:label xml:lang="ca">sobre lot</rdfs:label>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#sobreProducte">
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Producte"/>
+    <rdfs:label xml:lang="ca">sobre producte</rdfs:label>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#ubicatACentre">
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#UbicacioProducte"/>
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#CentreLogistic"/>
+    <rdfs:label xml:lang="ca">ubicat a centre</rdfs:label>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#assignatATransportista">
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Transportista"/>
+    <rdfs:label xml:lang="ca">assignat a transportista</rdfs:label>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#emissor">
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comunicacio"/>
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
+    <rdfs:label xml:lang="ca">emissor</rdfs:label>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#receptor">
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comunicacio"/>
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
+    <rdfs:label xml:lang="ca">receptor</rdfs:label>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#esRespostaA">
+    <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    <rdfs:label xml:lang="ca">és resposta a</rdfs:label>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#teFeedback">
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Feedback"/>
+    <rdfs:label xml:lang="ca">té feedback</rdfs:label>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#generaRecomanacio">
+    <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Recomanacio"/>
+    <rdfs:label xml:lang="ca">genera recomanació</rdfs:label>
+  </owl:ObjectProperty>
+
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idProducte">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">identificador de producte</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idComanda">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">identificador de comanda</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idUsuari">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">identificador d’usuari</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idLot">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">identificador de lot</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idTransportista">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">identificador de transportista</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idCentreLogistic">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">identificador de centre logístic</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idDevolucio">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">identificador de devolució</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idPagament">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">identificador de pagament</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idFeedback">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">identificador de feedback</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#nom">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">nom</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#descripcio">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">descripció</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#categoria">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">categoria</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#marca">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">marca</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#skuExtern">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">codi extern</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#preu">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+    <rdfs:label xml:lang="ca">preu</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#pes">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+    <rdfs:label xml:lang="ca">pes</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#ciutat">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">ciutat</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#carrer">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">carrer</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#prioritat">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">prioritat</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#metodePagament">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">mètode de pagament</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#importPagament">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+    <rdfs:label xml:lang="ca">import de pagament</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#estat">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">estat</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#teText">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">text de cerca</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#teCategoria">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">categoria filtrada</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#teMarca">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">marca filtrada</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#preuMinim">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+    <rdfs:label xml:lang="ca">preu mínim</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#preuMaxim">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+    <rdfs:label xml:lang="ca">preu màxim</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#totalResultats">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+    <rdfs:label xml:lang="ca">total de resultats</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#dataAlta">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
+    <rdfs:label xml:lang="ca">data d’alta</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#dataCompra">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
+    <rdfs:label xml:lang="ca">data de compra</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#dataEntrega">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
+    <rdfs:label xml:lang="ca">data d’entrega</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#costTransport">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+    <rdfs:label xml:lang="ca">cost de transport</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#nomTransportista">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">nom de transportista</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#motiuDevolucio">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">motiu de devolució</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#puntuacio">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+    <rdfs:label xml:lang="ca">puntuació</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#comentari">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    <rdfs:label xml:lang="ca">comentari</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#requereixLogisticaExterna">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
+    <rdfs:label xml:lang="ca">requereix logística externa</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#acceptada">
+    <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
+    <rdfs:label xml:lang="ca">acceptada</rdfs:label>
+  </owl:DatatypeProperty>
 
-
-    <!-- 
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //
-    // Datatypes
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////
-     -->
-
-    
-
-
-    <!-- http://www.w3.org/2001/XMLSchema#date -->
-
-    <rdfs:Datatype rdf:about="http://www.w3.org/2001/XMLSchema#date"/>
-    
-
-
-    <!-- 
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //
-    // Object Properties
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////
-     -->
-
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Avalua -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Avalua">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaFeedback"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Demana -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Demana">
-        <owl:equivalentProperty rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Negocia"/>
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogistic"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport"/>
-        <rdfs:comment xml:lang="ca">El centre relaciona amb la petició de cotització de transport (concepte PeticioTransport contingut dels missatges request). Equivalent conceptual a Negocia. La contra-resposta dels transportistes es modela amb RespostaOfertaTransport</rdfs:comment>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DemanaAfegir -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DemanaAfegir">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#VenedorExtern"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioAfegirProducteExtern"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Distribueix -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Distribueix">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogistic"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Dona -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Dona">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaFeedback"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Envia -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Envia">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#InfoUsuari"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsEscollit -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EsEscollit">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EleccióTransportista"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Genera -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Genera">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Gestiona -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Gestiona">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#VenedorExtern"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteExtern"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Localitza -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Localitza">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Mostra -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Mostra">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResultatCerca"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Negocia -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Negocia">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogistic"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Paga -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Paga">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioCobramentProducte"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Proposa -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Proposa">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Realitza -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Realitza">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioCerca"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioDevolucio"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioRegistreCompra"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Rep -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Rep">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioFeedback"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioInfoUsuari"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaDevolucio"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaSuggeriment"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResultatCerca"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepAvis -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepAvis">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogistic"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepOferta -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepOferta">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogistic"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepPagament -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepPagament">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProveidorPagament"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioCobramentProducte"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepUna -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RepUna">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggereix -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggereix">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaSuggeriment"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Te -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Te">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#TeProducte -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#TeProducte">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Tramita -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Tramita">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaDevolucio"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- 
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //
-    // Data properties
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////
-     -->
-
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Adreça -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Adreça">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentUsuari"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Categoria -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Categoria">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Ciutat -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Ciutat">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentUsuari"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#UbicacioProducte"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comentari -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comentari">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CostBase -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CostBase">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
-        <rdfs:comment xml:lang="ca">En missatges amb node OfertaTransport separat (patró Proposa), el preu cotitzat va sobre OfertaTransport; RespostaOfertaTransport ⊑ OfertaTransport continua sent vàlid però el contingut RDF recomanat separa l&apos;oferta abstracta de la resposta de negociació.</rdfs:comment>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesBancaries -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesBancaries">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioCobramentProducte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#VenedorExtern"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DataEntregaDefinitiva -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DataEntregaDefinitiva">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentProducte"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DataEnviament -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DataEnviament">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentProducte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
-        <rdfs:comment xml:lang="ca">S&apos;usa com a data límit/enviament en diversos missatges. Per dades definitives de lliurament, preferir DataEntregaDefinitiva.</rdfs:comment>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Descripcio -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Descripcio">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogistic"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProveidorPagament"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#VenedorExtern"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdCentreLogistic -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdCentreLogistic">
-        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdComanda -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdComanda">
-        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentProducte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdLot -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdLot">
-        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentProducte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdProducte -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdProducte">
-        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentProducte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResponsableEnviamentProducte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#UbicacioProducte"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-        <rdfs:comment xml:lang="ca">Identificador de producte com a literal en missatges o taules auxiliars. Els lots poden enllaçar productes del catàleg amb TeProducte.</rdfs:comment>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdTransportista -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdTransportista">
-        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentProducte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdUsuari -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#IdUsuari">
-        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Id"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentProducte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentUsuari"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Magatzem -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Magatzem">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#UbicacioProducte"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Marca -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Marca">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#MetodePagament -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#MetodePagament">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Nom -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Nom">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Pes -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Pes">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Preu -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Preu">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioCobramentProducte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Prioritat -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Prioritat">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentUsuari"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioRegistreCompra"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Puntuacio -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Puntuacio">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Responsable -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Responsable">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResponsableEnviamentProducte"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Ubicacio -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Ubicacio">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogistic"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Venedor -->
-
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Venedor">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResponsableEnviamentProducte"/>
-        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </owl:DatatypeProperty>
-    
-
-
-    <!-- 
-    ///////////////////////////////////////////////////////////////////////////////////////
-    //
-    // Classes
-    //
-    ///////////////////////////////////////////////////////////////////////////////////////
-     -->
-
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comunicacio"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogistic -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#CentreLogistic"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comanda"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comunicacio -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comunicacio"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviament -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviament"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentProducte -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentProducte">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviament"/>
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentUsuari -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviamentUsuari">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#DadesEnviament"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Devolució"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EleccióTransportista -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#EleccióTransportista">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#NegociacioTransport"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Feedback"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#InfoUsuari -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#InfoUsuari">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Lot"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#NegociacioTransport -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#NegociacioTransport">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport">
-        <rdfs:comment xml:lang="ca">Model abstracte d&apos;oferta de servei (preu CostBase i DataEnviament). En RDF, un node OfertaTransport pot ser l&apos;objecte de Proposa des d&apos;una RespostaOfertaTransport; aquesta última afegeix identificadors de negociació (IdLot, IdTransportista). Com que RespostaOfertaTransport ⊑ OfertaTransport, un sol node tipat només com a resposta també és OWL-vàlid, però el patró amb dos nodes reflecteix millor la propietat Proposa.</rdfs:comment>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioAfegirProducteExtern -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioAfegirProducteExtern">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioCerca -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioCerca">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioCobramentProducte -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioCobramentProducte">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioDevolucio -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioDevolucio">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioEnviamentCentreLogistic -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioEnviamentCentreLogistic">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioEnviamentVenedorExtern -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioEnviamentVenedorExtern">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioFeedback -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioFeedback">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioInfoUsuari -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioInfoUsuari">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioRegistreCompra -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioRegistreCompra">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#PeticioTransport">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio"/>
-        <rdfs:comment xml:lang="ca">Cotització inicial de transport als transportistes via ACL request: destinació Ciutat, Pes, IdCentreLogistic, DataEnviament opcional pel termini. El missatge intercanviat no ha d&apos;exigir IdLot als transportistes (el centre correlaciona internament).</rdfs:comment>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteExtern -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteExtern">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Producte"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProducteLocalitzat">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Accio"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProveidorPagament -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ProveidorPagament">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResponsableEnviamentProducte -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResponsableEnviamentProducte"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Comunicacio"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaDevolucio -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaDevolucio">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaFeedback -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaFeedback">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaOfertaTransport">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#NegociacioTransport"/>
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#OfertaTransport"/>
-        <rdfs:comment xml:lang="ca">Resposta cotització (ACL inform): enllaça Proposa cap a un node OfertaTransport amb CostBase i DataEnviament; IdLot i IdTransportista sobre la resposta quan cal. Alternativa OWL-equivalent: un sol node amb ambdós tipus (ja que ⊑ OfertaTransport), sense Proposa.</rdfs:comment>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaSuggeriment -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#RespostaSuggeriment">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResultatCerca -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#ResultatCerca">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Resposta"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Suggeriment"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Transportista">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#UbicacioProducte -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#UbicacioProducte"/>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Usuari">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#VenedorExtern -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#VenedorExtern">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/upc/ontologies/2026/3/untitled-ontology-15#Actor"/>
-    </owl:Class>
 </rdf:RDF>
-
-
-
-<!-- Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi -->
-

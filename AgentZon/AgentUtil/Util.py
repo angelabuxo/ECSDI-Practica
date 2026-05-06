@@ -1,8 +1,12 @@
+"""Network utility helpers used during AgentZon agent bootstrap.
+
+@author: javier
+"""
+
+__author__ = "javier"
+
 import socket
 
 
 def gethostname():
-    try:
-        return socket.getfqdn()
-    except OSError:
-        return socket.gethostname()
+    return socket.gethostname()

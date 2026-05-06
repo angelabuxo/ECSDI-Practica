@@ -1,11 +1,14 @@
+"""Seed data generators for the AgentZon Phase 2 prototype."""
+
 from pathlib import Path
 
 from rdflib import Graph, Literal, RDF, XSD
 
 from AgentZon.AgentUtil.OntoNamespaces import AZON, bind_namespaces
-from AgentZon.services.rdf_store import RDFFileStore
+from AgentZon.services.rdf_store import save_graph
 
 
+# Seed graph builders --------------------------------------------------------------
 def _build_products_graph():
     graph = Graph()
     bind_namespaces(graph)
@@ -85,6 +88,7 @@ def _build_empty_graph():
     return graph
 
 
+# Bootstrap orchestration ----------------------------------------------------------
 def bootstrap_phase2_data(data_dir):
     data_dir = Path(data_dir)
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -100,4 +104,4 @@ def bootstrap_phase2_data(data_dir):
     }
 
     for filename, graph in files.items():
-        RDFFileStore(data_dir / filename).save_graph(graph)
+        save_graph(data_dir / filename, graph)

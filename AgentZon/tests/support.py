@@ -1,3 +1,5 @@
+"""Test support helpers for in-process AgentZon message routing."""
+
 from urllib.parse import urlparse
 
 from rdflib import Graph

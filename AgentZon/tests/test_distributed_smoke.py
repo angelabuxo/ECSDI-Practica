@@ -1,3 +1,5 @@
+"""End-to-end smoke test that launches the core AgentZon agents as processes."""
+
 import socket
 import subprocess
 import tempfile

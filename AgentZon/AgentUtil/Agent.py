@@ -1,9 +1,14 @@
-from dataclasses import dataclass
+"""Minimal Agent record shared by the AgentZon runtime.
+
+@author: javier
+"""
+
+__author__ = "javier"
 
 
-@dataclass(frozen=True)
 class Agent:
-    name: str
-    uri: object
-    address: str
-    stop: str
+    def __init__(self, name, uri, address, stop):
+        self.name = name
+        self.uri = uri
+        self.address = address
+        self.stop = stop

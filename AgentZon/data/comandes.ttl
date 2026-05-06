@@ -1,1 +1,33 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+
+azon:order-ORDER-102054C3 a azon:Comanda ;
+    azon:carrer "Guillem Tell 42" ;
+    azon:ciutat "Barcelona" ;
+    azon:idComanda "ORDER-102054C3" ;
+    azon:idUsuari "1234" ;
+    azon:nom "Pol" ;
+    azon:prioritat "standard" ;
+    azon:teProducte azon:product-P1001,
+        azon:product-P1002 .
+
+azon:order-ORDER-68DD8207 a azon:Comanda ;
+    azon:carrer "Carrer de Balmes" ;
+    azon:ciutat "Barcelona" ;
+    azon:idComanda "ORDER-68DD8207" ;
+    azon:idUsuari "2" ;
+    azon:nom "Paula" ;
+    azon:prioritat "urgent" ;
+    azon:teProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P2001,
+        azon:product-P3001 .
+
+azon:order-ORDER-8BB9C37B a azon:Comanda ;
+    azon:carrer "HOla" ;
+    azon:ciutat "Barcelona" ;
+    azon:idComanda "ORDER-8BB9C37B" ;
+    azon:idUsuari "3" ;
+    azon:nom "Josep" ;
+    azon:prioritat "standard" ;
+    azon:teProducte azon:product-P1002 .
 

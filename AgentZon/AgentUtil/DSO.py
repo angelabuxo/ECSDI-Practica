@@ -1,3 +1,10 @@
+"""Directory Service Ontology namespace constants used by AgentZon.
+
+@author: javier
+"""
+
+__author__ = "javier"
+
 from rdflib import URIRef
 from rdflib.namespace import ClosedNamespace
 

@@ -1,3 +1,10 @@
+"""Helpers for stopping Flask servers launched by AgentZon agents.
+
+@author: javier
+"""
+
+__author__ = "javier"
+
 from flask import request
 
 

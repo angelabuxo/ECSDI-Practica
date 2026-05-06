@@ -1,3 +1,5 @@
+"""Flow tests for logistics-center and transport-negotiation behaviour."""
+
 import tempfile
 import unittest
 from pathlib import Path
@@ -8,13 +10,12 @@ from rdflib import Namespace
 class LogisticsFlowTests(unittest.TestCase):
     def test_centre_logistic_queries_two_transport_agents_and_picks_the_cheapest_offer(self):
         from AgentZon.AgentUtil.Agent import Agent
-        from AgentZon.agents.agent_centre_logistic import create_app as create_logistics_app
-        from AgentZon.agents.agent_transportista import create_app as create_transport_app
+        from AgentZon.agents import agent_centre_logistic
         from AgentZon.protocols.centre_logistic import (
             build_productes_localitzats,
+            build_resposta_oferta_transport,
             extract_shipping_details,
         )
-        from AgentZon.tests.support import LocalMessageRouter
 
         agn = Namespace("http://www.agentes.org#")
 
@@ -37,40 +38,47 @@ class LogisticsFlowTests(unittest.TestCase):
             "http://transport-economy.test/stop",
         )
 
-        router = LocalMessageRouter()
+        def fake_send_message(message, address):
+            if address == fast_transport.address:
+                return build_resposta_oferta_transport(
+                    {
+                        "lot_id": "LOT-1",
+                        "transport_id": "fast",
+                        "transport_name": fast_transport.name,
+                        "city": "Barcelona",
+                        "delivery_date": "2026-05-06",
+                        "price": 11.25,
+                    },
+                    sender=fast_transport.uri,
+                    receiver=logistics_agent.uri,
+                    msgcnt=1,
+                )
+            if address == economy_transport.address:
+                return build_resposta_oferta_transport(
+                    {
+                        "lot_id": "LOT-1",
+                        "transport_id": "economy",
+                        "transport_name": economy_transport.name,
+                        "city": "Barcelona",
+                        "delivery_date": "2026-05-08",
+                        "price": 6.0,
+                    },
+                    sender=economy_transport.uri,
+                    receiver=logistics_agent.uri,
+                    msgcnt=2,
+                )
+            raise AssertionError(f"Unexpected address {address}")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             data_dir = Path(tmpdir)
-            transport_apps = [
-                create_transport_app(
-                    {
-                        "agent": fast_transport,
-                        "transport_id": "fast",
-                        "price_per_kg": 7.5,
-                        "delivery_days": 1,
-                    }
-                ),
-                create_transport_app(
-                    {
-                        "agent": economy_transport,
-                        "transport_id": "economy",
-                        "price_per_kg": 4.0,
-                        "delivery_days": 3,
-                    }
-                ),
-            ]
-            logistics_app = create_logistics_app(
+            agent_centre_logistic.configure_runtime(
                 {
                     "agent": logistics_agent,
                     "data_dir": data_dir,
                     "transport_agents": [fast_transport, economy_transport],
                 },
-                message_sender=router.send_message,
+                message_sender=fake_send_message,
             )
-
-            router.register_app(fast_transport.address, transport_apps[0])
-            router.register_app(economy_transport.address, transport_apps[1])
-            router.register_app(logistics_agent.address, logistics_app)
 
             request_graph, content = build_productes_localitzats(
                 order_id="ORDER-1",
@@ -86,8 +94,18 @@ class LogisticsFlowTests(unittest.TestCase):
                 ],
             )
 
-            response_graph = router.send_message(request_graph, logistics_agent.address)
-            details = extract_shipping_details(response_graph)
+            client = agent_centre_logistic.app.test_client()
+            response = client.get(
+                "/comm",
+                query_string={"content": request_graph.serialize(format="xml")},
+            )
+            self.assertEqual(response.status_code, 200)
+            graph = response.get_data(as_text=True)
+            from rdflib import Graph
+
+            parsed_graph = Graph()
+            parsed_graph.parse(data=graph, format="xml")
+            details = extract_shipping_details(parsed_graph)
 
             self.assertEqual(details["transport_id"], "economy")
             self.assertEqual(details["order_id"], "ORDER-1")

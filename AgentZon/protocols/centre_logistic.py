@@ -1,12 +1,14 @@
+"""Ontology-backed messages used during logistics and transport negotiation."""
+
 from rdflib import Graph, Literal, RDF
 from rdflib.namespace import XSD
 
 from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentZon.AgentUtil.OntoNamespaces import AGN, AZON, bind_namespaces
-from AgentZon.domain import TransportOffer
 
 
+# Product localization -------------------------------------------------------------
 def build_productes_localitzats(
     order_id,
     user_id,
@@ -62,6 +64,7 @@ def parse_productes_localitzats(graph, content):
     }
 
 
+# Transport negotiation ------------------------------------------------------------
 def build_peticio_transport(
     lot_id,
     order_id,
@@ -102,18 +105,19 @@ def parse_peticio_transport(graph, content):
     }
 
 
-def build_resposta_oferta_transport(offer: TransportOffer, sender=None, receiver=None, msgcnt=0):
+# Transport responses --------------------------------------------------------------
+def build_resposta_oferta_transport(offer, sender=None, receiver=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
-    content = AZON[f"transport-offer-{offer.transport_id}-{offer.lot_id}"]
+    content = AZON[f"transport-offer-{offer['transport_id']}-{offer['lot_id']}"]
     graph.add((content, RDF.type, AZON.RespostaOfertaTransport))
-    graph.add((content, AZON.idLot, Literal(offer.lot_id)))
-    graph.add((content, AZON.idComanda, Literal(offer.lot_id.replace("LOT-", "ORDER-"))))
-    graph.add((content, AZON.idTransportista, Literal(offer.transport_id)))
-    graph.add((content, AZON.nomTransportista, Literal(offer.transport_name)))
-    graph.add((content, AZON.ciutat, Literal(offer.city)))
-    graph.add((content, AZON.dataEntrega, Literal(offer.delivery_date)))
-    graph.add((content, AZON.costTransport, Literal(offer.price, datatype=XSD.float)))
+    graph.add((content, AZON.idLot, Literal(offer["lot_id"])))
+    graph.add((content, AZON.idComanda, Literal(offer.get("order_id", offer["lot_id"].replace("LOT-", "ORDER-")))))
+    graph.add((content, AZON.idTransportista, Literal(offer["transport_id"])))
+    graph.add((content, AZON.nomTransportista, Literal(offer["transport_name"])))
+    graph.add((content, AZON.ciutat, Literal(offer["city"])))
+    graph.add((content, AZON.dataEntrega, Literal(offer["delivery_date"])))
+    graph.add((content, AZON.costTransport, Literal(offer["price"], datatype=XSD.float)))
     return build_message(
         graph,
         perf=ACL.inform,
@@ -127,28 +131,29 @@ def build_resposta_oferta_transport(offer: TransportOffer, sender=None, receiver
 def extract_transport_offer(graph):
     props = get_message_properties(graph)
     content = props["content"]
-    return TransportOffer(
-        lot_id=str(graph.value(content, AZON.idLot)),
-        transport_id=str(graph.value(content, AZON.idTransportista)),
-        transport_name=str(graph.value(content, AZON.nomTransportista)),
-        city=str(graph.value(content, AZON.ciutat)),
-        delivery_date=str(graph.value(content, AZON.dataEntrega)),
-        price=float(graph.value(content, AZON.costTransport)),
-    )
+    return {
+        "lot_id": str(graph.value(content, AZON.idLot)),
+        "order_id": str(graph.value(content, AZON.idComanda)),
+        "transport_id": str(graph.value(content, AZON.idTransportista)),
+        "transport_name": str(graph.value(content, AZON.nomTransportista)),
+        "city": str(graph.value(content, AZON.ciutat)),
+        "delivery_date": str(graph.value(content, AZON.dataEntrega)),
+        "price": float(graph.value(content, AZON.costTransport)),
+    }
 
 
-def build_shipping_details_response(order_id, city, offer: TransportOffer, sender=None, receiver=None, msgcnt=0):
+def build_shipping_details_response(order_id, city, offer, sender=None, receiver=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
     content = AZON[f"shipping-details-{order_id}"]
     graph.add((content, RDF.type, AZON.RespostaOfertaTransport))
     graph.add((content, AZON.idComanda, Literal(order_id)))
-    graph.add((content, AZON.idLot, Literal(offer.lot_id)))
-    graph.add((content, AZON.idTransportista, Literal(offer.transport_id)))
-    graph.add((content, AZON.nomTransportista, Literal(offer.transport_name)))
+    graph.add((content, AZON.idLot, Literal(offer["lot_id"])))
+    graph.add((content, AZON.idTransportista, Literal(offer["transport_id"])))
+    graph.add((content, AZON.nomTransportista, Literal(offer["transport_name"])))
     graph.add((content, AZON.ciutat, Literal(city)))
-    graph.add((content, AZON.dataEntrega, Literal(offer.delivery_date)))
-    graph.add((content, AZON.costTransport, Literal(offer.price, datatype=XSD.float)))
+    graph.add((content, AZON.dataEntrega, Literal(offer["delivery_date"])))
+    graph.add((content, AZON.costTransport, Literal(offer["price"], datatype=XSD.float)))
     return build_message(
         graph,
         perf=ACL.inform,

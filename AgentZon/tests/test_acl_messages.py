@@ -1,3 +1,5 @@
+"""Regression tests for RDF/FIPA-ACL message construction."""
+
 import unittest
 
 from rdflib import Graph, Literal, Namespace, RDF

@@ -1,3 +1,5 @@
+"""Small RDF file-store helpers shared by AgentZon services."""
+
 from pathlib import Path
 
 from rdflib import Graph
@@ -5,18 +7,17 @@ from rdflib import Graph
 from AgentZon.AgentUtil.OntoNamespaces import bind_namespaces
 
 
-class RDFFileStore:
-    def __init__(self, path, rdf_format="turtle"):
-        self.path = Path(path)
-        self.rdf_format = rdf_format
+# Graph IO -------------------------------------------------------------------------
+def load_graph(path, rdf_format="turtle"):
+    path = Path(path)
+    graph = Graph()
+    bind_namespaces(graph)
+    if path.exists() and path.read_text(encoding="utf-8").strip():
+        graph.parse(path, format=rdf_format)
+    return graph
 
-    def load_graph(self):
-        graph = Graph()
-        bind_namespaces(graph)
-        if self.path.exists() and self.path.read_text(encoding="utf-8").strip():
-            graph.parse(self.path, format=self.rdf_format)
-        return graph
 
-    def save_graph(self, graph):
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(graph.serialize(format=self.rdf_format), encoding="utf-8")
+def save_graph(path, graph, rdf_format="turtle"):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(graph.serialize(format=rdf_format), encoding="utf-8")

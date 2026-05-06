@@ -1,3 +1,10 @@
+"""Ontology namespace bindings shared by AgentZon graphs.
+
+@author: javier
+"""
+
+__author__ = "javier"
+
 from rdflib import Namespace
 
 

@@ -1,9 +1,11 @@
+"""Ontology-backed messages for product-search requests and responses."""
+
 from rdflib import Graph, Literal, RDF, XSD
 
 from AgentZon.AgentUtil.OntoNamespaces import AZON, bind_namespaces
-from AgentZon.domain import ProductRecord
 
 
+# RDF builders --------------------------------------------------------------------
 def build_peticio_cerca(request_id, text="", category="", brand="", min_price=None, max_price=None):
     graph = Graph()
     bind_namespaces(graph)
@@ -19,6 +21,7 @@ def build_peticio_cerca(request_id, text="", category="", brand="", min_price=No
     return graph, content
 
 
+# RDF parsers ---------------------------------------------------------------------
 def parse_peticio_cerca(graph, content):
     return {
         "text": str(graph.value(content, AZON.teText, default=Literal(""))),
@@ -36,16 +39,16 @@ def build_resultat_cerca(result_id, products):
     graph.add((content, RDF.type, AZON.ResultatCerca))
     graph.add((content, AZON.totalResultats, Literal(len(products))))
     for product in products:
-        subject = AZON[f"product-{product.product_id}"]
+        subject = AZON[f"product-{product['product_id']}"]
         graph.add((content, AZON.mostraProducte, subject))
         graph.add((subject, RDF.type, AZON.Producte))
-        graph.add((subject, AZON.idProducte, Literal(product.product_id)))
-        graph.add((subject, AZON.nom, Literal(product.name)))
-        graph.add((subject, AZON.descripcio, Literal(product.description)))
-        graph.add((subject, AZON.categoria, Literal(product.category)))
-        graph.add((subject, AZON.marca, Literal(product.brand)))
-        graph.add((subject, AZON.preu, Literal(product.price)))
-        graph.add((subject, AZON.pes, Literal(product.weight)))
+        graph.add((subject, AZON.idProducte, Literal(product["product_id"])))
+        graph.add((subject, AZON.nom, Literal(product["name"])))
+        graph.add((subject, AZON.descripcio, Literal(product["description"])))
+        graph.add((subject, AZON.categoria, Literal(product["category"])))
+        graph.add((subject, AZON.marca, Literal(product["brand"])))
+        graph.add((subject, AZON.preu, Literal(product["price"])))
+        graph.add((subject, AZON.pes, Literal(product["weight"])))
     return graph, content
 
 

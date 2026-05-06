@@ -1,3 +1,10 @@
+"""FIPA-ACL namespace constants reused across AgentZon agents.
+
+@author: javier
+"""
+
+__author__ = "javier"
+
 from rdflib import URIRef
 from rdflib.namespace import ClosedNamespace
 

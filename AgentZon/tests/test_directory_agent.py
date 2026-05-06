@@ -1,3 +1,5 @@
+"""Tests for directory-agent registration and lookup behaviour."""
+
 import unittest
 
 from rdflib import Namespace
@@ -7,7 +9,7 @@ class DirectoryAgentTests(unittest.TestCase):
     def test_directory_registers_and_resolves_core_agents(self):
         from AgentZon.AgentUtil.Agent import Agent
         from AgentZon.AgentUtil.DSO import DSO
-        from AgentZon.agents.agent_directory import create_app
+        from AgentZon.agents import agent_directory
         from AgentZon.protocols.directory import (
             build_register_message,
             build_search_message,
@@ -35,9 +37,9 @@ class DirectoryAgentTests(unittest.TestCase):
             "http://cercador.test/stop",
         )
 
-        app = create_app({"agent": directory})
+        agent_directory.configure_runtime({"agent": directory})
         router = LocalMessageRouter()
-        router.register_app(directory.address, app)
+        router.register_app(directory.address, agent_directory.app)
 
         register_message = build_register_message(
             compra,
