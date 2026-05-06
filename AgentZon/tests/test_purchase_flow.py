@@ -170,6 +170,15 @@ class PurchaseFlowTests(unittest.TestCase):
             self.assertIn("USER-1", history_text)
             self.assertIn("P1001", history_text)
 
+            search_history_text = (data_dir / "historial_cerques.ttl").read_text(encoding="utf-8")
+            self.assertIn("TextConsulta", search_history_text)
+            self.assertIn("CategoriaConsulta", search_history_text)
+            self.assertIn("MarcaConsulta", search_history_text)
+            self.assertIn("MostraProducte", search_history_text)
+            self.assertNotIn("teText", search_history_text)
+            self.assertNotIn("teCategoria", search_history_text)
+            self.assertNotIn("teMarca", search_history_text)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -55,13 +55,13 @@ def _build_products_graph():
     for item in products:
         subject = AZON[f"product-{item['id']}"]
         graph.add((subject, RDF.type, AZON.Producte))
-        graph.add((subject, AZON.idProducte, Literal(item["id"])))
-        graph.add((subject, AZON.nom, Literal(item["name"])))
-        graph.add((subject, AZON.descripcio, Literal(item["description"])))
-        graph.add((subject, AZON.categoria, Literal(item["category"])))
-        graph.add((subject, AZON.marca, Literal(item["brand"])))
-        graph.add((subject, AZON.preu, Literal(item["price"], datatype=XSD.float)))
-        graph.add((subject, AZON.pes, Literal(item["weight"], datatype=XSD.float)))
+        graph.add((subject, AZON.IdProducte, Literal(item["id"])))
+        graph.add((subject, AZON.Nom, Literal(item["name"])))
+        graph.add((subject, AZON.Descripcio, Literal(item["description"])))
+        graph.add((subject, AZON.Categoria, Literal(item["category"])))
+        graph.add((subject, AZON.Marca, Literal(item["brand"])))
+        graph.add((subject, AZON.Preu, Literal(item["price"], datatype=XSD.float)))
+        graph.add((subject, AZON.Pes, Literal(item["weight"], datatype=XSD.float)))
     return graph
 
 
@@ -70,15 +70,15 @@ def _build_locations_graph():
     bind_namespaces(graph)
     centre = AZON["centre-BCN"]
     graph.add((centre, RDF.type, AZON.CentreLogistic))
-    graph.add((centre, AZON.idCentreLogistic, Literal("CL-BCN")))
-    graph.add((centre, AZON.ciutat, Literal("Barcelona")))
+    graph.add((centre, AZON.IdCentreLogistic, Literal("CL-BCN")))
+    graph.add((centre, AZON.Ciutat, Literal("Barcelona")))
 
     for product_id in ["P1001", "P1002", "P2001", "P3001"]:
+        product = AZON[f"product-{product_id}"]
         mapping = AZON[f"location-{product_id}"]
         graph.add((mapping, RDF.type, AZON.UbicacioProducte))
-        graph.add((mapping, AZON.idProducte, Literal(product_id)))
-        graph.add((mapping, AZON.idCentreLogistic, Literal("CL-BCN")))
-        graph.add((mapping, AZON.ciutat, Literal("Barcelona")))
+        graph.add((mapping, AZON.SobreProducte, product))
+        graph.add((mapping, AZON.UbicatACentre, centre))
     return graph
 
 

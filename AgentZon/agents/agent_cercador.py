@@ -11,6 +11,7 @@ from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties, register_agent, send_message
 from AgentZon.AgentUtil.DSO import DSO
 from AgentZon.AgentUtil.FlaskServer import shutdown_server
+from AgentZon.AgentUtil.OntoNamespaces import ONTOLOGY_URI
 from AgentZon.config import (
     DEFAULT_PORTS,
     TEMPLATE_DIR,
@@ -122,13 +123,18 @@ def comm():
     content = properties["content"]
     criteria = parse_peticio_cerca(message_graph, content)
     products = pla_de_cerca(criteria)
-    response_graph, response_content = build_resultat_cerca(f"result-{next_counter()}", products)
+    response_graph, response_content = build_resultat_cerca(
+        f"result-{next_counter()}",
+        products,
+        request_content=content,
+    )
     response = build_message(
         response_graph,
         ACL.inform,
         sender=AGENT.uri,
         receiver=properties.get("sender"),
         content=response_content,
+        ontology=ONTOLOGY_URI,
         msgcnt=next_counter(),
     )
     return response.serialize(format="xml")
