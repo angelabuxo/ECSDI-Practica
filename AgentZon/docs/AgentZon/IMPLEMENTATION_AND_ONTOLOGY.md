@@ -9,10 +9,11 @@ The current codebase implements the Phase 2 core: product search, purchase captu
 ### Main hierarchies
 
 - `Actor`
-- `Usuari`, `VenedorExtern`, `Transportista`, `Banc`, `AgentIntern`
-- `AgentIntern` is specialized into `AgentCercador`, `AgentCompra`, `AgentCentreLogistic`, `AgentOpinador`, `AgentCobrador`, `AgentRetornador`, and `AgentVenedorExtern`
+- `Usuari`, `VenedorExtern`, `Transportista`, `ProveidorPagament`
 - `Comunicacio`
 - `Accio` and `Resposta`
+
+The ontology no longer models internal agents as domain concepts. Agents are the consumers of the ontology, while sender/receiver/performative metadata is carried by the FIPA-ACL envelope.
 
 ### Implemented communication concepts
 
@@ -43,19 +44,19 @@ The current codebase implements the Phase 2 core: product search, purchase captu
 
 ### Key object properties
 
-- `mostraProducte`: links a search result to returned products
-- `teProducte`: reused by orders, lots, and logistics communications
-- `teDadesEnviament`: links an order to shipping data
-- `sobreComanda`, `sobreLot`, `sobreProducte`: keep messages tied to the domain entities they affect
-- `emissor`, `receptor`, `esRespostaA`: capture message semantics
-- `ubicatACentre`, `assignatATransportista`, `teFeedback`, `generaRecomanacio`: model logistics and post-sale processes
+- `MostraProducte`: links a search result or search-history record to returned products
+- `TeProducte`: reused by orders, lots, purchase-history messages, and logistics messages
+- `TeDadesEnviament`: links an order to shipping data
+- `SobreComanda`, `SobreLot`, `SobreProducte`: keep messages and records tied to the domain entities they affect
+- `UbicatACentre`, `AssignatATransportista`, `TeFeedback`, `GeneraRecomanacio`: model logistics and post-sale processes
+- FIPA-ACL `sender`, `receiver`, `performative`, `content`, and `ontology` are used for communicative acts instead of duplicating those roles in the local ontology
 
 ### Key datatype properties
 
-- Product attributes: `idProducte`, `nom`, `descripcio`, `categoria`, `marca`, `preu`, `pes`, `skuExtern`
-- Order and logistics attributes: `idComanda`, `idLot`, `idCentreLogistic`, `prioritat`, `ciutat`, `carrer`, `dataEntrega`, `costTransport`, `nomTransportista`
-- Search attributes: `teText`, `teCategoria`, `teMarca`, `preuMinim`, `preuMaxim`, `totalResultats`
-- Future process attributes: `idPagament`, `idDevolucio`, `importPagament`, `estat`, `motiuDevolucio`, `puntuacio`, `comentari`, `acceptada`, `requereixLogisticaExterna`
+- Product attributes: `IdProducte`, `Nom`, `Descripcio`, `Categoria`, `Marca`, `Preu`, `Pes`, `SkuExtern`
+- Order and logistics attributes: `IdComanda`, `IdLot`, `IdCentreLogistic`, `Prioritat`, `Ciutat`, `Carrer`, `DataEntrega`, `CostTransport`, `NomTransportista`
+- Search attributes: `TeText`, `TeCategoria`, `TeMarca`, `PreuMinim`, `PreuMaxim`, `TotalResultats`
+- Future process attributes: `IdPagament`, `IdDevolucio`, `ImportPagament`, `Estat`, `MotiuDevolucio`, `Puntuacio`, `Comentari`, `Acceptada`, `RequereixLogisticaExterna`
 
 ## Implemented Agents
 
@@ -90,28 +91,29 @@ The transport agent is instantiated twice, once for the `fast` profile and once 
 1. The user submits a browser form to `Agent Cercador`.
 2. `Agent Cercador` converts the filters into a `PeticioCerca`-shaped internal record.
 3. The catalog service returns matching `Producte` resources.
-4. The result page is rendered and linked to `Agent Compra`, resolved through the directory service.
+4. The RDF response is wrapped in a FIPA-ACL `inform` message with explicit `acl:ontology`.
+5. The result page is rendered and linked to `Agent Compra`, resolved through the directory service.
 
 ### Purchase and history flow
 
 1. The user confirms a product selection with `Agent Compra`.
-2. `Agent Compra` stores `DadesEnviamentUsuari` and creates a `Comanda`.
+2. `Agent Compra` stores `DadesEnviamentUsuari` and creates a `Comanda` linked through `TeDadesEnviament` and `TeProducte`.
 3. `Agent Compra` resolves `Agent Opinador` through the directory agent.
-4. A `PeticioRegistreCompra` message is sent to `Agent Opinador`.
+4. A `PeticioRegistreCompra` FIPA-ACL `request` message is sent to `Agent Opinador` and points to the `Comanda` via `SobreComanda`.
 5. `Agent Opinador` writes a `HistorialCompra` record and returns `ConfirmacioRegistreCompra`.
 
 ### Logistics negotiation flow
 
 1. `Agent Compra` sends `ProducteLocalitzat` to `Agent Centre Logístic`.
-2. `Agent Centre Logístic` materializes a `Lot`.
-3. It sends one `PeticioTransport` to each transport agent.
+2. `Agent Centre Logístic` materializes a `Lot` linked to both `Comanda` and `Producte`.
+3. It sends one `PeticioTransport` to each transport agent, with the lot referenced through `SobreLot`.
 4. Both `RespostaOfertaTransport` replies are collected concurrently.
-5. The logistics agent selects the cheapest valid offer and returns the final shipping summary to `Agent Compra`.
+5. The logistics agent selects the cheapest valid offer and returns the final shipping summary to `Agent Compra`, preserving the `Transportista` relation through `AssignatATransportista`.
 
 ### Interaction with external actors
 
 - `Transportista` is the only external actor implemented in code during this phase, and it remains explicit and distributed as required by the statement.
-- `Usuari`, `VenedorExtern`, and `Banc` are fully modeled in the ontology even where the executable flow is still pending.
+- `Usuari`, `VenedorExtern`, and `ProveidorPagament` are fully modeled in the ontology even where the executable flow is still pending.
 - The ontology also reserves the communication structure required for future external-seller onboarding, payment authorization, return management, and feedback/recommendation loops.
 
 ## Code/Ontology Mapping

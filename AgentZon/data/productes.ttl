@@ -1,39 +1,38 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-azon:product-P1001 a azon:Producte ;
-    azon:categoria "audio" ;
-    azon:descripcio "Wireless over-ear headphones with noise isolation" ;
-    azon:idProducte "P1001" ;
-    azon:marca "AuralMax" ;
-    azon:nom "Wireless Headphones" ;
-    azon:pes "1.5"^^xsd:float ;
-    azon:preu "89.99"^^xsd:float .
+azon:Producte-P1001 a azon:Producte ;
+    azon:Categoria "audio" ;
+    azon:Descripcio "Wireless over-ear headphones with noise isolation" ;
+    azon:IdProducte "P1001" ;
+    azon:Marca "AuralMax" ;
+    azon:Nom "Wireless Headphones" ;
+    azon:Pes "1.5"^^xsd:float ;
+    azon:Preu "89.99"^^xsd:float .
 
-azon:product-P1002 a azon:Producte ;
-    azon:categoria "audio" ;
-    azon:descripcio "Compact bluetooth speaker for travel" ;
-    azon:idProducte "P1002" ;
-    azon:marca "AuralMax" ;
-    azon:nom "Portable Speaker" ;
-    azon:pes "1.1"^^xsd:float ;
-    azon:preu "59.99"^^xsd:float .
+azon:Producte-P1002 a azon:Producte ;
+    azon:Categoria "audio" ;
+    azon:Descripcio "Compact bluetooth speaker for travel" ;
+    azon:IdProducte "P1002" ;
+    azon:Marca "AuralMax" ;
+    azon:Nom "Portable Speaker" ;
+    azon:Pes "1.1"^^xsd:float ;
+    azon:Preu "59.99"^^xsd:float .
 
-azon:product-P2001 a azon:Producte ;
-    azon:categoria "peripherals" ;
-    azon:descripcio "Mechanical keyboard with tactile switches" ;
-    azon:idProducte "P2001" ;
-    azon:marca "KeyForge" ;
-    azon:nom "Mechanical Keyboard" ;
-    azon:pes "2.4"^^xsd:float ;
-    azon:preu "129.0"^^xsd:float .
+azon:Producte-P2001 a azon:Producte ;
+    azon:Categoria "peripherals" ;
+    azon:Descripcio "Mechanical keyboard with tactile switches" ;
+    azon:IdProducte "P2001" ;
+    azon:Marca "KeyForge" ;
+    azon:Nom "Mechanical Keyboard" ;
+    azon:Pes "2.4"^^xsd:float ;
+    azon:Preu "129.0"^^xsd:float .
 
-azon:product-P3001 a azon:Producte ;
-    azon:categoria "home" ;
-    azon:descripcio "Ceramic mug for hot drinks" ;
-    azon:idProducte "P3001" ;
-    azon:marca "CasaNova" ;
-    azon:nom "Ceramic Coffee Mug" ;
-    azon:pes "0.6"^^xsd:float ;
-    azon:preu "15.5"^^xsd:float .
-
+azon:Producte-P3001 a azon:Producte ;
+    azon:Categoria "home" ;
+    azon:Descripcio "Ceramic mug for hot drinks" ;
+    azon:IdProducte "P3001" ;
+    azon:Marca "CasaNova" ;
+    azon:Nom "Ceramic Coffee Mug" ;
+    azon:Pes "0.6"^^xsd:float ;
+    azon:Preu "15.5"^^xsd:float .

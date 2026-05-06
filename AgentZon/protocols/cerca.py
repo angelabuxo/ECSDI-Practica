@@ -9,46 +9,46 @@ from AgentZon.AgentUtil.OntoNamespaces import AZON, bind_namespaces
 def build_peticio_cerca(request_id, text="", category="", brand="", min_price=None, max_price=None):
     graph = Graph()
     bind_namespaces(graph)
-    content = AZON[request_id]
+    content = AZON[f"PeticioCerca-{request_id}"]
     graph.add((content, RDF.type, AZON.PeticioCerca))
-    graph.add((content, AZON.teText, Literal(text)))
-    graph.add((content, AZON.teCategoria, Literal(category)))
-    graph.add((content, AZON.teMarca, Literal(brand)))
+    graph.add((content, AZON.TeText, Literal(text)))
+    graph.add((content, AZON.TeCategoria, Literal(category)))
+    graph.add((content, AZON.TeMarca, Literal(brand)))
     if min_price is not None:
-        graph.add((content, AZON.preuMinim, Literal(min_price, datatype=XSD.float)))
+        graph.add((content, AZON.PreuMinim, Literal(min_price, datatype=XSD.float)))
     if max_price is not None:
-        graph.add((content, AZON.preuMaxim, Literal(max_price, datatype=XSD.float)))
+        graph.add((content, AZON.PreuMaxim, Literal(max_price, datatype=XSD.float)))
     return graph, content
 
 
 # RDF parsers ---------------------------------------------------------------------
 def parse_peticio_cerca(graph, content):
     return {
-        "text": str(graph.value(content, AZON.teText, default=Literal(""))),
-        "category": str(graph.value(content, AZON.teCategoria, default=Literal(""))),
-        "brand": str(graph.value(content, AZON.teMarca, default=Literal(""))),
-        "min_price": _literal_to_float(graph.value(content, AZON.preuMinim)),
-        "max_price": _literal_to_float(graph.value(content, AZON.preuMaxim)),
+        "text": str(graph.value(content, AZON.TeText, default=Literal(""))),
+        "category": str(graph.value(content, AZON.TeCategoria, default=Literal(""))),
+        "brand": str(graph.value(content, AZON.TeMarca, default=Literal(""))),
+        "min_price": _literal_to_float(graph.value(content, AZON.PreuMinim)),
+        "max_price": _literal_to_float(graph.value(content, AZON.PreuMaxim)),
     }
 
 
 def build_resultat_cerca(result_id, products):
     graph = Graph()
     bind_namespaces(graph)
-    content = AZON[result_id]
+    content = AZON[f"ResultatCerca-{result_id}"]
     graph.add((content, RDF.type, AZON.ResultatCerca))
-    graph.add((content, AZON.totalResultats, Literal(len(products))))
+    graph.add((content, AZON.TotalResultats, Literal(len(products))))
     for product in products:
-        subject = AZON[f"product-{product['product_id']}"]
-        graph.add((content, AZON.mostraProducte, subject))
+        subject = AZON[f"Producte-{product['product_id']}"]
+        graph.add((content, AZON.MostraProducte, subject))
         graph.add((subject, RDF.type, AZON.Producte))
-        graph.add((subject, AZON.idProducte, Literal(product["product_id"])))
-        graph.add((subject, AZON.nom, Literal(product["name"])))
-        graph.add((subject, AZON.descripcio, Literal(product["description"])))
-        graph.add((subject, AZON.categoria, Literal(product["category"])))
-        graph.add((subject, AZON.marca, Literal(product["brand"])))
-        graph.add((subject, AZON.preu, Literal(product["price"])))
-        graph.add((subject, AZON.pes, Literal(product["weight"])))
+        graph.add((subject, AZON.IdProducte, Literal(product["product_id"])))
+        graph.add((subject, AZON.Nom, Literal(product["name"])))
+        graph.add((subject, AZON.Descripcio, Literal(product["description"])))
+        graph.add((subject, AZON.Categoria, Literal(product["category"])))
+        graph.add((subject, AZON.Marca, Literal(product["brand"])))
+        graph.add((subject, AZON.Preu, Literal(product["price"])))
+        graph.add((subject, AZON.Pes, Literal(product["weight"])))
     return graph, content
 
 
@@ -56,16 +56,16 @@ def extract_result_products(graph, content=None):
     if content is None:
         content = graph.value(predicate=RDF.type, object=AZON.ResultatCerca)
     products = []
-    for subject in graph.objects(content, AZON.mostraProducte):
+    for subject in graph.objects(content, AZON.MostraProducte):
         products.append(
             {
-                "product_id": str(graph.value(subject, AZON.idProducte)),
-                "name": str(graph.value(subject, AZON.nom)),
-                "description": str(graph.value(subject, AZON.descripcio)),
-                "category": str(graph.value(subject, AZON.categoria)),
-                "brand": str(graph.value(subject, AZON.marca)),
-                "price": float(graph.value(subject, AZON.preu)),
-                "weight": float(graph.value(subject, AZON.pes)),
+                "product_id": str(graph.value(subject, AZON.IdProducte)),
+                "name": str(graph.value(subject, AZON.Nom)),
+                "description": str(graph.value(subject, AZON.Descripcio)),
+                "category": str(graph.value(subject, AZON.Categoria)),
+                "brand": str(graph.value(subject, AZON.Marca)),
+                "price": float(graph.value(subject, AZON.Preu)),
+                "weight": float(graph.value(subject, AZON.Pes)),
             }
         )
     return products

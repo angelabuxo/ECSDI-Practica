@@ -9,6 +9,7 @@ class ACLMessageTests(unittest.TestCase):
     def test_build_message_wraps_search_content_and_round_trips_properties(self):
         from AgentZon.AgentUtil.ACL import ACL
         from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
+        from AgentZon.AgentUtil.OntoNamespaces import AZON_ONTOLOGY
         from AgentZon.protocols.cerca import build_peticio_cerca, parse_peticio_cerca
 
         agn = Namespace("http://www.agentes.org#")
@@ -31,6 +32,7 @@ class ACLMessageTests(unittest.TestCase):
             receiver=receiver,
             content=content,
             msgcnt=1,
+            ontology=AZON_ONTOLOGY,
         )
 
         properties = get_message_properties(message_graph)
@@ -38,6 +40,7 @@ class ACLMessageTests(unittest.TestCase):
         self.assertEqual(properties["sender"], sender)
         self.assertEqual(properties["receiver"], receiver)
         self.assertEqual(properties["content"], content)
+        self.assertEqual(properties["ontology"], AZON_ONTOLOGY)
 
         parsed = parse_peticio_cerca(message_graph, content)
         self.assertEqual(parsed["text"], "headphones")

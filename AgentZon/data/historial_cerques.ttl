@@ -1,44 +1,38 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-azon:search-0 a azon:PeticioCerca ;
-    azon:teCategoria "" ;
-    azon:teMarca "apple" ;
-    azon:teText "" ;
-    azon:totalResultats 0 .
+azon:HistorialCerca-0 a azon:HistorialCerca ;
+    azon:TeCategoria "" ;
+    azon:TeMarca "" ;
+    azon:TeText "aa" ;
+    azon:TotalResultats 0 .
 
-azon:search-11 a azon:PeticioCerca ;
-    azon:mostraProducte azon:product-P1001,
-        azon:product-P1002 ;
-    azon:teCategoria "audio" ;
-    azon:teMarca "" ;
-    azon:teText "" ;
-    azon:totalResultats 2 .
+azon:HistorialCerca-14 a azon:HistorialCerca ;
+    azon:MostraProducte azon:Producte-P1001,
+        azon:Producte-P1002,
+        azon:Producte-P2001,
+        azon:Producte-P3001 ;
+    azon:TeCategoria "" ;
+    azon:TeMarca "" ;
+    azon:TeText "a" ;
+    azon:TotalResultats 4 .
 
-azon:search-18 a azon:PeticioCerca ;
-    azon:mostraProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P2001,
-        azon:product-P3001 ;
-    azon:teCategoria "" ;
-    azon:teMarca "" ;
-    azon:teText "a" ;
-    azon:totalResultats 4 .
+azon:HistorialCerca-23 a azon:HistorialCerca ;
+    azon:MostraProducte azon:Producte-P1001,
+        azon:Producte-P1002,
+        azon:Producte-P2001,
+        azon:Producte-P3001 ;
+    azon:TeCategoria "" ;
+    azon:TeMarca "" ;
+    azon:TeText "a" ;
+    azon:TotalResultats 4 .
 
-azon:search-27 a azon:PeticioCerca ;
-    azon:mostraProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P2001,
-        azon:product-P3001 ;
-    azon:teCategoria "" ;
-    azon:teMarca "" ;
-    azon:teText "a" ;
-    azon:totalResultats 4 .
-
-azon:search-5 a azon:PeticioCerca ;
-    azon:mostraProducte azon:product-P2001 ;
-    azon:teCategoria "" ;
-    azon:teMarca "KeyForge" ;
-    azon:teText "" ;
-    azon:totalResultats 1 .
-
+azon:HistorialCerca-5 a azon:HistorialCerca ;
+    azon:MostraProducte azon:Producte-P1001,
+        azon:Producte-P1002,
+        azon:Producte-P2001,
+        azon:Producte-P3001 ;
+    azon:TeCategoria "" ;
+    azon:TeMarca "" ;
+    azon:TeText "a" ;
+    azon:TotalResultats 4 .

@@ -7,7 +7,7 @@ from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentZon.AgentUtil.Agent import Agent
 from AgentZon.AgentUtil.DSO import DSO
-from AgentZon.AgentUtil.OntoNamespaces import AGN, bind_namespaces
+from AgentZon.AgentUtil.OntoNamespaces import AGN, DSO_ONTOLOGY, bind_namespaces
 
 
 # Directory requests ---------------------------------------------------------------
@@ -29,6 +29,7 @@ def build_register_message(agent, agent_type, directory_agent, msgcnt=0):
         receiver=directory_agent.uri,
         content=content,
         msgcnt=msgcnt,
+        ontology=DSO_ONTOLOGY,
     )
 
 
@@ -46,6 +47,7 @@ def build_search_message(requester_agent, agent_type, directory_agent, msgcnt=0)
         receiver=directory_agent.uri,
         content=content,
         msgcnt=msgcnt,
+        ontology=DSO_ONTOLOGY,
     )
 
 

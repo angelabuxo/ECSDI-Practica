@@ -53,32 +53,35 @@ def _build_products_graph():
     ]
 
     for item in products:
-        subject = AZON[f"product-{item['id']}"]
+        subject = AZON[f"Producte-{item['id']}"]
         graph.add((subject, RDF.type, AZON.Producte))
-        graph.add((subject, AZON.idProducte, Literal(item["id"])))
-        graph.add((subject, AZON.nom, Literal(item["name"])))
-        graph.add((subject, AZON.descripcio, Literal(item["description"])))
-        graph.add((subject, AZON.categoria, Literal(item["category"])))
-        graph.add((subject, AZON.marca, Literal(item["brand"])))
-        graph.add((subject, AZON.preu, Literal(item["price"], datatype=XSD.float)))
-        graph.add((subject, AZON.pes, Literal(item["weight"], datatype=XSD.float)))
+        graph.add((subject, AZON.IdProducte, Literal(item["id"])))
+        graph.add((subject, AZON.Nom, Literal(item["name"])))
+        graph.add((subject, AZON.Descripcio, Literal(item["description"])))
+        graph.add((subject, AZON.Categoria, Literal(item["category"])))
+        graph.add((subject, AZON.Marca, Literal(item["brand"])))
+        graph.add((subject, AZON.Preu, Literal(item["price"], datatype=XSD.float)))
+        graph.add((subject, AZON.Pes, Literal(item["weight"], datatype=XSD.float)))
     return graph
 
 
 def _build_locations_graph():
     graph = Graph()
     bind_namespaces(graph)
-    centre = AZON["centre-BCN"]
+    centre = AZON["CentreLogistic-BCN"]
     graph.add((centre, RDF.type, AZON.CentreLogistic))
-    graph.add((centre, AZON.idCentreLogistic, Literal("CL-BCN")))
-    graph.add((centre, AZON.ciutat, Literal("Barcelona")))
+    graph.add((centre, AZON.IdCentreLogistic, Literal("CL-BCN")))
+    graph.add((centre, AZON.Ciutat, Literal("Barcelona")))
 
     for product_id in ["P1001", "P1002", "P2001", "P3001"]:
-        mapping = AZON[f"location-{product_id}"]
+        mapping = AZON[f"UbicacioProducte-{product_id}"]
+        product = AZON[f"Producte-{product_id}"]
         graph.add((mapping, RDF.type, AZON.UbicacioProducte))
-        graph.add((mapping, AZON.idProducte, Literal(product_id)))
-        graph.add((mapping, AZON.idCentreLogistic, Literal("CL-BCN")))
-        graph.add((mapping, AZON.ciutat, Literal("Barcelona")))
+        graph.add((mapping, AZON.SobreProducte, product))
+        graph.add((mapping, AZON.UbicatACentre, centre))
+        graph.add((mapping, AZON.Ciutat, Literal("Barcelona")))
+        graph.add((product, RDF.type, AZON.Producte))
+        graph.add((product, AZON.IdProducte, Literal(product_id)))
     return graph
 
 

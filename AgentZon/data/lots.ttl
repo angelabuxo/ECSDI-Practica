@@ -1,31 +1,13 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-azon:lot-LOT-1DC61B a azon:Lot ;
-    azon:ciutat "Barcelona" ;
-    azon:idComanda "ORDER-68DD8207" ;
-    azon:idLot "LOT-1DC61B" ;
-    azon:idProducte "P1001",
-        "P1002",
-        "P2001",
-        "P3001" ;
-    azon:pes 5.6e+00 ;
-    azon:prioritat "urgent" .
-
-azon:lot-LOT-2B34C3 a azon:Lot ;
-    azon:ciutat "Barcelona" ;
-    azon:idComanda "ORDER-8BB9C37B" ;
-    azon:idLot "LOT-2B34C3" ;
-    azon:idProducte "P1002" ;
-    azon:pes 1.1e+00 ;
-    azon:prioritat "standard" .
-
-azon:lot-LOT-FAAD84 a azon:Lot ;
-    azon:ciutat "Barcelona" ;
-    azon:idComanda "ORDER-102054C3" ;
-    azon:idLot "LOT-FAAD84" ;
-    azon:idProducte "P1001",
-        "P1002" ;
-    azon:pes 2.6e+00 ;
-    azon:prioritat "standard" .
-
+azon:Lot-LOT-D3D4D1 a azon:Lot ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdLot "LOT-D3D4D1" ;
+    azon:Pes 3.2e+00 ;
+    azon:Prioritat "urgent" ;
+    azon:SobreComanda azon:Comanda-ORDER-1844C273,
+        azon:Comanda-ORDER-CD1D95DC ;
+    azon:TeProducte azon:Producte-P1001,
+        azon:Producte-P1002,
+        azon:Producte-P3001 .

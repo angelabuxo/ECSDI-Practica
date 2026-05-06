@@ -11,6 +11,7 @@ from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties, register_agent, send_message
 from AgentZon.AgentUtil.DSO import DSO
 from AgentZon.AgentUtil.FlaskServer import shutdown_server
+from AgentZon.AgentUtil.OntoNamespaces import AZON_ONTOLOGY
 from AgentZon.config import (
     DEFAULT_PORTS,
     TEMPLATE_DIR,
@@ -118,6 +119,7 @@ def comm():
             ACL["not-understood"],
             sender=AGENT.uri,
             msgcnt=next_counter(),
+            ontology=AZON_ONTOLOGY,
         ).serialize(format="xml")
     content = properties["content"]
     criteria = parse_peticio_cerca(message_graph, content)
@@ -130,6 +132,7 @@ def comm():
         receiver=properties.get("sender"),
         content=response_content,
         msgcnt=next_counter(),
+        ontology=AZON_ONTOLOGY,
     )
     return response.serialize(format="xml")
 

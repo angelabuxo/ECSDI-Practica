@@ -10,6 +10,7 @@ from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentZon.AgentUtil.DSO import DSO
 from AgentZon.AgentUtil.FlaskServer import shutdown_server
+from AgentZon.AgentUtil.OntoNamespaces import AZON_ONTOLOGY
 from AgentZon.config import (
     DEFAULT_PORTS,
     add_data_dir_argument,
@@ -82,6 +83,7 @@ def comm():
             ACL["not-understood"],
             sender=AGENT.uri,
             msgcnt=next_counter(),
+            ontology=AZON_ONTOLOGY,
         ).serialize(format="xml")
     content = properties["content"]
     request_data = parse_peticio_registre_compra(message_graph, content)

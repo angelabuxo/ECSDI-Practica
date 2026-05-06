@@ -14,13 +14,13 @@ def search_products(catalog_path, criteria):
         SELECT ?id ?name ?description ?category ?brand ?price ?weight
         WHERE {
             ?product a azon:Producte ;
-                azon:idProducte ?id ;
-                azon:nom ?name ;
-                azon:descripcio ?description ;
-                azon:categoria ?category ;
-                azon:marca ?brand ;
-                azon:preu ?price ;
-                azon:pes ?weight .
+                azon:IdProducte ?id ;
+                azon:Nom ?name ;
+                azon:Descripcio ?description ;
+                azon:Categoria ?category ;
+                azon:Marca ?brand ;
+                azon:Preu ?price ;
+                azon:Pes ?weight .
         }
     """
     rows = graph.query(query)

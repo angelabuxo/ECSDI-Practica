@@ -12,14 +12,14 @@ from AgentZon.services.rdf_store import load_graph, save_graph
 def save_user_shipping_data(shipping_path, shipping_data):
     graph = load_graph(shipping_path)
     bind_namespaces(graph)
-    node = AZON[f"shipping-{shipping_data['user_id']}"]
+    node = AZON[f"DadesEnviament-{shipping_data['user_id']}"]
     graph.add((node, RDF.type, AZON.DadesEnviamentUsuari))
-    graph.add((node, AZON.idUsuari, Literal(shipping_data["user_id"])))
-    graph.add((node, AZON.nom, Literal(shipping_data["user_name"])))
-    graph.add((node, AZON.carrer, Literal(shipping_data["street_address"])))
-    graph.add((node, AZON.ciutat, Literal(shipping_data["city"])))
-    graph.add((node, AZON.prioritat, Literal(shipping_data["priority"])))
-    graph.add((node, AZON.metodePagament, Literal(shipping_data["payment_method"])))
+    graph.add((node, AZON.IdUsuari, Literal(shipping_data["user_id"])))
+    graph.add((node, AZON.Nom, Literal(shipping_data["user_name"])))
+    graph.add((node, AZON.Carrer, Literal(shipping_data["street_address"])))
+    graph.add((node, AZON.Ciutat, Literal(shipping_data["city"])))
+    graph.add((node, AZON.Prioritat, Literal(shipping_data["priority"])))
+    graph.add((node, AZON.MetodePagament, Literal(shipping_data["payment_method"])))
     save_graph(shipping_path, graph)
 
 
@@ -34,15 +34,17 @@ def create_order(orders_path, shipping_data, products):
     }
     graph = load_graph(orders_path)
     bind_namespaces(graph)
-    node = AZON[f"order-{order['order_id']}"]
+    node = AZON[f"Comanda-{order['order_id']}"]
+    shipping_node = AZON[f"DadesEnviament-{order['user_id']}"]
     graph.add((node, RDF.type, AZON.Comanda))
-    graph.add((node, AZON.idComanda, Literal(order["order_id"])))
-    graph.add((node, AZON.idUsuari, Literal(order["user_id"])))
-    graph.add((node, AZON.nom, Literal(order["user_name"])))
-    graph.add((node, AZON.carrer, Literal(order["shipping_data"]["street_address"])))
-    graph.add((node, AZON.ciutat, Literal(order["shipping_data"]["city"])))
-    graph.add((node, AZON.prioritat, Literal(order["shipping_data"]["priority"])))
+    graph.add((node, AZON.IdComanda, Literal(order["order_id"])))
+    graph.add((node, AZON.IdUsuari, Literal(order["user_id"])))
+    graph.add((node, AZON.Nom, Literal(order["user_name"])))
+    graph.add((node, AZON.TeDadesEnviament, shipping_node))
     for product in order["products"]:
-        graph.add((node, AZON.teProducte, AZON[f"product-{product['product_id']}"]))
+        product_node = AZON[f"Producte-{product['product_id']}"]
+        graph.add((node, AZON.TeProducte, product_node))
+        graph.add((product_node, RDF.type, AZON.Producte))
+        graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
     save_graph(orders_path, graph)
     return order

@@ -1,26 +1,17 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 
-azon:shipping-1234 a azon:DadesEnviamentUsuari ;
-    azon:carrer "Guillem Tell 42" ;
-    azon:ciutat "Barcelona" ;
-    azon:idUsuari "1234" ;
-    azon:metodePagament "Visa" ;
-    azon:nom "Pol" ;
-    azon:prioritat "standard" .
+azon:DadesEnviament-1 a azon:DadesEnviamentUsuari ;
+    azon:Carrer "Balmes 23" ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "1" ;
+    azon:MetodePagament "V" ;
+    azon:Nom "pol" ;
+    azon:Prioritat "urgent" .
 
-azon:shipping-2 a azon:DadesEnviamentUsuari ;
-    azon:carrer "Carrer de Balmes" ;
-    azon:ciutat "Barcelona" ;
-    azon:idUsuari "2" ;
-    azon:metodePagament "hola" ;
-    azon:nom "Paula" ;
-    azon:prioritat "urgent" .
-
-azon:shipping-3 a azon:DadesEnviamentUsuari ;
-    azon:carrer "HOla" ;
-    azon:ciutat "Barcelona" ;
-    azon:idUsuari "3" ;
-    azon:metodePagament "a" ;
-    azon:nom "Josep" ;
-    azon:prioritat "standard" .
-
+azon:DadesEnviament-2 a azon:DadesEnviamentUsuari ;
+    azon:Carrer "Guillem Tell 23" ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "2" ;
+    azon:MetodePagament "v" ;
+    azon:Nom "paula" ;
+    azon:Prioritat "urgent" .

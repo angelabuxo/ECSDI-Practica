@@ -11,7 +11,7 @@ from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentZon.AgentUtil.DSO import DSO
 from AgentZon.AgentUtil.FlaskServer import shutdown_server
-from AgentZon.AgentUtil.OntoNamespaces import bind_namespaces
+from AgentZon.AgentUtil.OntoNamespaces import DSO_ONTOLOGY, bind_namespaces
 from AgentZon.config import (
     DEFAULT_PORTS,
     add_runtime_arguments,
@@ -71,6 +71,7 @@ def process_register(message_graph, content):
         sender=AGENT.uri,
         receiver=uri,
         msgcnt=next_counter(),
+        ontology=DSO_ONTOLOGY,
     )
 
 
@@ -94,6 +95,7 @@ def process_search(message_graph, content, requester):
             receiver=requester,
             content=payload,
             msgcnt=next_counter(),
+            ontology=DSO_ONTOLOGY,
         )
 
     return build_message(
@@ -102,6 +104,7 @@ def process_search(message_graph, content, requester):
         sender=AGENT.uri,
         receiver=requester,
         msgcnt=next_counter(),
+        ontology=DSO_ONTOLOGY,
     )
 
 
@@ -117,6 +120,7 @@ def register():
             ACL["not-understood"],
             sender=AGENT.uri,
             msgcnt=next_counter(),
+            ontology=DSO_ONTOLOGY,
         ).serialize(format="xml")
 
     content = properties["content"]
@@ -131,6 +135,7 @@ def register():
             ACL["not-understood"],
             sender=AGENT.uri,
             msgcnt=next_counter(),
+            ontology=DSO_ONTOLOGY,
         )
     return response.serialize(format="xml")
 

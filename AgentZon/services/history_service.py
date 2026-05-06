@@ -10,14 +10,17 @@ from AgentZon.services.rdf_store import load_graph, save_graph
 def record_search(path, criteria, products):
     graph = load_graph(path)
     bind_namespaces(graph)
-    record = AZON[f"search-{len(graph)}"]
-    graph.add((record, RDF.type, AZON.PeticioCerca))
-    graph.add((record, AZON.teText, Literal(criteria.get("text", ""))))
-    graph.add((record, AZON.teCategoria, Literal(criteria.get("category", ""))))
-    graph.add((record, AZON.teMarca, Literal(criteria.get("brand", ""))))
-    graph.add((record, AZON.totalResultats, Literal(len(products))))
+    record = AZON[f"HistorialCerca-{len(graph)}"]
+    graph.add((record, RDF.type, AZON.HistorialCerca))
+    graph.add((record, AZON.TeText, Literal(criteria.get("text", ""))))
+    graph.add((record, AZON.TeCategoria, Literal(criteria.get("category", ""))))
+    graph.add((record, AZON.TeMarca, Literal(criteria.get("brand", ""))))
+    graph.add((record, AZON.TotalResultats, Literal(len(products))))
     for product in products:
-        graph.add((record, AZON.mostraProducte, AZON[f"product-{product['product_id']}"]))
+        product_node = AZON[f"Producte-{product['product_id']}"]
+        graph.add((record, AZON.MostraProducte, product_node))
+        graph.add((product_node, RDF.type, AZON.Producte))
+        graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
     save_graph(path, graph)
 
 
@@ -25,10 +28,17 @@ def record_search(path, criteria, products):
 def record_purchase(path, order):
     graph = load_graph(path)
     bind_namespaces(graph)
-    record = AZON[f"purchase-{order['order_id']}"]
+    record = AZON[f"HistorialCompra-{order['order_id']}"]
+    order_node = AZON[f"Comanda-{order['order_id']}"]
     graph.add((record, RDF.type, AZON.HistorialCompra))
-    graph.add((record, AZON.idComanda, Literal(order["order_id"])))
-    graph.add((record, AZON.idUsuari, Literal(order["user_id"])))
+    graph.add((record, AZON.SobreComanda, order_node))
+    graph.add((order_node, RDF.type, AZON.Comanda))
+    graph.add((order_node, AZON.IdComanda, Literal(order["order_id"])))
+    graph.add((order_node, AZON.IdUsuari, Literal(order["user_id"])))
     for product in order["products"]:
-        graph.add((record, AZON.idProducte, Literal(product["product_id"])))
+        product_node = AZON[f"Producte-{product['product_id']}"]
+        graph.add((record, AZON.TeProducte, product_node))
+        graph.add((order_node, AZON.TeProducte, product_node))
+        graph.add((product_node, RDF.type, AZON.Producte))
+        graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
     save_graph(path, graph)

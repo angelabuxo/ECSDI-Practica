@@ -42,13 +42,13 @@ class LogisticsFlowTests(unittest.TestCase):
             self.assertEqual(first_lot["lot_id"], second_lot["lot_id"])
 
             lot = lots[0]
-            self.assertEqual(float(graph.value(lot, AZON.pes)), 3.5)
+            self.assertEqual(float(graph.value(lot, AZON.Pes)), 3.5)
             self.assertEqual(
-                {str(value) for value in graph.objects(lot, AZON.idComanda)},
+                {str(graph.value(value, AZON.IdComanda)) for value in graph.objects(lot, AZON.SobreComanda)},
                 {"ORDER-1", "ORDER-2"},
             )
             self.assertEqual(
-                {str(value) for value in graph.objects(lot, AZON.idProducte)},
+                {str(graph.value(value, AZON.IdProducte)) for value in graph.objects(lot, AZON.TeProducte)},
                 {"P1", "P2"},
             )
 

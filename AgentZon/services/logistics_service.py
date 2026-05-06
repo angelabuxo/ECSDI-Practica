@@ -15,32 +15,38 @@ def create_lot(lots_path, order_id, city, priority, products):
     bind_namespaces(graph)
     node = None
     for lot in graph.subjects(RDF.type, AZON.Lot):
-        lot_city = graph.value(lot, AZON.ciutat)
-        lot_priority = graph.value(lot, AZON.prioritat)
+        lot_city = graph.value(lot, AZON.Ciutat)
+        lot_priority = graph.value(lot, AZON.Prioritat)
         if str(lot_city) == city and str(lot_priority) == priority:
             node = lot
             break
 
     if node is None:
         lot_id = f"LOT-{uuid4().hex[:6].upper()}"
-        node = AZON[f"lot-{lot_id}"]
+        node = AZON[f"Lot-{lot_id}"]
         graph.add((node, RDF.type, AZON.Lot))
-        graph.add((node, AZON.idLot, Literal(lot_id)))
-        graph.add((node, AZON.idComanda, Literal(order_id)))
-        graph.add((node, AZON.ciutat, Literal(city)))
-        graph.add((node, AZON.prioritat, Literal(priority)))
+        graph.add((node, AZON.IdLot, Literal(lot_id)))
+        graph.add((node, AZON.Ciutat, Literal(city)))
+        graph.add((node, AZON.Prioritat, Literal(priority)))
         total_weight = 0.0
     else:
-        lot_id = str(graph.value(node, AZON.idLot))
-        existing_weight = graph.value(node, AZON.pes)
+        lot_id = str(graph.value(node, AZON.IdLot))
+        existing_weight = graph.value(node, AZON.Pes)
         total_weight = float(existing_weight) if existing_weight is not None else 0.0
-        if order_id not in {str(value) for value in graph.objects(node, AZON.idComanda)}:
-            graph.add((node, AZON.idComanda, Literal(order_id)))
+
+    order_node = AZON[f"Comanda-{order_id}"]
+    if order_node not in set(graph.objects(node, AZON.SobreComanda)):
+        graph.add((node, AZON.SobreComanda, order_node))
+    graph.add((order_node, RDF.type, AZON.Comanda))
+    graph.add((order_node, AZON.IdComanda, Literal(order_id)))
 
     for product in products:
         total_weight += float(product["weight"])
-        graph.add((node, AZON.idProducte, Literal(product["product_id"])))
-    graph.set((node, AZON.pes, Literal(total_weight)))
+        product_node = AZON[f"Producte-{product['product_id']}"]
+        graph.add((node, AZON.TeProducte, product_node))
+        graph.add((product_node, RDF.type, AZON.Producte))
+        graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
+    graph.set((node, AZON.Pes, Literal(total_weight)))
     save_graph(lots_path, graph)
     return {
         "lot_id": lot_id,

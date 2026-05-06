@@ -10,6 +10,7 @@ from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties, send_message
 from AgentZon.AgentUtil.DSO import DSO
 from AgentZon.AgentUtil.FlaskServer import shutdown_server
+from AgentZon.AgentUtil.OntoNamespaces import AZON_ONTOLOGY
 from AgentZon.config import (
     DEFAULT_PORTS,
     TEMPLATE_DIR,
@@ -157,6 +158,7 @@ def comm():
         ACL["not-understood"],
         sender=AGENT.uri,
         msgcnt=next_counter(),
+        ontology=AZON_ONTOLOGY,
     )
     return response.serialize(format="xml")
 

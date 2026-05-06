@@ -9,7 +9,7 @@ from rdflib import Graph, RDF
 from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentZon.AgentUtil.FlaskServer import shutdown_server
-from AgentZon.AgentUtil.OntoNamespaces import bind_namespaces
+from AgentZon.AgentUtil.OntoNamespaces import AZON_ONTOLOGY, bind_namespaces
 from AgentZon.config import (
     DEFAULT_PORTS,
     add_runtime_arguments,
@@ -71,6 +71,7 @@ def comm():
             ACL["not-understood"],
             sender=AGENT.uri,
             msgcnt=next_counter(),
+            ontology=AZON_ONTOLOGY,
         ).serialize(format="xml")
     content = properties["content"]
     action = message_graph.value(content, RDF.type)
@@ -80,6 +81,7 @@ def comm():
             ACL["not-understood"],
             sender=AGENT.uri,
             msgcnt=next_counter(),
+            ontology=AZON_ONTOLOGY,
         ).serialize(format="xml")
     request_data = parse_peticio_transport(message_graph, content)
     offer = generar_oferta_transport(request_data)

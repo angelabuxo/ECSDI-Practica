@@ -5,10 +5,12 @@
 
 __author__ = "javier"
 
-from rdflib import Namespace
+from rdflib import Namespace, URIRef
 
 
-AZON = Namespace("http://www.semanticweb.org/agentzon#")
+AZON_ONTOLOGY = URIRef("http://www.semanticweb.org/agentzon")
+DSO_ONTOLOGY = URIRef("http://www.semanticweb.org/directory-service-ontology#")
+AZON = Namespace(f"{AZON_ONTOLOGY}#")
 AGN = Namespace("http://www.agentes.org#")
 
 

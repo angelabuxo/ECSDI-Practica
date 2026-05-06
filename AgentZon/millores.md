@@ -47,7 +47,7 @@ Once the refactoring is complete:
 The current ontology is minimal (only 2 relationships and no attributes). It must be expanded significantly using Protégé.
 
 * **Language:** Add descriptions in **Catalan** to the main concepts.
-* **Hierarchy:** Organize concepts hierarchically (e.g., `Actor` -> `Usuari`, `VenedorExtern`, `Transportista`, `Banc`).
+* **Hierarchy:** Organize concepts hierarchically (e.g., `Actor` -> `Usuari`, `VenedorExtern`, `Transportista`, `ProveidorPagament`).
 * **Communication Structure:** Define a specific taxonomy:
     * `Comunicacio`
         * `Accio`
