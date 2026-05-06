@@ -25,7 +25,7 @@ from AgentZon.protocols.centre_logistic import build_productes_localitzats, extr
 from AgentZon.protocols.compra import build_peticio_registre_compra, extract_registration_confirmation
 from AgentZon.protocols.directory import build_search_message, parse_directory_response
 from AgentZon.services.catalog_service import get_products_by_ids
-from AgentZon.services.order_service import create_order, save_user_shipping_data
+from AgentZon.services.order_service import build_order, save_order, save_user_shipping_data
 from AgentZon.services.rdf_store import load_graph
 
 
@@ -82,9 +82,11 @@ def pla_registrar_dades_d_usuari(selected_product_ids, form_data):
         "priority": form_data["priority"],
         "payment_method": form_data["payment_method"],
     }
-    save_user_shipping_data(SHIPPING_PATH, shipping)
     products = get_products_by_ids(CATALOG_PATH, selected_product_ids)
-    return create_order(ORDERS_PATH, shipping, products)
+    order = build_order(shipping, products)
+    save_user_shipping_data(SHIPPING_PATH, order)
+    save_order(ORDERS_PATH, order)
+    return order
 
 
 def pla_producte_als_nostres_magatzems(order):

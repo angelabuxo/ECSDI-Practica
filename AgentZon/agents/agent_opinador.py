@@ -57,15 +57,18 @@ def pla_registre_de_compra(request_data):
         "order_id": request_data["order_id"],
         "user_id": request_data["user_id"],
         "user_name": "history-user",
-        "products": [{"product_id": product_id} for product_id in request_data["product_ids"]],
-        "shipping_data": {
-            "user_id": request_data["user_id"],
-            "user_name": "history-user",
-            "street_address": "",
-            "city": "",
-            "priority": "",
-            "payment_method": "",
-        },
+        "products": request_data["products"],
+        "shipping_data": request_data.get(
+            "shipping_data",
+            {
+                "user_id": request_data["user_id"],
+                "user_name": "history-user",
+                "street_address": "",
+                "city": "",
+                "priority": "",
+                "payment_method": "",
+            },
+        ),
     }
     record_purchase(HISTORY_PATH, order)
 
@@ -90,6 +93,7 @@ def comm():
         request_data["order_id"],
         sender=AGENT.uri,
         receiver=properties.get("sender"),
+        request_content=content,
         msgcnt=next_counter(),
     )
     return response.serialize(format="xml")

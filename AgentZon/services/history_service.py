@@ -30,9 +30,11 @@ def record_purchase(path, order):
     graph = load_graph(path)
     bind_namespaces(graph)
     record = AZON[f"purchase-{order['order_id']}"]
+    order_node = AZON[f"order-{order['order_id']}"]
     graph.add((record, RDF.type, AZON.HistorialCompra))
-    graph.add((record, AZON.idComanda, Literal(order["order_id"])))
-    graph.add((record, AZON.idUsuari, Literal(order["user_id"])))
+    graph.add((record, AZON.IdComanda, Literal(order["order_id"])))
+    graph.add((record, AZON.IdUsuari, Literal(order["user_id"])))
+    graph.add((record, AZON.SobreComanda, order_node))
     for product in order["products"]:
-        graph.add((record, AZON.idProducte, Literal(product["product_id"])))
+        graph.add((record, AZON.TeProducte, AZON[f"product-{product['product_id']}"]))
     save_graph(path, graph)

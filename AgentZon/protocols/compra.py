@@ -4,7 +4,7 @@ from rdflib import Graph, Literal, RDF
 
 from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
-from AgentZon.AgentUtil.OntoNamespaces import AZON, bind_namespaces
+from AgentZon.AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
 
 
 # RDF builders --------------------------------------------------------------------
@@ -12,42 +12,66 @@ def build_peticio_registre_compra(order, sender=None, receiver=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
     content = AZON[f"history-request-{order['order_id']}"]
+    order_node = AZON[f"order-{order['order_id']}"]
+
     graph.add((content, RDF.type, AZON.PeticioRegistreCompra))
-    graph.add((content, AZON.idComanda, Literal(order["order_id"])))
-    graph.add((content, AZON.idUsuari, Literal(order["user_id"])))
+    graph.add((content, AZON.IdComanda, Literal(order["order_id"])))
+    graph.add((content, AZON.IdUsuari, Literal(order["user_id"])))
+    graph.add((content, AZON.SobreComanda, order_node))
+
+    graph.add((order_node, RDF.type, AZON.Comanda))
+    graph.add((order_node, AZON.IdComanda, Literal(order["order_id"])))
+    graph.add((order_node, AZON.IdUsuari, Literal(order["user_id"])))
+
     for product in order["products"]:
-        graph.add((content, AZON.idProducte, Literal(product["product_id"])))
+        product_node = AZON[f"product-{product['product_id']}"]
+        graph.add((content, AZON.TeProducte, product_node))
+        graph.add((order_node, AZON.TeProducte, product_node))
+
     return build_message(
         graph,
         perf=ACL.request,
         sender=sender,
         receiver=receiver,
         content=content,
+        ontology=ONTOLOGY_URI,
         msgcnt=msgcnt,
     )
 
 
 # RDF parsers ---------------------------------------------------------------------
 def parse_peticio_registre_compra(graph, content):
+    products = []
+    for product_node in graph.objects(content, AZON.TeProducte):
+        product_id = graph.value(product_node, AZON.IdProducte)
+        if product_id is None:
+            local = str(product_node).rsplit("product-", 1)[-1]
+            product_id = Literal(local)
+        products.append({"product_id": str(product_id)})
+
     return {
-        "order_id": str(graph.value(content, AZON.idComanda)),
-        "user_id": str(graph.value(content, AZON.idUsuari)),
-        "product_ids": [str(value) for value in graph.objects(content, AZON.idProducte)],
+        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "user_id": str(graph.value(content, AZON.IdUsuari)),
+        "products": products,
     }
 
 
-def build_confirmacio_registre_compra(order_id, sender=None, receiver=None, msgcnt=0):
+def build_confirmacio_registre_compra(order_id, sender=None, receiver=None, request_content=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
     content = AZON[f"history-confirmation-{order_id}"]
     graph.add((content, RDF.type, AZON.ConfirmacioRegistreCompra))
-    graph.add((content, AZON.idComanda, Literal(order_id)))
+    graph.add((content, AZON.IdComanda, Literal(order_id)))
+    graph.add((content, AZON.SobreComanda, AZON[f"order-{order_id}"]))
+    if request_content is not None:
+        graph.add((content, AZON.EsRespostaA, request_content))
     return build_message(
         graph,
         perf=ACL.inform,
         sender=sender,
         receiver=receiver,
         content=content,
+        ontology=ONTOLOGY_URI,
         msgcnt=msgcnt,
     )
 
@@ -55,4 +79,4 @@ def build_confirmacio_registre_compra(order_id, sender=None, receiver=None, msgc
 def extract_registration_confirmation(graph):
     props = get_message_properties(graph)
     content = props["content"]
-    return str(graph.value(content, AZON.idComanda))
+    return str(graph.value(content, AZON.IdComanda))
