@@ -8,6 +8,82 @@ from rdflib import Namespace
 
 
 class LogisticsFlowTests(unittest.TestCase):
+    def test_create_lot_merges_products_for_same_city_and_priority(self):
+        from AgentZon.AgentUtil.OntoNamespaces import AZON
+        from AgentZon.services.logistics_service import create_lot
+        from AgentZon.services.rdf_store import load_graph
+        from rdflib import RDF
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lots_path = Path(tmpdir) / "lots.ttl"
+
+            first_lot = create_lot(
+                lots_path,
+                order_id="ORDER-1",
+                city="Barcelona",
+                priority="standard",
+                products=[
+                    {"product_id": "P1", "weight": 1.5},
+                ],
+            )
+            second_lot = create_lot(
+                lots_path,
+                order_id="ORDER-2",
+                city="Barcelona",
+                priority="standard",
+                products=[
+                    {"product_id": "P2", "weight": 2.0},
+                ],
+            )
+
+            graph = load_graph(lots_path)
+            lots = list(graph.subjects(RDF.type, AZON.Lot))
+            self.assertEqual(len(lots), 1)
+            self.assertEqual(first_lot["lot_id"], second_lot["lot_id"])
+
+            lot = lots[0]
+            self.assertEqual(float(graph.value(lot, AZON.pes)), 3.5)
+            self.assertEqual(
+                {str(value) for value in graph.objects(lot, AZON.idComanda)},
+                {"ORDER-1", "ORDER-2"},
+            )
+            self.assertEqual(
+                {str(value) for value in graph.objects(lot, AZON.idProducte)},
+                {"P1", "P2"},
+            )
+
+    def test_create_lot_creates_new_lot_for_different_city_or_priority(self):
+        from AgentZon.services.logistics_service import create_lot
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lots_path = Path(tmpdir) / "lots.ttl"
+
+            first_lot = create_lot(
+                lots_path,
+                order_id="ORDER-1",
+                city="Barcelona",
+                priority="standard",
+                products=[{"product_id": "P1", "weight": 1.0}],
+            )
+            second_lot = create_lot(
+                lots_path,
+                order_id="ORDER-2",
+                city="Barcelona",
+                priority="urgent",
+                products=[{"product_id": "P2", "weight": 1.0}],
+            )
+            third_lot = create_lot(
+                lots_path,
+                order_id="ORDER-3",
+                city="Girona",
+                priority="standard",
+                products=[{"product_id": "P3", "weight": 1.0}],
+            )
+
+            self.assertNotEqual(first_lot["lot_id"], second_lot["lot_id"])
+            self.assertNotEqual(first_lot["lot_id"], third_lot["lot_id"])
+            self.assertNotEqual(second_lot["lot_id"], third_lot["lot_id"])
+
     def test_centre_logistic_queries_two_transport_agents_and_picks_the_cheapest_offer(self):
         from AgentZon.AgentUtil.Agent import Agent
         from AgentZon.agents import agent_centre_logistic
