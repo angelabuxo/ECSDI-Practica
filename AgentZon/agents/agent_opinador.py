@@ -10,6 +10,7 @@ from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentZon.AgentUtil.DSO import DSO
 from AgentZon.AgentUtil.FlaskServer import shutdown_server
+from AgentZon.AgentUtil.Logging import config_logger
 from AgentZon.config import (
     DEFAULT_PORTS,
     add_data_dir_argument,
@@ -29,6 +30,7 @@ from AgentZon.services.rdf_store import load_graph
 
 
 app = Flask(__name__)
+logger = config_logger(level=1)
 
 # Agent attributes -----------------------------------------------------------------
 AGENT = None
@@ -70,6 +72,7 @@ def pla_registre_de_compra(request_data):
             },
         ),
     }
+    logger.info("Recording purchase history for order %s", order["order_id"])
     record_purchase(HISTORY_PATH, order)
 
 
@@ -80,6 +83,7 @@ def comm():
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
     if not properties or properties.get("performative") != ACL.request:
+        logger.warning("Received non-request or malformed message in /comm")
         return build_message(
             Graph(),
             ACL["not-understood"],
@@ -121,7 +125,9 @@ def main():
 
     configure_runtime({"agent": build_agent("OpinadorAgent", "Opinador", args.port, host=hostname), "data_dir": Path(args.data_dir)})
     directory = build_directory_agent(args.directory_host, args.directory_port)
+    logger.info("Registering %s in directory %s", AGENT.name, directory.address)
     register_with_directory(AGENT, directory, DSO.OpinadorAgent, 0)
+    logger.info("Starting %s on %s:%s", AGENT.name, hostname, args.port)
     app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
 
 

@@ -11,6 +11,7 @@ from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties, register_agent, send_message
 from AgentZon.AgentUtil.DSO import DSO
 from AgentZon.AgentUtil.FlaskServer import shutdown_server
+from AgentZon.AgentUtil.Logging import config_logger
 from AgentZon.config import (
     DEFAULT_PORTS,
     add_data_dir_argument,
@@ -22,6 +23,7 @@ from AgentZon.config import (
     resolve_runtime_hostname,
 )
 from AgentZon.protocols.centre_logistic import (
+    build_eleccio_transportista,
     build_peticio_transport,
     build_shipping_details_response,
     extract_transport_offer,
@@ -32,6 +34,7 @@ from AgentZon.services.rdf_store import load_graph
 
 
 app = Flask(__name__)
+logger = config_logger(level=1)
 
 # Agent attributes -----------------------------------------------------------------
 AGENT = None
@@ -60,11 +63,12 @@ def next_counter():
 
 # Agent logic ----------------------------------------------------------------------
 def pla_assignar_producte_a_lot(request_data):
+    logger.info("Creating lot for order %s", request_data["order_id"])
     return create_lot(
         LOTS_PATH,
         request_data["order_id"],
         request_data["city"],
-        request_data["priority"],
+        request_data["delivery_date"],
         request_data["products"],
     )
 
@@ -81,11 +85,27 @@ def pla_cerca_de_transportista(lot):
 
     with ThreadPoolExecutor(max_workers=len(TRANSPORT_AGENTS)) as executor:
         futures = [executor.submit(query_transport, agent) for agent in TRANSPORT_AGENTS]
-        return [future.result() for future in futures]
+        offers = [future.result() for future in futures]
+        logger.info("Received %d transport offers for lot %s", len(offers), lot["lot_id"])
+        return offers
 
 
 def pla_de_transportista_escollit(lot, offers, receiver, request_content=None):
     selected = choose_best_offer(offers)
+    selected_transport = next(
+        agent
+        for agent in TRANSPORT_AGENTS
+        if agent.name.endswith(selected["transport_id"]) or selected["transport_id"] in agent.name.lower()
+    )
+    selection_message = build_eleccio_transportista(
+        lot,
+        selected,
+        sender=AGENT.uri,
+        receiver=selected_transport.uri,
+        request_content=request_content,
+        msgcnt=next_counter(),
+    )
+    MESSAGE_SENDER(selection_message, selected_transport.address)
     return build_shipping_details_response(
         lot["order_id"],
         lot["city"],
@@ -108,6 +128,7 @@ def comm():
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
     if not properties or properties.get("performative") != ACL.request:
+        logger.warning("Received non-request or malformed message in /comm")
         return build_message(
             Graph(),
             ACL["not-understood"],
@@ -167,7 +188,9 @@ def main():
         }
     )
     directory = build_directory_agent(args.directory_host, args.directory_port)
+    logger.info("Registering %s in directory %s", AGENT.name, directory.address)
     register_with_directory(AGENT, directory, DSO.CentreLogisticAgent, 0)
+    logger.info("Starting %s on %s:%s", AGENT.name, hostname, args.port)
     app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
 
 

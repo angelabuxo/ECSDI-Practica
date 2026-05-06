@@ -19,7 +19,7 @@ def build_productes_localitzats(order, sender=None, receiver=None, msgcnt=0):
     graph.add((content, AZON.IdComanda, Literal(order["order_id"])))
     graph.add((content, AZON.IdUsuari, Literal(order["user_id"])))
     graph.add((content, AZON.Ciutat, Literal(order["shipping_data"]["city"])))
-    graph.add((content, AZON.Prioritat, Literal(order["shipping_data"]["priority"])))
+    graph.add((content, AZON.DataEntrega, Literal(order["delivery_date"])))
     graph.add((content, AZON.SobreComanda, order_node))
 
     graph.add((order_node, RDF.type, AZON.Comanda))
@@ -60,7 +60,7 @@ def parse_productes_localitzats(graph, content):
         "order_id": str(graph.value(content, AZON.IdComanda)),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
         "city": str(graph.value(content, AZON.Ciutat)),
-        "priority": str(graph.value(content, AZON.Prioritat)),
+        "delivery_date": str(graph.value(content, AZON.DataEntrega)),
         "products": products,
     }
 
@@ -76,7 +76,7 @@ def build_peticio_transport(lot, sender=None, receiver=None, msgcnt=0):
     graph.add((content, AZON.IdLot, Literal(lot["lot_id"])))
     graph.add((content, AZON.IdComanda, Literal(lot["order_id"])))
     graph.add((content, AZON.Ciutat, Literal(lot["city"])))
-    graph.add((content, AZON.Prioritat, Literal(lot["priority"])))
+    graph.add((content, AZON.DataEntrega, Literal(lot["delivery_date"])))
     graph.add((content, AZON.PesTotal, Literal(lot["total_weight"], datatype=XSD.float)))
     graph.add((content, AZON.SobreLot, lot_node))
     graph.add((content, AZON.SobreComanda, AZON[f"order-{lot['order_id']}"]))
@@ -98,7 +98,7 @@ def parse_peticio_transport(graph, content):
         "lot_id": str(graph.value(content, AZON.IdLot)),
         "order_id": str(graph.value(content, AZON.IdComanda)),
         "city": str(graph.value(content, AZON.Ciutat)),
-        "priority": str(graph.value(content, AZON.Prioritat)),
+        "delivery_date": str(graph.value(content, AZON.DataEntrega)),
         "total_weight": float(graph.value(content, AZON.PesTotal)),
     }
 
@@ -118,7 +118,7 @@ def build_resposta_oferta_transport(offer, sender=None, receiver=None, request_c
     graph.add((content, AZON.IdTransportista, Literal(offer["transport_id"])))
     graph.add((content, AZON.NomTransportista, Literal(offer["transport_name"])))
     graph.add((content, AZON.Ciutat, Literal(offer["city"])))
-    graph.add((content, AZON.DataEntrega, Literal(offer["delivery_date"])))
+    graph.add((content, AZON.DataEntregaDefinitiva, Literal(offer["delivery_date"])))
     graph.add((content, AZON.CostTransport, Literal(offer["price"], datatype=XSD.float)))
     graph.add((content, AZON.SobreLot, lot_node))
     graph.add((content, AZON.SobreComanda, AZON[f"order-{order_id}"]))
@@ -147,25 +147,73 @@ def extract_transport_offer(graph):
         "transport_id": str(graph.value(content, AZON.IdTransportista)),
         "transport_name": str(graph.value(content, AZON.NomTransportista)),
         "city": str(graph.value(content, AZON.Ciutat)),
-        "delivery_date": str(graph.value(content, AZON.DataEntrega)),
+        "delivery_date": str(graph.value(content, AZON.DataEntregaDefinitiva)),
         "price": float(graph.value(content, AZON.CostTransport)),
     }
 
 
+def build_eleccio_transportista(lot, offer, sender=None, receiver=None, request_content=None, msgcnt=0):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"transport-selection-{lot['lot_id']}"]
+    lot_node = AZON[f"lot-{lot['lot_id']}"]
+    transport_node = AZON[f"transport-{offer['transport_id']}"]
+
+    graph.add((content, RDF.type, AZON.EleccioTransportista))
+    graph.add((content, AZON.IdLot, Literal(lot["lot_id"])))
+    graph.add((content, AZON.IdComanda, Literal(lot["order_id"])))
+    graph.add((content, AZON.IdTransportista, Literal(offer["transport_id"])))
+    graph.add((content, AZON.NomTransportista, Literal(offer["transport_name"])))
+    graph.add((content, AZON.Ciutat, Literal(lot["city"])))
+    graph.add((content, AZON.DataEntregaDefinitiva, Literal(offer["delivery_date"])))
+    graph.add((content, AZON.CostTransport, Literal(offer["price"], datatype=XSD.float)))
+    graph.add((content, AZON.SobreLot, lot_node))
+    graph.add((content, AZON.SobreComanda, AZON[f"order-{lot['order_id']}"]))
+    graph.add((content, AZON.AssignatATransportista, transport_node))
+    graph.add((transport_node, RDF.type, AZON.Transportista))
+    if request_content is not None:
+        graph.add((content, AZON.EsRespostaA, request_content))
+
+    return build_message(
+        graph,
+        perf=ACL.request,
+        sender=sender or AGN.CentreLogistic,
+        receiver=receiver or AGN.Transportista,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
 def build_shipping_details_response(order_id, city, offer, sender=None, receiver=None, request_content=None, msgcnt=0):
-    return build_resposta_oferta_transport(
-        {
-            "lot_id": offer["lot_id"],
-            "order_id": order_id,
-            "transport_id": offer["transport_id"],
-            "transport_name": offer["transport_name"],
-            "city": city,
-            "delivery_date": offer["delivery_date"],
-            "price": offer["price"],
-        },
-        sender=sender,
-        receiver=receiver,
-        request_content=request_content,
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"shipping-confirmation-{order_id}"]
+    lot_node = AZON[f"lot-{offer['lot_id']}"]
+    transport_node = AZON[f"transport-{offer['transport_id']}"]
+
+    graph.add((content, RDF.type, AZON.ConfirmacioEnviament))
+    graph.add((content, AZON.IdComanda, Literal(order_id)))
+    graph.add((content, AZON.IdLot, Literal(offer["lot_id"])))
+    graph.add((content, AZON.IdTransportista, Literal(offer["transport_id"])))
+    graph.add((content, AZON.NomTransportista, Literal(offer["transport_name"])))
+    graph.add((content, AZON.Ciutat, Literal(city)))
+    graph.add((content, AZON.DataEntregaDefinitiva, Literal(offer["delivery_date"])))
+    graph.add((content, AZON.CostTransport, Literal(offer["price"], datatype=XSD.float)))
+    graph.add((content, AZON.SobreLot, lot_node))
+    graph.add((content, AZON.SobreComanda, AZON[f"order-{order_id}"]))
+    graph.add((content, AZON.AssignatATransportista, transport_node))
+    graph.add((transport_node, RDF.type, AZON.Transportista))
+    if request_content is not None:
+        graph.add((content, AZON.EsRespostaA, request_content))
+
+    return build_message(
+        graph,
+        perf=ACL.inform,
+        sender=sender or AGN.CentreLogistic,
+        receiver=receiver or AGN.Compra,
+        content=content,
+        ontology=ONTOLOGY_URI,
         msgcnt=msgcnt,
     )
 
@@ -179,6 +227,6 @@ def extract_shipping_details(graph):
         "transport_id": str(graph.value(content, AZON.IdTransportista)),
         "transport_name": str(graph.value(content, AZON.NomTransportista)),
         "city": str(graph.value(content, AZON.Ciutat)),
-        "delivery_date": str(graph.value(content, AZON.DataEntrega)),
+        "delivery_date": str(graph.value(content, AZON.DataEntregaDefinitiva)),
         "price": float(graph.value(content, AZON.CostTransport)),
     }

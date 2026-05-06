@@ -11,6 +11,7 @@ from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties, register_agent, send_message
 from AgentZon.AgentUtil.DSO import DSO
 from AgentZon.AgentUtil.FlaskServer import shutdown_server
+from AgentZon.AgentUtil.Logging import config_logger
 from AgentZon.AgentUtil.OntoNamespaces import ONTOLOGY_URI
 from AgentZon.config import (
     DEFAULT_PORTS,
@@ -31,6 +32,7 @@ from AgentZon.services.rdf_store import load_graph
 
 
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
+logger = config_logger(level=1)
 
 # Agent attributes -----------------------------------------------------------------
 AGENT = None
@@ -72,8 +74,10 @@ def resolve_compra_agent():
 
 
 def pla_de_cerca(criteria):
+    logger.info("Executing search with criteria: %s", criteria)
     products = search_products(CATALOG_PATH, criteria)
     record_search(SEARCH_HISTORY_PATH, criteria, products)
+    logger.info("Search returned %d products", len(products))
     return products
 
 
@@ -114,6 +118,7 @@ def comm():
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
     if not properties or properties.get("performative") != ACL.request:
+        logger.warning("Received non-request or malformed message in /comm")
         return build_message(
             Graph(),
             ACL["not-understood"],
@@ -122,6 +127,7 @@ def comm():
         ).serialize(format="xml")
     content = properties["content"]
     criteria = parse_peticio_cerca(message_graph, content)
+    logger.info("Received ACL search request")
     products = pla_de_cerca(criteria)
     response_graph, response_content = build_resultat_cerca(
         f"result-{next_counter()}",
@@ -167,7 +173,9 @@ def main():
             "data_dir": Path(args.data_dir),
         }
     )
+    logger.info("Registering %s in directory %s", AGENT.name, DIRECTORY_AGENT.address)
     register_with_directory(AGENT, DIRECTORY_AGENT, DSO.CercadorAgent, 0)
+    logger.info("Starting %s on %s:%s", AGENT.name, hostname, args.port)
     app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
 
 

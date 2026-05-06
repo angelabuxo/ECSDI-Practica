@@ -36,22 +36,19 @@ The current codebase implements the Phase 2 core: product search, purchase captu
 - `Comanda`
 - `Lot`
 - `CentreLogistic`
-- `DadesEnviamentUsuari`
-- `DadesBancaries`
-- `HistorialCompra`, `HistorialCerca`
-- `UbicacioProducte`
 - `Pagament`, `Devolucio`, `Feedback`, `Recomanacio`
+
+`DadesEnviamentUsuari`, `DadesBancaries`, `HistorialCompra`, `HistorialCerca`, and `UbicacionsProductes` are persisted data sources, not ontology classes.
 
 ### Key object properties
 
 - `MostraProducte`: links a search result to the returned products
-- `TeProducte`: reused by `Comanda`, `Lot`, `HistorialCompra`, `PeticioRegistreCompra`, and `ProducteLocalitzat`
-- `TeDadesEnviament`: links a `Comanda` to its `DadesEnviamentUsuari`
+- `TeProducte`: reused by `Comanda`, `Lot`, `PeticioRegistreCompra`, and `ProducteLocalitzat`
 - `SobreComanda`, `SobreLot`, `SobreProducte`: keep messages tied to the domain entities they affect
 - `EsRespostaA`: ties a `Resposta` to the originating `Accio`
 - `UbicatACentre`, `AssignatATransportista`, `TeFeedback`, `GeneraRecomanacio`: model logistics and post-sale processes
 
-`acl:sender` and `acl:receiver` belong to the FIPA-ACL envelope and are not AgentZon ontology relations. `TeProducte`, `TeDadesEnviament`, `SobreComanda`, `SobreLot`, and `UbicatACentre` are the canonical runtime relations. `PesTotal` belongs to `Lot` and `PeticioTransport`; `Pes` stays on `Producte`.
+`acl:sender` and `acl:receiver` belong to the FIPA-ACL envelope and are not AgentZon ontology relations. `TeProducte`, `SobreComanda`, `SobreLot`, and `UbicatACentre` are the canonical runtime relations. `PesTotal` belongs to `Lot` and `PeticioTransport`; `Pes` stays on `Producte`.
 
 ### Key datatype properties
 
@@ -80,7 +77,7 @@ The logistics agent converts a purchase into a `Lot`, asks both transport agents
 
 ### 5. Agent Opinador
 
-The opinion agent currently implements the minimal Phase 2 responsibility: it receives `PeticioRegistreCompra` and persists `HistorialCompra`. The ontology leaves room for its future feedback and recommendation responsibilities.
+The opinion agent currently implements the minimal Phase 2 responsibility: it receives `PeticioRegistreCompra` and persists purchase history. The ontology leaves room for its future feedback and recommendation responsibilities.
 
 ### 6. Agent Transportista
 
@@ -98,10 +95,10 @@ The transport agent is instantiated twice, once for the `fast` profile and once 
 ### Purchase and history flow
 
 1. The user confirms a product selection with `Agent Compra`.
-2. `Agent Compra` stores `DadesEnviamentUsuari` and creates a `Comanda`.
+2. `Agent Compra` stores shipping data and creates a `Comanda`.
 3. `Agent Compra` resolves `Agent Opinador` through the directory agent.
 4. A `PeticioRegistreCompra` message is sent to `Agent Opinador`.
-5. `Agent Opinador` writes a `HistorialCompra` record and returns `ConfirmacioRegistreCompra`.
+5. `Agent Opinador` writes a purchase-history record and returns `ConfirmacioRegistreCompra`.
 
 ### Logistics negotiation flow
 
@@ -122,9 +119,9 @@ The transport agent is instantiated twice, once for the `fast` profile and once 
 - `AgentZon/protocols/cerca.py` maps to `PeticioCerca`, `ResultatCerca`, and `Producte`
 - `AgentZon/protocols/compra.py` maps to `PeticioRegistreCompra` and `ConfirmacioRegistreCompra`
 - `AgentZon/protocols/centre_logistic.py` maps to `ProducteLocalitzat`, `PeticioTransport`, and `RespostaOfertaTransport`
-- `AgentZon/services/order_service.py` maps to `Comanda` and `DadesEnviamentUsuari`
+- `AgentZon/services/order_service.py` maps to `Comanda` and persisted shipping data
 - `AgentZon/services/logistics_service.py` maps to `Lot`
-- `AgentZon/services/history_service.py` maps to `HistorialCompra` and search-history persistence derived from `PeticioCerca`
+- `AgentZon/services/history_service.py` maps purchase-history and search-history persistence to the message/domain vocabulary
 
 ## Refactor Notes
 

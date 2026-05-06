@@ -75,10 +75,7 @@ def _build_locations_graph():
 
     for product_id in ["P1001", "P1002", "P2001", "P3001"]:
         product = AZON[f"product-{product_id}"]
-        mapping = AZON[f"location-{product_id}"]
-        graph.add((mapping, RDF.type, AZON.UbicacioProducte))
-        graph.add((mapping, AZON.SobreProducte, product))
-        graph.add((mapping, AZON.UbicatACentre, centre))
+        graph.add((product, AZON.UbicatACentre, centre))
     return graph
 
 

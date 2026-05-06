@@ -23,6 +23,20 @@ The runtime dependencies are listed in `requirements.txt`:
 
 Optional ontology-documentation helpers used by the team are described in `AgentZon/docs/AgentZon/PHASE2_IMPLEMENTATION.md`.
 
+## Ontology Docs And Graph
+
+Generate the ontology HTML documentation with `pylode`:
+
+```bash
+./AgentZon/.venv/bin/python -m pylode AgentZon/ontologia/AgentZonOntology.rdf -o AgentZon/ontologia/docs/ontology.html
+```
+
+Generate the ontology graph with `owl2plot`:
+
+```bash
+owl2plot AgentZon/ontologia/AgentZonOntology.rdf -o AgentZon/ontologia/docs/ontology_graph
+```
+
 ## Virtual Environment
 
 Create and activate the project virtual environment with:

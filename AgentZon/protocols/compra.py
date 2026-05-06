@@ -76,6 +76,26 @@ def build_confirmacio_registre_compra(order_id, sender=None, receiver=None, requ
     )
 
 
+def build_peticio_enviament_extern(order, sender=None, receiver=None, msgcnt=0):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"external-shipping-request-{order['order_id']}"]
+    graph.add((content, RDF.type, AZON.PeticioEnviamentExtern))
+    graph.add((content, AZON.IdComanda, Literal(order["order_id"])))
+    graph.add((content, AZON.Ciutat, Literal(order["shipping_data"]["city"])))
+    graph.add((content, AZON.Prioritat, Literal(order["shipping_data"]["priority"])))
+    graph.add((content, AZON.SobreComanda, AZON[f"order-{order['order_id']}"]))
+    return build_message(
+        graph,
+        perf=ACL.request,
+        sender=sender,
+        receiver=receiver,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
 def extract_registration_confirmation(graph):
     props = get_message_properties(graph)
     content = props["content"]

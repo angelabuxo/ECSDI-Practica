@@ -163,7 +163,7 @@ class DistributedSmokeTests(unittest.TestCase):
                         "user_name": "Distributed Demo",
                         "street_address": "Gran Via 100",
                         "city": "Barcelona",
-                        "priority": "standard",
+                        "priority": "48h",
                         "payment_method": "placeholder-visa",
                     },
                     timeout=10,

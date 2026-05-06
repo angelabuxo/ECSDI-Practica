@@ -1,6 +1,6 @@
 """Persistence helpers for search and purchase history graphs."""
 
-from rdflib import Graph, Literal, RDF
+from rdflib import Graph, Literal
 
 from AgentZon.AgentUtil.OntoNamespaces import AZON, bind_namespaces
 from AgentZon.services.rdf_store import load_graph, save_graph
@@ -11,7 +11,6 @@ def record_search(path, criteria, products):
     graph = load_graph(path)
     bind_namespaces(graph)
     record = AZON[f"search-{len(graph)}"]
-    graph.add((record, RDF.type, AZON.HistorialCerca))
     graph.add((record, AZON.TextConsulta, Literal(criteria.get("text", ""))))
     graph.add((record, AZON.CategoriaConsulta, Literal(criteria.get("category", ""))))
     graph.add((record, AZON.MarcaConsulta, Literal(criteria.get("brand", ""))))
@@ -31,7 +30,6 @@ def record_purchase(path, order):
     bind_namespaces(graph)
     record = AZON[f"purchase-{order['order_id']}"]
     order_node = AZON[f"order-{order['order_id']}"]
-    graph.add((record, RDF.type, AZON.HistorialCompra))
     graph.add((record, AZON.IdComanda, Literal(order["order_id"])))
     graph.add((record, AZON.IdUsuari, Literal(order["user_id"])))
     graph.add((record, AZON.SobreComanda, order_node))

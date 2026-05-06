@@ -10,6 +10,7 @@ from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties, send_message
 from AgentZon.AgentUtil.DSO import DSO
 from AgentZon.AgentUtil.FlaskServer import shutdown_server
+from AgentZon.AgentUtil.Logging import config_logger
 from AgentZon.config import (
     DEFAULT_PORTS,
     TEMPLATE_DIR,
@@ -22,14 +23,24 @@ from AgentZon.config import (
     resolve_runtime_hostname,
 )
 from AgentZon.protocols.centre_logistic import build_productes_localitzats, extract_shipping_details
-from AgentZon.protocols.compra import build_peticio_registre_compra, extract_registration_confirmation
+from AgentZon.protocols.compra import (
+    build_peticio_enviament_extern,
+    build_peticio_registre_compra,
+    extract_registration_confirmation,
+)
 from AgentZon.protocols.directory import build_search_message, parse_directory_response
 from AgentZon.services.catalog_service import get_products_by_ids
-from AgentZon.services.order_service import build_order, save_order, save_user_shipping_data
+from AgentZon.services.order_service import (
+    build_order,
+    save_order,
+    save_user_shipping_data,
+    update_order_final_delivery_date,
+)
 from AgentZon.services.rdf_store import load_graph
 
 
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
+logger = config_logger(level=1)
 
 # Agent attributes -----------------------------------------------------------------
 AGENT = None
@@ -84,6 +95,7 @@ def pla_registrar_dades_d_usuari(selected_product_ids, form_data):
     }
     products = get_products_by_ids(CATALOG_PATH, selected_product_ids)
     order = build_order(shipping, products)
+    logger.info("Persisting order %s with %d products", order["order_id"], len(products))
     save_user_shipping_data(SHIPPING_PATH, order)
     save_order(ORDERS_PATH, order)
     return order
@@ -91,6 +103,7 @@ def pla_registrar_dades_d_usuari(selected_product_ids, form_data):
 
 def pla_producte_als_nostres_magatzems(order):
     centre_agent = resolve_agent(DSO.CentreLogisticAgent)
+    logger.info("Delegating shipping orchestration to %s", centre_agent.name)
     message, _ = build_productes_localitzats(
         order,
         sender=AGENT.uri,
@@ -116,8 +129,14 @@ def pla_delegar_registre_compra(order):
     return extract_registration_confirmation(reply)
 
 
-def pla_enviament_extern():
-    return None
+def pla_enviament_extern(order, external_logistics_agent):
+    # External-shipping integration point for marketplace products.
+    return build_peticio_enviament_extern(
+        order,
+        sender=AGENT.uri,
+        receiver=external_logistics_agent.uri,
+        msgcnt=next_counter(),
+    )
 
 
 # Web interface --------------------------------------------------------------------
@@ -133,6 +152,7 @@ def confirm_purchase():
     order = pla_registrar_dades_d_usuari(selected, request.form)
     pla_delegar_registre_compra(order)
     shipping_details = pla_producte_als_nostres_magatzems(order)
+    update_order_final_delivery_date(ORDERS_PATH, order["order_id"], shipping_details["delivery_date"])
     return pla_informar_usuari_sobre_l_enviament(order, shipping_details)
 
 
@@ -148,6 +168,7 @@ def comm():
         sender=AGENT.uri,
         msgcnt=next_counter(),
     )
+    logger.warning("CompraAgent received unsupported ACL message in /comm")
     return response.serialize(format="xml")
 
 
@@ -178,7 +199,9 @@ def main():
             "data_dir": Path(args.data_dir),
         }
     )
+    logger.info("Registering %s in directory %s", AGENT.name, DIRECTORY_AGENT.address)
     register_with_directory(AGENT, DIRECTORY_AGENT, DSO.CompraAgent, 0)
+    logger.info("Starting %s on %s:%s", AGENT.name, hostname, args.port)
     app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
 
 

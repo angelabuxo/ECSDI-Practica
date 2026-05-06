@@ -8,7 +8,7 @@ from rdflib import Namespace
 
 
 class LogisticsFlowTests(unittest.TestCase):
-    def test_create_lot_merges_products_for_same_city_and_priority(self):
+    def test_create_lot_merges_products_for_same_city_and_delivery_date(self):
         from AgentZon.AgentUtil.OntoNamespaces import AZON
         from AgentZon.services.logistics_service import create_lot
         from AgentZon.services.rdf_store import load_graph
@@ -21,7 +21,7 @@ class LogisticsFlowTests(unittest.TestCase):
                 lots_path,
                 order_id="ORDER-1",
                 city="Barcelona",
-                priority="standard",
+                delivery_date="2026-05-10",
                 products=[
                     {"product_id": "P1", "weight": 1.5},
                 ],
@@ -30,7 +30,7 @@ class LogisticsFlowTests(unittest.TestCase):
                 lots_path,
                 order_id="ORDER-2",
                 city="Barcelona",
-                priority="standard",
+                delivery_date="2026-05-10",
                 products=[
                     {"product_id": "P2", "weight": 2.0},
                 ],
@@ -52,7 +52,7 @@ class LogisticsFlowTests(unittest.TestCase):
                 {str(AZON["order-ORDER-1"]), str(AZON["order-ORDER-2"])},
             )
 
-    def test_create_lot_creates_new_lot_for_different_city_or_priority(self):
+    def test_create_lot_creates_new_lot_for_different_city_or_delivery_date(self):
         from AgentZon.services.logistics_service import create_lot
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -62,21 +62,21 @@ class LogisticsFlowTests(unittest.TestCase):
                 lots_path,
                 order_id="ORDER-1",
                 city="Barcelona",
-                priority="standard",
+                delivery_date="2026-05-10",
                 products=[{"product_id": "P1", "weight": 1.0}],
             )
             second_lot = create_lot(
                 lots_path,
                 order_id="ORDER-2",
                 city="Barcelona",
-                priority="urgent",
+                delivery_date="2026-05-11",
                 products=[{"product_id": "P2", "weight": 1.0}],
             )
             third_lot = create_lot(
                 lots_path,
                 order_id="ORDER-3",
                 city="Girona",
-                priority="standard",
+                delivery_date="2026-05-10",
                 products=[{"product_id": "P3", "weight": 1.0}],
             )
 
@@ -163,7 +163,8 @@ class LogisticsFlowTests(unittest.TestCase):
             order = {
                 "order_id": "ORDER-1",
                 "user_id": "USER-1",
-                "shipping_data": {"city": "Barcelona", "priority": "urgent"},
+                "shipping_data": {"city": "Barcelona", "priority": "24h"},
+                "delivery_date": "2026-05-10",
                 "products": [
                     {
                         "product_id": "P1001",

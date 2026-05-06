@@ -181,7 +181,7 @@ class PurchaseFlowTests(unittest.TestCase):
                     "user_name": "Pol",
                     "street_address": "Carrer de Mallorca 401",
                     "city": "Barcelona",
-                    "priority": "standard",
+                    "priority": "48h",
                     "payment_method": "placeholder-visa",
                 },
             )
@@ -206,7 +206,7 @@ class PurchaseFlowTests(unittest.TestCase):
             orders_text = (data_dir / "comandes.ttl").read_text(encoding="utf-8")
             lots_text = (data_dir / "lots.ttl").read_text(encoding="utf-8")
 
-            self.assertIn("TeDadesEnviament", orders_text)
+            self.assertIn("MetodePagament", orders_text)
             self.assertIn("SobreComanda", history_text)
             self.assertIn("TeProducte", lots_text)
             self.assertIn("PesTotal", lots_text)

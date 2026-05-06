@@ -9,7 +9,8 @@ from rdflib import Graph, RDF
 from AgentZon.AgentUtil.ACL import ACL
 from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentZon.AgentUtil.FlaskServer import shutdown_server
-from AgentZon.AgentUtil.OntoNamespaces import bind_namespaces
+from AgentZon.AgentUtil.Logging import config_logger
+from AgentZon.AgentUtil.OntoNamespaces import AZON, bind_namespaces
 from AgentZon.config import (
     DEFAULT_PORTS,
     add_runtime_arguments,
@@ -20,6 +21,7 @@ from AgentZon.protocols.centre_logistic import build_resposta_oferta_transport, 
 
 
 app = Flask(__name__)
+logger = config_logger(level=1)
 
 # Agent attributes -----------------------------------------------------------------
 AGENT = None
@@ -66,6 +68,7 @@ def comm():
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
     if not properties or properties.get("performative") != ACL.request:
+        logger.warning("Received non-request or malformed message in /comm")
         return build_message(
             Graph(),
             ACL["not-understood"],
@@ -81,8 +84,22 @@ def comm():
             sender=AGENT.uri,
             msgcnt=next_counter(),
         ).serialize(format="xml")
+    if action == AZON.EleccioTransportista:
+        return build_message(
+            Graph(),
+            ACL.inform,
+            sender=AGENT.uri,
+            receiver=properties.get("sender"),
+            msgcnt=next_counter(),
+        ).serialize(format="xml")
     request_data = parse_peticio_transport(message_graph, content)
     offer = generar_oferta_transport(request_data)
+    logger.info(
+        "Generated %s transport offer for order %s (%.2f EUR)",
+        TRANSPORT_ID,
+        offer["order_id"],
+        offer["price"],
+    )
     response = build_resposta_oferta_transport(
         offer,
         sender=AGENT.uri,
@@ -129,6 +146,7 @@ def main():
             "delivery_days": args.delivery_days,
         }
     )
+    logger.info("Starting %s on %s:%s", AGENT.name, hostname, args.port)
     app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
 
 
