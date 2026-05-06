@@ -9,7 +9,7 @@
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
     <owl:Ontology rdf:about="http://www.semanticweb.org/agentzon">
         <rdfs:comment xml:lang="ca">
-      Ontologia compartida del sistema AgentZon. Modela actors, agents interns,
+      Ontologia compartida del sistema AgentZon. Modela actors externs,
       productes, comandes, logística, devolucions, pagaments, suggeriments i les
       comunicacions RDF/FIPA-ACL que connecten tot el sistema distribuït.
     </rdfs:comment>
@@ -46,28 +46,15 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#assignatATransportista -->
+    <!-- http://www.semanticweb.org/agentzon#AssignatATransportista -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#assignatATransportista">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#AssignatATransportista">
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Transportista"/>
         <rdfs:label xml:lang="ca">assignat a transportista</rdfs:label>
     </owl:ObjectProperty>
-    
+    <!-- http://www.semanticweb.org/agentzon#EsRespostaA -->
 
-
-    <!-- http://www.semanticweb.org/agentzon#emissor -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#emissor">
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comunicacio"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
-        <rdfs:label xml:lang="ca">emissor</rdfs:label>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/agentzon#esRespostaA -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#esRespostaA">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#EsRespostaA">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
         <rdfs:label xml:lang="ca">és resposta a</rdfs:label>
@@ -75,39 +62,26 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#generaRecomanacio -->
+    <!-- http://www.semanticweb.org/agentzon#GeneraRecomanacio -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#generaRecomanacio">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#GeneraRecomanacio">
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Recomanacio"/>
         <rdfs:label xml:lang="ca">genera recomanació</rdfs:label>
     </owl:ObjectProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#mostraProducte -->
+    <!-- http://www.semanticweb.org/agentzon#MostraProducte -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#mostraProducte">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#MostraProducte">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ResultatCerca"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Producte"/>
         <rdfs:comment xml:lang="ca">Relaciona un resultat de cerca amb els productes retornats.</rdfs:comment>
         <rdfs:label xml:lang="ca">mostra producte</rdfs:label>
     </owl:ObjectProperty>
-    
+    <!-- http://www.semanticweb.org/agentzon#SobreComanda -->
 
-
-    <!-- http://www.semanticweb.org/agentzon#receptor -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#receptor">
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comunicacio"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
-        <rdfs:label xml:lang="ca">receptor</rdfs:label>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/agentzon#sobreComanda -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#sobreComanda">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#SobreComanda">
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Comanda"/>
         <rdfs:comment xml:lang="ca">Relaciona una comunicació amb la comanda sobre la qual opera.</rdfs:comment>
         <rdfs:label xml:lang="ca">sobre comanda</rdfs:label>
@@ -115,36 +89,36 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#sobreLot -->
+    <!-- http://www.semanticweb.org/agentzon#SobreLot -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#sobreLot">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#SobreLot">
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Lot"/>
         <rdfs:label xml:lang="ca">sobre lot</rdfs:label>
     </owl:ObjectProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#sobreProducte -->
+    <!-- http://www.semanticweb.org/agentzon#SobreProducte -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#sobreProducte">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#SobreProducte">
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Producte"/>
         <rdfs:label xml:lang="ca">sobre producte</rdfs:label>
     </owl:ObjectProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#teDadesBancaries -->
+    <!-- http://www.semanticweb.org/agentzon#TeDadesBancaries -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#teDadesBancaries">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#TeDadesBancaries">
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#DadesBancaries"/>
         <rdfs:label xml:lang="ca">té dades bancàries</rdfs:label>
     </owl:ObjectProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#teDadesEnviament -->
+    <!-- http://www.semanticweb.org/agentzon#TeDadesEnviament -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#teDadesEnviament">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#TeDadesEnviament">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comanda"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#DadesEnviamentUsuari"/>
         <rdfs:label xml:lang="ca">té dades d’enviament</rdfs:label>
@@ -152,30 +126,33 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#teFeedback -->
+    <!-- http://www.semanticweb.org/agentzon#TeFeedback -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#teFeedback">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#TeFeedback">
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Feedback"/>
         <rdfs:label xml:lang="ca">té feedback</rdfs:label>
     </owl:ObjectProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#teProducte -->
+    <!-- http://www.semanticweb.org/agentzon#TeProducte -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#teProducte">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#TeProducte">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comanda"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Lot"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#HistorialCompra"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioRegistreCompra"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ProducteLocalitzat"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Producte"/>
-        <rdfs:comment xml:lang="ca">Relaciona una comanda, un lot o una comunicació amb els seus productes.</rdfs:comment>
-        <rdfs:label xml:lang="ca">té producte</rdfs:label>
+        <rdfs:comment xml:lang="ca">Relaciona una comanda, un lot, un historial de compra o una comunicació amb els seus productes.</rdfs:comment>
+        <rdfs:label xml:lang="ca">TeProducte</rdfs:label>
     </owl:ObjectProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#ubicatACentre -->
+    <!-- http://www.semanticweb.org/agentzon#UbicatACentre -->
 
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#ubicatACentre">
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#UbicatACentre">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#UbicacioProducte"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#CentreLogistic"/>
         <rdfs:label xml:lang="ca">ubicat a centre</rdfs:label>
@@ -194,108 +171,108 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#acceptada -->
+    <!-- http://www.semanticweb.org/agentzon#Acceptada -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#acceptada">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Acceptada">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
         <rdfs:label xml:lang="ca">acceptada</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#carrer -->
+    <!-- http://www.semanticweb.org/agentzon#Carrer -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#carrer">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Carrer">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">carrer</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#categoria -->
+    <!-- http://www.semanticweb.org/agentzon#Categoria -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#categoria">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Categoria">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">categoria</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#ciutat -->
+    <!-- http://www.semanticweb.org/agentzon#Ciutat -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#ciutat">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Ciutat">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">ciutat</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#comentari -->
+    <!-- http://www.semanticweb.org/agentzon#Comentari -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#comentari">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Comentari">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">comentariFeedback</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#costTransport -->
+    <!-- http://www.semanticweb.org/agentzon#CostTransport -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#costTransport">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#CostTransport">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <rdfs:label xml:lang="ca">costTransport</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#dataAlta -->
+    <!-- http://www.semanticweb.org/agentzon#DataAlta -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#dataAlta">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#DataAlta">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
         <rdfs:label xml:lang="ca">dataAlta</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#dataCompra -->
+    <!-- http://www.semanticweb.org/agentzon#DataCompra -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#dataCompra">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#DataCompra">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
         <rdfs:label xml:lang="ca">dataCompra</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#dataEntrega -->
+    <!-- http://www.semanticweb.org/agentzon#DataEntrega -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#dataEntrega">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#DataEntrega">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
         <rdfs:label xml:lang="ca">dataEntrega</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#descripcio -->
+    <!-- http://www.semanticweb.org/agentzon#Descripcio -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#descripcio">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Descripcio">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">descripcio</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#estat -->
+    <!-- http://www.semanticweb.org/agentzon#Estat -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#estat">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Estat">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">estat</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#idCentreLogistic -->
+    <!-- http://www.semanticweb.org/agentzon#IdCentreLogistic -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idCentreLogistic">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#IdCentreLogistic">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#CentreLogistic"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">IdCentreLogistic</rdfs:label>
@@ -303,9 +280,9 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#idComanda -->
+    <!-- http://www.semanticweb.org/agentzon#IdComanda -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idComanda">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#IdComanda">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comanda"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">IdComanda</rdfs:label>
@@ -313,9 +290,9 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#idDevolucio -->
+    <!-- http://www.semanticweb.org/agentzon#IdDevolucio -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idDevolucio">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#IdDevolucio">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Devolucio"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">IdDevolucio</rdfs:label>
@@ -323,9 +300,9 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#idFeedback -->
+    <!-- http://www.semanticweb.org/agentzon#IdFeedback -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idFeedback">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#IdFeedback">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Feedback"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">IdFeedback</rdfs:label>
@@ -333,9 +310,9 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#idLot -->
+    <!-- http://www.semanticweb.org/agentzon#IdLot -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idLot">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#IdLot">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Lot"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">IdLot</rdfs:label>
@@ -343,9 +320,9 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#idPagament -->
+    <!-- http://www.semanticweb.org/agentzon#IdPagament -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idPagament">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#IdPagament">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Pagament"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">IdPagament</rdfs:label>
@@ -353,9 +330,9 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#idProducte -->
+    <!-- http://www.semanticweb.org/agentzon#IdProducte -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idProducte">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#IdProducte">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Producte"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">IdProducte</rdfs:label>
@@ -363,9 +340,9 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#idTransportista -->
+    <!-- http://www.semanticweb.org/agentzon#IdTransportista -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idTransportista">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#IdTransportista">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Transportista"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">IdTransportista</rdfs:label>
@@ -373,9 +350,9 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#idUsuari -->
+    <!-- http://www.semanticweb.org/agentzon#IdUsuari -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#idUsuari">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#IdUsuari">
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Usuari"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">IdUsuari</rdfs:label>
@@ -383,164 +360,175 @@
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#importPagament -->
+    <!-- http://www.semanticweb.org/agentzon#ImportPagament -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#importPagament">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#ImportPagament">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <rdfs:label xml:lang="ca">importPagament</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#marca -->
+    <!-- http://www.semanticweb.org/agentzon#Marca -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#marca">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Marca">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">marca</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#metodePagament -->
+    <!-- http://www.semanticweb.org/agentzon#MetodePagament -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#metodePagament">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#MetodePagament">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">metodePagament</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#motiuDevolucio -->
+    <!-- http://www.semanticweb.org/agentzon#MotiuDevolucio -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#motiuDevolucio">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#MotiuDevolucio">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">motiuDevolucio</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#nom -->
+    <!-- http://www.semanticweb.org/agentzon#Nom -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#nom">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Nom">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">nom</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#nomTransportista -->
+    <!-- http://www.semanticweb.org/agentzon#NomTransportista -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#nomTransportista">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#NomTransportista">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">nomTransportista</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#pes -->
+    <!-- http://www.semanticweb.org/agentzon#Pes -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#pes">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Pes">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <rdfs:label xml:lang="ca">pes</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#preu -->
+    <!-- http://www.semanticweb.org/agentzon#Preu -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#preu">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Preu">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <rdfs:label xml:lang="ca">preu</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#preuMaxim -->
+    <!-- http://www.semanticweb.org/agentzon#PreuMaxim -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#preuMaxim">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#PreuMaxim">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <rdfs:label xml:lang="ca">preuMaxim</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#preuMinim -->
+    <!-- http://www.semanticweb.org/agentzon#PreuMinim -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#preuMinim">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#PreuMinim">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
         <rdfs:label xml:lang="ca">preuMinim</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#prioritat -->
+    <!-- http://www.semanticweb.org/agentzon#Prioritat -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#prioritat">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Prioritat">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">prioritat</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#puntuacio -->
+    <!-- http://www.semanticweb.org/agentzon#Puntuacio -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#puntuacio">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Puntuacio">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
         <rdfs:label xml:lang="ca">puntuacio</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#requereixLogisticaExterna -->
+    <!-- http://www.semanticweb.org/agentzon#RequereixLogisticaExterna -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#requereixLogisticaExterna">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#RequereixLogisticaExterna">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
         <rdfs:label xml:lang="ca">requereixLogisticaExterna</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#skuExtern -->
+    <!-- http://www.semanticweb.org/agentzon#SkuExtern -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#skuExtern">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#SkuExtern">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">codiExtern</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#teCategoria -->
+    <!-- http://www.semanticweb.org/agentzon#CategoriaConsulta -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#teCategoria">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#CategoriaConsulta">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">categoriaFiltrada</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#teMarca -->
+    <!-- http://www.semanticweb.org/agentzon#MarcaConsulta -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#teMarca">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#MarcaConsulta">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">marcaFiltrada</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#teText -->
+    <!-- http://www.semanticweb.org/agentzon#TextConsulta -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#teText">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#TextConsulta">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <rdfs:label xml:lang="ca">textCerca</rdfs:label>
     </owl:DatatypeProperty>
     
 
 
-    <!-- http://www.semanticweb.org/agentzon#totalResultats -->
+    <!-- http://www.semanticweb.org/agentzon#TotalResultats -->
 
-    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#totalResultats">
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#TotalResultats">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
         <rdfs:label xml:lang="ca">totalResultats</rdfs:label>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/agentzon#PesTotal -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#PesTotal">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Lot"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioTransport"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label xml:lang="ca">PesTotal</rdfs:label>
     </owl:DatatypeProperty>
     
 
@@ -569,92 +557,9 @@
     <!-- http://www.semanticweb.org/agentzon#Actor -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#Actor">
-        <rdfs:comment xml:lang="ca">Entitat que participa en el sistema, humana, externa o software.</rdfs:comment>
+        <rdfs:comment xml:lang="ca">Entitat externa o humana que participa en el sistema.</rdfs:comment>
         <rdfs:label xml:lang="ca">Actor</rdfs:label>
     </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/agentzon#AgentCentreLogistic -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentCentreLogistic">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
-        <rdfs:comment xml:lang="ca">Agent que agrupa productes en lots i negocia el transport.</rdfs:comment>
-        <rdfs:label xml:lang="ca">Agent Centre Logístic</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/agentzon#AgentCercador -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentCercador">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
-        <rdfs:comment xml:lang="ca">Agent que gestiona les restriccions de cerca i presenta resultats.</rdfs:comment>
-        <rdfs:label xml:lang="ca">Agent Cercador</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/agentzon#AgentCobrador -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentCobrador">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
-        <rdfs:comment xml:lang="ca">Agent que coordina el pagament, la factura i les transferències externes.</rdfs:comment>
-        <rdfs:label xml:lang="ca">Agent Cobrador</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/agentzon#AgentCompra -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentCompra">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
-        <rdfs:comment xml:lang="ca">Agent que coordina el flux de compra i la informació d’enviament.</rdfs:comment>
-        <rdfs:label xml:lang="ca">Agent Compra</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/agentzon#AgentIntern -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentIntern">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Actor"/>
-        <rdfs:comment xml:lang="ca">Agent desplegat per AgentZon per coordinar processos interns.</rdfs:comment>
-        <rdfs:label xml:lang="ca">Agent intern</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/agentzon#AgentOpinador -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentOpinador">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
-        <rdfs:comment xml:lang="ca">Agent que registra l’historial de compra i pot iniciar fluxos de feedback.</rdfs:comment>
-        <rdfs:label xml:lang="ca">Agent Opinador</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/agentzon#AgentRetornador -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentRetornador">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
-        <rdfs:comment xml:lang="ca">Agent que avalua devolucions i coordina la recollida i el reemborsament.</rdfs:comment>
-        <rdfs:label xml:lang="ca">Agent Retornador</rdfs:label>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/agentzon#AgentVenedorExtern -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AgentVenedorExtern">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#AgentIntern"/>
-        <rdfs:comment xml:lang="ca">Agent responsable de la integració de productes de tercers.</rdfs:comment>
-        <rdfs:label xml:lang="ca">Agent Venedor Extern</rdfs:label>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/agentzon#AltaProducteExtern -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#AltaProducteExtern">

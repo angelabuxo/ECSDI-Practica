@@ -18,7 +18,7 @@ AGN = Namespace("http://www.agentes.org#")
 
 
 # Message creation -----------------------------------------------------------------
-def build_message(gmess, perf, sender=None, receiver=None, content=None, msgcnt=0):
+def build_message(gmess, perf, sender=None, receiver=None, content=None, ontology=None, msgcnt=0):
     mssid = f"message-{hash(sender)}-{msgcnt:04d}"
     ms = URIRef(mssid)
     gmess.bind("acl", ACL)
@@ -31,6 +31,8 @@ def build_message(gmess, perf, sender=None, receiver=None, content=None, msgcnt=
         gmess.add((ms, ACL.receiver, receiver))
     if content is not None:
         gmess.add((ms, ACL.content, content))
+    if ontology is not None:
+        gmess.add((ms, ACL.ontology, ontology))
     return gmess
 
 

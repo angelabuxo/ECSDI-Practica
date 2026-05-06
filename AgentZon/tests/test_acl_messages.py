@@ -2,13 +2,14 @@
 
 import unittest
 
-from rdflib import Graph, Literal, Namespace, RDF
+from rdflib import Namespace
 
 
 class ACLMessageTests(unittest.TestCase):
     def test_build_message_wraps_search_content_and_round_trips_properties(self):
         from AgentZon.AgentUtil.ACL import ACL
         from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
+        from AgentZon.AgentUtil.OntoNamespaces import ONTOLOGY_URI
         from AgentZon.protocols.cerca import build_peticio_cerca, parse_peticio_cerca
 
         agn = Namespace("http://www.agentes.org#")
@@ -30,6 +31,7 @@ class ACLMessageTests(unittest.TestCase):
             sender=sender,
             receiver=receiver,
             content=content,
+            ontology=ONTOLOGY_URI,
             msgcnt=1,
         )
 
@@ -38,6 +40,7 @@ class ACLMessageTests(unittest.TestCase):
         self.assertEqual(properties["sender"], sender)
         self.assertEqual(properties["receiver"], receiver)
         self.assertEqual(properties["content"], content)
+        self.assertEqual(properties["ontology"], ONTOLOGY_URI)
 
         parsed = parse_peticio_cerca(message_graph, content)
         self.assertEqual(parsed["text"], "headphones")
