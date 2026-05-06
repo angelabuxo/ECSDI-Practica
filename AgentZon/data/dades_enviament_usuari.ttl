@@ -1,9 +1,23 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 
+azon:shipping-ORDER-4B84234D azon:Carrer "aa" ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "1" ;
+    azon:MetodePagament "v" ;
+    azon:Nom "jordii" ;
+    azon:Prioritat "24h" .
+
 azon:shipping-ORDER-9D288FCB azon:Carrer "passeig manuel girona" ;
     azon:Ciutat "Barcelona" ;
     azon:IdUsuari "1" ;
     azon:MetodePagament "visa" ;
     azon:Nom "jordi" ;
+    azon:Prioritat "24h" .
+
+azon:shipping-ORDER-E249B479 azon:Carrer "aaaa" ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "2" ;
+    azon:MetodePagament "visa" ;
+    azon:Nom "josep" ;
     azon:Prioritat "24h" .
 

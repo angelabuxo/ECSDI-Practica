@@ -72,7 +72,7 @@ def pla_registre_de_compra(request_data):
             },
         ),
     }
-    logger.info("Recording purchase history for order %s", order["order_id"])
+    logger.info("Registrant historial de compra per a la comanda %s", order["order_id"])
     record_purchase(HISTORY_PATH, order)
 
 
@@ -83,7 +83,7 @@ def comm():
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
     if not properties or properties.get("performative") != ACL.request:
-        logger.warning("Received non-request or malformed message in /comm")
+        logger.warning("Rebut missatge no-request o malformat a /comm")
         return build_message(
             Graph(),
             ACL["not-understood"],
@@ -125,9 +125,9 @@ def main():
 
     configure_runtime({"agent": build_agent("OpinadorAgent", "Opinador", args.port, host=hostname), "data_dir": Path(args.data_dir)})
     directory = build_directory_agent(args.directory_host, args.directory_port)
-    logger.info("Registering %s in directory %s", AGENT.name, directory.address)
+    logger.info("Registrant %s al directori %s", AGENT.name, directory.address)
     register_with_directory(AGENT, directory, DSO.OpinadorAgent, 0)
-    logger.info("Starting %s on %s:%s", AGENT.name, hostname, args.port)
+    logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
     app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
 
 

@@ -20,7 +20,9 @@ def create_lot(lots_path, order_id, city, delivery_date, products):
             node = lot
             break
 
-    if node is None:
+    created_new_lot = node is None
+
+    if created_new_lot:
         lot_id = f"LOT-{uuid4().hex[:6].upper()}"
         node = AZON[f"lot-{lot_id}"]
         graph.add((node, RDF.type, AZON.Lot))
@@ -45,6 +47,7 @@ def create_lot(lots_path, order_id, city, delivery_date, products):
         "city": city,
         "delivery_date": delivery_date,
         "total_weight": total_weight,
+        "created_new_lot": created_new_lot,
     }
 
 

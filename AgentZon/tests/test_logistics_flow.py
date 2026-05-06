@@ -35,6 +35,8 @@ class LogisticsFlowTests(unittest.TestCase):
                     {"product_id": "P2", "weight": 2.0},
                 ],
             )
+            self.assertTrue(first_lot["created_new_lot"])
+            self.assertFalse(second_lot["created_new_lot"])
 
             graph = load_graph(lots_path)
             lots = list(graph.subjects(RDF.type, AZON.Lot))
@@ -79,6 +81,9 @@ class LogisticsFlowTests(unittest.TestCase):
                 delivery_date="2026-05-10",
                 products=[{"product_id": "P3", "weight": 1.0}],
             )
+            self.assertTrue(first_lot["created_new_lot"])
+            self.assertTrue(second_lot["created_new_lot"])
+            self.assertTrue(third_lot["created_new_lot"])
 
             self.assertNotEqual(first_lot["lot_id"], second_lot["lot_id"])
             self.assertNotEqual(first_lot["lot_id"], third_lot["lot_id"])

@@ -66,7 +66,7 @@ def process_register(message_graph, content):
     DIRECTORY_GRAPH.add((uri, FOAF.name, name))
     DIRECTORY_GRAPH.add((uri, DSO.Address, address))
     DIRECTORY_GRAPH.add((uri, DSO.AgentType, agent_type))
-    logger.info("Registered agent %s (%s) at %s", name, agent_type, address)
+    logger.info("Registrat agent %s (%s) a %s", name, agent_type, address)
 
     return build_message(
         Graph(),
@@ -79,7 +79,7 @@ def process_register(message_graph, content):
 
 def process_search(message_graph, content, requester):
     agent_type = message_graph.value(content, DSO.AgentType)
-    logger.info("Directory search requested for agent type %s", agent_type)
+    logger.info("Cerca al directori sol.licitada per al tipus d'agent %s", agent_type)
     for uri, _, _ in DIRECTORY_GRAPH.triples((None, DSO.AgentType, agent_type)):
         address = DIRECTORY_GRAPH.value(uri, DSO.Address)
         name = DIRECTORY_GRAPH.value(uri, FOAF.name)
@@ -116,7 +116,7 @@ def register():
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
     if not properties or properties.get("performative") != ACL.request:
-        logger.warning("Received non-request or malformed message in /Register")
+        logger.warning("Rebut missatge no-request o malformat a /Register")
         return build_message(
             Graph(),
             ACL["not-understood"],
@@ -162,7 +162,7 @@ def main():
     configure_runtime(
         {"agent": build_agent("DirectoryAgent", "Directory", args.port, host=hostname, endpoint="/Register")}
     )
-    logger.info("Starting %s on %s:%s", AGENT.name, hostname, args.port)
+    logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
     app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
 
 

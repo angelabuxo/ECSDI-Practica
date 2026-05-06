@@ -68,7 +68,7 @@ def comm():
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
     if not properties or properties.get("performative") != ACL.request:
-        logger.warning("Received non-request or malformed message in /comm")
+        logger.warning("Rebut missatge no-request o malformat a /comm")
         return build_message(
             Graph(),
             ACL["not-understood"],
@@ -95,7 +95,7 @@ def comm():
     request_data = parse_peticio_transport(message_graph, content)
     offer = generar_oferta_transport(request_data)
     logger.info(
-        "Generated %s transport offer for order %s (%.2f EUR)",
+        "Generada oferta de transport %s per a la comanda %s (%.2f EUR)",
         TRANSPORT_ID,
         offer["order_id"],
         offer["price"],
@@ -146,7 +146,7 @@ def main():
             "delivery_days": args.delivery_days,
         }
     )
-    logger.info("Starting %s on %s:%s", AGENT.name, hostname, args.port)
+    logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
     app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
 
 

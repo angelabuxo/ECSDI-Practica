@@ -5,9 +5,12 @@ azon:lot-LOT-875819 a azon:Lot ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-05-07" ;
     azon:IdLot "LOT-875819" ;
-    azon:PesTotal 5e+00 ;
-    azon:SobreComanda azon:order-ORDER-9D288FCB ;
+    azon:PesTotal 1.06e+01 ;
+    azon:SobreComanda azon:order-ORDER-4B84234D,
+        azon:order-ORDER-9D288FCB,
+        azon:order-ORDER-E249B479 ;
     azon:SobreProducte azon:product-P1001,
         azon:product-P1002,
-        azon:product-P2001 .
+        azon:product-P2001,
+        azon:product-P3001 .
 

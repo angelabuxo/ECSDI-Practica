@@ -95,7 +95,7 @@ def pla_registrar_dades_d_usuari(selected_product_ids, form_data):
     }
     products = get_products_by_ids(CATALOG_PATH, selected_product_ids)
     order = build_order(shipping, products)
-    logger.info("Persisting order %s with %d products", order["order_id"], len(products))
+    logger.info("Persistint comanda %s amb %d productes", order["order_id"], len(products))
     save_user_shipping_data(SHIPPING_PATH, order)
     save_order(ORDERS_PATH, order)
     return order
@@ -103,7 +103,7 @@ def pla_registrar_dades_d_usuari(selected_product_ids, form_data):
 
 def pla_producte_als_nostres_magatzems(order):
     centre_agent = resolve_agent(DSO.CentreLogisticAgent)
-    logger.info("Delegating shipping orchestration to %s", centre_agent.name)
+    logger.info("Delegant l'orquestracio de l'enviament a %s", centre_agent.name)
     message, _ = build_productes_localitzats(
         order,
         sender=AGENT.uri,
@@ -168,7 +168,7 @@ def comm():
         sender=AGENT.uri,
         msgcnt=next_counter(),
     )
-    logger.warning("CompraAgent received unsupported ACL message in /comm")
+    logger.warning("CompraAgent ha rebut un missatge ACL no suportat a /comm")
     return response.serialize(format="xml")
 
 
@@ -199,9 +199,9 @@ def main():
             "data_dir": Path(args.data_dir),
         }
     )
-    logger.info("Registering %s in directory %s", AGENT.name, DIRECTORY_AGENT.address)
+    logger.info("Registrant %s al directori %s", AGENT.name, DIRECTORY_AGENT.address)
     register_with_directory(AGENT, DIRECTORY_AGENT, DSO.CompraAgent, 0)
-    logger.info("Starting %s on %s:%s", AGENT.name, hostname, args.port)
+    logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
     app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
 
 

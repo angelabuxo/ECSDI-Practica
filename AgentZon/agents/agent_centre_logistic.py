@@ -63,14 +63,39 @@ def next_counter():
 
 # Agent logic ----------------------------------------------------------------------
 def pla_assignar_producte_a_lot(request_data):
-    logger.info("Creating lot for order %s", request_data["order_id"])
-    return create_lot(
+    logger.info(
+        "Assignant comanda %s a lot (ciutat=%s, data_entrega=%s, productes=%d)",
+        request_data["order_id"],
+        request_data["city"],
+        request_data["delivery_date"],
+        len(request_data["products"]),
+    )
+    lot = create_lot(
         LOTS_PATH,
         request_data["order_id"],
         request_data["city"],
         request_data["delivery_date"],
         request_data["products"],
     )
+    if lot["created_new_lot"]:
+        logger.info(
+            "Creat lot nou %s per a la comanda %s (ciutat=%s, data_entrega=%s, pes_total=%.2f)",
+            lot["lot_id"],
+            request_data["order_id"],
+            request_data["city"],
+            request_data["delivery_date"],
+            lot["total_weight"],
+        )
+    else:
+        logger.info(
+            "Reutilitzat lot existent %s per a la comanda %s (coincideix ciutat=%s, data_entrega=%s, pes_total=%.2f)",
+            lot["lot_id"],
+            request_data["order_id"],
+            request_data["city"],
+            request_data["delivery_date"],
+            lot["total_weight"],
+        )
+    return lot
 
 
 def pla_cerca_de_transportista(lot):
@@ -86,7 +111,7 @@ def pla_cerca_de_transportista(lot):
     with ThreadPoolExecutor(max_workers=len(TRANSPORT_AGENTS)) as executor:
         futures = [executor.submit(query_transport, agent) for agent in TRANSPORT_AGENTS]
         offers = [future.result() for future in futures]
-        logger.info("Received %d transport offers for lot %s", len(offers), lot["lot_id"])
+        logger.info("Rebudes %d ofertes de transport per al lot %s", len(offers), lot["lot_id"])
         return offers
 
 
@@ -128,7 +153,7 @@ def comm():
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
     if not properties or properties.get("performative") != ACL.request:
-        logger.warning("Received non-request or malformed message in /comm")
+        logger.warning("Rebut missatge no-request o malformat a /comm")
         return build_message(
             Graph(),
             ACL["not-understood"],
@@ -188,9 +213,9 @@ def main():
         }
     )
     directory = build_directory_agent(args.directory_host, args.directory_port)
-    logger.info("Registering %s in directory %s", AGENT.name, directory.address)
+    logger.info("Registrant %s al directori %s", AGENT.name, directory.address)
     register_with_directory(AGENT, directory, DSO.CentreLogisticAgent, 0)
-    logger.info("Starting %s on %s:%s", AGENT.name, hostname, args.port)
+    logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
     app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
 
 
