@@ -25,8 +25,8 @@ def build_peticio_registre_compra(order, sender=None, receiver=None, msgcnt=0):
 
     for product in order["products"]:
         product_node = AZON[f"product-{product['product_id']}"]
-        graph.add((content, AZON.TeProducte, product_node))
-        graph.add((order_node, AZON.TeProducte, product_node))
+        graph.add((content, AZON.SobreProducte, product_node))
+        graph.add((order_node, AZON.SobreProducte, product_node))
 
     return build_message(
         graph,
@@ -42,7 +42,7 @@ def build_peticio_registre_compra(order, sender=None, receiver=None, msgcnt=0):
 # RDF parsers ---------------------------------------------------------------------
 def parse_peticio_registre_compra(graph, content):
     products = []
-    for product_node in graph.objects(content, AZON.TeProducte):
+    for product_node in graph.objects(content, AZON.SobreProducte):
         product_id = graph.value(product_node, AZON.IdProducte)
         if product_id is None:
             local = str(product_node).rsplit("product-", 1)[-1]

@@ -208,7 +208,7 @@ class PurchaseFlowTests(unittest.TestCase):
 
             self.assertIn("MetodePagament", orders_text)
             self.assertIn("SobreComanda", history_text)
-            self.assertIn("TeProducte", lots_text)
+            self.assertIn("SobreProducte", lots_text)
             self.assertIn("PesTotal", lots_text)
             self.assertNotIn("teProducte", orders_text)
             self.assertNotIn("idComanda", history_text)

@@ -57,7 +57,7 @@ def save_order(orders_path, order):
     graph.add((node, AZON.DataEntregaDefinitiva, Literal(order["delivery_date"])))
     graph.add((node, AZON.MetodePagament, Literal(order["shipping_data"]["payment_method"])))
     for product in order["products"]:
-        graph.add((node, AZON.TeProducte, AZON[f"product-{product['product_id']}"]))
+        graph.add((node, AZON.SobreProducte, AZON[f"product-{product['product_id']}"]))
     save_graph(orders_path, graph)
 
 

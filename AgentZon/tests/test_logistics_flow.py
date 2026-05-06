@@ -44,7 +44,7 @@ class LogisticsFlowTests(unittest.TestCase):
             lot = lots[0]
             self.assertEqual(float(graph.value(lot, AZON.PesTotal)), 3.5)
             self.assertEqual(
-                {str(value) for value in graph.objects(lot, AZON.TeProducte)},
+                {str(value) for value in graph.objects(lot, AZON.SobreProducte)},
                 {str(AZON["product-P1"]), str(AZON["product-P2"])},
             )
             self.assertEqual(

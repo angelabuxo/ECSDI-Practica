@@ -52,7 +52,7 @@ class OrderGraphTests(unittest.TestCase):
             self.assertIn((order_node, AZON.MetodePagament, None), graph)
             self.assertIn((order_node, AZON.DataEntrega, None), graph)
             self.assertIn((order_node, AZON.DataEntregaDefinitiva, None), graph)
-            self.assertIn((order_node, AZON.TeProducte, AZON["product-P1001"]), graph)
+            self.assertIn((order_node, AZON.SobreProducte, AZON["product-P1001"]), graph)
 
     def test_purchase_history_links_back_to_the_order(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -77,7 +77,7 @@ class OrderGraphTests(unittest.TestCase):
             history_node = AZON["purchase-ORDER-1"]
 
             self.assertIn((history_node, AZON.SobreComanda, AZON["order-ORDER-1"]), graph)
-            self.assertIn((history_node, AZON.TeProducte, AZON["product-P1001"]), graph)
+            self.assertIn((history_node, AZON.SobreProducte, AZON["product-P1001"]), graph)
 
 
 if __name__ == "__main__":

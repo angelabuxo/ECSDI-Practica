@@ -36,7 +36,7 @@ def create_lot(lots_path, order_id, city, delivery_date, products):
     graph.add((node, AZON.SobreComanda, AZON[f"order-{order_id}"]))
     for product in products:
         total_weight += float(product["weight"])
-        graph.add((node, AZON.TeProducte, AZON[f"product-{product['product_id']}"]))
+        graph.add((node, AZON.SobreProducte, AZON[f"product-{product['product_id']}"]))
     graph.set((node, AZON.PesTotal, Literal(total_weight)))
     save_graph(lots_path, graph)
     return {

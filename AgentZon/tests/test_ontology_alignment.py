@@ -13,7 +13,7 @@ class OntologyAlignmentTests(unittest.TestCase):
         graph = Graph()
         graph.parse("AgentZon/ontologia/AgentZonOntology.rdf", format="xml")
 
-        self.assertIn((AZON.TeProducte, RDF.type, OWL.ObjectProperty), graph)
+        self.assertIn((AZON.SobreProducte, RDF.type, OWL.ObjectProperty), graph)
         self.assertIn((AZON.PesTotal, RDF.type, OWL.DatatypeProperty), graph)
         self.assertNotIn((AZON.AgentIntern, None, None), graph)
         self.assertNotIn((AZON.AgentCercador, None, None), graph)
