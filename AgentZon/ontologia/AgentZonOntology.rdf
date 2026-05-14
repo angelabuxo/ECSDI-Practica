@@ -880,6 +880,14 @@
     
 
 
+    <!-- http://www.semanticweb.org/agentzon#ProducteIntern -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ProducteIntern">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Producte"/>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/agentzon#ProducteLocalitzat -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ProducteLocalitzat">
@@ -921,14 +929,6 @@
     <!-- http://www.semanticweb.org/agentzon#RespostaOfertaTransport -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#RespostaOfertaTransport">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/agentzon#RespostaRecomanacio -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#RespostaRecomanacio">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
     </owl:Class>
     
