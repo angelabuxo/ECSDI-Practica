@@ -1,5 +1,7 @@
 """Persistence helpers for search and purchase history graphs."""
 
+from datetime import date
+
 from rdflib import Graph, Literal
 
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
@@ -33,6 +35,9 @@ def record_purchase(path, order):
     graph.add((record, AZON.IdComanda, Literal(order["order_id"])))
     graph.add((record, AZON.IdUsuari, Literal(order["user_id"])))
     graph.add((record, AZON.SobreComanda, order_node))
+    graph.add((record, AZON.DataCompra, Literal(order.get("purchase_date", date.today().isoformat()))))
+    if order.get("delivery_date") is not None:
+        graph.add((record, AZON.DataEntregaDefinitiva, Literal(order["delivery_date"])))
     for product in order["products"]:
         graph.add((record, AZON.SobreProducte, AZON[f"product-{product['product_id']}"]))
     save_graph(path, graph)
