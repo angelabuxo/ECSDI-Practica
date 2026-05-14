@@ -7,15 +7,15 @@ from rdflib import Namespace
 
 class DirectoryAgentTests(unittest.TestCase):
     def test_directory_registers_and_resolves_core_agents(self):
-        from AgentZon.AgentUtil.Agent import Agent
-        from AgentZon.AgentUtil.DSO import DSO
-        from AgentZon.agents import agent_directory
-        from AgentZon.protocols.directory import (
+        from AgentUtil.Agent import Agent
+        from AgentUtil.DSO import DSO
+        from agents import agent_directory
+        from protocols.directory import (
             build_register_message,
             build_search_message,
             parse_directory_response,
         )
-        from AgentZon.tests.support import LocalMessageRouter
+        from tests.support import LocalMessageRouter
 
         agn = Namespace("http://www.agentes.org#")
         directory = Agent(

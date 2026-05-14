@@ -6,11 +6,11 @@ from pathlib import Path
 
 from rdflib import RDF
 
-from AgentZon.AgentUtil.OntoNamespaces import AZON
-from AgentZon.protocols.centre_logistic import build_peticio_transport
-from AgentZon.services.history_service import record_purchase
-from AgentZon.services.order_service import build_order, save_order, save_user_shipping_data
-from AgentZon.services.rdf_store import load_graph
+from AgentUtil.OntoNamespaces import AZON
+from protocols.centre_logistic import build_peticio_transport
+from services.history_service import record_purchase
+from services.order_service import build_order, save_order, save_user_shipping_data
+from services.rdf_store import load_graph
 
 
 class OrderGraphTests(unittest.TestCase):

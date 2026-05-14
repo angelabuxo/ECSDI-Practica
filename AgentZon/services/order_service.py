@@ -5,8 +5,8 @@ from uuid import uuid4
 
 from rdflib import Literal, RDF
 
-from AgentZon.AgentUtil.OntoNamespaces import AZON, bind_namespaces
-from AgentZon.services.rdf_store import load_graph, save_graph
+from AgentUtil.OntoNamespaces import AZON, bind_namespaces
+from services.rdf_store import load_graph, save_graph
 
 
 # Order construction ---------------------------------------------------------------

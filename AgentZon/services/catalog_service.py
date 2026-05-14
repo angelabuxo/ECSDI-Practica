@@ -2,8 +2,8 @@
 
 from rdflib import Graph
 
-from AgentZon.AgentUtil.OntoNamespaces import AZON
-from AgentZon.services.rdf_store import load_graph
+from AgentUtil.OntoNamespaces import AZON
+from services.rdf_store import load_graph
 
 
 # Search operations ----------------------------------------------------------------

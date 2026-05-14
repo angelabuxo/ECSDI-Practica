@@ -2,8 +2,8 @@
 
 from rdflib import Graph, Literal
 
-from AgentZon.AgentUtil.OntoNamespaces import AZON, bind_namespaces
-from AgentZon.services.rdf_store import load_graph, save_graph
+from AgentUtil.OntoNamespaces import AZON, bind_namespaces
+from services.rdf_store import load_graph, save_graph
 
 
 # Search history -------------------------------------------------------------------

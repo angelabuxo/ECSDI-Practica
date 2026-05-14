@@ -9,19 +9,19 @@ from rdflib import Namespace
 
 class PurchaseFlowTests(unittest.TestCase):
     def test_browser_search_and_simple_order_flow_records_history_and_returns_shipping_summary(self):
-        from AgentZon.AgentUtil.Agent import Agent
-        from AgentZon.AgentUtil.DSO import DSO
-        from AgentZon.agents import (
+        from AgentUtil.Agent import Agent
+        from AgentUtil.DSO import DSO
+        from agents import (
             agent_centre_logistic,
             agent_cercador,
             agent_compra,
             agent_directory,
             agent_opinador,
         )
-        from AgentZon.protocols.centre_logistic import build_resposta_oferta_transport
-        from AgentZon.protocols.directory import build_register_message
-        from AgentZon.services.bootstrap import bootstrap_phase2_data
-        from AgentZon.tests.support import LocalMessageRouter
+        from protocols.centre_logistic import build_resposta_oferta_transport
+        from protocols.directory import build_register_message
+        from services.bootstrap import bootstrap_phase2_data
+        from tests.support import LocalMessageRouter
 
         agn = Namespace("http://www.agentes.org#")
         directory = Agent(

@@ -3,9 +3,9 @@
 from rdflib import Graph, Literal, RDF
 from rdflib.namespace import XSD
 
-from AgentZon.AgentUtil.ACL import ACL
-from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
-from AgentZon.AgentUtil.OntoNamespaces import AGN, AZON, ONTOLOGY_URI, bind_namespaces
+from AgentUtil.ACL import ACL
+from AgentUtil.ACLMessages import build_message, get_message_properties
+from AgentUtil.OntoNamespaces import AGN, AZON, ONTOLOGY_URI, bind_namespaces
 
 
 # Product localization -------------------------------------------------------------

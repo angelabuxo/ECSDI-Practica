@@ -7,8 +7,8 @@ from pathlib import Path
 
 class CatalogServiceTests(unittest.TestCase):
     def test_search_products_filters_by_text_category_brand_and_price(self):
-        from AgentZon.services.bootstrap import bootstrap_phase2_data
-        from AgentZon.services.catalog_service import search_products
+        from services.bootstrap import bootstrap_phase2_data
+        from services.catalog_service import search_products
 
         with tempfile.TemporaryDirectory() as tmpdir:
             data_dir = Path(tmpdir)

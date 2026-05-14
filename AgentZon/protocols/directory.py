@@ -3,11 +3,11 @@
 from rdflib import Graph, Literal, Namespace, RDF
 from rdflib.namespace import FOAF
 
-from AgentZon.AgentUtil.ACL import ACL
-from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
-from AgentZon.AgentUtil.Agent import Agent
-from AgentZon.AgentUtil.DSO import DSO
-from AgentZon.AgentUtil.OntoNamespaces import AGN, bind_namespaces
+from AgentUtil.ACL import ACL
+from AgentUtil.ACLMessages import build_message, get_message_properties
+from AgentUtil.Agent import Agent
+from AgentUtil.DSO import DSO
+from AgentUtil.OntoNamespaces import AGN, bind_namespaces
 
 
 # Directory requests ---------------------------------------------------------------

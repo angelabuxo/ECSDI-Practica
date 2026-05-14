@@ -2,10 +2,10 @@
 
 from pathlib import Path
 
-from AgentZon.AgentUtil.ACLMessages import register_agent
-from AgentZon.AgentUtil.Agent import Agent
-from AgentZon.AgentUtil.Util import gethostname
-from AgentZon.AgentUtil.OntoNamespaces import AGN
+from AgentUtil.ACLMessages import register_agent
+from AgentUtil.Agent import Agent
+from AgentUtil.Util import gethostname
+from AgentUtil.OntoNamespaces import AGN
 
 
 BASE_DIR = Path(__file__).resolve().parent

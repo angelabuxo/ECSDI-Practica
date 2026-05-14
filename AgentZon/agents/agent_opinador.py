@@ -6,12 +6,12 @@ from pathlib import Path
 from flask import Flask, request
 from rdflib import Graph
 
-from AgentZon.AgentUtil.ACL import ACL
-from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
-from AgentZon.AgentUtil.DSO import DSO
-from AgentZon.AgentUtil.FlaskServer import shutdown_server
-from AgentZon.AgentUtil.Logging import config_logger
-from AgentZon.config import (
+from AgentUtil.ACL import ACL
+from AgentUtil.ACLMessages import build_message, get_message_properties
+from AgentUtil.DSO import DSO
+from AgentUtil.FlaskServer import shutdown_server
+from AgentUtil.Logging import config_logger
+from config import (
     DEFAULT_PORTS,
     add_data_dir_argument,
     add_directory_arguments,
@@ -21,12 +21,12 @@ from AgentZon.config import (
     register_with_directory,
     resolve_runtime_hostname,
 )
-from AgentZon.protocols.compra import (
+from protocols.compra import (
     build_confirmacio_registre_compra,
     parse_peticio_registre_compra,
 )
-from AgentZon.services.history_service import record_purchase
-from AgentZon.services.rdf_store import load_graph
+from services.history_service import record_purchase
+from services.rdf_store import load_graph
 
 
 app = Flask(__name__)

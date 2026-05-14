@@ -4,8 +4,8 @@ from pathlib import Path
 
 from rdflib import Graph, Literal, RDF, XSD
 
-from AgentZon.AgentUtil.OntoNamespaces import AZON, bind_namespaces
-from AgentZon.services.rdf_store import save_graph
+from AgentUtil.OntoNamespaces import AZON, bind_namespaces
+from services.rdf_store import save_graph
 
 
 # Seed graph builders --------------------------------------------------------------

@@ -7,12 +7,12 @@ from pathlib import Path
 from flask import Flask, request
 from rdflib import Graph
 
-from AgentZon.AgentUtil.ACL import ACL
-from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties, register_agent, send_message
-from AgentZon.AgentUtil.DSO import DSO
-from AgentZon.AgentUtil.FlaskServer import shutdown_server
-from AgentZon.AgentUtil.Logging import config_logger
-from AgentZon.config import (
+from AgentUtil.ACL import ACL
+from AgentUtil.ACLMessages import build_message, get_message_properties, register_agent, send_message
+from AgentUtil.DSO import DSO
+from AgentUtil.FlaskServer import shutdown_server
+from AgentUtil.Logging import config_logger
+from config import (
     DEFAULT_PORTS,
     add_data_dir_argument,
     add_directory_arguments,
@@ -22,15 +22,15 @@ from AgentZon.config import (
     register_with_directory,
     resolve_runtime_hostname,
 )
-from AgentZon.protocols.centre_logistic import (
+from protocols.centre_logistic import (
     build_eleccio_transportista,
     build_peticio_transport,
     build_shipping_details_response,
     extract_transport_offer,
     parse_productes_localitzats,
 )
-from AgentZon.services.logistics_service import choose_best_offer, create_lot
-from AgentZon.services.rdf_store import load_graph
+from services.logistics_service import choose_best_offer, create_lot
+from services.rdf_store import load_graph
 
 
 app = Flask(__name__)

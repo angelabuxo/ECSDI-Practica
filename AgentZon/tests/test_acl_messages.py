@@ -7,10 +7,10 @@ from rdflib import Literal, Namespace
 
 class ACLMessageTests(unittest.TestCase):
     def test_build_message_wraps_search_content_and_round_trips_properties(self):
-        from AgentZon.AgentUtil.ACL import ACL
-        from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
-        from AgentZon.AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI
-        from AgentZon.protocols.cerca import build_peticio_cerca, parse_peticio_cerca
+        from AgentUtil.ACL import ACL
+        from AgentUtil.ACLMessages import build_message, get_message_properties
+        from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI
+        from protocols.cerca import build_peticio_cerca, parse_peticio_cerca
 
         agn = Namespace("http://www.agentes.org#")
         sender = agn.Cercador

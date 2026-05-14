@@ -9,9 +9,9 @@ from rdflib import Namespace
 
 class LogisticsFlowTests(unittest.TestCase):
     def test_create_lot_merges_products_for_same_city_and_delivery_date(self):
-        from AgentZon.AgentUtil.OntoNamespaces import AZON
-        from AgentZon.services.logistics_service import create_lot
-        from AgentZon.services.rdf_store import load_graph
+        from AgentUtil.OntoNamespaces import AZON
+        from services.logistics_service import create_lot
+        from services.rdf_store import load_graph
         from rdflib import RDF
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -55,7 +55,7 @@ class LogisticsFlowTests(unittest.TestCase):
             )
 
     def test_create_lot_creates_new_lot_for_different_city_or_delivery_date(self):
-        from AgentZon.services.logistics_service import create_lot
+        from services.logistics_service import create_lot
 
         with tempfile.TemporaryDirectory() as tmpdir:
             lots_path = Path(tmpdir) / "lots.ttl"
@@ -90,11 +90,11 @@ class LogisticsFlowTests(unittest.TestCase):
             self.assertNotEqual(second_lot["lot_id"], third_lot["lot_id"])
 
     def test_centre_logistic_queries_two_transport_agents_and_picks_the_cheapest_offer(self):
-        from AgentZon.AgentUtil.ACLMessages import get_message_properties
-        from AgentZon.AgentUtil.Agent import Agent
-        from AgentZon.AgentUtil.OntoNamespaces import AZON
-        from AgentZon.agents import agent_centre_logistic
-        from AgentZon.protocols.centre_logistic import (
+        from AgentUtil.ACLMessages import get_message_properties
+        from AgentUtil.Agent import Agent
+        from AgentUtil.OntoNamespaces import AZON
+        from agents import agent_centre_logistic
+        from protocols.centre_logistic import (
             build_productes_localitzats,
             build_resposta_oferta_transport,
             extract_shipping_details,

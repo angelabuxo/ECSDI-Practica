@@ -9,9 +9,9 @@ import requests
 from rdflib import Graph, Literal, Namespace, URIRef
 from rdflib.namespace import FOAF, OWL, RDF
 
-from AgentZon.AgentUtil.ACL import ACL
-from AgentZon.AgentUtil.Agent import Agent
-from AgentZon.AgentUtil.DSO import DSO
+from AgentUtil.ACL import ACL
+from AgentUtil.Agent import Agent
+from AgentUtil.DSO import DSO
 
 
 AGN = Namespace("http://www.agentes.org#")

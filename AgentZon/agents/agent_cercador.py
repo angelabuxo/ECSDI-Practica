@@ -7,13 +7,13 @@ from urllib.parse import urlsplit, urlunsplit
 from flask import Flask, render_template, request
 from rdflib import Graph
 
-from AgentZon.AgentUtil.ACL import ACL
-from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties, register_agent, send_message
-from AgentZon.AgentUtil.DSO import DSO
-from AgentZon.AgentUtil.FlaskServer import shutdown_server
-from AgentZon.AgentUtil.Logging import config_logger
-from AgentZon.AgentUtil.OntoNamespaces import ONTOLOGY_URI
-from AgentZon.config import (
+from AgentUtil.ACL import ACL
+from AgentUtil.ACLMessages import build_message, get_message_properties, register_agent, send_message
+from AgentUtil.DSO import DSO
+from AgentUtil.FlaskServer import shutdown_server
+from AgentUtil.Logging import config_logger
+from AgentUtil.OntoNamespaces import ONTOLOGY_URI
+from config import (
     DEFAULT_PORTS,
     TEMPLATE_DIR,
     add_data_dir_argument,
@@ -24,11 +24,11 @@ from AgentZon.config import (
     register_with_directory,
     resolve_runtime_hostname,
 )
-from AgentZon.protocols.cerca import build_peticio_cerca, build_resultat_cerca, parse_peticio_cerca
-from AgentZon.protocols.directory import build_search_message, parse_directory_response
-from AgentZon.services.catalog_service import search_products
-from AgentZon.services.history_service import record_search
-from AgentZon.services.rdf_store import load_graph
+from protocols.cerca import build_peticio_cerca, build_resultat_cerca, parse_peticio_cerca
+from protocols.directory import build_search_message, parse_directory_response
+from services.catalog_service import search_products
+from services.history_service import record_search
+from services.rdf_store import load_graph
 
 
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR))

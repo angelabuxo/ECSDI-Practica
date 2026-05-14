@@ -6,12 +6,12 @@ from pathlib import Path
 from flask import Flask, render_template, request
 from rdflib import Graph
 
-from AgentZon.AgentUtil.ACL import ACL
-from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties, send_message
-from AgentZon.AgentUtil.DSO import DSO
-from AgentZon.AgentUtil.FlaskServer import shutdown_server
-from AgentZon.AgentUtil.Logging import config_logger
-from AgentZon.config import (
+from AgentUtil.ACL import ACL
+from AgentUtil.ACLMessages import build_message, get_message_properties, send_message
+from AgentUtil.DSO import DSO
+from AgentUtil.FlaskServer import shutdown_server
+from AgentUtil.Logging import config_logger
+from config import (
     DEFAULT_PORTS,
     TEMPLATE_DIR,
     add_data_dir_argument,
@@ -22,21 +22,21 @@ from AgentZon.config import (
     register_with_directory,
     resolve_runtime_hostname,
 )
-from AgentZon.protocols.centre_logistic import build_productes_localitzats, extract_shipping_details
-from AgentZon.protocols.compra import (
+from protocols.centre_logistic import build_productes_localitzats, extract_shipping_details
+from protocols.compra import (
     build_peticio_enviament_extern,
     build_peticio_registre_compra,
     extract_registration_confirmation,
 )
-from AgentZon.protocols.directory import build_search_message, parse_directory_response
-from AgentZon.services.catalog_service import get_products_by_ids
-from AgentZon.services.order_service import (
+from protocols.directory import build_search_message, parse_directory_response
+from services.catalog_service import get_products_by_ids
+from services.order_service import (
     build_order,
     save_order,
     save_user_shipping_data,
     update_order_final_delivery_date,
 )
-from AgentZon.services.rdf_store import load_graph
+from services.rdf_store import load_graph
 
 
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR))

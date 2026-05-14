@@ -4,7 +4,7 @@ from pathlib import Path
 
 from rdflib import Graph
 
-from AgentZon.AgentUtil.OntoNamespaces import bind_namespaces
+from AgentUtil.OntoNamespaces import bind_namespaces
 
 
 # Graph IO -------------------------------------------------------------------------

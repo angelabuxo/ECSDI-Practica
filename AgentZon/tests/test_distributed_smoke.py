@@ -12,7 +12,7 @@ import requests
 
 class DistributedSmokeTests(unittest.TestCase):
     def test_agents_run_as_separate_processes_and_complete_one_order(self):
-        from AgentZon.services.bootstrap import bootstrap_phase2_data
+        from services.bootstrap import bootstrap_phase2_data
 
         base_cmd = ["./AgentZon/.venv/bin/python", "-m"]
         host = "127.0.0.1"

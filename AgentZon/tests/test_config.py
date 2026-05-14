@@ -7,14 +7,14 @@ from unittest.mock import patch
 
 class ConfigTests(unittest.TestCase):
     def test_resolve_runtime_hostname_falls_back_to_open_bind_address(self):
-        from AgentZon.config import resolve_runtime_hostname
+        from config import resolve_runtime_hostname
 
         args = types.SimpleNamespace(host=None, open=None)
 
         self.assertEqual(resolve_runtime_hostname(args), "0.0.0.0")
 
     def test_resolve_runtime_hostname_uses_machine_hostname_when_open_flag_is_set(self):
-        from AgentZon.config import resolve_runtime_hostname
+        from config import resolve_runtime_hostname
 
         args = types.SimpleNamespace(host=None, open=True)
 
@@ -22,7 +22,7 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(resolve_runtime_hostname(args), "agentzon-host")
 
     def test_build_directory_agent_uses_register_endpoint(self):
-        from AgentZon.config import build_directory_agent
+        from config import build_directory_agent
 
         directory = build_directory_agent("directory.test", 9000)
 

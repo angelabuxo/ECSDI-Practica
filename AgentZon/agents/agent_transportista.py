@@ -6,18 +6,18 @@ from datetime import date, timedelta
 from flask import Flask, request
 from rdflib import Graph, RDF
 
-from AgentZon.AgentUtil.ACL import ACL
-from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
-from AgentZon.AgentUtil.FlaskServer import shutdown_server
-from AgentZon.AgentUtil.Logging import config_logger
-from AgentZon.AgentUtil.OntoNamespaces import AZON, bind_namespaces
-from AgentZon.config import (
+from AgentUtil.ACL import ACL
+from AgentUtil.ACLMessages import build_message, get_message_properties
+from AgentUtil.FlaskServer import shutdown_server
+from AgentUtil.Logging import config_logger
+from AgentUtil.OntoNamespaces import AZON, bind_namespaces
+from config import (
     DEFAULT_PORTS,
     add_runtime_arguments,
     build_agent,
     resolve_runtime_hostname,
 )
-from AgentZon.protocols.centre_logistic import build_resposta_oferta_transport, parse_peticio_transport
+from protocols.centre_logistic import build_resposta_oferta_transport, parse_peticio_transport
 
 
 app = Flask(__name__)

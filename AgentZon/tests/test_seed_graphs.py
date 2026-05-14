@@ -4,9 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from AgentZon.AgentUtil.OntoNamespaces import AZON
-from AgentZon.services.bootstrap import bootstrap_phase2_data
-from AgentZon.services.rdf_store import load_graph
+from AgentUtil.OntoNamespaces import AZON
+from services.bootstrap import bootstrap_phase2_data
+from services.rdf_store import load_graph
 
 
 class SeedGraphTests(unittest.TestCase):

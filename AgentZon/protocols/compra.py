@@ -2,9 +2,9 @@
 
 from rdflib import Graph, Literal, RDF
 
-from AgentZon.AgentUtil.ACL import ACL
-from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
-from AgentZon.AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
+from AgentUtil.ACL import ACL
+from AgentUtil.ACLMessages import build_message, get_message_properties
+from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
 
 
 # RDF builders --------------------------------------------------------------------

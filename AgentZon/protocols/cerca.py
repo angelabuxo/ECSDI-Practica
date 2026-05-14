@@ -2,7 +2,7 @@
 
 from rdflib import Graph, Literal, RDF, XSD
 
-from AgentZon.AgentUtil.OntoNamespaces import AZON, bind_namespaces
+from AgentUtil.OntoNamespaces import AZON, bind_namespaces
 
 
 # RDF builders --------------------------------------------------------------------

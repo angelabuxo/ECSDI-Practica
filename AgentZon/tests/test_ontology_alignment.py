@@ -5,7 +5,7 @@ import unittest
 from rdflib import Graph, OWL, RDF
 from rdflib.namespace import RDFS
 
-from AgentZon.AgentUtil.OntoNamespaces import AZON
+from AgentUtil.OntoNamespaces import AZON
 
 
 class OntologyAlignmentTests(unittest.TestCase):

@@ -7,13 +7,13 @@ from flask import Flask, request
 from rdflib import Graph, RDF
 from rdflib.namespace import FOAF
 
-from AgentZon.AgentUtil.ACL import ACL
-from AgentZon.AgentUtil.ACLMessages import build_message, get_message_properties
-from AgentZon.AgentUtil.DSO import DSO
-from AgentZon.AgentUtil.FlaskServer import shutdown_server
-from AgentZon.AgentUtil.Logging import config_logger
-from AgentZon.AgentUtil.OntoNamespaces import bind_namespaces
-from AgentZon.config import (
+from AgentUtil.ACL import ACL
+from AgentUtil.ACLMessages import build_message, get_message_properties
+from AgentUtil.DSO import DSO
+from AgentUtil.FlaskServer import shutdown_server
+from AgentUtil.Logging import config_logger
+from AgentUtil.OntoNamespaces import bind_namespaces
+from config import (
     DEFAULT_PORTS,
     add_runtime_arguments,
     build_agent,

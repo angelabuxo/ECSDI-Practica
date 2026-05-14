@@ -5,6 +5,6 @@
 
 __author__ = "javier"
 
-from AgentZon.AgentUtil.Agent import Agent
+from AgentUtil.Agent import Agent
 
 __all__ = ["Agent"]
