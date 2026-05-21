@@ -7,6 +7,7 @@ from pathlib import Path
 from rdflib import RDF
 
 from AgentUtil.OntoNamespaces import AZON
+from protocols.compra import build_peticio_compra, parse_peticio_compra
 from protocols.centre_logistic import build_peticio_transport
 from services.history_service import record_purchase
 from services.order_service import build_order, save_order, save_user_shipping_data
@@ -52,7 +53,32 @@ class OrderGraphTests(unittest.TestCase):
             self.assertIn((order_node, AZON.MetodePagament, None), graph)
             self.assertIn((order_node, AZON.DataEntrega, None), graph)
             self.assertIn((order_node, AZON.DataEntregaDefinitiva, None), graph)
-            self.assertIn((order_node, AZON.SobreProducte, AZON["product-P1001"]), graph)
+            self.assertIn((order_node, AZON.TeProducte, AZON["product-P1001"]), graph)
+
+    def test_peticio_compra_round_trip_keeps_embedded_order_and_products(self):
+        request_graph = build_peticio_compra(
+            "purchase-request-1",
+            user_id="USER-1",
+            payment_method="visa",
+            shipping_data={
+                "user_name": "Pol",
+                "street_address": "Carrer Major 1",
+                "city": "Barcelona",
+                "priority": "48h",
+            },
+            product_ids=["P1001", "P1002"],
+        )
+        content = request_graph.value(predicate=RDF.type, object=AZON.PeticioCompra)
+
+        parsed = parse_peticio_compra(request_graph, content)
+
+        self.assertEqual(parsed["user_id"], "USER-1")
+        self.assertEqual(parsed["payment_method"], "visa")
+        self.assertEqual(parsed["shipping_data"]["user_name"], "Pol")
+        self.assertEqual(parsed["shipping_data"]["street_address"], "Carrer Major 1")
+        self.assertEqual(parsed["shipping_data"]["city"], "Barcelona")
+        self.assertEqual(parsed["shipping_data"]["priority"], "48h")
+        self.assertEqual(parsed["product_ids"], ["P1001", "P1002"])
 
     def test_purchase_history_links_back_to_the_order(self):
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -32,7 +32,7 @@ def build_agent(name, uri_name, port, host="127.0.0.1", endpoint="/comm"):
         name=name,
         uri=AGN[uri_name],
         address=f"http://{host}:{port}{endpoint}",
-        stop=f"http://{host}:{port}/stop",
+        stop=f"http://{host}:{port}/Stop",
     )
 
 

@@ -27,7 +27,7 @@ Generar el graf de l'ontologia:
 
 ## 2) Executar el sistema distribuït
 
-Obre terminals separats i executa cada agent des de l'arrel del projecte.
+Obre terminals separats i executa cada agent des de l'arrel del projecte. La interfície humana viu a `/iface`; els agents es comuniquen per `/comm` i el directori per `/Register`.
 
 1. Agent Directory
 
@@ -73,4 +73,9 @@ Obre terminals separats i executa cada agent des de l'arrel del projecte.
 
 Quan tots els agents estiguin en marxa, obre:
 
-`http://127.0.0.1:9001/`
+`http://127.0.0.1:9001/iface`
+
+Endpoints principals:
+
+- `DirectoryAgent`: `/Register`, `/Info`, `/Stop`
+- `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `Transportista`: `/comm`, `/iface`, `/Stop`

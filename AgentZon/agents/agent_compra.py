@@ -1,16 +1,17 @@
-"""Purchase agent coordinating order capture and internal shipping requests."""
+"""Purchase agent coordinating ACL purchase requests and browser wrappers."""
 
 import argparse
 from pathlib import Path
 
 from flask import Flask, render_template, request
-from rdflib import Graph
+from rdflib import Graph, RDF
 
 from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties, send_message
 from AgentUtil.DSO import DSO
 from AgentUtil.FlaskServer import shutdown_server
 from AgentUtil.Logging import config_logger
+from AgentUtil.OntoNamespaces import AZON
 from config import (
     DEFAULT_PORTS,
     TEMPLATE_DIR,
@@ -24,9 +25,12 @@ from config import (
 )
 from protocols.centre_logistic import build_productes_localitzats, extract_shipping_details
 from protocols.compra import (
+    build_confirmacio_enviament,
+    build_peticio_compra,
     build_peticio_enviament_extern,
     build_peticio_registre_compra,
     extract_registration_confirmation,
+    parse_peticio_compra,
 )
 from protocols.directory import build_search_message, parse_directory_response
 from services.catalog_service import get_products_by_ids
@@ -36,7 +40,6 @@ from services.order_service import (
     save_user_shipping_data,
     update_order_final_delivery_date,
 )
-from services.rdf_store import load_graph
 
 
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
@@ -81,7 +84,7 @@ def resolve_agent(agent_type):
 
 def pla_demanar_informacio_usuari(selected_product_ids):
     products = get_products_by_ids(CATALOG_PATH, selected_product_ids)
-    return render_template("compra.html", products=products)
+    return render_template("compra.html", products=products, iface_path="/iface")
 
 
 def pla_registrar_dades_d_usuari(selected_product_ids, form_data):
@@ -139,20 +142,68 @@ def pla_enviament_extern(order, external_logistics_agent):
     )
 
 
-# Web interface --------------------------------------------------------------------
-@app.route("/purchase", methods=["POST"])
-def purchase():
-    selected = request.form.getlist("selected_product_ids")
-    return pla_demanar_informacio_usuari(selected)
-
-
-@app.route("/confirm-purchase", methods=["POST"])
-def confirm_purchase():
-    selected = request.form.getlist("selected_product_ids")
-    order = pla_registrar_dades_d_usuari(selected, request.form)
+def process_purchase_request(request_data, acl_sender=None, request_content=None):
+    shipping = {
+        "user_id": request_data["user_id"],
+        "user_name": request_data["shipping_data"]["user_name"],
+        "street_address": request_data["shipping_data"]["street_address"],
+        "city": request_data["shipping_data"]["city"],
+        "priority": request_data["shipping_data"]["priority"],
+        "payment_method": request_data["payment_method"],
+    }
+    products = get_products_by_ids(CATALOG_PATH, request_data["product_ids"])
+    order = build_order(shipping, products)
+    logger.info("Persistint comanda %s amb %d productes", order["order_id"], len(products))
+    save_user_shipping_data(SHIPPING_PATH, order)
+    save_order(ORDERS_PATH, order)
     pla_delegar_registre_compra(order)
     shipping_details = pla_producte_als_nostres_magatzems(order)
     update_order_final_delivery_date(ORDERS_PATH, order["order_id"], shipping_details["delivery_date"])
+    response = build_confirmacio_enviament(
+        order,
+        shipping_details,
+        sender=AGENT.uri,
+        receiver=acl_sender,
+        request_content=request_content,
+        msgcnt=next_counter(),
+    )
+    return response, order, shipping_details
+
+
+def build_purchase_request_from_form(form_data):
+    request_graph = build_peticio_compra(
+        f"iface-purchase-{next_counter()}",
+        user_id=form_data["user_id"],
+        payment_method=form_data["payment_method"],
+        shipping_data={
+            "user_name": form_data["user_name"],
+            "street_address": form_data["street_address"],
+            "city": form_data["city"],
+            "priority": form_data["priority"],
+        },
+        product_ids=form_data.getlist("selected_product_ids"),
+        sender=AGENT.uri,
+        receiver=AGENT.uri,
+        msgcnt=next_counter(),
+    )
+    content = request_graph.value(predicate=RDF.type, object=AZON.PeticioCompra)
+    return request_graph, content
+
+
+# Web interface --------------------------------------------------------------------
+@app.route("/iface", methods=["GET", "POST"])
+def iface():
+    if request.method == "GET":
+        return pla_demanar_informacio_usuari([])
+    if "user_id" not in request.form:
+        return pla_demanar_informacio_usuari(request.form.getlist("selected_product_ids"))
+    request_graph, content = build_purchase_request_from_form(request.form)
+    request_data = parse_peticio_compra(request_graph, content)
+    _, order, shipping_details = process_purchase_request(
+        request_data,
+        acl_sender=AGENT.uri,
+        request_content=content,
+    )
     return pla_informar_usuari_sobre_l_enviament(order, shipping_details)
 
 
@@ -162,22 +213,33 @@ def comm():
     message_graph = Graph()
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
-    response = build_message(
-        Graph(),
-        ACL["not-understood"],
-        sender=AGENT.uri,
-        msgcnt=next_counter(),
+    if not properties or properties.get("performative") != ACL.request:
+        logger.warning("CompraAgent ha rebut un missatge no-request o malformat a /comm")
+        return build_message(
+            Graph(),
+            ACL["not-understood"],
+            sender=AGENT.uri,
+            msgcnt=next_counter(),
+        ).serialize(format="xml")
+    content = properties["content"]
+    if message_graph.value(content, RDF.type) != AZON.PeticioCompra:
+        logger.warning("CompraAgent ha rebut una accio no suportada a /comm")
+        return build_message(
+            Graph(),
+            ACL["not-understood"],
+            sender=AGENT.uri,
+            msgcnt=next_counter(),
+        ).serialize(format="xml")
+    request_data = parse_peticio_compra(message_graph, content)
+    response, _, _ = process_purchase_request(
+        request_data,
+        acl_sender=properties.get("sender"),
+        request_content=content,
     )
-    logger.warning("CompraAgent ha rebut un missatge ACL no suportat a /comm")
     return response.serialize(format="xml")
 
 
-@app.route("/info")
-def info():
-    return load_graph(ORDERS_PATH).serialize(format="turtle")
-
-
-@app.route("/stop")
+@app.route("/Stop")
 def stop():
     shutdown_server()
     return "Stopping"

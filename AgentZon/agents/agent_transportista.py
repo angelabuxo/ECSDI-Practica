@@ -110,14 +110,14 @@ def comm():
     return response.serialize(format="xml")
 
 
-@app.route("/info")
-def info():
+@app.route("/iface")
+def iface():
     graph = Graph()
     bind_namespaces(graph)
     return graph.serialize(format="turtle")
 
 
-@app.route("/stop")
+@app.route("/Stop")
 def stop():
     shutdown_server()
     return "Stopping"

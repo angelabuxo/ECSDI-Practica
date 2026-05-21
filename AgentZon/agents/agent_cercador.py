@@ -1,18 +1,18 @@
-"""Search agent responsible for product queries and search-history recording."""
+"""Search agent exposing ACL search on /comm and a thin browser wrapper on /iface."""
 
 import argparse
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
 from flask import Flask, render_template, request
-from rdflib import Graph
+from rdflib import Graph, RDF
 
 from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties, register_agent, send_message
 from AgentUtil.DSO import DSO
 from AgentUtil.FlaskServer import shutdown_server
 from AgentUtil.Logging import config_logger
-from AgentUtil.OntoNamespaces import ONTOLOGY_URI
+from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI
 from config import (
     DEFAULT_PORTS,
     TEMPLATE_DIR,
@@ -28,7 +28,6 @@ from protocols.cerca import build_peticio_cerca, build_resultat_cerca, parse_pet
 from protocols.directory import build_search_message, parse_directory_response
 from services.catalog_service import search_products
 from services.history_service import record_search
-from services.rdf_store import load_graph
 
 
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
@@ -83,8 +82,8 @@ def pla_de_cerca(criteria):
 
 def pla_de_presentacio(criteria, products):
     compra_agent = resolve_compra_agent()
-    compra_url = replace_path(compra_agent.address, "/purchase")
-    return render_template("cercador.html", criteria=criteria, products=products, compra_url=compra_url)
+    compra_url = replace_path(compra_agent.address, "/iface")
+    return render_template("cercador.html", criteria=criteria, products=products, compra_url=compra_url, search_path="/iface")
 
 
 def replace_path(address, new_path):
@@ -93,20 +92,19 @@ def replace_path(address, new_path):
 
 
 # Web interface --------------------------------------------------------------------
-@app.route("/")
-def index():
-    return render_template("cercador.html", criteria=default_criteria(), products=[], compra_url="")
-
-
-@app.route("/search", methods=["POST"])
-def search():
-    criteria = {
-        "text": request.form.get("text", ""),
-        "category": request.form.get("category", ""),
-        "brand": request.form.get("brand", ""),
-        "min_price": float(request.form["min_price"]) if request.form.get("min_price") else None,
-        "max_price": float(request.form["max_price"]) if request.form.get("max_price") else None,
-    }
+@app.route("/iface", methods=["GET", "POST"])
+def iface():
+    if request.method == "GET":
+        return render_template("cercador.html", criteria=default_criteria(), products=[], compra_url="", search_path="/iface")
+    request_graph, content = build_peticio_cerca(
+        f"iface-search-{next_counter()}",
+        text=request.form.get("text", ""),
+        category=request.form.get("category", ""),
+        brand=request.form.get("brand", ""),
+        min_price=float(request.form["min_price"]) if request.form.get("min_price") else None,
+        max_price=float(request.form["max_price"]) if request.form.get("max_price") else None,
+    )
+    criteria = parse_peticio_cerca(request_graph, content)
     products = pla_de_cerca(criteria)
     return pla_de_presentacio(criteria, products)
 
@@ -126,6 +124,14 @@ def comm():
             msgcnt=next_counter(),
         ).serialize(format="xml")
     content = properties["content"]
+    if message_graph.value(content, RDF.type) != AZON.PeticioCerca:
+        logger.warning("Rebut accio no suportada a /comm")
+        return build_message(
+            Graph(),
+            ACL["not-understood"],
+            sender=AGENT.uri,
+            msgcnt=next_counter(),
+        ).serialize(format="xml")
     criteria = parse_peticio_cerca(message_graph, content)
     logger.info("Rebuda peticio ACL de cerca")
     products = pla_de_cerca(criteria)
@@ -146,12 +152,7 @@ def comm():
     return response.serialize(format="xml")
 
 
-@app.route("/info")
-def info():
-    return load_graph(SEARCH_HISTORY_PATH).serialize(format="turtle")
-
-
-@app.route("/stop")
+@app.route("/Stop")
 def stop():
     shutdown_server()
     return "Stopping"

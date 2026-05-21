@@ -14,7 +14,7 @@ class DistributedSmokeTests(unittest.TestCase):
     def test_agents_run_as_separate_processes_and_complete_one_order(self):
         from services.bootstrap import bootstrap_phase2_data
 
-        base_cmd = ["./AgentZon/.venv/bin/python", "-m"]
+        base_cmd = ["./.venv/bin/python", "-m"]
         host = "127.0.0.1"
         ports = {
             "directory": 9200,
@@ -32,10 +32,10 @@ class DistributedSmokeTests(unittest.TestCase):
             bootstrap_phase2_data(data_dir)
 
             commands = [
-                base_cmd + ["AgentZon.agents.agent_directory", "--host", host, "--port", str(ports["directory"])],
+                base_cmd + ["agents.agent_directory", "--host", host, "--port", str(ports["directory"])],
                 base_cmd
                 + [
-                    "AgentZon.agents.agent_opinador",
+                    "agents.agent_opinador",
                     "--host",
                     host,
                     "--port",
@@ -49,7 +49,7 @@ class DistributedSmokeTests(unittest.TestCase):
                 ],
                 base_cmd
                 + [
-                    "AgentZon.agents.agent_transportista",
+                    "agents.agent_transportista",
                     "--host",
                     host,
                     "--port",
@@ -63,7 +63,7 @@ class DistributedSmokeTests(unittest.TestCase):
                 ],
                 base_cmd
                 + [
-                    "AgentZon.agents.agent_transportista",
+                    "agents.agent_transportista",
                     "--host",
                     host,
                     "--port",
@@ -77,7 +77,7 @@ class DistributedSmokeTests(unittest.TestCase):
                 ],
                 base_cmd
                 + [
-                    "AgentZon.agents.agent_centre_logistic",
+                    "agents.agent_centre_logistic",
                     "--host",
                     host,
                     "--port",
@@ -99,7 +99,7 @@ class DistributedSmokeTests(unittest.TestCase):
                 ],
                 base_cmd
                 + [
-                    "AgentZon.agents.agent_compra",
+                    "agents.agent_compra",
                     "--host",
                     host,
                     "--port",
@@ -113,7 +113,7 @@ class DistributedSmokeTests(unittest.TestCase):
                 ],
                 base_cmd
                 + [
-                    "AgentZon.agents.agent_cercador",
+                    "agents.agent_cercador",
                     "--host",
                     host,
                     "--port",
@@ -129,14 +129,19 @@ class DistributedSmokeTests(unittest.TestCase):
 
             try:
                 for command in commands:
-                    processes.append(subprocess.Popen(command, cwd="/Users/polmontanera/Desktop/Q6 2526/ECSDI/ECSDI-Practica"))
+                    processes.append(
+                        subprocess.Popen(
+                            command,
+                            cwd="/Users/polmontanera/Desktop/Q6 2526/ECSDI/ECSDI-Practica/AgentZon",
+                        )
+                    )
                     time.sleep(0.4)
 
                 for port in ports.values():
                     self._wait_for_port(host, port)
 
                 search_response = requests.post(
-                    f"http://{host}:{ports['cercador']}/search",
+                    f"http://{host}:{ports['cercador']}/iface",
                     data={
                         "text": "wireless",
                         "category": "audio",
@@ -149,14 +154,14 @@ class DistributedSmokeTests(unittest.TestCase):
                 self.assertIn("Wireless Headphones", search_response.text)
 
                 purchase_page = requests.post(
-                    f"http://{host}:{ports['compra']}/purchase",
+                    f"http://{host}:{ports['compra']}/iface",
                     data={"selected_product_ids": ["P1001"]},
                     timeout=10,
                 )
                 self.assertIn("Confirm purchase", purchase_page.text)
 
                 confirmation = requests.post(
-                    f"http://{host}:{ports['compra']}/confirm-purchase",
+                    f"http://{host}:{ports['compra']}/iface",
                     data={
                         "selected_product_ids": ["P1001"],
                         "user_id": "USER-DIST",
@@ -181,7 +186,7 @@ class DistributedSmokeTests(unittest.TestCase):
                     ("directory", ports["directory"]),
                 ]:
                     try:
-                        path = "/stop" if name != "directory" else "/stop"
+                        path = "/Stop"
                         requests.get(f"http://{host}:{port}{path}", timeout=2)
                     except Exception:
                         pass

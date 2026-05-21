@@ -46,7 +46,7 @@ class LogisticsFlowTests(unittest.TestCase):
             lot = lots[0]
             self.assertEqual(float(graph.value(lot, AZON.PesTotal)), 3.5)
             self.assertEqual(
-                {str(value) for value in graph.objects(lot, AZON.SobreProducte)},
+                {str(value) for value in graph.objects(lot, AZON.TeProducte)},
                 {str(AZON["product-P1"]), str(AZON["product-P2"])},
             )
             self.assertEqual(
@@ -106,19 +106,19 @@ class LogisticsFlowTests(unittest.TestCase):
             "CentreLogisticAgent",
             agn.CentreLogistic,
             "http://centre.test/comm",
-            "http://centre.test/stop",
+            "http://centre.test/Stop",
         )
         fast_transport = Agent(
             "TransportFast",
             agn.TransportFast,
             "http://transport-fast.test/comm",
-            "http://transport-fast.test/stop",
+            "http://transport-fast.test/Stop",
         )
         economy_transport = Agent(
             "TransportEconomy",
             agn.TransportEconomy,
             "http://transport-economy.test/comm",
-            "http://transport-economy.test/stop",
+            "http://transport-economy.test/Stop",
         )
 
         def fake_send_message(message, address):

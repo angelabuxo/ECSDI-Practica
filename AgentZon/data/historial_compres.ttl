@@ -1,5 +1,11 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 
+azon:purchase-ORDER-10758FF2 azon:IdComanda "ORDER-10758FF2" ;
+    azon:IdUsuari "123" ;
+    azon:SobreComanda azon:order-ORDER-10758FF2 ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002 .
+
 azon:purchase-ORDER-4B84234D azon:IdComanda "ORDER-4B84234D" ;
     azon:IdUsuari "1" ;
     azon:SobreComanda azon:order-ORDER-4B84234D ;

@@ -1,5 +1,18 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 
+azon:order-ORDER-10758FF2 a azon:Comanda ;
+    azon:Carrer "Guillem Tell" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-05-22" ;
+    azon:DataEntregaDefinitiva "2026-05-24" ;
+    azon:IdComanda "ORDER-10758FF2" ;
+    azon:IdUsuari "123" ;
+    azon:MetodePagament "visa" ;
+    azon:Nom "miquel" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002 .
+
 azon:order-ORDER-4B84234D a azon:Comanda ;
     azon:Carrer "aa" ;
     azon:Ciutat "Barcelona" ;

@@ -141,12 +141,12 @@ def register():
 
 
 # Inspection endpoints -------------------------------------------------------------
-@app.route("/info")
+@app.route("/Info")
 def info():
     return DIRECTORY_GRAPH.serialize(format="turtle")
 
 
-@app.route("/stop")
+@app.route("/Stop")
 def stop():
     shutdown_server()
     return "Stopping"

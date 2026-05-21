@@ -13,7 +13,7 @@
     {% endfor %}
   </ul>
 
-  <form method="post" action="/confirm-purchase">
+  <form method="post" action="{{ iface_path or '/iface' }}">
     {% for product in products %}
     <input type="hidden" name="selected_product_ids" value="{{ product.product_id }}">
     {% endfor %}

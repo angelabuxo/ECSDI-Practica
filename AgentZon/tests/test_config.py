@@ -18,7 +18,7 @@ class ConfigTests(unittest.TestCase):
 
         args = types.SimpleNamespace(host=None, open=True)
 
-        with patch("AgentZon.config.gethostname", return_value="agentzon-host"):
+        with patch("config.gethostname", return_value="agentzon-host"):
             self.assertEqual(resolve_runtime_hostname(args), "agentzon-host")
 
     def test_build_directory_agent_uses_register_endpoint(self):
@@ -29,6 +29,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(directory.name, "DirectoryAgent")
         self.assertEqual(str(directory.uri).split("#")[-1], "Directory")
         self.assertEqual(directory.address, "http://directory.test:9000/Register")
+        self.assertEqual(directory.stop, "http://directory.test:9000/Stop")
 
 
 if __name__ == "__main__":

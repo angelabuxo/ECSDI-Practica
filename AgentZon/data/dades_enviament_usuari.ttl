@@ -1,5 +1,12 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 
+azon:shipping-ORDER-10758FF2 azon:Carrer "Guillem Tell" ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "123" ;
+    azon:MetodePagament "visa" ;
+    azon:Nom "miquel" ;
+    azon:Prioritat "24h" .
+
 azon:shipping-ORDER-4B84234D azon:Carrer "aa" ;
     azon:Ciutat "Barcelona" ;
     azon:IdUsuari "1" ;

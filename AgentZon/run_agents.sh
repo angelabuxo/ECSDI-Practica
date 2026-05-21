@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Obre una finestra de Terminal per cada agent del sistema distribuït.
-# Segueix l'ordre i les comandes de AgentZon/README.md (secció 2).
+# Segueix l'ordre i les comandes de README.md (secció 2) des de l'arrel d'AgentZon/.
 
 set -euo pipefail
 
@@ -8,6 +8,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$ROOT_DIR/.." && pwd)"
 RUN_DIR="$ROOT_DIR/.run"
 HOST="127.0.0.1"
+BROWSER_PATH="${BROWSER_PATH:-/iface}"
 DELAY_SECONDS="${DELAY_SECONDS:-0.6}"
 OPEN_BROWSER="${OPEN_BROWSER:-1}"
 
@@ -18,10 +19,10 @@ elif [[ -x "$REPO_ROOT/.venv/bin/python" ]]; then
 else
   echo "ERROR: No s'ha trobat cap entorn virtual (.venv)."
   echo
-  echo "Crea'l des de l'arrel del repositori:"
-  echo "  cd \"$REPO_ROOT\""
-  echo "  python3 -m venv AgentZon/.venv"
-  echo "  source AgentZon/.venv/bin/activate"
+  echo "Crea'l des de l'arrel d'AgentZon/:"
+  echo "  cd \"$ROOT_DIR\""
+  echo "  python3 -m venv .venv"
+  echo "  source .venv/bin/activate"
   echo "  python -m pip install -r requirements.txt"
   exit 1
 fi
@@ -117,9 +118,9 @@ run_agent agent_cercador "Agent Cercador" \
   --directory-host "$HOST" --directory-port 9000 --data-dir data
 
 echo "Tots els agents s'han llançat en terminals separades."
-echo "Quan estiguin actius, obre: http://${HOST}:9001/"
+echo "Quan estiguin actius, obre: http://${HOST}:9001${BROWSER_PATH}"
 
 if [[ "$(uname -s)" == "Darwin" && "$OPEN_BROWSER" == "1" ]]; then
   sleep 2
-  open "http://${HOST}:9001/" || true
+  open "http://${HOST}:9001${BROWSER_PATH}" || true
 fi

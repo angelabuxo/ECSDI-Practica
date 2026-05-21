@@ -14,3 +14,12 @@ azon:lot-LOT-875819 a azon:Lot ;
         azon:product-P2001,
         azon:product-P3001 .
 
+azon:lot-LOT-AB1312 a azon:Lot ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-05-22" ;
+    azon:IdLot "LOT-AB1312" ;
+    azon:PesTotal 2.6e+00 ;
+    azon:SobreComanda azon:order-ORDER-10758FF2 ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002 .
+

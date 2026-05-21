@@ -26,8 +26,8 @@ def build_productes_localitzats(order, sender=None, receiver=None, msgcnt=0):
 
     for product in order["products"]:
         product_node = AZON[f"product-{product['product_id']}"]
-        graph.add((content, AZON.SobreProducte, product_node))
-        graph.add((order_node, AZON.SobreProducte, product_node))
+        graph.add((content, AZON.TeProducte, product_node))
+        graph.add((order_node, AZON.TeProducte, product_node))
         graph.add((product_node, RDF.type, AZON.Producte))
         graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
         graph.add((product_node, AZON.Nom, Literal(product["name"])))
@@ -47,7 +47,7 @@ def build_productes_localitzats(order, sender=None, receiver=None, msgcnt=0):
 
 def parse_productes_localitzats(graph, content):
     products = []
-    for product_node in graph.objects(content, AZON.SobreProducte):
+    for product_node in graph.objects(content, AZON.TeProducte):
         weight_value = graph.value(product_node, AZON.Pes)
         products.append(
             {

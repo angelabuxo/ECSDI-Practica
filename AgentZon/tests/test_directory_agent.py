@@ -22,19 +22,19 @@ class DirectoryAgentTests(unittest.TestCase):
             "DirectoryAgent",
             agn.Directory,
             "http://directory.test/Register",
-            "http://directory.test/stop",
+            "http://directory.test/Stop",
         )
         compra = Agent(
             "CompraAgent",
             agn.Compra,
             "http://compra.test/comm",
-            "http://compra.test/stop",
+            "http://compra.test/Stop",
         )
         cercador = Agent(
             "CercadorAgent",
             agn.Cercador,
             "http://cercador.test/comm",
-            "http://cercador.test/stop",
+            "http://cercador.test/Stop",
         )
 
         agent_directory.configure_runtime({"agent": directory})

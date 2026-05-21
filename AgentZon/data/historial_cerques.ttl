@@ -29,6 +29,15 @@ azon:search-24 azon:CategoriaConsulta "" ;
     azon:TextConsulta "a" ;
     azon:TotalResultats 4 .
 
+azon:search-32 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P2001,
+        azon:product-P3001 ;
+    azon:TextConsulta "a" ;
+    azon:TotalResultats 4 .
+
 azon:search-4 azon:CategoriaConsulta "" ;
     azon:MarcaConsulta "" ;
     azon:MostraProducte azon:product-P1001,

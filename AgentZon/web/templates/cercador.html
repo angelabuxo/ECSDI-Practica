@@ -6,7 +6,7 @@
 </head>
 <body>
   <h1>AgentZon Search</h1>
-  <form method="post" action="/search">
+  <form method="post" action="{{ search_path or '/iface' }}">
     <label>Text <input type="text" name="text" value="{{ criteria.text if criteria else '' }}"></label>
     <label>Category <input type="text" name="category" value="{{ criteria.category if criteria else '' }}"></label>
     <label>Brand <input type="text" name="brand" value="{{ criteria.brand if criteria else '' }}"></label>
