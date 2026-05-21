@@ -22,6 +22,7 @@ DEFAULT_PORTS = {
     "compra": 9002,
     "centre_logistic": 9003,
     "opinador": 9004,
+    "venedor_extern": 9005,
     "transport_fast": 9010,
     "transport_economy": 9011,
 }

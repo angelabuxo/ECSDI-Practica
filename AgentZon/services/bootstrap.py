@@ -93,6 +93,7 @@ def bootstrap_phase2_data(data_dir):
     files = {
         "productes.ttl": _build_products_graph(),
         "ubicacions_productes.ttl": _build_locations_graph(),
+        "responsable_enviament_productes.ttl": _build_empty_graph(),
         "historial_cerques.ttl": _build_empty_graph(),
         "historial_compres.ttl": _build_empty_graph(),
         "comandes.ttl": _build_empty_graph(),

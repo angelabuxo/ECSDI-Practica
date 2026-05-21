@@ -26,6 +26,8 @@ from config import (
 )
 from protocols.cerca import build_peticio_cerca, build_resultat_cerca, parse_peticio_cerca
 from protocols.directory import build_search_message, parse_directory_response
+from protocols.venedor_extern import build_confirmacio_alta_producte_extern, parse_alta_producte_extern
+from services.external_product_service import save_external_product
 from services.catalog_service import search_products
 from services.history_service import record_search
 
@@ -124,7 +126,22 @@ def comm():
             msgcnt=next_counter(),
         ).serialize(format="xml")
     content = properties["content"]
-    if message_graph.value(content, RDF.type) != AZON.PeticioCerca:
+    action = message_graph.value(content, RDF.type)
+    if action == AZON.AltaProducteExtern:
+        request_data = parse_alta_producte_extern(message_graph, content)
+        logger.info("Rebuda alta de producte extern %s", request_data["product_id"])
+        save_external_product(CATALOG_PATH, request_data)
+        response = build_confirmacio_alta_producte_extern(
+            request_data["product_id"],
+            request_data["seller_id"],
+            sender=AGENT.uri,
+            receiver=properties.get("sender"),
+            request_content=content,
+            msgcnt=next_counter(),
+            data_alta=request_data.get("data_alta"),
+        )
+        return response.serialize(format="xml")
+    if action != AZON.PeticioCerca:
         logger.warning("Rebut accio no suportada a /comm")
         return build_message(
             Graph(),
