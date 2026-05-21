@@ -9,10 +9,10 @@
   <ul>
     {% for product in products %}
     <li>{{ product.name }} - {{ product.price }}</li>
-    <input type="hidden" name="selected_product_ids" value="{{ product.product_id }}">
     {% endfor %}
   </ul>
 
+  {% if products %}
   <form method="post" action="{{ iface_path or '/iface' }}">
     {% for product in products %}
     <input type="hidden" name="selected_product_ids" value="{{ product.product_id }}">
@@ -31,5 +31,6 @@
     <label>Payment method placeholder <input type="text" name="payment_method" required></label>
     <button type="submit">Confirm purchase</button>
   </form>
+  {% endif %}
 </body>
 </html>
