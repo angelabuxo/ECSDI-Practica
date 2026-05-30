@@ -1,1 +1,38 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:lot-LOT-9B578C a azon:Lot ;
+    azon:Ciutat "bcn" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:IdLot "LOT-9B578C" ;
+    azon:PesTotal 5.89e+00 ;
+    azon:SobreComanda azon:order-ORDER-9BC802E7 ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1016,
+        azon:product-P1019 .
+
+azon:lot-LOT-9C3DB8 a azon:Lot ;
+    azon:Ciutat "a" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:IdLot "LOT-9C3DB8" ;
+    azon:PesTotal 7.62e+00 ;
+    azon:SobreComanda azon:order-ORDER-3C6E20F3,
+        azon:order-ORDER-4A6366C3 ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1019 .
+
+azon:lot-LOT-E315FA a azon:Lot ;
+    azon:Ciutat "mm" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:IdLot "LOT-E315FA" ;
+    azon:PesTotal 7.5e+00 ;
+    azon:SobreComanda azon:order-ORDER-56519F0C,
+        azon:order-ORDER-BA01C270 ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1017,
+        azon:product-P1018 .
 

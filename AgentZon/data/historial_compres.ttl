@@ -1,1 +1,42 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+
+azon:purchase-ORDER-3C6E20F3 azon:IdComanda "ORDER-3C6E20F3" ;
+    azon:IdUsuari "a" ;
+    azon:SobreComanda azon:order-ORDER-3C6E20F3 ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1019 .
+
+azon:purchase-ORDER-4A6366C3 azon:IdComanda "ORDER-4A6366C3" ;
+    azon:IdUsuari "a" ;
+    azon:SobreComanda azon:order-ORDER-4A6366C3 ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1019 .
+
+azon:purchase-ORDER-56519F0C azon:IdComanda "ORDER-56519F0C" ;
+    azon:IdUsuari "1234" ;
+    azon:SobreComanda azon:order-ORDER-56519F0C ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1017,
+        azon:product-P1018 .
+
+azon:purchase-ORDER-9BC802E7 azon:IdComanda "ORDER-9BC802E7" ;
+    azon:IdUsuari "111111" ;
+    azon:SobreComanda azon:order-ORDER-9BC802E7 ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1016,
+        azon:product-P1019 .
+
+azon:purchase-ORDER-BA01C270 azon:IdComanda "ORDER-BA01C270" ;
+    azon:IdUsuari "1234" ;
+    azon:SobreComanda azon:order-ORDER-BA01C270 ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1017,
+        azon:product-P1018 .
 

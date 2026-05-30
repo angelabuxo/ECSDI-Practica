@@ -53,6 +53,18 @@ Obre terminals separats i executa cada agent des de l'arrel del projecte. La int
 .venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9011 --transport-id economy --price-per-kg 4.0 --delivery-days 3
 ```
 
+1. Agent Proveïdor de Pagament (banc extern)
+
+```bash
+.venv/bin/python -m agents.agent_proveidor_de_pagament --host 127.0.0.1 --port 9006 --directory-host 127.0.0.1 --directory-port 9000
+```
+
+1. Agent Cobrador
+
+```bash
+.venv/bin/python -m agents.agent_cobrador --host 127.0.0.1 --port 9005 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+```
+
 1. Agent Centre Logístic
 
 ```bash
@@ -78,7 +90,9 @@ Quan tots els agents estiguin en marxa, obre:
 Endpoints principals:
 
 - `DirectoryAgent`: `/Register`, `/Info`, `/Stop`
-- `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `Transportista`: `/comm`, `/iface`, `/Stop`
+- `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `Transportista`, `CobradorAgent`, `ProveidorPagamentAgent`: `/comm`, `/iface`, `/Stop`
+
+L'ordre d'arrencada recomanat és: Directory, Proveïdor de Pagament i Cobrador (gestió del pagament), després Opinador i Transportistes, i finalment Centre Logístic, Compra i Cercador. El Cobrador i el Proveïdor s'han d'aixecar abans del Centre Logístic i la Compra perquè aquests els resolen pel Directory en el moment de cobrar.
 
 ## 3) Regenerar dades aleatòries del catàleg
 
