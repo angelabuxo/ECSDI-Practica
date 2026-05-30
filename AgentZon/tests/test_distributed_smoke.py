@@ -2,6 +2,7 @@
 
 import socket
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -20,7 +21,7 @@ class DistributedSmokeTests(unittest.TestCase):
         from services.bootstrap import bootstrap_phase2_data
         from services.rdf_store import save_graph
 
-        base_cmd = ["./.venv/bin/python", "-m"]
+        base_cmd = [sys.executable, "-m"]
         host = "127.0.0.1"
         ports = {
             "directory": 9200,
@@ -187,10 +188,7 @@ class DistributedSmokeTests(unittest.TestCase):
             try:
                 for command in commands:
                     processes.append(
-                        subprocess.Popen(
-                            command,
-                            cwd="/Users/polmontanera/Desktop/Q6 2526/ECSDI/ECSDI-Practica/AgentZon",
-                        )
+                        subprocess.Popen(command, cwd=Path(__file__).resolve().parents[1])
                     )
                     time.sleep(0.4)
 
