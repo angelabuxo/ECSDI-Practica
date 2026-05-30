@@ -1,45 +1,70 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 
-azon:product-P1001 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1001 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-GI .
 
-azon:product-P1002 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1002 azon:UbicatACentre azon:centre-GI .
 
-azon:product-P1003 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1003 azon:UbicatACentre azon:centre-TGN .
 
-azon:product-P1004 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1004 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-GI .
 
-azon:product-P1005 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1005 azon:UbicatACentre azon:centre-GI .
 
-azon:product-P1006 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1006 azon:UbicatACentre azon:centre-TGN .
 
-azon:product-P1007 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1007 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-GI .
 
-azon:product-P1008 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1008 azon:UbicatACentre azon:centre-GI .
 
-azon:product-P1009 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1009 azon:UbicatACentre azon:centre-TGN .
 
-azon:product-P1010 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1010 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-GI .
 
-azon:product-P1011 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1011 azon:UbicatACentre azon:centre-GI .
 
-azon:product-P1012 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1012 azon:UbicatACentre azon:centre-TGN .
 
-azon:product-P1013 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1013 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-GI .
 
-azon:product-P1014 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1014 azon:UbicatACentre azon:centre-GI .
 
-azon:product-P1015 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1015 azon:UbicatACentre azon:centre-TGN .
 
-azon:product-P1016 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1016 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-GI .
 
-azon:product-P1017 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1017 azon:UbicatACentre azon:centre-GI .
 
-azon:product-P1018 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1018 azon:UbicatACentre azon:centre-TGN .
 
-azon:product-P1019 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1019 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-GI .
 
-azon:product-P1020 azon:UbicatACentre azon:centre-BCN .
+azon:product-P1020 azon:UbicatACentre azon:centre-GI .
+
+azon:product-P1021 azon:UbicatACentre azon:centre-TGN .
+
+azon:product-P1022 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-GI .
+
+azon:product-P1023 azon:UbicatACentre azon:centre-GI .
+
+azon:product-P1024 azon:UbicatACentre azon:centre-TGN .
 
 azon:centre-BCN a azon:CentreLogistic ;
     azon:Ciutat "Barcelona" ;
     azon:IdCentreLogistic "CL-BCN" .
+
+azon:centre-TGN a azon:CentreLogistic ;
+    azon:Ciutat "Tarragona" ;
+    azon:IdCentreLogistic "CL-TGN" .
+
+azon:centre-GI a azon:CentreLogistic ;
+    azon:Ciutat "Girona" ;
+    azon:IdCentreLogistic "CL-GI" .
+

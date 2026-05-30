@@ -1,1 +1,44 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+
+azon:shipping-ORDER-1756FF6A azon:Carrer "Hola" ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "1234" ;
+    azon:MetodePagament "vsa" ;
+    azon:Nom "polmonta" ;
+    azon:Prioritat "24h" .
+
+azon:shipping-ORDER-274C0645 azon:Carrer "Gran Via 100" ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "USER-DEMO" ;
+    azon:MetodePagament "placeholder-visa" ;
+    azon:Nom "Dual Centre Demo" ;
+    azon:Prioritat "48h" .
+
+azon:shipping-ORDER-7AE3408B azon:Carrer "asfasf" ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "1243" ;
+    azon:MetodePagament "VV" ;
+    azon:Nom "afa" ;
+    azon:Prioritat "24h" .
+
+azon:shipping-ORDER-8B687C0C azon:Carrer "dmsgk" ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "124" ;
+    azon:MetodePagament "VISA" ;
+    azon:Nom "polmo" ;
+    azon:Prioritat "24h" .
+
+azon:shipping-ORDER-CD6EDDA6 azon:Carrer "Carrer de Guillem Tell " ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "1234" ;
+    azon:MetodePagament "VISA" ;
+    azon:Nom "Pol Mo" ;
+    azon:Prioritat "24h" .
+
+azon:shipping-ORDER-FD3C35DB azon:Carrer "holajafkaf" ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "123235358" ;
+    azon:MetodePagament "vv" ;
+    azon:Nom "josep" ;
+    azon:Prioritat "24h" .
 

@@ -8,6 +8,30 @@ from rdflib import Namespace
 
 
 class LogisticsFlowTests(unittest.TestCase):
+    def test_centre_runtime_uses_a_centre_specific_lots_file(self):
+        from AgentUtil.Agent import Agent
+        from agents import agent_centre_logistic
+
+        agn = Namespace("http://www.agentes.org#")
+        logistics_agent = Agent(
+            "CentreLogisticAgent-CL-BCN",
+            agn.CentreLogisticCLBCN,
+            "http://centre-bcn.test/comm",
+            "http://centre-bcn.test/Stop",
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            agent_centre_logistic.configure_runtime(
+                {
+                    "agent": logistics_agent,
+                    "data_dir": Path(tmpdir),
+                    "transport_agents": [],
+                    "centre_id": "CL-BCN",
+                    "centre_city": "Barcelona",
+                }
+            )
+            self.assertEqual(agent_centre_logistic.LOTS_PATH.name, "lots-CL-BCN.ttl")
+
     def test_create_lot_merges_products_for_same_city_and_delivery_date(self):
         from AgentUtil.OntoNamespaces import AZON
         from services.logistics_service import create_lot

@@ -92,7 +92,11 @@ PRODUCT_ARCHETYPES = [
     },
 ]
 
-LOGISTIC_CENTRE = {"resource": "centre-BCN", "id": "CL-BCN", "city": "Barcelona"}
+LOGISTIC_CENTRES = [
+    {"resource": "centre-BCN", "id": "CL-BCN", "city": "Barcelona"},
+    {"resource": "centre-GI", "id": "CL-GI", "city": "Girona"},
+    {"resource": "centre-TGN", "id": "CL-TGN", "city": "Tarragona"},
+]
 
 
 def _build_rng(seed):
@@ -147,14 +151,19 @@ def _build_locations_graph(products):
     graph = Graph()
     bind_namespaces(graph)
 
-    centre = AZON[LOGISTIC_CENTRE["resource"]]
-    graph.add((centre, RDF.type, AZON.CentreLogistic))
-    graph.add((centre, AZON.IdCentreLogistic, Literal(LOGISTIC_CENTRE["id"])))
-    graph.add((centre, AZON.Ciutat, Literal(LOGISTIC_CENTRE["city"])))
+    for centre_data in LOGISTIC_CENTRES:
+        centre = AZON[centre_data["resource"]]
+        graph.add((centre, RDF.type, AZON.CentreLogistic))
+        graph.add((centre, AZON.IdCentreLogistic, Literal(centre_data["id"])))
+        graph.add((centre, AZON.Ciutat, Literal(centre_data["city"])))
 
-    for item in products:
+    for index, item in enumerate(products):
         product = AZON[f"product-{item['id']}"]
-        graph.add((product, AZON.UbicatACentre, centre))
+        primary_centre = LOGISTIC_CENTRES[index % len(LOGISTIC_CENTRES)]
+        graph.add((product, AZON.UbicatACentre, AZON[primary_centre["resource"]]))
+        if len(LOGISTIC_CENTRES) > 1 and index % 3 == 0:
+            secondary_centre = LOGISTIC_CENTRES[(index + 1) % len(LOGISTIC_CENTRES)]
+            graph.add((product, AZON.UbicatACentre, AZON[secondary_centre["resource"]]))
     return graph
 
 

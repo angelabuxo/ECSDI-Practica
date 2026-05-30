@@ -13,10 +13,19 @@
     {% endfor %}
   </ul>
   <h2>Shipping</h2>
-  <p>Transport: {{ shipping_details.transport_id }}</p>
-  <p>Transport name: {{ shipping_details.transport_name }}</p>
-  <p>Delivery date: {{ shipping_details.delivery_date }}</p>
-  <p>City: {{ shipping_details.city }}</p>
-  <p>Price: {{ shipping_details.price }}</p>
+  <p>Delivery city: {{ order.shipping_data.city }}</p>
+  <p>Final delivery date: {{ final_delivery_date }}</p>
+  <ul>
+    {% for shipment in shipments %}
+    <li>
+      <strong>{{ shipment.product_name or shipment.product_id }}</strong><br>
+      Logistics centre: {{ shipment.centre_id }}{% if shipment.centre_city %} ({{ shipment.centre_city }}){% endif %}<br>
+      Transport: {{ shipment.transport_id }}<br>
+      Transport name: {{ shipment.transport_name }}<br>
+      Delivery date: {{ shipment.delivery_date }}<br>
+      Price: {{ shipment.price }}
+    </li>
+    {% endfor %}
+  </ul>
 </body>
 </html>

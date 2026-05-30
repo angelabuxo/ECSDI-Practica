@@ -8,10 +8,11 @@ from flask import Flask, request
 from rdflib import Graph
 
 from AgentUtil.ACL import ACL
-from AgentUtil.ACLMessages import build_message, get_message_properties, register_agent, send_message
+from AgentUtil.ACLMessages import build_message, get_message_properties, send_message
 from AgentUtil.DSO import DSO
 from AgentUtil.FlaskServer import shutdown_server
 from AgentUtil.Logging import config_logger
+from AgentUtil.OntoNamespaces import AZON
 from config import (
     DEFAULT_PORTS,
     add_data_dir_argument,
@@ -41,16 +42,21 @@ AGENT = None
 MESSAGE_SENDER = send_message
 TRANSPORT_AGENTS = []
 LOTS_PATH = None
+CENTRE_ID = None
+CENTRE_CITY = None
 COUNTER = 0
 
 
 # Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
-    global AGENT, MESSAGE_SENDER, TRANSPORT_AGENTS, LOTS_PATH, COUNTER
+    global AGENT, MESSAGE_SENDER, TRANSPORT_AGENTS, LOTS_PATH, CENTRE_ID, CENTRE_CITY, COUNTER
     AGENT = settings["agent"]
     MESSAGE_SENDER = message_sender
     TRANSPORT_AGENTS = settings["transport_agents"]
-    LOTS_PATH = Path(settings["data_dir"]) / "lots.ttl"
+    CENTRE_ID = settings.get("centre_id")
+    CENTRE_CITY = settings.get("centre_city")
+    lots_filename = f"lots-{CENTRE_ID}.ttl" if CENTRE_ID else "lots.ttl"
+    LOTS_PATH = Path(settings["data_dir"]) / lots_filename
     COUNTER = 0
 
 
@@ -62,10 +68,15 @@ def next_counter():
 
 
 # Agent logic ----------------------------------------------------------------------
+def build_centre_uri_name(centre_id):
+    return f"CentreLogistic{''.join(ch for ch in centre_id if ch.isalnum())}"
+
+
 def pla_assignar_producte_a_lot(request_data):
     logger.info(
-        "Assignant comanda %s a lot (ciutat=%s, data_entrega=%s, productes=%d)",
+        "Assignant comanda %s a lot al centre %s (desti=%s, data_entrega=%s, productes=%d)",
         request_data["order_id"],
+        request_data.get("centre_id") or CENTRE_ID,
         request_data["city"],
         request_data["delivery_date"],
         len(request_data["products"]),
@@ -76,21 +87,25 @@ def pla_assignar_producte_a_lot(request_data):
         request_data["city"],
         request_data["delivery_date"],
         request_data["products"],
+        centre_id=request_data.get("centre_id") or CENTRE_ID,
+        centre_city=request_data.get("centre_city") or CENTRE_CITY,
     )
     if lot["created_new_lot"]:
         logger.info(
-            "Creat lot nou %s per a la comanda %s (ciutat=%s, data_entrega=%s, pes_total=%.2f)",
+            "Creat lot nou %s per a la comanda %s al centre %s (desti=%s, data_entrega=%s, pes_total=%.2f)",
             lot["lot_id"],
             request_data["order_id"],
+            lot.get("centre_id") or CENTRE_ID,
             request_data["city"],
             request_data["delivery_date"],
             lot["total_weight"],
         )
     else:
         logger.info(
-            "Reutilitzat lot existent %s per a la comanda %s (coincideix ciutat=%s, data_entrega=%s, pes_total=%.2f)",
+            "Reutilitzat lot existent %s per a la comanda %s al centre %s (coincideix desti=%s, data_entrega=%s, pes_total=%.2f)",
             lot["lot_id"],
             request_data["order_id"],
+            lot.get("centre_id") or CENTRE_ID,
             request_data["city"],
             request_data["delivery_date"],
             lot["total_weight"],
@@ -132,8 +147,7 @@ def pla_de_transportista_escollit(lot, offers, receiver, request_content=None):
     )
     MESSAGE_SENDER(selection_message, selected_transport.address)
     return build_shipping_details_response(
-        lot["order_id"],
-        lot["city"],
+        lot,
         selected,
         sender=AGENT.uri,
         receiver=receiver,
@@ -184,6 +198,8 @@ def main():
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["centre_logistic"])
     add_directory_arguments(parser)
+    parser.add_argument("--centre-id", default="CL-BCN")
+    parser.add_argument("--centre-city", default="Barcelona")
     parser.add_argument("--transport-fast-host", default="127.0.0.1")
     parser.add_argument("--transport-fast-port", type=int, default=DEFAULT_PORTS["transport_fast"])
     parser.add_argument("--transport-economy-host", default="127.0.0.1")
@@ -194,8 +210,15 @@ def main():
 
     configure_runtime(
         {
-            "agent": build_agent("CentreLogisticAgent", "CentreLogistic", args.port, host=hostname),
+            "agent": build_agent(
+                f"CentreLogisticAgent-{args.centre_id}",
+                build_centre_uri_name(args.centre_id),
+                args.port,
+                host=hostname,
+            ),
             "data_dir": Path(args.data_dir),
+            "centre_id": args.centre_id,
+            "centre_city": args.centre_city,
             "transport_agents": [
                 build_agent(
                     "Transportista-fast",
@@ -214,7 +237,16 @@ def main():
     )
     directory = build_directory_agent(args.directory_host, args.directory_port)
     logger.info("Registrant %s al directori %s", AGENT.name, directory.address)
-    register_with_directory(AGENT, directory, DSO.CentreLogisticAgent, 0)
+    register_with_directory(
+        AGENT,
+        directory,
+        DSO.CentreLogisticAgent,
+        0,
+        metadata={
+            AZON.IdCentreLogistic: args.centre_id,
+            AZON.Ciutat: args.centre_city,
+        },
+    )
     logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
     app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
 

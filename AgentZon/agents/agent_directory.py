@@ -66,6 +66,9 @@ def process_register(message_graph, content):
     DIRECTORY_GRAPH.add((uri, FOAF.name, name))
     DIRECTORY_GRAPH.add((uri, DSO.Address, address))
     DIRECTORY_GRAPH.add((uri, DSO.AgentType, agent_type))
+    DIRECTORY_GRAPH.add((uri, DSO.Uri, uri))
+    for predicate, obj in message_graph.predicate_objects(uri):
+        DIRECTORY_GRAPH.add((uri, predicate, obj))
     logger.info("Registrat agent %s (%s) a %s", name, agent_type, address)
 
     return build_message(
@@ -80,31 +83,20 @@ def process_register(message_graph, content):
 def process_search(message_graph, content, requester):
     agent_type = message_graph.value(content, DSO.AgentType)
     logger.info("Cerca al directori sol.licitada per al tipus d'agent %s", agent_type)
+    reply = Graph()
+    bind_namespaces(reply)
+    reply.bind("foaf", FOAF)
+    reply.bind("dso", DSO)
+    payload = AGENT.uri + "#directory-response"
     for uri, _, _ in DIRECTORY_GRAPH.triples((None, DSO.AgentType, agent_type)):
-        address = DIRECTORY_GRAPH.value(uri, DSO.Address)
-        name = DIRECTORY_GRAPH.value(uri, FOAF.name)
-        reply = Graph()
-        bind_namespaces(reply)
-        reply.bind("foaf", FOAF)
-        reply.bind("dso", DSO)
-        payload = AGENT.uri + "#directory-response"
-        reply.add((payload, DSO.Address, address))
-        reply.add((payload, DSO.Uri, uri))
-        reply.add((payload, FOAF.name, name))
-        return build_message(
-            reply,
-            ACL.inform,
-            sender=AGENT.uri,
-            receiver=requester,
-            content=payload,
-            msgcnt=next_counter(),
-        )
-
+        for predicate, obj in DIRECTORY_GRAPH.predicate_objects(uri):
+            reply.add((uri, predicate, obj))
     return build_message(
-        Graph(),
+        reply,
         ACL.inform,
         sender=AGENT.uri,
         receiver=requester,
+        content=payload,
         msgcnt=next_counter(),
     )
 

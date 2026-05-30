@@ -13,7 +13,7 @@ LOT_LOCK = Lock()
 
 
 # Lot persistence ------------------------------------------------------------------
-def create_lot(lots_path, order_id, city, delivery_date, products):
+def create_lot(lots_path, order_id, city, delivery_date, products, centre_id=None, centre_city=None):
     with LOT_LOCK:
         graph = load_graph(lots_path)
         bind_namespaces(graph)
@@ -53,6 +53,9 @@ def create_lot(lots_path, order_id, city, delivery_date, products):
             "delivery_date": delivery_date,
             "total_weight": total_weight,
             "created_new_lot": created_new_lot,
+            "products": [dict(product) for product in products],
+            "centre_id": centre_id,
+            "centre_city": centre_city,
         }
 
 

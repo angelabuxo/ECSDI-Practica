@@ -2,182 +2,218 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 azon:product-P1001 a azon:Producte ;
-    azon:Categoria "audio" ;
-    azon:Descripcio "Party Speaker with punchy bass response" ;
+    azon:Categoria "home" ;
+    azon:Descripcio "Slim Desk Lamp that blends into modern study spaces" ;
     azon:IdProducte "P1001" ;
-    azon:Marca "WaveCraft" ;
-    azon:Nom "Party Speaker" ;
-    azon:Pes "1.41"^^xsd:float ;
-    azon:Preu "139.14"^^xsd:float .
+    azon:Marca "CasaNova" ;
+    azon:Nom "Slim Desk Lamp" ;
+    azon:Pes "1.47"^^xsd:float ;
+    azon:Preu "68.49"^^xsd:float .
 
 azon:product-P1002 a azon:Producte ;
     azon:Categoria "audio" ;
-    azon:Descripcio "Party Speaker built for indoor and outdoor playback" ;
+    azon:Descripcio "Travel Headphones with low-latency bluetooth connectivity" ;
     azon:IdProducte "P1002" ;
-    azon:Marca "WaveCraft" ;
-    azon:Nom "Party Speaker" ;
-    azon:Pes "0.9"^^xsd:float ;
-    azon:Preu "117.83"^^xsd:float .
+    azon:Marca "SonicNest" ;
+    azon:Nom "Travel Headphones" ;
+    azon:Pes "1.05"^^xsd:float ;
+    azon:Preu "234.65"^^xsd:float .
 
 azon:product-P1003 a azon:Producte ;
     azon:Categoria "audio" ;
-    azon:Descripcio "Wireless Headphones with low-latency bluetooth connectivity" ;
+    azon:Descripcio "Smart Speaker for easy travel and quick pairing" ;
     azon:IdProducte "P1003" ;
-    azon:Marca "SonicNest" ;
-    azon:Nom "Wireless Headphones" ;
-    azon:Pes "0.37"^^xsd:float ;
-    azon:Preu "134.64"^^xsd:float .
+    azon:Marca "WaveCraft" ;
+    azon:Nom "Smart Speaker" ;
+    azon:Pes "0.57"^^xsd:float ;
+    azon:Preu "62.28"^^xsd:float .
 
 azon:product-P1004 a azon:Producte ;
-    azon:Categoria "audio" ;
-    azon:Descripcio "Smart Speaker built for indoor and outdoor playback" ;
+    azon:Categoria "home" ;
+    azon:Descripcio "Minimalist Coffee Mug with a comfortable easy-grip handle" ;
     azon:IdProducte "P1004" ;
-    azon:Marca "WaveCraft" ;
-    azon:Nom "Smart Speaker" ;
-    azon:Pes "2.49"^^xsd:float ;
-    azon:Preu "106.64"^^xsd:float .
+    azon:Marca "CasaNova" ;
+    azon:Nom "Minimalist Coffee Mug" ;
+    azon:Pes "0.3"^^xsd:float ;
+    azon:Preu "11.25"^^xsd:float .
 
 azon:product-P1005 a azon:Producte ;
-    azon:Categoria "peripherals" ;
-    azon:Descripcio "Ultra-Light Mouse with programmable buttons and fast tracking" ;
+    azon:Categoria "audio" ;
+    azon:Descripcio "Party Speaker for easy travel and quick pairing" ;
     azon:IdProducte "P1005" ;
-    azon:Marca "KeyForge" ;
-    azon:Nom "Ultra-Light Mouse" ;
-    azon:Pes "0.37"^^xsd:float ;
-    azon:Preu "91.52"^^xsd:float .
+    azon:Marca "AuralMax" ;
+    azon:Nom "Party Speaker" ;
+    azon:Pes "0.69"^^xsd:float ;
+    azon:Preu "149.26"^^xsd:float .
 
 azon:product-P1006 a azon:Producte ;
-    azon:Categoria "home" ;
-    azon:Descripcio "Slim Desk Lamp for focused lighting on work surfaces" ;
-    azon:IdProducte "P1006" ;
-    azon:Marca "CasaNova" ;
-    azon:Nom "Slim Desk Lamp" ;
-    azon:Pes "0.65"^^xsd:float ;
-    azon:Preu "70.61"^^xsd:float .
-
-azon:product-P1007 a azon:Producte ;
-    azon:Categoria "audio" ;
-    azon:Descripcio "Travel Headphones with low-latency bluetooth connectivity" ;
-    azon:IdProducte "P1007" ;
-    azon:Marca "AuralMax" ;
-    azon:Nom "Travel Headphones" ;
-    azon:Pes "0.68"^^xsd:float ;
-    azon:Preu "194.69"^^xsd:float .
-
-azon:product-P1008 a azon:Producte ;
     azon:Categoria "audio" ;
     azon:Descripcio "Smart Speaker built for indoor and outdoor playback" ;
-    azon:IdProducte "P1008" ;
-    azon:Marca "WaveCraft" ;
+    azon:IdProducte "P1006" ;
+    azon:Marca "EchoBeat" ;
     azon:Nom "Smart Speaker" ;
-    azon:Pes "2.12"^^xsd:float ;
-    azon:Preu "112.07"^^xsd:float .
+    azon:Pes "1.05"^^xsd:float ;
+    azon:Preu "145.56"^^xsd:float .
+
+azon:product-P1007 a azon:Producte ;
+    azon:Categoria "peripherals" ;
+    azon:Descripcio "Precision Mouse for precise cursor control" ;
+    azon:IdProducte "P1007" ;
+    azon:Marca "InputWorks" ;
+    azon:Nom "Precision Mouse" ;
+    azon:Pes "0.25"^^xsd:float ;
+    azon:Preu "106.27"^^xsd:float .
+
+azon:product-P1008 a azon:Producte ;
+    azon:Categoria "peripherals" ;
+    azon:Descripcio "Ergonomic Keyboard for productivity and gaming" ;
+    azon:IdProducte "P1008" ;
+    azon:Marca "InputWorks" ;
+    azon:Nom "Ergonomic Keyboard" ;
+    azon:Pes "1.74"^^xsd:float ;
+    azon:Preu "77.54"^^xsd:float .
 
 azon:product-P1009 a azon:Producte ;
-    azon:Categoria "audio" ;
-    azon:Descripcio "Studio Headphones with low-latency bluetooth connectivity" ;
+    azon:Categoria "home" ;
+    azon:Descripcio "Adjustable Desk Lamp with soft warm illumination" ;
     azon:IdProducte "P1009" ;
-    azon:Marca "AuralMax" ;
-    azon:Nom "Studio Headphones" ;
-    azon:Pes "1.27"^^xsd:float ;
-    azon:Preu "242.75"^^xsd:float .
+    azon:Marca "BrightNest" ;
+    azon:Nom "Adjustable Desk Lamp" ;
+    azon:Pes "1.85"^^xsd:float ;
+    azon:Preu "25.54"^^xsd:float .
 
 azon:product-P1010 a azon:Producte ;
     azon:Categoria "home" ;
-    azon:Descripcio "Ceramic Coffee Mug that fits naturally into any kitchen" ;
+    azon:Descripcio "Slim Desk Lamp for focused lighting on work surfaces" ;
     azon:IdProducte "P1010" ;
-    azon:Marca "CasaNova" ;
-    azon:Nom "Ceramic Coffee Mug" ;
-    azon:Pes "0.78"^^xsd:float ;
-    azon:Preu "20.86"^^xsd:float .
-
-azon:product-P1011 a azon:Producte ;
-    azon:Categoria "audio" ;
-    azon:Descripcio "Compact Speaker for easy travel and quick pairing" ;
-    azon:IdProducte "P1011" ;
-    azon:Marca "AuralMax" ;
-    azon:Nom "Compact Speaker" ;
-    azon:Pes "1.17"^^xsd:float ;
-    azon:Preu "102.17"^^xsd:float .
-
-azon:product-P1012 a azon:Producte ;
-    azon:Categoria "peripherals" ;
-    azon:Descripcio "Ultra-Light Mouse with programmable buttons and fast tracking" ;
-    azon:IdProducte "P1012" ;
-    azon:Marca "PointerPro" ;
-    azon:Nom "Ultra-Light Mouse" ;
-    azon:Pes "0.09"^^xsd:float ;
-    azon:Preu "72.32"^^xsd:float .
-
-azon:product-P1013 a azon:Producte ;
-    azon:Categoria "audio" ;
-    azon:Descripcio "Studio Headphones with low-latency bluetooth connectivity" ;
-    azon:IdProducte "P1013" ;
-    azon:Marca "WaveCraft" ;
-    azon:Nom "Studio Headphones" ;
-    azon:Pes "0.8"^^xsd:float ;
-    azon:Preu "247.56"^^xsd:float .
-
-azon:product-P1014 a azon:Producte ;
-    azon:Categoria "peripherals" ;
-    azon:Descripcio "Wireless Mouse designed for all-day comfort" ;
-    azon:IdProducte "P1014" ;
-    azon:Marca "InputWorks" ;
-    azon:Nom "Wireless Mouse" ;
-    azon:Pes "0.17"^^xsd:float ;
-    azon:Preu "117.52"^^xsd:float .
-
-azon:product-P1015 a azon:Producte ;
-    azon:Categoria "home" ;
-    azon:Descripcio "Minimalist Coffee Mug that fits naturally into any kitchen" ;
-    azon:IdProducte "P1015" ;
-    azon:Marca "NordClay" ;
-    azon:Nom "Minimalist Coffee Mug" ;
-    azon:Pes "0.67"^^xsd:float ;
-    azon:Preu "11.04"^^xsd:float .
-
-azon:product-P1016 a azon:Producte ;
-    azon:Categoria "home" ;
-    azon:Descripcio "Slim Desk Lamp with soft warm illumination" ;
-    azon:IdProducte "P1016" ;
     azon:Marca "LumaHome" ;
     azon:Nom "Slim Desk Lamp" ;
-    azon:Pes "2.08"^^xsd:float ;
-    azon:Preu "72.09"^^xsd:float .
+    azon:Pes "1.93"^^xsd:float ;
+    azon:Preu "72.97"^^xsd:float .
+
+azon:product-P1011 a azon:Producte ;
+    azon:Categoria "home" ;
+    azon:Descripcio "Slim Desk Lamp for focused lighting on work surfaces" ;
+    azon:IdProducte "P1011" ;
+    azon:Marca "BrightNest" ;
+    azon:Nom "Slim Desk Lamp" ;
+    azon:Pes "1.78"^^xsd:float ;
+    azon:Preu "42.48"^^xsd:float .
+
+azon:product-P1012 a azon:Producte ;
+    azon:Categoria "home" ;
+    azon:Descripcio "Insulated Coffee Mug with a comfortable easy-grip handle" ;
+    azon:IdProducte "P1012" ;
+    azon:Marca "NordClay" ;
+    azon:Nom "Insulated Coffee Mug" ;
+    azon:Pes "0.44"^^xsd:float ;
+    azon:Preu "29.85"^^xsd:float .
+
+azon:product-P1013 a azon:Producte ;
+    azon:Categoria "peripherals" ;
+    azon:Descripcio "Ultra-Light Mouse designed for all-day comfort" ;
+    azon:IdProducte "P1013" ;
+    azon:Marca "KeyForge" ;
+    azon:Nom "Ultra-Light Mouse" ;
+    azon:Pes "0.44"^^xsd:float ;
+    azon:Preu "113.38"^^xsd:float .
+
+azon:product-P1014 a azon:Producte ;
+    azon:Categoria "audio" ;
+    azon:Descripcio "Wireless Headphones with immersive stereo sound" ;
+    azon:IdProducte "P1014" ;
+    azon:Marca "AuralMax" ;
+    azon:Nom "Wireless Headphones" ;
+    azon:Pes "0.55"^^xsd:float ;
+    azon:Preu "242.88"^^xsd:float .
+
+azon:product-P1015 a azon:Producte ;
+    azon:Categoria "peripherals" ;
+    azon:Descripcio "Ultra-Light Mouse for precise cursor control" ;
+    azon:IdProducte "P1015" ;
+    azon:Marca "KeyForge" ;
+    azon:Nom "Ultra-Light Mouse" ;
+    azon:Pes "0.31"^^xsd:float ;
+    azon:Preu "107.93"^^xsd:float .
+
+azon:product-P1016 a azon:Producte ;
+    azon:Categoria "peripherals" ;
+    azon:Descripcio "Compact Keyboard with responsive tactile switches" ;
+    azon:IdProducte "P1016" ;
+    azon:Marca "TypeLab" ;
+    azon:Nom "Compact Keyboard" ;
+    azon:Pes "0.66"^^xsd:float ;
+    azon:Preu "179.94"^^xsd:float .
 
 azon:product-P1017 a azon:Producte ;
-    azon:Categoria "audio" ;
-    azon:Descripcio "Portable Speaker built for indoor and outdoor playback" ;
+    azon:Categoria "home" ;
+    azon:Descripcio "Adjustable Desk Lamp with soft warm illumination" ;
     azon:IdProducte "P1017" ;
-    azon:Marca "AuralMax" ;
-    azon:Nom "Portable Speaker" ;
-    azon:Pes "0.77"^^xsd:float ;
-    azon:Preu "186.39"^^xsd:float .
+    azon:Marca "BrightNest" ;
+    azon:Nom "Adjustable Desk Lamp" ;
+    azon:Pes "1.53"^^xsd:float ;
+    azon:Preu "48.17"^^xsd:float .
 
 azon:product-P1018 a azon:Producte ;
-    azon:Categoria "peripherals" ;
-    azon:Descripcio "Ergonomic Mouse designed for all-day comfort" ;
+    azon:Categoria "home" ;
+    azon:Descripcio "Ambient Desk Lamp for focused lighting on work surfaces" ;
     azon:IdProducte "P1018" ;
-    azon:Marca "KeyForge" ;
-    azon:Nom "Ergonomic Mouse" ;
-    azon:Pes "0.3"^^xsd:float ;
-    azon:Preu "28.59"^^xsd:float .
+    azon:Marca "LumaHome" ;
+    azon:Nom "Ambient Desk Lamp" ;
+    azon:Pes "1.47"^^xsd:float ;
+    azon:Preu "72.64"^^xsd:float .
 
 azon:product-P1019 a azon:Producte ;
-    azon:Categoria "home" ;
-    azon:Descripcio "Adjustable Desk Lamp for focused lighting on work surfaces" ;
+    azon:Categoria "audio" ;
+    azon:Descripcio "Studio Headphones with low-latency bluetooth connectivity" ;
     azon:IdProducte "P1019" ;
-    azon:Marca "LumaHome" ;
-    azon:Nom "Adjustable Desk Lamp" ;
-    azon:Pes "1.5"^^xsd:float ;
-    azon:Preu "86.26"^^xsd:float .
+    azon:Marca "WaveCraft" ;
+    azon:Nom "Studio Headphones" ;
+    azon:Pes "0.33"^^xsd:float ;
+    azon:Preu "64.03"^^xsd:float .
 
 azon:product-P1020 a azon:Producte ;
     azon:Categoria "peripherals" ;
-    azon:Descripcio "RGB Keyboard for productivity and gaming" ;
+    azon:Descripcio "Ultra-Light Mouse designed for all-day comfort" ;
     azon:IdProducte "P1020" ;
-    azon:Marca "InputWorks" ;
-    azon:Nom "RGB Keyboard" ;
-    azon:Pes "1.91"^^xsd:float ;
-    azon:Preu "172.38"^^xsd:float .
+    azon:Marca "KeyForge" ;
+    azon:Nom "Ultra-Light Mouse" ;
+    azon:Pes "0.37"^^xsd:float ;
+    azon:Preu "31.09"^^xsd:float .
+
+azon:product-P1021 a azon:Producte ;
+    azon:Categoria "home" ;
+    azon:Descripcio "Ceramic Coffee Mug for hot drinks throughout the day" ;
+    azon:IdProducte "P1021" ;
+    azon:Marca "Homely" ;
+    azon:Nom "Ceramic Coffee Mug" ;
+    azon:Pes "0.68"^^xsd:float ;
+    azon:Preu "8.23"^^xsd:float .
+
+azon:product-P1022 a azon:Producte ;
+    azon:Categoria "peripherals" ;
+    azon:Descripcio "Compact Keyboard for productivity and gaming" ;
+    azon:IdProducte "P1022" ;
+    azon:Marca "TypeLab" ;
+    azon:Nom "Compact Keyboard" ;
+    azon:Pes "1.7"^^xsd:float ;
+    azon:Preu "96.18"^^xsd:float .
+
+azon:product-P1023 a azon:Producte ;
+    azon:Categoria "audio" ;
+    azon:Descripcio "Portable Speaker with punchy bass response" ;
+    azon:IdProducte "P1023" ;
+    azon:Marca "AuralMax" ;
+    azon:Nom "Portable Speaker" ;
+    azon:Pes "1.01"^^xsd:float ;
+    azon:Preu "135.44"^^xsd:float .
+
+azon:product-P1024 a azon:Producte ;
+    azon:Categoria "audio" ;
+    azon:Descripcio "Compact Speaker for easy travel and quick pairing" ;
+    azon:IdProducte "P1024" ;
+    azon:Marca "WaveCraft" ;
+    azon:Nom "Compact Speaker" ;
+    azon:Pes "1.71"^^xsd:float ;
+    azon:Preu "145.85"^^xsd:float .
 

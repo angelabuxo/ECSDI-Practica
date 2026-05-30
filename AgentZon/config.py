@@ -2,10 +2,11 @@
 
 from pathlib import Path
 
-from AgentUtil.ACLMessages import register_agent
+from AgentUtil.ACLMessages import send_message
 from AgentUtil.Agent import Agent
 from AgentUtil.Util import gethostname
 from AgentUtil.OntoNamespaces import AGN
+from protocols.directory import build_register_message
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -69,9 +70,16 @@ def add_data_dir_argument(parser):
     parser.add_argument("--data-dir", default=str(DATA_DIR))
 
 
-def register_with_directory(agent, directory_agent, agent_type, msgcnt=0):
+def register_with_directory(agent, directory_agent, agent_type, msgcnt=0, metadata=None):
     try:
-        register_agent(agent, directory_agent, agent_type, msgcnt)
+        message = build_register_message(
+            agent,
+            agent_type,
+            directory_agent,
+            msgcnt=msgcnt,
+            metadata=metadata,
+        )
+        send_message(message, directory_agent.address)
     except Exception:
         return False
     return True

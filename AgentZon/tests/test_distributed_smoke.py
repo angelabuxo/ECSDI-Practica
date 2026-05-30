@@ -14,7 +14,11 @@ from tests.support import load_catalog_products
 
 class DistributedSmokeTests(unittest.TestCase):
     def test_agents_run_as_separate_processes_and_complete_one_order(self):
+        from rdflib import Graph, Literal, RDF
+
+        from AgentUtil.OntoNamespaces import AZON, bind_namespaces
         from services.bootstrap import bootstrap_phase2_data
+        from services.rdf_store import save_graph
 
         base_cmd = ["./.venv/bin/python", "-m"]
         host = "127.0.0.1"
@@ -22,7 +26,8 @@ class DistributedSmokeTests(unittest.TestCase):
             "directory": 9200,
             "cercador": 9201,
             "compra": 9202,
-            "centre": 9203,
+            "centre_bcn": 9203,
+            "centre_gi": 9205,
             "opinador": 9204,
             "fast": 9210,
             "economy": 9211,
@@ -32,8 +37,26 @@ class DistributedSmokeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             data_dir = Path(tmpdir)
             bootstrap_phase2_data(data_dir, product_count=10, seed=21)
-            sample_product = load_catalog_products(data_dir / "productes.ttl")[0]
+            products = load_catalog_products(data_dir / "productes.ttl")[:2]
+            sample_product = products[0]
+            second_product = products[1]
             search_token = sample_product["name"].split()[0]
+
+            locations = Graph()
+            bind_namespaces(locations)
+            centre_nodes = {
+                "CL-BCN": AZON["centre-BCN"],
+                "CL-GI": AZON["centre-GI"],
+            }
+            for centre_id, city in [("CL-BCN", "Barcelona"), ("CL-GI", "Girona")]:
+                centre_node = centre_nodes[centre_id]
+                locations.add((centre_node, RDF.type, AZON.CentreLogistic))
+                locations.add((centre_node, AZON.IdCentreLogistic, Literal(centre_id)))
+                locations.add((centre_node, AZON.Ciutat, Literal(city)))
+            locations.add((AZON[f"product-{sample_product['product_id']}"], AZON.UbicatACentre, centre_nodes["CL-BCN"]))
+            locations.add((AZON[f"product-{sample_product['product_id']}"], AZON.UbicatACentre, centre_nodes["CL-GI"]))
+            locations.add((AZON[f"product-{second_product['product_id']}"], AZON.UbicatACentre, centre_nodes["CL-GI"]))
+            save_graph(data_dir / "ubicacions_productes.ttl", locations)
 
             commands = [
                 base_cmd + ["agents.agent_directory", "--host", host, "--port", str(ports["directory"])],
@@ -85,11 +108,41 @@ class DistributedSmokeTests(unittest.TestCase):
                     "--host",
                     host,
                     "--port",
-                    str(ports["centre"]),
+                    str(ports["centre_bcn"]),
                     "--directory-host",
                     host,
                     "--directory-port",
                     str(ports["directory"]),
+                    "--centre-id",
+                    "CL-BCN",
+                    "--centre-city",
+                    "Barcelona",
+                    "--transport-fast-host",
+                    host,
+                    "--transport-fast-port",
+                    str(ports["fast"]),
+                    "--transport-economy-host",
+                    host,
+                    "--transport-economy-port",
+                    str(ports["economy"]),
+                    "--data-dir",
+                    str(data_dir),
+                ],
+                base_cmd
+                + [
+                    "agents.agent_centre_logistic",
+                    "--host",
+                    host,
+                    "--port",
+                    str(ports["centre_gi"]),
+                    "--directory-host",
+                    host,
+                    "--directory-port",
+                    str(ports["directory"]),
+                    "--centre-id",
+                    "CL-GI",
+                    "--centre-city",
+                    "Girona",
                     "--transport-fast-host",
                     host,
                     "--transport-fast-port",
@@ -159,7 +212,7 @@ class DistributedSmokeTests(unittest.TestCase):
 
                 purchase_page = requests.post(
                     f"http://{host}:{ports['compra']}/iface",
-                    data={"selected_product_ids": [sample_product["product_id"]]},
+                    data={"selected_product_ids": [sample_product["product_id"], second_product["product_id"]]},
                     timeout=10,
                 )
                 self.assertIn("Confirm purchase", purchase_page.text)
@@ -167,7 +220,7 @@ class DistributedSmokeTests(unittest.TestCase):
                 confirmation = requests.post(
                     f"http://{host}:{ports['compra']}/iface",
                     data={
-                        "selected_product_ids": [sample_product["product_id"]],
+                        "selected_product_ids": [sample_product["product_id"], second_product["product_id"]],
                         "user_id": "USER-DIST",
                         "user_name": "Distributed Demo",
                         "street_address": "Gran Via 100",
@@ -179,11 +232,14 @@ class DistributedSmokeTests(unittest.TestCase):
                 )
                 self.assertIn("economy", confirmation.text)
                 self.assertIn("ORDER-", confirmation.text)
+                self.assertIn("CL-BCN", confirmation.text)
+                self.assertIn("CL-GI", confirmation.text)
             finally:
                 for name, port in [
                     ("cercador", ports["cercador"]),
                     ("compra", ports["compra"]),
-                    ("centre", ports["centre"]),
+                    ("centre_bcn", ports["centre_bcn"]),
+                    ("centre_gi", ports["centre_gi"]),
                     ("opinador", ports["opinador"]),
                     ("fast", ports["fast"]),
                     ("economy", ports["economy"]),

@@ -1,1 +1,86 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+
+azon:order-ORDER-1756FF6A a azon:Comanda ;
+    azon:Carrer "Hola" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:DataEntregaDefinitiva "2026-06-02" ;
+    azon:IdComanda "ORDER-1756FF6A" ;
+    azon:IdUsuari "1234" ;
+    azon:MetodePagament "vsa" ;
+    azon:Nom "polmonta" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1012,
+        azon:product-P1017,
+        azon:product-P1023 .
+
+azon:order-ORDER-274C0645 a azon:Comanda ;
+    azon:Carrer "Gran Via 100" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-01" ;
+    azon:DataEntregaDefinitiva "2026-06-02" ;
+    azon:IdComanda "ORDER-274C0645" ;
+    azon:IdUsuari "USER-DEMO" ;
+    azon:MetodePagament "placeholder-visa" ;
+    azon:Nom "Dual Centre Demo" ;
+    azon:Prioritat "48h" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1004 .
+
+azon:order-ORDER-7AE3408B a azon:Comanda ;
+    azon:Carrer "asfasf" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:DataEntregaDefinitiva "2026-06-02" ;
+    azon:IdComanda "ORDER-7AE3408B" ;
+    azon:IdUsuari "1243" ;
+    azon:MetodePagament "VV" ;
+    azon:Nom "afa" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1016 .
+
+azon:order-ORDER-8B687C0C a azon:Comanda ;
+    azon:Carrer "dmsgk" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:DataEntregaDefinitiva "2026-06-02" ;
+    azon:IdComanda "ORDER-8B687C0C" ;
+    azon:IdUsuari "124" ;
+    azon:MetodePagament "VISA" ;
+    azon:Nom "polmo" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1021,
+        azon:product-P1022 .
+
+azon:order-ORDER-CD6EDDA6 a azon:Comanda ;
+    azon:Carrer "Carrer de Guillem Tell " ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:DataEntregaDefinitiva "2026-06-02" ;
+    azon:IdComanda "ORDER-CD6EDDA6" ;
+    azon:IdUsuari "1234" ;
+    azon:MetodePagament "VISA" ;
+    azon:Nom "Pol Mo" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004 .
+
+azon:order-ORDER-FD3C35DB a azon:Comanda ;
+    azon:Carrer "holajafkaf" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:DataEntregaDefinitiva "2026-06-02" ;
+    azon:IdComanda "ORDER-FD3C35DB" ;
+    azon:IdUsuari "123235358" ;
+    azon:MetodePagament "vv" ;
+    azon:Nom "josep" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1015,
+        azon:product-P1016 .
 

@@ -23,7 +23,7 @@ class SeedGraphTests(unittest.TestCase):
             product_nodes = sorted(products.subjects(RDF.type, AZON.Producte))
             self.assertEqual(len(product_nodes), 12)
             centres = sorted(locations.subjects(RDF.type, AZON.CentreLogistic))
-            self.assertEqual(centres, [AZON["centre-BCN"]])
+            self.assertGreaterEqual(len(centres), 2)
 
             for product_node in product_nodes:
                 self.assertIsNotNone(products.value(product_node, AZON.IdProducte))
@@ -33,7 +33,7 @@ class SeedGraphTests(unittest.TestCase):
                 self.assertIsNotNone(products.value(product_node, AZON.Marca))
                 self.assertGreater(float(products.value(product_node, AZON.Preu)), 0.0)
                 self.assertGreater(float(products.value(product_node, AZON.Pes)), 0.0)
-                self.assertEqual(list(locations.objects(product_node, AZON.UbicatACentre)), [AZON["centre-BCN"]])
+                self.assertGreaterEqual(len(list(locations.objects(product_node, AZON.UbicatACentre))), 1)
 
     def test_bootstrap_with_same_seed_generates_same_catalog(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -45,6 +45,21 @@ class SeedGraphTests(unittest.TestCase):
             second_snapshot = set(load_graph(data_dir / "productes.ttl"))
 
             self.assertEqual(first_snapshot, second_snapshot)
+
+    def test_bootstrap_spreads_locations_across_multiple_centres_and_allows_overlap(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            bootstrap_phase2_data(data_dir, product_count=18, seed=11)
+
+            locations = load_graph(data_dir / "ubicacions_productes.ttl")
+            centres = sorted(locations.subjects(RDF.type, AZON.CentreLogistic))
+            self.assertGreaterEqual(len(centres), 2)
+
+            product_nodes = sorted({subject for subject, _, _ in locations.triples((None, AZON.UbicatACentre, None))})
+            centre_counts = [len(list(locations.objects(product_node, AZON.UbicatACentre))) for product_node in product_nodes]
+
+            self.assertTrue(any(count > 1 for count in centre_counts))
+            self.assertTrue(all(count >= 1 for count in centre_counts))
 
 
 if __name__ == "__main__":

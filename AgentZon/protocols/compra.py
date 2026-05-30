@@ -180,32 +180,70 @@ def build_confirmacio_registre_compra(order_id, sender=None, receiver=None, requ
     )
 
 
+def _build_centre_node(graph, shipment):
+    centre_id = shipment.get("centre_id")
+    if not centre_id:
+        return None
+    centre_node = AZON[f"centre-{centre_id}"]
+    graph.add((centre_node, RDF.type, AZON.CentreLogistic))
+    graph.add((centre_node, AZON.IdCentreLogistic, Literal(centre_id)))
+    if shipment.get("centre_city"):
+        graph.add((centre_node, AZON.Ciutat, Literal(shipment["centre_city"])))
+    return centre_node
+
+
 def build_confirmacio_enviament(order, shipping_details, sender=None, receiver=None, request_content=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
     content = AZON[f"shipping-confirmation-{order['order_id']}"]
-    lot_node = AZON[f"lot-{shipping_details['lot_id']}"]
-    transport_node = AZON[f"transport-{shipping_details['transport_id']}"]
     order_node = AZON[f"order-{order['order_id']}"]
+    shipments = shipping_details if isinstance(shipping_details, list) else [shipping_details]
+    final_delivery_date = max(shipment["delivery_date"] for shipment in shipments)
+    products_by_id = {product["product_id"]: product for product in order["products"]}
 
     graph.add((content, RDF.type, AZON.ConfirmacioEnviament))
     graph.add((content, AZON.IdComanda, Literal(order["order_id"])))
-    graph.add((content, AZON.IdLot, Literal(shipping_details["lot_id"])))
-    graph.add((content, AZON.IdTransportista, Literal(shipping_details["transport_id"])))
-    graph.add((content, AZON.NomTransportista, Literal(shipping_details["transport_name"])))
-    graph.add((content, AZON.Ciutat, Literal(shipping_details["city"])))
-    graph.add((content, AZON.DataEntregaDefinitiva, Literal(shipping_details["delivery_date"])))
-    graph.add((content, AZON.CostTransport, Literal(shipping_details["price"], datatype=XSD.float)))
-    graph.add((content, AZON.SobreLot, lot_node))
     graph.add((content, AZON.SobreComanda, order_node))
-    graph.add((content, AZON.AssignatATransportista, transport_node))
-    graph.add((transport_node, RDF.type, AZON.Transportista))
+    graph.add((content, AZON.DataEntregaDefinitiva, Literal(final_delivery_date)))
     _build_embedded_order(graph, order_node, order, include_order_id=True)
     graph.add((order_node, AZON.MetodePagament, Literal(order["shipping_data"]["payment_method"])))
     graph.add((order_node, AZON.DataEntrega, Literal(order["delivery_date"])))
-    graph.add((order_node, AZON.DataEntregaDefinitiva, Literal(shipping_details["delivery_date"])))
+    graph.add((order_node, AZON.DataEntregaDefinitiva, Literal(final_delivery_date)))
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
+
+    for index, shipment in enumerate(shipments, start=1):
+        shipment_key = shipment.get("product_id") or f"shipment-{index}"
+        shipment_node = AZON[f"shipping-confirmation-{order['order_id']}-{shipment_key}"]
+        lot_node = AZON[f"lot-{shipment['lot_id']}"]
+        transport_node = AZON[f"transport-{shipment['transport_id']}"]
+        centre_node = _build_centre_node(graph, shipment)
+
+        graph.add((shipment_node, RDF.type, AZON.ConfirmacioEnviament))
+        graph.add((shipment_node, AZON.IdComanda, Literal(order["order_id"])))
+        graph.add((shipment_node, AZON.IdLot, Literal(shipment["lot_id"])))
+        graph.add((shipment_node, AZON.IdTransportista, Literal(shipment["transport_id"])))
+        graph.add((shipment_node, AZON.NomTransportista, Literal(shipment["transport_name"])))
+        graph.add((shipment_node, AZON.Ciutat, Literal(shipment["city"])))
+        graph.add((shipment_node, AZON.DataEntregaDefinitiva, Literal(shipment["delivery_date"])))
+        graph.add((shipment_node, AZON.CostTransport, Literal(shipment["price"], datatype=XSD.float)))
+        graph.add((shipment_node, AZON.SobreLot, lot_node))
+        graph.add((shipment_node, AZON.SobreComanda, order_node))
+        graph.add((shipment_node, AZON.AssignatATransportista, transport_node))
+        graph.add((transport_node, RDF.type, AZON.Transportista))
+        graph.add((lot_node, RDF.type, AZON.Lot))
+        graph.add((lot_node, AZON.IdLot, Literal(shipment["lot_id"])))
+        graph.add((lot_node, AZON.Ciutat, Literal(order["shipping_data"]["city"])))
+        graph.add((lot_node, AZON.SobreComanda, order_node))
+        if request_content is not None:
+            graph.add((shipment_node, AZON.EsRespostaA, request_content))
+
+        product_id = shipment.get("product_id")
+        if product_id:
+            product = products_by_id.get(product_id, {"product_id": product_id})
+            product_node = _add_product_reference(graph, lot_node, product)
+            if centre_node is not None:
+                graph.add((product_node, AZON.UbicatACentre, centre_node))
 
     return build_message(
         graph,
