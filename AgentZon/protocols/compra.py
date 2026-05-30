@@ -1,4 +1,4 @@
-"""Ontology-backed purchase and purchase-history registration messages."""
+"""Missatges de compra, confirmació d'enviament i registre d'historial de compres."""
 
 from rdflib import Graph, Literal, RDF
 from rdflib.namespace import XSD
@@ -192,6 +192,23 @@ def _build_centre_node(graph, shipment):
     return centre_node
 
 
+def _group_shipments_by_lot(shipments):
+    grouped = {}
+    lot_order = []
+    for shipment in shipments:
+        lot_id = shipment.get("lot_id")
+        centre_id = shipment.get("centre_id") or ""
+        if lot_id and centre_id:
+            group_key = f"{centre_id}:{lot_id}"
+        else:
+            group_key = lot_id or shipment.get("product_id") or f"shipment-{len(lot_order)}"
+        if group_key not in grouped:
+            grouped[group_key] = []
+            lot_order.append(group_key)
+        grouped[group_key].append(shipment)
+    return [grouped[lot_key] for lot_key in lot_order]
+
+
 def build_confirmacio_enviament(order, shipping_details, sender=None, receiver=None, request_content=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
@@ -212,12 +229,14 @@ def build_confirmacio_enviament(order, shipping_details, sender=None, receiver=N
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
 
-    for index, shipment in enumerate(shipments, start=1):
-        shipment_key = shipment.get("product_id") or f"shipment-{index}"
+    for index, lot_shipments in enumerate(_group_shipments_by_lot(shipments), start=1):
+        shipment = lot_shipments[0]
+        shipment_key = shipment.get("lot_id") or shipment.get("product_id") or f"shipment-{index}"
         shipment_node = AZON[f"shipping-confirmation-{order['order_id']}-{shipment_key}"]
         lot_node = AZON[f"lot-{shipment['lot_id']}"]
         transport_node = AZON[f"transport-{shipment['transport_id']}"]
         centre_node = _build_centre_node(graph, shipment)
+        transport_price = max(item.get("price", 0.0) for item in lot_shipments)
 
         graph.add((shipment_node, RDF.type, AZON.ConfirmacioEnviament))
         graph.add((shipment_node, AZON.IdComanda, Literal(order["order_id"])))
@@ -226,7 +245,7 @@ def build_confirmacio_enviament(order, shipping_details, sender=None, receiver=N
         graph.add((shipment_node, AZON.NomTransportista, Literal(shipment["transport_name"])))
         graph.add((shipment_node, AZON.Ciutat, Literal(shipment["city"])))
         graph.add((shipment_node, AZON.DataEntregaDefinitiva, Literal(shipment["delivery_date"])))
-        graph.add((shipment_node, AZON.CostTransport, Literal(shipment["price"], datatype=XSD.float)))
+        graph.add((shipment_node, AZON.CostTransport, Literal(transport_price, datatype=XSD.float)))
         graph.add((shipment_node, AZON.SobreLot, lot_node))
         graph.add((shipment_node, AZON.SobreComanda, order_node))
         graph.add((shipment_node, AZON.AssignatATransportista, transport_node))
@@ -238,8 +257,10 @@ def build_confirmacio_enviament(order, shipping_details, sender=None, receiver=N
         if request_content is not None:
             graph.add((shipment_node, AZON.EsRespostaA, request_content))
 
-        product_id = shipment.get("product_id")
-        if product_id:
+        for lot_shipment in lot_shipments:
+            product_id = lot_shipment.get("product_id")
+            if not product_id:
+                continue
             product = products_by_id.get(product_id, {"product_id": product_id})
             product_node = _add_product_reference(graph, lot_node, product)
             if centre_node is not None:

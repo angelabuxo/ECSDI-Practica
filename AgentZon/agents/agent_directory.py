@@ -1,4 +1,4 @@
-"""Directory agent that registers and resolves AgentZon services."""
+"""Agent de directori: registre i resolució d'agents del sistema."""
 
 import argparse
 from threading import Lock

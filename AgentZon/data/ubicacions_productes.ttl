@@ -56,6 +56,21 @@ azon:product-P1023 azon:UbicatACentre azon:centre-GI .
 
 azon:product-P1024 azon:UbicatACentre azon:centre-TGN .
 
+azon:product-P1025 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-GI .
+
+azon:product-P1026 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-GI .
+
+azon:product-P1027 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-TGN .
+
+azon:product-P1028 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-GI .
+
+azon:product-P1029 azon:UbicatACentre azon:centre-BCN,
+        azon:centre-GI .
+
 azon:centre-BCN a azon:CentreLogistic ;
     azon:Ciutat "Barcelona" ;
     azon:IdCentreLogistic "CL-BCN" .

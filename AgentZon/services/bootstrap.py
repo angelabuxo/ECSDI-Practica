@@ -1,4 +1,4 @@
-"""Seed data generators for the AgentZon Phase 2 prototype."""
+"""Generació de dades inicials (catàleg, ubicacions) per a la fase 2."""
 
 import argparse
 import random

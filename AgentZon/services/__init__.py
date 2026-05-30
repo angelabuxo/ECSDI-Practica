@@ -1,1 +1,1 @@
-"""RDF-backed services for AgentZon."""
+"""Serveis compartits d'AgentZon basats en RDF i persistència Turtle."""

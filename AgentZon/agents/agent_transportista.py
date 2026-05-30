@@ -1,4 +1,4 @@
-"""External transport agent that answers shipping-offer requests."""
+"""Agent transportista extern: ofertes de transport per lots (preu i data d'entrega)."""
 
 import argparse
 from datetime import date, timedelta

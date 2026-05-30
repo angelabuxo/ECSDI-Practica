@@ -1,9 +1,8 @@
-"""Purchase agent coordinating ACL purchase requests and browser wrappers."""
+"""Agent de compra: orquestra comandes, centres logístics, pagament i resum web."""
 
 import argparse
+import threading
 from concurrent.futures import ThreadPoolExecutor
-import unicodedata
-from difflib import SequenceMatcher
 from pathlib import Path
 from urllib.parse import urlencode, urlsplit, urlunsplit
 from uuid import uuid4
@@ -28,7 +27,6 @@ from config import (
     register_with_directory,
     resolve_runtime_hostname,
 )
-from protocols.centre_logistic import build_productes_localitzats, extract_shipping_details
 from protocols.compra import (
     build_confirmacio_enviament,
     build_peticio_compra,
@@ -45,13 +43,21 @@ from protocols.pagament import (
     extract_confirmacio_registre_dades,
 )
 from services.catalog_service import get_products_by_ids
+from services.logistics_routing_service import (
+    group_order_products_by_logistics_centre,
+    load_product_location_candidates,
+)
 from services.order_service import (
     build_order,
     save_order,
     save_user_shipping_data,
     update_order_final_delivery_date,
 )
-from services.rdf_store import load_graph
+from services.shipping_service import (
+    build_invoice_summary,
+    collect_warehouse_shipments,
+    group_shipments_for_display,
+)
 
 
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
@@ -66,6 +72,7 @@ ORDERS_PATH = None
 SHIPPING_PATH = None
 LOCATIONS_PATH = None
 COUNTER = 0
+_MSGCNT_LOCK = threading.Lock()
 NO_PRODUCTS_ERROR = "Has de seleccionar almenys un producte abans de continuar la compra."
 
 
@@ -85,12 +92,13 @@ def configure_runtime(settings, message_sender=send_message):
 
 def next_counter():
     global COUNTER
-    current = COUNTER
-    COUNTER += 1
-    return current
+    with _MSGCNT_LOCK:
+        current = COUNTER
+        COUNTER += 1
+        return current
 
 
-# Agent logic ----------------------------------------------------------------------
+# Directory helpers ----------------------------------------------------------------
 def resolve_agents(agent_type):
     message = build_search_message(AGENT, agent_type, DIRECTORY_AGENT, msgcnt=next_counter())
     response = MESSAGE_SENDER(message, DIRECTORY_AGENT.address)
@@ -121,150 +129,7 @@ def normalize_selected_product_ids(product_ids):
     return [product_id for product_id in product_ids if product_id]
 
 
-def normalize_city_name(value):
-    normalized = unicodedata.normalize("NFKD", value or "")
-    ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
-    compact = "".join(ch if ch.isalnum() else " " for ch in ascii_text.lower())
-    return " ".join(compact.split())
-
-
-def choose_logistics_centre_for_product(user_city, candidate_centres):
-    if not candidate_centres:
-        raise ValueError("No logistics centres are available for the requested product")
-
-    normalized_user_city = normalize_city_name(user_city)
-
-    def score(candidate):
-        candidate_city = normalize_city_name(candidate.get("centre_city", ""))
-        exact_match = candidate_city == normalized_user_city
-        similarity = SequenceMatcher(None, normalized_user_city, candidate_city).ratio()
-        return (
-            0 if exact_match else 1,
-            -similarity,
-            candidate.get("centre_id", ""),
-        )
-
-    return min(candidate_centres, key=score)
-
-
-def load_product_location_candidates(product_ids):
-    graph = load_graph(LOCATIONS_PATH)
-    candidates_by_product = {}
-    for product_id in product_ids:
-        product_node = AZON[f"product-{product_id}"]
-        candidates = []
-        for centre_node in graph.objects(product_node, AZON.UbicatACentre):
-            centre_id = graph.value(centre_node, AZON.IdCentreLogistic)
-            if centre_id is None:
-                continue
-            candidates.append(
-                {
-                    "centre_id": str(centre_id),
-                    "centre_city": str(graph.value(centre_node, AZON.Ciutat) or ""),
-                }
-            )
-        candidates_by_product[product_id] = sorted(candidates, key=lambda candidate: candidate["centre_id"])
-    return candidates_by_product
-
-
-def resolve_centre_agents():
-    return resolve_agents(DSO.CentreLogisticAgent)
-
-
-def match_candidate_centres(candidate_centres, registered_centres):
-    registered_by_id = {centre["centre_id"]: centre for centre in registered_centres if centre.get("centre_id")}
-    matched = []
-    for candidate in candidate_centres:
-        registered = registered_by_id.get(candidate["centre_id"])
-        if registered is None:
-            continue
-        matched.append(
-            {
-                **registered,
-                "centre_id": candidate["centre_id"],
-                "centre_city": candidate.get("centre_city") or registered.get("centre_city", ""),
-            }
-        )
-    if not matched and len(registered_centres) == 1:
-        registered = registered_centres[0]
-        return [
-            {
-                **registered,
-                "centre_id": candidate["centre_id"],
-                "centre_city": candidate.get("centre_city") or registered.get("centre_city", ""),
-            }
-            for candidate in candidate_centres
-        ]
-    return matched
-
-
-def enrich_shipment_details(order, product, selected_centre, shipping_details):
-    details = {
-        **shipping_details,
-        "product_id": shipping_details.get("product_id") or product["product_id"],
-        "product_name": product.get("name"),
-        "centre_id": shipping_details.get("centre_id") or selected_centre.get("centre_id"),
-        "centre_city": shipping_details.get("centre_city") or selected_centre.get("centre_city"),
-        "delivery_city": order["shipping_data"]["city"],
-    }
-    if shipping_details.get("invoice") is not None:
-        details["invoice"] = shipping_details["invoice"]
-    return details
-
-
-def build_invoice_summary(order, shipments):
-    lines = sorted(
-        [
-            {"product_id": product["product_id"], "name": product["name"], "price": product["price"]}
-            for product in order["products"]
-        ],
-        key=lambda line: line["product_id"],
-    )
-    shipment_invoices = [shipment["invoice"] for shipment in shipments if shipment.get("invoice")]
-    fallback_products_subtotal = round(sum(line["price"] for line in lines), 2)
-    fallback_transport_cost = round(sum(shipment["price"] for shipment in shipments), 2)
-
-    if not shipment_invoices:
-        return {
-            "payment_id": "PENDENT",
-            "order_id": order["order_id"],
-            "amount": round(fallback_products_subtotal + fallback_transport_cost, 2),
-            "method": order["shipping_data"]["payment_method"],
-            "status": "PENDENT",
-            "date": "",
-            "lines": lines,
-            "transport_cost": fallback_transport_cost,
-            "products_subtotal": fallback_products_subtotal,
-        }
-
-    payment_ids = sorted({invoice["payment_id"] for invoice in shipment_invoices if invoice.get("payment_id")})
-    statuses = sorted({invoice["status"] for invoice in shipment_invoices if invoice.get("status")})
-    methods = sorted({invoice["method"] for invoice in shipment_invoices if invoice.get("method")})
-    dates = sorted({invoice["date"] for invoice in shipment_invoices if invoice.get("date")})
-    products_subtotal = round(sum(invoice.get("products_subtotal", 0.0) for invoice in shipment_invoices), 2)
-    transport_cost = round(sum(invoice.get("transport_cost", 0.0) for invoice in shipment_invoices), 2)
-    amount = round(sum(invoice.get("amount", 0.0) for invoice in shipment_invoices), 2)
-
-    if not products_subtotal:
-        products_subtotal = fallback_products_subtotal
-    if not transport_cost:
-        transport_cost = fallback_transport_cost
-    if not amount:
-        amount = round(products_subtotal + transport_cost, 2)
-
-    return {
-        "payment_id": ", ".join(payment_ids) if payment_ids else "PENDENT",
-        "order_id": order["order_id"],
-        "amount": amount,
-        "method": methods[0] if len(methods) == 1 else order["shipping_data"]["payment_method"],
-        "status": ", ".join(statuses) if statuses else "PENDENT",
-        "date": ", ".join(dates),
-        "lines": lines,
-        "transport_cost": transport_cost,
-        "products_subtotal": products_subtotal,
-    }
-
-
+# Plans ----------------------------------------------------------------------------
 def pla_demanar_informacio_usuari(selected_product_ids):
     product_ids = normalize_selected_product_ids(selected_product_ids)
     if not product_ids:
@@ -293,87 +158,37 @@ def pla_registrar_dades_d_usuari(selected_product_ids, form_data):
 
 
 def pla_producte_als_nostres_magatzems(order):
-    registered_centres = resolve_centre_agents()
-    candidate_centres_by_product = load_product_location_candidates([product["product_id"] for product in order["products"]])
-    shipments = []
-
-    for product in order["products"]:
-        candidate_centres = match_candidate_centres(
-            candidate_centres_by_product.get(product["product_id"], []),
-            registered_centres,
-        )
-        selected_centre = choose_logistics_centre_for_product(order["shipping_data"]["city"], candidate_centres)
-        normalized_delivery_city = normalize_city_name(order["shipping_data"]["city"])
-        scored_candidates = []
-        for candidate in candidate_centres:
-            candidate_city = normalize_city_name(candidate.get("centre_city", ""))
-            exact_match = candidate_city == normalized_delivery_city
-            similarity = SequenceMatcher(None, normalized_delivery_city, candidate_city).ratio()
-            scored_candidates.append(
-                {
-                    "centre": candidate,
-                    "exact_match": exact_match,
-                    "similarity": similarity,
-                    "score": (
-                        0 if exact_match else 1,
-                        -similarity,
-                        candidate.get("centre_id", ""),
-                    ),
-                }
-            )
-        selected_candidate = next(
-            candidate
-            for candidate in scored_candidates
-            if candidate["centre"].get("centre_id") == selected_centre.get("centre_id")
-        )
-        tied_candidates = [
-            candidate for candidate in scored_candidates if candidate["score"][:2] == selected_candidate["score"][:2]
-        ]
-        reason = "coincideix exactament amb la ciutat de lliurament"
-        if not selected_candidate["exact_match"]:
-            reason = (
-                "te la millor semblanca amb la ciutat de lliurament "
-                f"({selected_candidate['similarity']:.3f})"
-            )
-        if len(tied_candidates) > 1:
-            reason += " i s'ha desfet l'empat per centre_id"
-        options = ", ".join(
-            f"{candidate['centre'].get('centre_id')} ({candidate['centre'].get('centre_city', '-')})"
-            for candidate in scored_candidates
-        )
+    registered_centres = resolve_agents(DSO.CentreLogisticAgent)
+    candidate_centres_by_product = load_product_location_candidates(
+        LOCATIONS_PATH,
+        [product["product_id"] for product in order["products"]],
+    )
+    centre_groups = group_order_products_by_logistics_centre(
+        order,
+        registered_centres,
+        candidate_centres_by_product,
+    )
+    for group in centre_groups:
         logger.info(
-            "Opcions de centre logistic per al producte %s de la comanda %s: %s",
-            product["product_id"],
+            "Enviant %d producte(s) de la comanda %s al centre %s",
+            len(group["products"]),
             order["order_id"],
-            options,
+            group["centre"]["centre_id"],
         )
-        logger.info(
-            "Escollit el centre %s (%s) per al producte %s de la comanda %s perque %s",
-            selected_centre["centre_id"],
-            selected_centre.get("centre_city", ""),
-            product["product_id"],
-            order["order_id"],
-            reason,
-        )
-        message, _ = build_productes_localitzats(
-            order,
-            products=[product],
-            centre=selected_centre,
-            sender=AGENT.uri,
-            receiver=selected_centre["uri"],
-            msgcnt=next_counter(),
-        )
-        reply = MESSAGE_SENDER(message, selected_centre["address"])
-        shipments.append(enrich_shipment_details(order, product, selected_centre, extract_shipping_details(reply)))
-
-    return shipments
+    return collect_warehouse_shipments(
+        order,
+        centre_groups,
+        AGENT.uri,
+        MESSAGE_SENDER,
+        next_counter,
+    )
 
 
 def pla_informar_usuari_sobre_l_enviament(order, shipments):
     return render_template(
         "shipping_summary.html",
         order=order,
-        shipments=shipments,
+        shipment_groups=group_shipments_for_display(shipments),
         final_delivery_date=max(shipment["delivery_date"] for shipment in shipments),
         invoice=build_invoice_summary(order, shipments),
     )
@@ -392,7 +207,6 @@ def pla_delegar_registre_compra(order):
 
 
 def pla_registrar_dades_d_usuari_al_cobrador(order):
-    # Delega al Cobrador el registre de les dades bancaries de l'usuari (cap. Guardar dades bancaries).
     try:
         cobrador = resolve_agent(DSO.CobradorAgent)
     except Exception:
@@ -418,7 +232,6 @@ def pla_registrar_dades_d_usuari_al_cobrador(order):
 
 
 def pla_enviament_extern(order, external_logistics_agent):
-    # External-shipping integration point for marketplace products.
     return build_peticio_enviament_extern(
         order,
         sender=AGENT.uri,
@@ -428,7 +241,6 @@ def pla_enviament_extern(order, external_logistics_agent):
 
 
 def pla_cobrament_extern(order, seller_id):
-    # Pla de cobrament extern: demana al Cobrador que cobri els productes d'enviament extern.
     try:
         cobrador = resolve_agent(DSO.CobradorAgent)
     except Exception:

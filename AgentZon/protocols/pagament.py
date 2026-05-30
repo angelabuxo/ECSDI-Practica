@@ -1,4 +1,4 @@
-"""Ontology-backed messages used by the payment agents (Cobrador and Proveidor)."""
+"""Missatges de pagament, cobrament intern, registre bancari i devolucions."""
 
 from rdflib import Graph, Literal, RDF
 from rdflib.namespace import XSD

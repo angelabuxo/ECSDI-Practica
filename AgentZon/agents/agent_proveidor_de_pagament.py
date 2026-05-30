@@ -1,4 +1,4 @@
-"""External payment-provider agent (the bank) that processes payment requests."""
+"""Agent proveïdor de pagament (banc extern): confirma o rebutja operacions de pagament."""
 
 import argparse
 from datetime import date

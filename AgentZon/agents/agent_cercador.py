@@ -1,4 +1,4 @@
-"""Search agent exposing ACL search on /comm and a thin browser wrapper on /iface."""
+"""Agent cercador: cerca de productes per ACL (/comm) i interfície web (/iface)."""
 
 import argparse
 from pathlib import Path

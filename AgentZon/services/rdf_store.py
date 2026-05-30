@@ -1,4 +1,4 @@
-"""Small RDF file-store helpers shared by AgentZon services."""
+"""Utilitats de lectura i escriptura de grafos RDF en fitxers Turtle."""
 
 from pathlib import Path
 

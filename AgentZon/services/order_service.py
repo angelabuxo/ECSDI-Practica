@@ -1,4 +1,4 @@
-"""Persistence helpers for shipping data and internal order creation."""
+"""Construcció i persistència de comandes i dades d'enviament de l'usuari."""
 
 from datetime import date, timedelta
 from uuid import uuid4

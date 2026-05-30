@@ -217,3 +217,48 @@ azon:product-P1024 a azon:Producte ;
     azon:Pes "1.71"^^xsd:float ;
     azon:Preu "145.85"^^xsd:float .
 
+azon:product-P1025 a azon:Producte ;
+    azon:Categoria "audio" ;
+    azon:Descripcio "Auriculars sense fils amb cancel·lacio activa de soroll i estoig de recarrega" ;
+    azon:IdProducte "P1025" ;
+    azon:Marca "Apple" ;
+    azon:Nom "AirPods" ;
+    azon:Pes "0.05"^^xsd:float ;
+    azon:Preu "199.00"^^xsd:float .
+
+azon:product-P1026 a azon:Producte ;
+    azon:Categoria "audio" ;
+    azon:Descripcio "Auriculars over-ear amb xip H2, cancel·lacio activa i mode transparencia" ;
+    azon:IdProducte "P1026" ;
+    azon:Marca "Apple" ;
+    azon:Nom "AirPods Max" ;
+    azon:Pes "0.38"^^xsd:float ;
+    azon:Preu "579.00"^^xsd:float .
+
+azon:product-P1027 a azon:Producte ;
+    azon:Categoria "peripherals" ;
+    azon:Descripcio "Smartphone amb pantalla ProMotion, xip A19 Pro i sistema de camera avancat" ;
+    azon:IdProducte "P1027" ;
+    azon:Marca "Apple" ;
+    azon:Nom "iPhone 17 Pro" ;
+    azon:Pes "0.22"^^xsd:float ;
+    azon:Preu "1229.00"^^xsd:float .
+
+azon:product-P1028 a azon:Producte ;
+    azon:Categoria "peripherals" ;
+    azon:Descripcio "Portatil professional amb xip M4, pantalla Liquid Retina XDR i fins a 24 h de autonomia" ;
+    azon:IdProducte "P1028" ;
+    azon:Marca "Apple" ;
+    azon:Nom "MacBook Pro M4" ;
+    azon:Pes "1.55"^^xsd:float ;
+    azon:Preu "1999.00"^^xsd:float .
+
+azon:product-P1029 a azon:Producte ;
+    azon:Categoria "peripherals" ;
+    azon:Descripcio "Carregador sense fil MagSafe amb compatibilitat Qi2 per a iPhone i AirPods" ;
+    azon:IdProducte "P1029" ;
+    azon:Marca "Apple" ;
+    azon:Nom "Carregador MagSafe" ;
+    azon:Pes "0.08"^^xsd:float ;
+    azon:Preu "45.00"^^xsd:float .
+

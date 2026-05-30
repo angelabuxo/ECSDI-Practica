@@ -49,6 +49,7 @@ class LogisticsFlowTests(unittest.TestCase):
                 products=[
                     {"product_id": "P1", "weight": 1.5},
                 ],
+                centre_id="CL-BCN",
             )
             second_lot = create_lot(
                 lots_path,
@@ -58,6 +59,7 @@ class LogisticsFlowTests(unittest.TestCase):
                 products=[
                     {"product_id": "P2", "weight": 2.0},
                 ],
+                centre_id="CL-BCN",
             )
             self.assertTrue(first_lot["created_new_lot"])
             self.assertFalse(second_lot["created_new_lot"])
@@ -77,6 +79,33 @@ class LogisticsFlowTests(unittest.TestCase):
                 {str(value) for value in graph.objects(lot, AZON.SobreComanda)},
                 {str(AZON["order-ORDER-1"]), str(AZON["order-ORDER-2"])},
             )
+
+    def test_create_lot_does_not_merge_different_centres_for_same_city_and_date(self):
+        from services.logistics_service import create_lot
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lots_path = Path(tmpdir) / "lots.ttl"
+
+            bcn_lot = create_lot(
+                lots_path,
+                order_id="ORDER-1",
+                city="Barcelona",
+                delivery_date="2026-05-10",
+                products=[{"product_id": "P1", "weight": 1.0}],
+                centre_id="CL-BCN",
+            )
+            gi_lot = create_lot(
+                lots_path,
+                order_id="ORDER-1",
+                city="Barcelona",
+                delivery_date="2026-05-10",
+                products=[{"product_id": "P2", "weight": 1.0}],
+                centre_id="CL-GI",
+            )
+
+            self.assertTrue(bcn_lot["created_new_lot"])
+            self.assertTrue(gi_lot["created_new_lot"])
+            self.assertNotEqual(bcn_lot["lot_id"], gi_lot["lot_id"])
 
     def test_create_lot_creates_new_lot_for_different_city_or_delivery_date(self):
         from services.logistics_service import create_lot

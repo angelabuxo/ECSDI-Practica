@@ -1,4 +1,4 @@
-"""Ontology-backed messages for product-search requests and responses."""
+"""Missatges de petició i resposta de cerca de productes (PeticioCerca, ResultatCerca)."""
 
 from rdflib import Graph, Literal, RDF, XSD
 

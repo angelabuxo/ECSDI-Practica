@@ -1,4 +1,4 @@
-"""Persistence helpers for search and purchase history graphs."""
+"""Registre d'historial de cerques i de compres completades."""
 
 from rdflib import Graph, Literal
 

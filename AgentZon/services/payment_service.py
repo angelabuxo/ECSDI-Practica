@@ -1,4 +1,4 @@
-"""Persistence helpers for bank data, payments, invoices and refunds."""
+"""Persistència de dades bancàries, pagaments, factures i devolucions."""
 
 from rdflib import Literal, RDF
 from rdflib.namespace import XSD

@@ -1,58 +1,27 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-azon:payment-PAY-141113CC a azon:Pagament ;
+azon:payment-PAY-22F83240 a azon:Pagament ;
     azon:DataPagament "2026-05-30" ;
     azon:Estat "PAGAT" ;
-    azon:IdComanda "ORDER-9BC802E7" ;
-    azon:IdPagament "PAY-141113CC" ;
-    azon:IdUsuari "111111" ;
-    azon:ImportPagament "438.88"^^xsd:float ;
-    azon:MetodePagament "targeta" ;
-    azon:SobreComanda azon:order-ORDER-9BC802E7 ;
-    azon:SobreProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1016,
-        azon:product-P1019 .
-
-azon:payment-PAY-4335C992 a azon:Pagament ;
-    azon:DataPagament "2026-05-30" ;
-    azon:Estat "PAGAT" ;
-    azon:IdComanda "ORDER-BA01C270" ;
-    azon:IdPagament "PAY-4335C992" ;
-    azon:IdUsuari "1234" ;
-    azon:ImportPagament "636.59"^^xsd:float ;
-    azon:MetodePagament "121212121212" ;
-    azon:SobreComanda azon:order-ORDER-BA01C270 ;
-    azon:SobreProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1003,
-        azon:product-P1017,
-        azon:product-P1018 .
-
-azon:payment-PAY-C1D2AF87 a azon:Pagament ;
-    azon:DataPagament "2026-05-30" ;
-    azon:Estat "PAGAT" ;
-    azon:IdComanda "ORDER-4A6366C3" ;
-    azon:IdPagament "PAY-C1D2AF87" ;
+    azon:IdComanda "ORDER-9EC27036" ;
+    azon:IdPagament "PAY-22F83240" ;
     azon:IdUsuari "a" ;
-    azon:ImportPagament "373.71"^^xsd:float ;
-    azon:MetodePagament "targeta" ;
-    azon:SobreComanda azon:order-ORDER-4A6366C3 ;
+    azon:ImportPagament "93.62"^^xsd:float ;
+    azon:MetodePagament "a" ;
+    azon:SobreComanda azon:order-ORDER-9EC27036 ;
     azon:SobreProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1019 .
+        azon:product-P1004 .
 
-azon:payment-PAY-DF680551 a azon:Pagament ;
+azon:payment-PAY-99939550 a azon:Pagament ;
     azon:DataPagament "2026-05-30" ;
     azon:Estat "PAGAT" ;
-    azon:IdComanda "ORDER-3C6E20F3" ;
-    azon:IdPagament "PAY-DF680551" ;
+    azon:IdComanda "ORDER-9EC27036" ;
+    azon:IdPagament "PAY-99939550" ;
     azon:IdUsuari "a" ;
-    azon:ImportPagament "358.47"^^xsd:float ;
-    azon:MetodePagament "targeta" ;
-    azon:SobreComanda azon:order-ORDER-3C6E20F3 ;
-    azon:SobreProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1019 .
+    azon:ImportPagament "222.92"^^xsd:float ;
+    azon:MetodePagament "a" ;
+    azon:SobreComanda azon:order-ORDER-9EC27036 ;
+    azon:SobreProducte azon:product-P1003,
+        azon:product-P1006 .
 

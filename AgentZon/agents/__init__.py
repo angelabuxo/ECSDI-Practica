@@ -1,1 +1,1 @@
-"""Agent entrypoints for the AgentZon prototype."""
+"""Punts d'entrada dels agents Flask/FIPA-ACL del prototip AgentZon."""

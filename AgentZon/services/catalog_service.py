@@ -1,4 +1,4 @@
-"""Catalog query helpers backed by the AgentZon RDF product store."""
+"""Consultes al catàleg de productes (productes.ttl) amb filtres per ID i criteris."""
 
 from rdflib import Graph
 

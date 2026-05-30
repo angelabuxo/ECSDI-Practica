@@ -11,9 +11,9 @@ from tests.support import LocalMessageRouter, load_catalog_products
 
 class PurchaseFlowTests(unittest.TestCase):
     def test_choose_logistics_centre_prefers_exact_match_then_centre_id_tiebreak(self):
-        from agents import agent_compra
+        from services.logistics_routing_service import choose_logistics_centre_for_product
 
-        selected = agent_compra.choose_logistics_centre_for_product(
+        selected = choose_logistics_centre_for_product(
             "Barcelna",
             [
                 {
@@ -580,7 +580,7 @@ class PurchaseFlowTests(unittest.TestCase):
                 "2026-06-03",
             )
 
-    def test_two_products_in_same_centre_still_use_per_product_routing(self):
+    def test_two_products_in_same_centre_use_one_grouped_routing_request(self):
         from AgentUtil.Agent import Agent
         from AgentUtil.DSO import DSO
         from AgentUtil.OntoNamespaces import AZON, bind_namespaces
@@ -618,7 +618,7 @@ class PurchaseFlowTests(unittest.TestCase):
         )
 
         router = LocalMessageRouter()
-        requested_product_ids = []
+        centre_requests = []
 
         with tempfile.TemporaryDirectory() as tmpdir:
             data_dir = Path(tmpdir)
@@ -644,12 +644,11 @@ class PurchaseFlowTests(unittest.TestCase):
                 if address == centre_bcn.address:
                     content = message.value(predicate=RDF.type, object=AZON.ProducteLocalitzat)
                     request_data = parse_productes_localitzats(message, content)
-                    self.assertEqual(len(request_data["products"]), 1)
-                    requested_product_ids.append(request_data["products"][0]["product_id"])
+                    centre_requests.append(request_data)
                     return build_shipping_details_response(
                         request_data,
                         {
-                            "lot_id": f"LOT-{request_data['products'][0]['product_id']}",
+                            "lot_id": "LOT-SHARED",
                             "order_id": request_data["order_id"],
                             "transport_id": "economy",
                             "transport_name": "TransportEconomy",
@@ -706,12 +705,17 @@ class PurchaseFlowTests(unittest.TestCase):
             )
             confirmation = router.send_message(purchase_message, compra.address)
 
-            self.assertEqual(sorted(requested_product_ids), sorted([product["product_id"] for product in products]))
-            self.assertEqual(len(requested_product_ids), 2)
+            self.assertEqual(len(centre_requests), 1)
+            self.assertEqual(
+                sorted(product["product_id"] for product in centre_requests[0]["products"]),
+                sorted(product["product_id"] for product in products),
+            )
 
             shipments = extract_shipping_details_list(confirmation)
             self.assertEqual(len(shipments), 2)
             self.assertEqual({shipment["centre_id"] for shipment in shipments}, {"CL-BCN"})
+            self.assertEqual({shipment["lot_id"] for shipment in shipments}, {"LOT-SHARED"})
+            self.assertEqual({shipment["transport_id"] for shipment in shipments}, {"economy"})
 
     def test_browser_iface_flow_wraps_search_and_purchase_without_business_routes(self):
         from AgentUtil.Agent import Agent

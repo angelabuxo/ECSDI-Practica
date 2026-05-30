@@ -1,4 +1,4 @@
-"""Messages exchanged with the local directory service agent."""
+"""Missatges de registre i cerca d'agents al servei de directori."""
 
 from rdflib import Graph, Literal, Namespace, RDF
 from rdflib.namespace import FOAF

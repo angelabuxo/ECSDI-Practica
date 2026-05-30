@@ -1,7 +1,6 @@
-"""Logistics center agent that groups products into lots and negotiates transport."""
+"""Agent centre logístic: lots, negociació amb transportistes i cobrament intern."""
 
 import argparse
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from flask import Flask, request
@@ -32,7 +31,14 @@ from protocols.centre_logistic import (
 )
 from protocols.directory import build_search_message, parse_directory_response
 from protocols.pagament import build_peticio_cobrament_intern, extract_confirmacio_pagament
-from services.logistics_service import choose_best_offer, create_lot
+from services.logistics_service import (
+    build_internal_shipment,
+    choose_best_offer,
+    create_lot,
+    format_centre_uri_name,
+    match_transport_agent,
+    query_transport_offers,
+)
 from services.rdf_store import load_graph
 
 
@@ -71,19 +77,16 @@ def next_counter():
     return current
 
 
-# Agent logic ----------------------------------------------------------------------
-def build_centre_uri_name(centre_id):
-    return f"CentreLogistic{''.join(ch for ch in centre_id if ch.isalnum())}"
-
-
+# Plans ----------------------------------------------------------------------------
 def pla_assignar_producte_a_lot(request_data):
+    centre_id = request_data.get("centre_id") or CENTRE_ID
     logger.info(
-        "Assignant comanda %s a lot al centre %s (desti=%s, data_entrega=%s, productes=%d)",
+        "Assignant comanda %s a lot al centre %s (%d productes, desti=%s, data=%s)",
         request_data["order_id"],
-        request_data.get("centre_id") or CENTRE_ID,
+        centre_id,
+        len(request_data["products"]),
         request_data["city"],
         request_data["delivery_date"],
-        len(request_data["products"]),
     )
     lot = create_lot(
         LOTS_PATH,
@@ -91,34 +94,22 @@ def pla_assignar_producte_a_lot(request_data):
         request_data["city"],
         request_data["delivery_date"],
         request_data["products"],
-        centre_id=request_data.get("centre_id") or CENTRE_ID,
+        centre_id=centre_id,
         centre_city=request_data.get("centre_city") or CENTRE_CITY,
     )
-    if lot["created_new_lot"]:
-        logger.info(
-            "Creat lot nou %s per a la comanda %s al centre %s (desti=%s, data_entrega=%s, pes_total=%.2f)",
-            lot["lot_id"],
-            request_data["order_id"],
-            lot.get("centre_id") or CENTRE_ID,
-            request_data["city"],
-            request_data["delivery_date"],
-            lot["total_weight"],
-        )
-    else:
-        logger.info(
-            "Reutilitzat lot existent %s per a la comanda %s al centre %s (coincideix desti=%s, data_entrega=%s, pes_total=%.2f)",
-            lot["lot_id"],
-            request_data["order_id"],
-            lot.get("centre_id") or CENTRE_ID,
-            request_data["city"],
-            request_data["delivery_date"],
-            lot["total_weight"],
-        )
+    action = "Creat" if lot["created_new_lot"] else "Reutilitzat"
+    logger.info(
+        "%s lot %s per a la comanda %s (pes_total=%.2f)",
+        action,
+        lot["lot_id"],
+        request_data["order_id"],
+        lot["total_weight"],
+    )
     return lot
 
 
 def pla_cerca_de_transportista(lot):
-    def query_transport(transport_agent):
+    def request_offer(transport_agent):
         try:
             message, _ = build_peticio_transport(
                 lot,
@@ -136,9 +127,7 @@ def pla_cerca_de_transportista(lot):
             )
             return None
 
-    with ThreadPoolExecutor(max_workers=len(TRANSPORT_AGENTS)) as executor:
-        futures = [executor.submit(query_transport, agent) for agent in TRANSPORT_AGENTS]
-        offers = [offer for future in futures if (offer := future.result()) is not None]
+    offers = query_transport_offers(lot, TRANSPORT_AGENTS, request_offer)
     if not offers:
         raise RuntimeError("Cap transportista disponible per al lot {}".format(lot["lot_id"]))
     logger.info("Rebudes %d ofertes de transport per al lot %s", len(offers), lot["lot_id"])
@@ -147,11 +136,7 @@ def pla_cerca_de_transportista(lot):
 
 def pla_de_transportista_escollit(lot, offers, request_content=None):
     selected = choose_best_offer(offers)
-    selected_transport = next(
-        agent
-        for agent in TRANSPORT_AGENTS
-        if agent.name.endswith(selected["transport_id"]) or selected["transport_id"] in agent.name.lower()
-    )
+    selected_transport = match_transport_agent(TRANSPORT_AGENTS, selected["transport_id"])
     selection_message = build_eleccio_transportista(
         lot,
         selected,
@@ -164,32 +149,21 @@ def pla_de_transportista_escollit(lot, offers, request_content=None):
     return selected
 
 
-def resolve_agent(agent_type):
-    message = build_search_message(AGENT, agent_type, DIRECTORY_AGENT, msgcnt=next_counter())
-    response = MESSAGE_SENDER(message, DIRECTORY_AGENT.address)
-    return parse_directory_response(response)
-
-
 def pla_producte_sha_enviat(request_data, selected):
     if DIRECTORY_AGENT is None:
         return None
     try:
-        cobrador = resolve_agent(DSO.CobradorAgent)
+        cobrador = parse_directory_response(
+            MESSAGE_SENDER(
+                build_search_message(AGENT, DSO.CobradorAgent, DIRECTORY_AGENT, msgcnt=next_counter()),
+                DIRECTORY_AGENT.address,
+            )
+        )
     except Exception:
         logger.warning("No s'ha pogut resoldre el Cobrador; s'omet el cobrament intern")
         return None
-    shipment = {
-        "order_id": request_data["order_id"],
-        "user_id": request_data["user_id"],
-        "city": request_data["city"],
-        "delivery_date": selected["delivery_date"],
-        "transport_cost": selected["price"],
-        "product_ids": [product["product_id"] for product in request_data["products"]],
-    }
-    logger.info(
-        "Productes de la comanda %s enviats; notificant el Cobrador perque cobri",
-        shipment["order_id"],
-    )
+    shipment = build_internal_shipment(request_data, selected)
+    logger.info("Comanda %s enviada; demanant cobrament intern al Cobrador", shipment["order_id"])
     message = build_peticio_cobrament_intern(
         shipment,
         sender=AGENT.uri,
@@ -285,7 +259,7 @@ def main():
         {
             "agent": build_agent(
                 f"CentreLogisticAgent-{args.centre_id}",
-                build_centre_uri_name(args.centre_id),
+                format_centre_uri_name(args.centre_id),
                 args.port,
                 host=hostname,
             ),

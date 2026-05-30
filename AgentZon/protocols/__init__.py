@@ -1,1 +1,1 @@
-"""Ontology-backed message builders and parsers."""
+"""Construcció i interpretació de missatges ACL segons l'ontologia AgentZon."""

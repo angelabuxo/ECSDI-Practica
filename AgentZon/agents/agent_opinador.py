@@ -1,4 +1,4 @@
-"""Opinion agent that records completed purchases into persistent history."""
+"""Agent opinador: registra compres completades a l'historial persistent."""
 
 import argparse
 from pathlib import Path

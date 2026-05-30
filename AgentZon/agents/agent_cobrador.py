@@ -1,4 +1,4 @@
-"""Collector agent that manages charges, seller transfers and refunds."""
+"""Agent cobrador: cobraments, transferències a venedors i devolucions."""
 
 import argparse
 from pathlib import Path

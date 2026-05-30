@@ -1,4 +1,4 @@
-"""Ontology-backed messages used during logistics and transport negotiation."""
+"""Missatges de localització de productes, transport, lots i confirmació d'enviament."""
 
 from rdflib import Graph, Literal, RDF
 from rdflib.namespace import XSD
