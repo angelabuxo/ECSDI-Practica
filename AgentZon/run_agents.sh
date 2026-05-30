@@ -81,7 +81,7 @@ run_agent() {
   open_terminal "$(write_launcher "$slug" "$title" "$@")"
 }
 
-echo "AgentZon: obrint 9 terminals (un agent per finestra)..."
+echo "AgentZon: obrint 11 terminals (un agent per finestra)..."
 echo "Directori de treball: $ROOT_DIR"
 echo "Python: $PYTHON"
 echo "Launchers: $RUN_DIR"
@@ -89,6 +89,14 @@ echo
 
 run_agent agent_directory "Agent Directory" \
   agents.agent_directory --host "$HOST" --port 9000
+
+run_agent agent_proveidor_pagament "Agent Proveïdor de Pagament" \
+  agents.agent_proveidor_de_pagament --host "$HOST" --port 9006 \
+  --directory-host "$HOST" --directory-port 9000
+
+run_agent agent_cobrador "Agent Cobrador" \
+  agents.agent_cobrador --host "$HOST" --port 9005 \
+  --directory-host "$HOST" --directory-port 9000 --data-dir data
 
 run_agent agent_opinador "Agent Opinador" \
   agents.agent_opinador --host "$HOST" --port 9004 \
@@ -111,7 +119,7 @@ run_agent agent_centre_logistic_bcn "Agent Centre Logístic BCN" \
   --data-dir data
 
 run_agent agent_centre_logistic_gi "Agent Centre Logístic GI" \
-  agents.agent_centre_logistic --host "$HOST" --port 9005 \
+  agents.agent_centre_logistic --host "$HOST" --port 9007 \
   --centre-id CL-GI --centre-city Girona \
   --directory-host "$HOST" --directory-port 9000 \
   --transport-fast-host "$HOST" --transport-fast-port 9010 \
@@ -119,7 +127,7 @@ run_agent agent_centre_logistic_gi "Agent Centre Logístic GI" \
   --data-dir data
 
 run_agent agent_centre_logistic_tgn "Agent Centre Logístic TGN" \
-  agents.agent_centre_logistic --host "$HOST" --port 9006 \
+  agents.agent_centre_logistic --host "$HOST" --port 9008 \
   --centre-id CL-TGN --centre-city Tarragona \
   --directory-host "$HOST" --directory-port 9000 \
   --transport-fast-host "$HOST" --transport-fast-port 9010 \

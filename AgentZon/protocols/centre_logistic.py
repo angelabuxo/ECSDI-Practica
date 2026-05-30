@@ -6,6 +6,7 @@ from rdflib.namespace import XSD
 from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AGN, AZON, ONTOLOGY_URI, bind_namespaces
+from protocols.pagament import embed_invoice_in_content, extract_invoice_from_content
 
 
 def _build_centre_node(graph, centre):
@@ -222,7 +223,26 @@ def build_eleccio_transportista(lot, offer, sender=None, receiver=None, request_
     )
 
 
-def build_shipping_details_response(request_data, offer, sender=None, receiver=None, request_content=None, msgcnt=0):
+def build_shipping_details_response(
+    request_data_or_order_id,
+    city_or_offer,
+    offer=None,
+    sender=None,
+    receiver=None,
+    request_content=None,
+    invoice=None,
+    msgcnt=0,
+):
+    if isinstance(request_data_or_order_id, dict):
+        request_data = request_data_or_order_id
+        offer = city_or_offer
+    else:
+        request_data = {
+            "order_id": request_data_or_order_id,
+            "city": city_or_offer,
+            "delivery_date": offer["delivery_date"],
+            "products": [],
+        }
     graph = Graph()
     bind_namespaces(graph)
     content = AZON[f"shipping-confirmation-{request_data['order_id']}-{offer['lot_id']}"]
@@ -250,6 +270,8 @@ def build_shipping_details_response(request_data, offer, sender=None, receiver=N
     graph.add((lot_node, AZON.SobreComanda, AZON[f"order-{request_data['order_id']}"]))
     for product in request_data["products"]:
         _add_product_to_graph(graph, lot_node, product, centre_node=centre_node)
+    if invoice is not None:
+        embed_invoice_in_content(graph, content, invoice)
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
 
@@ -319,4 +341,10 @@ def extract_shipping_details(graph):
     shipments = extract_shipping_details_list(graph)
     if not shipments:
         raise ValueError("Shipping confirmation does not contain shipment details")
-    return shipments[0]
+    details = shipments[0]
+    props = get_message_properties(graph)
+    content = props["content"]
+    invoice = extract_invoice_from_content(graph, content)
+    if invoice is not None:
+        details["invoice"] = invoice
+    return details

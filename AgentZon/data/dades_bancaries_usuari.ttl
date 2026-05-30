@@ -1,0 +1,17 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+
+azon:bank-user-111111 a azon:Usuari ;
+    azon:DadesBancariesUsuari "card-****-111111" ;
+    azon:IdUsuari "111111" ;
+    azon:MetodePagament "1122" .
+
+azon:bank-user-1234 a azon:Usuari ;
+    azon:DadesBancariesUsuari "card-****-1234" ;
+    azon:IdUsuari "1234" ;
+    azon:MetodePagament "121212121212" .
+
+azon:bank-user-a a azon:Usuari ;
+    azon:DadesBancariesUsuari "card-****-a" ;
+    azon:IdUsuari "a" ;
+    azon:MetodePagament "a" .
+

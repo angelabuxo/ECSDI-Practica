@@ -1,10 +1,12 @@
 """Purchase agent coordinating ACL purchase requests and browser wrappers."""
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import unicodedata
 from difflib import SequenceMatcher
 from pathlib import Path
 from urllib.parse import urlencode, urlsplit, urlunsplit
+from uuid import uuid4
 
 from flask import Flask, redirect, render_template, request
 from rdflib import Graph, RDF
@@ -36,6 +38,12 @@ from protocols.compra import (
     parse_peticio_compra,
 )
 from protocols.directory import build_search_message, parse_directory_response, parse_directory_responses
+from protocols.pagament import (
+    build_peticio_pagament,
+    build_peticio_registre_dades_usuari,
+    extract_confirmacio_pagament,
+    extract_confirmacio_registre_dades,
+)
 from services.catalog_service import get_products_by_ids
 from services.order_service import (
     build_order,
@@ -191,13 +199,69 @@ def match_candidate_centres(candidate_centres, registered_centres):
 
 
 def enrich_shipment_details(order, product, selected_centre, shipping_details):
-    return {
+    details = {
         **shipping_details,
         "product_id": shipping_details.get("product_id") or product["product_id"],
         "product_name": product.get("name"),
         "centre_id": shipping_details.get("centre_id") or selected_centre.get("centre_id"),
         "centre_city": shipping_details.get("centre_city") or selected_centre.get("centre_city"),
         "delivery_city": order["shipping_data"]["city"],
+    }
+    if shipping_details.get("invoice") is not None:
+        details["invoice"] = shipping_details["invoice"]
+    return details
+
+
+def build_invoice_summary(order, shipments):
+    lines = sorted(
+        [
+            {"product_id": product["product_id"], "name": product["name"], "price": product["price"]}
+            for product in order["products"]
+        ],
+        key=lambda line: line["product_id"],
+    )
+    shipment_invoices = [shipment["invoice"] for shipment in shipments if shipment.get("invoice")]
+    fallback_products_subtotal = round(sum(line["price"] for line in lines), 2)
+    fallback_transport_cost = round(sum(shipment["price"] for shipment in shipments), 2)
+
+    if not shipment_invoices:
+        return {
+            "payment_id": "PENDENT",
+            "order_id": order["order_id"],
+            "amount": round(fallback_products_subtotal + fallback_transport_cost, 2),
+            "method": order["shipping_data"]["payment_method"],
+            "status": "PENDENT",
+            "date": "",
+            "lines": lines,
+            "transport_cost": fallback_transport_cost,
+            "products_subtotal": fallback_products_subtotal,
+        }
+
+    payment_ids = sorted({invoice["payment_id"] for invoice in shipment_invoices if invoice.get("payment_id")})
+    statuses = sorted({invoice["status"] for invoice in shipment_invoices if invoice.get("status")})
+    methods = sorted({invoice["method"] for invoice in shipment_invoices if invoice.get("method")})
+    dates = sorted({invoice["date"] for invoice in shipment_invoices if invoice.get("date")})
+    products_subtotal = round(sum(invoice.get("products_subtotal", 0.0) for invoice in shipment_invoices), 2)
+    transport_cost = round(sum(invoice.get("transport_cost", 0.0) for invoice in shipment_invoices), 2)
+    amount = round(sum(invoice.get("amount", 0.0) for invoice in shipment_invoices), 2)
+
+    if not products_subtotal:
+        products_subtotal = fallback_products_subtotal
+    if not transport_cost:
+        transport_cost = fallback_transport_cost
+    if not amount:
+        amount = round(products_subtotal + transport_cost, 2)
+
+    return {
+        "payment_id": ", ".join(payment_ids) if payment_ids else "PENDENT",
+        "order_id": order["order_id"],
+        "amount": amount,
+        "method": methods[0] if len(methods) == 1 else order["shipping_data"]["payment_method"],
+        "status": ", ".join(statuses) if statuses else "PENDENT",
+        "date": ", ".join(dates),
+        "lines": lines,
+        "transport_cost": transport_cost,
+        "products_subtotal": products_subtotal,
     }
 
 
@@ -311,6 +375,7 @@ def pla_informar_usuari_sobre_l_enviament(order, shipments):
         order=order,
         shipments=shipments,
         final_delivery_date=max(shipment["delivery_date"] for shipment in shipments),
+        invoice=build_invoice_summary(order, shipments),
     )
 
 
@@ -326,6 +391,32 @@ def pla_delegar_registre_compra(order):
     return extract_registration_confirmation(reply)
 
 
+def pla_registrar_dades_d_usuari_al_cobrador(order):
+    # Delega al Cobrador el registre de les dades bancaries de l'usuari (cap. Guardar dades bancaries).
+    try:
+        cobrador = resolve_agent(DSO.CobradorAgent)
+    except Exception:
+        logger.warning("No s'ha pogut resoldre el Cobrador; s'omet el registre de dades bancaries")
+        return None
+    shipping = order["shipping_data"]
+    bank_data = f"card-****-{order['user_id']}"
+    message = build_peticio_registre_dades_usuari(
+        order["user_id"],
+        bank_data,
+        shipping["payment_method"],
+        sender=AGENT.uri,
+        receiver=cobrador.uri,
+        msgcnt=next_counter(),
+    )
+    try:
+        status = extract_confirmacio_registre_dades(MESSAGE_SENDER(message, cobrador.address))
+    except Exception:
+        logger.warning("El Cobrador no ha confirmat el registre de dades bancaries de l'usuari %s", order["user_id"])
+        return None
+    logger.info("Dades bancaries de l'usuari %s registrades al Cobrador (%s)", order["user_id"], status)
+    return status
+
+
 def pla_enviament_extern(order, external_logistics_agent):
     # External-shipping integration point for marketplace products.
     return build_peticio_enviament_extern(
@@ -334,6 +425,43 @@ def pla_enviament_extern(order, external_logistics_agent):
         receiver=external_logistics_agent.uri,
         msgcnt=next_counter(),
     )
+
+
+def pla_cobrament_extern(order, seller_id):
+    # Pla de cobrament extern: demana al Cobrador que cobri els productes d'enviament extern.
+    try:
+        cobrador = resolve_agent(DSO.CobradorAgent)
+    except Exception:
+        logger.warning("No s'ha pogut resoldre el Cobrador; s'omet el cobrament extern")
+        return None
+    amount = round(sum(product.get("price", 0.0) for product in order["products"]), 2)
+    payment = {
+        "payment_id": f"PAY-{uuid4().hex[:8].upper()}",
+        "order_id": order["order_id"],
+        "amount": amount,
+        "method": "transferencia",
+        "user_id": order["user_id"],
+        "seller_id": seller_id,
+        "product_ids": [product["product_id"] for product in order["products"]],
+    }
+    message = build_peticio_pagament(
+        payment,
+        sender=AGENT.uri,
+        receiver=cobrador.uri,
+        msgcnt=next_counter(),
+    )
+    try:
+        confirmation = extract_confirmacio_pagament(MESSAGE_SENDER(message, cobrador.address))
+    except Exception:
+        logger.warning("El cobrament extern de la comanda %s no s'ha pogut completar", order["order_id"])
+        return None
+    logger.info(
+        "Cobrament extern confirmat per la comanda %s (pagament %s, venedor %s)",
+        order["order_id"],
+        confirmation["payment_id"],
+        seller_id,
+    )
+    return confirmation
 
 
 def process_purchase_request(request_data, acl_sender=None, request_content=None):
@@ -352,8 +480,13 @@ def process_purchase_request(request_data, acl_sender=None, request_content=None
     logger.info("Persistint comanda %s amb %d productes", order["order_id"], len(products))
     save_user_shipping_data(SHIPPING_PATH, order)
     save_order(ORDERS_PATH, order)
-    pla_delegar_registre_compra(order)
-    shipping_details = pla_producte_als_nostres_magatzems(order)
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        bank_future = executor.submit(pla_registrar_dades_d_usuari_al_cobrador, order)
+        history_future = executor.submit(pla_delegar_registre_compra, order)
+        shipping_future = executor.submit(pla_producte_als_nostres_magatzems, order)
+        shipping_details = shipping_future.result()
+        bank_future.result()
+        history_future.result()
     final_delivery_date = max(shipment["delivery_date"] for shipment in shipping_details)
     update_order_final_delivery_date(ORDERS_PATH, order["order_id"], final_delivery_date)
     response = build_confirmacio_enviament(

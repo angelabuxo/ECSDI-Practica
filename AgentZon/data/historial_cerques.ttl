@@ -172,4 +172,3 @@ azon:search-76 azon:CategoriaConsulta "" ;
         azon:product-P1024 ;
     azon:TextConsulta "" ;
     azon:TotalResultats 24 .
-

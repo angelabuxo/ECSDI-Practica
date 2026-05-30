@@ -41,4 +41,3 @@ azon:purchase-ORDER-FD3C35DB azon:IdComanda "ORDER-FD3C35DB" ;
     azon:SobreComanda azon:order-ORDER-FD3C35DB ;
     azon:SobreProducte azon:product-P1015,
         azon:product-P1016 .
-

@@ -41,4 +41,3 @@ azon:shipping-ORDER-FD3C35DB azon:Carrer "holajafkaf" ;
     azon:MetodePagament "vv" ;
     azon:Nom "josep" ;
     azon:Prioritat "24h" .
-

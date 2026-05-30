@@ -1,29 +1,76 @@
 <!doctype html>
-<html lang="en">
+<html lang="ca">
 <head>
   <meta charset="utf-8">
-  <title>Shipping Summary</title>
+  <title>Comanda {{ order.order_id }}</title>
+  <style>
+    body { font-family: sans-serif; max-width: 760px; margin: 2rem auto; color: #222; }
+    h1, h2 { margin-bottom: 0.4rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+    td.amount, th.amount { text-align: right; }
+    .totals td { border-top: 2px solid #222; font-weight: bold; }
+    .meta { color: #555; margin: 0.2rem 0; }
+    .status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; background: #eef7ee; }
+    .shipment-list { padding-left: 1.2rem; }
+    .shipment-list li { margin-bottom: 0.8rem; }
+  </style>
 </head>
 <body>
-  <h1>Order {{ order.order_id }}</h1>
-  <h2>Products</h2>
-  <ul>
-    {% for product in order.products %}
-    <li>{{ product.name }}</li>
-    {% endfor %}
-  </ul>
-  <h2>Shipping</h2>
-  <p>Delivery city: {{ order.shipping_data.city }}</p>
-  <p>Final delivery date: {{ final_delivery_date }}</p>
-  <ul>
+  <h1>Resum de la comanda</h1>
+  <p class="meta">Comanda: <strong>{{ order.order_id }}</strong></p>
+  <p class="meta">Pagament(s): <strong>{{ invoice.payment_id }}</strong></p>
+  <p class="meta">Data del pagament: <strong>{{ invoice.date or "—" }}</strong></p>
+  <p class="meta">Mètode de pagament: <strong>{{ invoice.method }}</strong></p>
+  <p class="meta">Estat: <span class="status">{{ invoice.status }}</span></p>
+  <p class="meta">Client: <strong>{{ order.shipping_data.user_name }}</strong> ({{ order.user_id }})</p>
+  <p class="meta">Adreça: <strong>{{ order.shipping_data.street_address }}, {{ order.shipping_data.city }}</strong></p>
+  <p class="meta">Data final d'entrega: <strong>{{ final_delivery_date }}</strong></p>
+
+  <h2>Factura</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Producte</th>
+        <th>ID</th>
+        <th class="amount">Preu</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in invoice.lines %}
+      <tr>
+        <td>{{ line.name }}</td>
+        <td>{{ line.product_id }}</td>
+        <td class="amount">{{ "%.2f"|format(line.price) }} €</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">Subtotal productes</td>
+        <td class="amount">{{ "%.2f"|format(invoice.products_subtotal) }} €</td>
+      </tr>
+      <tr>
+        <td colspan="2">Transport total</td>
+        <td class="amount">{{ "%.2f"|format(invoice.transport_cost) }} €</td>
+      </tr>
+      <tr class="totals">
+        <td colspan="2">Total</td>
+        <td class="amount">{{ "%.2f"|format(invoice.amount) }} €</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <h2>Enviaments</h2>
+  <ul class="shipment-list">
     {% for shipment in shipments %}
     <li>
       <strong>{{ shipment.product_name or shipment.product_id }}</strong><br>
-      Logistics centre: {{ shipment.centre_id }}{% if shipment.centre_city %} ({{ shipment.centre_city }}){% endif %}<br>
-      Transport: {{ shipment.transport_id }}<br>
-      Transport name: {{ shipment.transport_name }}<br>
-      Delivery date: {{ shipment.delivery_date }}<br>
-      Price: {{ shipment.price }}
+      Centre logístic: {{ shipment.centre_id }}{% if shipment.centre_city %} ({{ shipment.centre_city }}){% endif %}<br>
+      Transportista: {{ shipment.transport_name }} ({{ shipment.transport_id }})<br>
+      Ciutat de lliurament: {{ shipment.city }}<br>
+      Data d'entrega: {{ shipment.delivery_date }}<br>
+      Cost del transport: {{ "%.2f"|format(shipment.price) }} €
     </li>
     {% endfor %}
   </ul>

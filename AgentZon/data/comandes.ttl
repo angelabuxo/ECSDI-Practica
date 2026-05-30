@@ -83,4 +83,3 @@ azon:order-ORDER-FD3C35DB a azon:Comanda ;
     azon:Prioritat "24h" ;
     azon:TeProducte azon:product-P1015,
         azon:product-P1016 .
-
