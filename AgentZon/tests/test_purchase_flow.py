@@ -6,6 +6,8 @@ from pathlib import Path
 
 from rdflib import Namespace, RDF
 
+from tests.support import LocalMessageRouter, load_catalog_products
+
 
 class PurchaseFlowTests(unittest.TestCase):
     def test_acl_search_and_purchase_flow_uses_comm_endpoints_and_returns_embedded_order(self):
@@ -26,8 +28,6 @@ class PurchaseFlowTests(unittest.TestCase):
         from protocols.compra import build_peticio_compra
         from protocols.directory import build_register_message
         from services.bootstrap import bootstrap_phase2_data
-        from tests.support import LocalMessageRouter
-
         agn = Namespace("http://www.agentes.org#")
         directory = Agent(
             "DirectoryAgent",
@@ -76,7 +76,9 @@ class PurchaseFlowTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             data_dir = Path(tmpdir)
-            bootstrap_phase2_data(data_dir)
+            bootstrap_phase2_data(data_dir, product_count=10, seed=21)
+            sample_product = load_catalog_products(data_dir / "productes.ttl")[0]
+            search_token = sample_product["name"].split()[0]
 
             agent_directory.configure_runtime({"agent": directory})
             router.register_app(directory.address, agent_directory.app)
@@ -161,11 +163,11 @@ class PurchaseFlowTests(unittest.TestCase):
 
             search_graph, search_content = build_peticio_cerca(
                 "search-request-1",
-                text="wireless",
-                category="audio",
-                brand="AuralMax",
-                min_price=20.0,
-                max_price=150.0,
+                text=search_token,
+                category=sample_product["category"],
+                brand=sample_product["brand"],
+                min_price=sample_product["price"] - 0.01,
+                max_price=sample_product["price"] + 0.01,
             )
             search_message = build_message(
                 search_graph,
@@ -180,7 +182,10 @@ class PurchaseFlowTests(unittest.TestCase):
             search_props = get_message_properties(search_reply)
             self.assertEqual(search_props["performative"], ACL.inform)
             found_products = extract_result_products(search_reply, search_props["content"])
-            self.assertEqual([product["product_id"] for product in found_products], ["P1001"])
+            self.assertIn(
+                sample_product["product_id"],
+                {product["product_id"] for product in found_products},
+            )
 
             purchase_message = build_peticio_compra(
                 "purchase-request-1",
@@ -192,7 +197,7 @@ class PurchaseFlowTests(unittest.TestCase):
                     "city": "Barcelona",
                     "priority": "48h",
                 },
-                product_ids=["P1001"],
+                product_ids=[sample_product["product_id"]],
                 sender=compra.uri,
                 receiver=compra.uri,
                 msgcnt=21,
@@ -210,12 +215,12 @@ class PurchaseFlowTests(unittest.TestCase):
             self.assertIn((embedded_order, RDF.type, AZON.Comanda), confirmation)
             self.assertEqual(
                 {str(value).rsplit("product-", 1)[-1] for value in confirmation.objects(embedded_order, AZON.TeProducte)},
-                {"P1001"},
+                {sample_product["product_id"]},
             )
 
             history_text = (data_dir / "historial_compres.ttl").read_text(encoding="utf-8")
             self.assertIn("USER-1", history_text)
-            self.assertIn("P1001", history_text)
+            self.assertIn(sample_product["product_id"], history_text)
 
             search_history_text = (data_dir / "historial_cerques.ttl").read_text(encoding="utf-8")
             self.assertIn("TextConsulta", search_history_text)
@@ -249,8 +254,6 @@ class PurchaseFlowTests(unittest.TestCase):
         from protocols.centre_logistic import build_resposta_oferta_transport
         from protocols.directory import build_register_message
         from services.bootstrap import bootstrap_phase2_data
-        from tests.support import LocalMessageRouter
-
         agn = Namespace("http://www.agentes.org#")
         directory = Agent(
             "DirectoryAgent",
@@ -299,7 +302,9 @@ class PurchaseFlowTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             data_dir = Path(tmpdir)
-            bootstrap_phase2_data(data_dir)
+            bootstrap_phase2_data(data_dir, product_count=10, seed=21)
+            sample_product = load_catalog_products(data_dir / "productes.ttl")[0]
+            search_token = sample_product["name"].split()[0]
 
             agent_directory.configure_runtime({"agent": directory})
             router.register_app(directory.address, agent_directory.app)
@@ -387,28 +392,28 @@ class PurchaseFlowTests(unittest.TestCase):
             search_response = search_client.post(
                 "/iface",
                 data={
-                    "text": "wireless",
-                    "category": "audio",
-                    "brand": "AuralMax",
-                    "min_price": "20",
-                    "max_price": "150",
+                    "text": search_token,
+                    "category": sample_product["category"],
+                    "brand": sample_product["brand"],
+                    "min_price": f"{sample_product['price'] - 0.01:.2f}",
+                    "max_price": f"{sample_product['price'] + 0.01:.2f}",
                 },
             )
             search_html = search_response.get_data(as_text=True)
-            self.assertIn("Wireless Headphones", search_html)
+            self.assertIn(sample_product["name"], search_html)
             self.assertIn("/iface", search_html)
 
             compra_client = agent_compra.app.test_client()
             purchase_page = compra_client.post(
                 "/iface",
-                data={"selected_product_ids": ["P1001"]},
+                data={"selected_product_ids": [sample_product["product_id"]]},
             )
             self.assertIn("Confirm purchase", purchase_page.get_data(as_text=True))
 
             confirmation = compra_client.post(
                 "/iface",
                 data={
-                    "selected_product_ids": ["P1001"],
+                    "selected_product_ids": [sample_product["product_id"]],
                     "user_id": "USER-1",
                     "user_name": "Pol",
                     "street_address": "Carrer de Mallorca 401",
@@ -420,7 +425,7 @@ class PurchaseFlowTests(unittest.TestCase):
             confirmation_html = confirmation.get_data(as_text=True)
             self.assertIn("economy", confirmation_html)
             self.assertIn("ORDER-", confirmation_html)
-            self.assertIn("Wireless Headphones", confirmation_html)
+            self.assertIn(sample_product["name"], confirmation_html)
 
 
 if __name__ == "__main__":

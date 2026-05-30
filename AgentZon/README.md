@@ -79,3 +79,19 @@ Endpoints principals:
 
 - `DirectoryAgent`: `/Register`, `/Info`, `/Stop`
 - `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `Transportista`: `/comm`, `/iface`, `/Stop`
+
+## 3) Regenerar dades aleatòries del catàleg
+
+El catàleg RDF de `productes.ttl` i les ubicacions de `ubicacions_productes.ttl` es poden generar aleatòriament a partir d'una plantilla de categories, marques i rangs coherents.
+
+Exemple:
+
+```bash
+.venv/bin/python -m services.bootstrap --data-dir data --product-count 24
+```
+
+Si vols que el catàleg sigui reproduïble entre execucions:
+
+```bash
+.venv/bin/python -m services.bootstrap --data-dir data --product-count 24 --seed 21
+```

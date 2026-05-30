@@ -19,3 +19,19 @@ class LocalMessageRouter:
         graph = Graph()
         graph.parse(data=response.get_data(as_text=True), format="xml")
         return graph
+
+
+def load_catalog_products(catalog_path):
+    from services.catalog_service import search_products
+
+    products = search_products(
+        catalog_path,
+        {
+            "text": "",
+            "category": "",
+            "brand": "",
+            "min_price": None,
+            "max_price": None,
+        },
+    )
+    return sorted(products, key=lambda product: product["product_id"])

@@ -9,6 +9,8 @@ from pathlib import Path
 
 import requests
 
+from tests.support import load_catalog_products
+
 
 class DistributedSmokeTests(unittest.TestCase):
     def test_agents_run_as_separate_processes_and_complete_one_order(self):
@@ -29,7 +31,9 @@ class DistributedSmokeTests(unittest.TestCase):
         processes = []
         with tempfile.TemporaryDirectory() as tmpdir:
             data_dir = Path(tmpdir)
-            bootstrap_phase2_data(data_dir)
+            bootstrap_phase2_data(data_dir, product_count=10, seed=21)
+            sample_product = load_catalog_products(data_dir / "productes.ttl")[0]
+            search_token = sample_product["name"].split()[0]
 
             commands = [
                 base_cmd + ["agents.agent_directory", "--host", host, "--port", str(ports["directory"])],
@@ -143,19 +147,19 @@ class DistributedSmokeTests(unittest.TestCase):
                 search_response = requests.post(
                     f"http://{host}:{ports['cercador']}/iface",
                     data={
-                        "text": "wireless",
-                        "category": "audio",
-                        "brand": "AuralMax",
-                        "min_price": "20",
-                        "max_price": "150",
+                        "text": search_token,
+                        "category": sample_product["category"],
+                        "brand": sample_product["brand"],
+                        "min_price": f"{sample_product['price'] - 0.01:.2f}",
+                        "max_price": f"{sample_product['price'] + 0.01:.2f}",
                     },
                     timeout=10,
                 )
-                self.assertIn("Wireless Headphones", search_response.text)
+                self.assertIn(sample_product["name"], search_response.text)
 
                 purchase_page = requests.post(
                     f"http://{host}:{ports['compra']}/iface",
-                    data={"selected_product_ids": ["P1001"]},
+                    data={"selected_product_ids": [sample_product["product_id"]]},
                     timeout=10,
                 )
                 self.assertIn("Confirm purchase", purchase_page.text)
@@ -163,7 +167,7 @@ class DistributedSmokeTests(unittest.TestCase):
                 confirmation = requests.post(
                     f"http://{host}:{ports['compra']}/iface",
                     data={
-                        "selected_product_ids": ["P1001"],
+                        "selected_product_ids": [sample_product["product_id"]],
                         "user_id": "USER-DIST",
                         "user_name": "Distributed Demo",
                         "street_address": "Gran Via 100",
