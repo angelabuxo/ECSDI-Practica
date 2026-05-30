@@ -80,10 +80,21 @@ def pla_de_cerca(criteria):
     return products
 
 
-def pla_de_presentacio(criteria, products):
+def purchase_error_message():
+    return request.args.get("purchase_error", "")
+
+
+def pla_de_presentacio(criteria, products, purchase_error=""):
     compra_agent = resolve_compra_agent()
     compra_url = replace_path(compra_agent.address, "/iface")
-    return render_template("cercador.html", criteria=criteria, products=products, compra_url=compra_url, search_path="/iface")
+    return render_template(
+        "cercador.html",
+        criteria=criteria,
+        products=products,
+        compra_url=compra_url,
+        search_path="/iface",
+        purchase_error=purchase_error,
+    )
 
 
 def replace_path(address, new_path):
@@ -95,7 +106,14 @@ def replace_path(address, new_path):
 @app.route("/iface", methods=["GET", "POST"])
 def iface():
     if request.method == "GET":
-        return render_template("cercador.html", criteria=default_criteria(), products=[], compra_url="", search_path="/iface")
+        return render_template(
+            "cercador.html",
+            criteria=default_criteria(),
+            products=[],
+            compra_url="",
+            search_path="/iface",
+            purchase_error=purchase_error_message(),
+        )
     request_graph, content = build_peticio_cerca(
         f"iface-search-{next_counter()}",
         text=request.form.get("text", ""),

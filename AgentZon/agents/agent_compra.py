@@ -2,8 +2,9 @@
 
 import argparse
 from pathlib import Path
+from urllib.parse import urlencode, urlsplit, urlunsplit
 
-from flask import Flask, render_template, request
+from flask import Flask, redirect, render_template, request
 from rdflib import Graph, RDF
 
 from AgentUtil.ACL import ACL
@@ -53,6 +54,7 @@ CATALOG_PATH = None
 ORDERS_PATH = None
 SHIPPING_PATH = None
 COUNTER = 0
+NO_PRODUCTS_ERROR = "Has de seleccionar almenys un producte abans de continuar la compra."
 
 
 # Runtime configuration ------------------------------------------------------------
@@ -82,8 +84,28 @@ def resolve_agent(agent_type):
     return parse_directory_response(response)
 
 
+def resolve_cercador_iface_url():
+    cercador_agent = resolve_agent(DSO.CercadorAgent)
+    parsed = urlsplit(cercador_agent.address)
+    return urlunsplit((parsed.scheme, parsed.netloc, "/iface", "", ""))
+
+
+def redirect_to_cercador_with_error():
+    query = urlencode({"purchase_error": NO_PRODUCTS_ERROR})
+    return redirect(f"{resolve_cercador_iface_url()}?{query}")
+
+
+def normalize_selected_product_ids(product_ids):
+    return [product_id for product_id in product_ids if product_id]
+
+
 def pla_demanar_informacio_usuari(selected_product_ids):
-    products = get_products_by_ids(CATALOG_PATH, selected_product_ids)
+    product_ids = normalize_selected_product_ids(selected_product_ids)
+    if not product_ids:
+        return redirect_to_cercador_with_error()
+    products = get_products_by_ids(CATALOG_PATH, product_ids)
+    if not products:
+        return redirect_to_cercador_with_error()
     return render_template("compra.html", products=products, iface_path="/iface")
 
 
@@ -143,6 +165,8 @@ def pla_enviament_extern(order, external_logistics_agent):
 
 
 def process_purchase_request(request_data, acl_sender=None, request_content=None):
+    if not request_data.get("product_ids"):
+        raise ValueError(NO_PRODUCTS_ERROR)
     shipping = {
         "user_id": request_data["user_id"],
         "user_name": request_data["shipping_data"]["user_name"],
@@ -194,9 +218,16 @@ def build_purchase_request_from_form(form_data):
 @app.route("/iface", methods=["GET", "POST"])
 def iface():
     if request.method == "GET":
-        return pla_demanar_informacio_usuari([])
+        return redirect(resolve_cercador_iface_url())
+
+    selected_product_ids = normalize_selected_product_ids(request.form.getlist("selected_product_ids"))
+    if not selected_product_ids:
+        logger.warning("Compra interrompuda: cap producte seleccionat")
+        return redirect_to_cercador_with_error()
+
     if "user_id" not in request.form:
-        return pla_demanar_informacio_usuari(request.form.getlist("selected_product_ids"))
+        return pla_demanar_informacio_usuari(selected_product_ids)
+
     request_graph, content = build_purchase_request_from_form(request.form)
     request_data = parse_peticio_compra(request_graph, content)
     _, order, shipping_details = process_purchase_request(
@@ -231,6 +262,15 @@ def comm():
             msgcnt=next_counter(),
         ).serialize(format="xml")
     request_data = parse_peticio_compra(message_graph, content)
+    if not request_data.get("product_ids"):
+        logger.warning("Compra ACL rebutjada: cap producte a la peticio")
+        return build_message(
+            Graph(),
+            ACL.failure,
+            sender=AGENT.uri,
+            receiver=properties.get("sender"),
+            msgcnt=next_counter(),
+        ).serialize(format="xml")
     response, _, _ = process_purchase_request(
         request_data,
         acl_sender=properties.get("sender"),
