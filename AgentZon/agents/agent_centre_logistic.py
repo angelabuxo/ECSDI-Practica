@@ -29,6 +29,8 @@ from protocols.centre_logistic import (
     extract_transport_offer,
     parse_productes_localitzats,
 )
+from protocols.directory import build_search_message, parse_directory_response
+from protocols.pagament import build_peticio_cobrament_intern, extract_confirmacio_pagament
 from services.logistics_service import choose_best_offer, create_lot
 from services.rdf_store import load_graph
 
@@ -38,6 +40,7 @@ logger = config_logger(level=1)
 
 # Agent attributes -----------------------------------------------------------------
 AGENT = None
+DIRECTORY_AGENT = None
 MESSAGE_SENDER = send_message
 TRANSPORT_AGENTS = []
 LOTS_PATH = None
@@ -46,8 +49,9 @@ COUNTER = 0
 
 # Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
-    global AGENT, MESSAGE_SENDER, TRANSPORT_AGENTS, LOTS_PATH, COUNTER
+    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, TRANSPORT_AGENTS, LOTS_PATH, COUNTER
     AGENT = settings["agent"]
+    DIRECTORY_AGENT = settings.get("directory_agent")
     MESSAGE_SENDER = message_sender
     TRANSPORT_AGENTS = settings["transport_agents"]
     LOTS_PATH = Path(settings["data_dir"]) / "lots.ttl"
@@ -100,22 +104,33 @@ def pla_assignar_producte_a_lot(request_data):
 
 def pla_cerca_de_transportista(lot):
     def query_transport(transport_agent):
-        message, _ = build_peticio_transport(
-            lot,
-            sender=AGENT.uri,
-            receiver=transport_agent.uri,
-            msgcnt=next_counter(),
-        )
-        return extract_transport_offer(MESSAGE_SENDER(message, transport_agent.address))
+        try:
+            message, _ = build_peticio_transport(
+                lot,
+                sender=AGENT.uri,
+                receiver=transport_agent.uri,
+                msgcnt=next_counter(),
+            )
+            return extract_transport_offer(MESSAGE_SENDER(message, transport_agent.address))
+        except Exception as exc:
+            logger.warning(
+                "No s'ha pogut obtenir oferta de %s (%s): %s",
+                transport_agent.name,
+                transport_agent.address,
+                exc,
+            )
+            return None
 
     with ThreadPoolExecutor(max_workers=len(TRANSPORT_AGENTS)) as executor:
         futures = [executor.submit(query_transport, agent) for agent in TRANSPORT_AGENTS]
-        offers = [future.result() for future in futures]
-        logger.info("Rebudes %d ofertes de transport per al lot %s", len(offers), lot["lot_id"])
-        return offers
+        offers = [offer for future in futures if (offer := future.result()) is not None]
+    if not offers:
+        raise RuntimeError("Cap transportista disponible per al lot {}".format(lot["lot_id"]))
+    logger.info("Rebudes %d ofertes de transport per al lot %s", len(offers), lot["lot_id"])
+    return offers
 
 
-def pla_de_transportista_escollit(lot, offers, receiver, request_content=None):
+def pla_de_transportista_escollit(lot, offers, request_content=None):
     selected = choose_best_offer(offers)
     selected_transport = next(
         agent
@@ -131,19 +146,56 @@ def pla_de_transportista_escollit(lot, offers, receiver, request_content=None):
         msgcnt=next_counter(),
     )
     MESSAGE_SENDER(selection_message, selected_transport.address)
-    return build_shipping_details_response(
-        lot["order_id"],
-        lot["city"],
-        selected,
+    return selected
+
+
+def resolve_agent(agent_type):
+    message = build_search_message(AGENT, agent_type, DIRECTORY_AGENT, msgcnt=next_counter())
+    response = MESSAGE_SENDER(message, DIRECTORY_AGENT.address)
+    return parse_directory_response(response)
+
+
+def pla_producte_sha_enviat(request_data, selected):
+    if DIRECTORY_AGENT is None:
+        return None
+    try:
+        cobrador = resolve_agent(DSO.CobradorAgent)
+    except Exception:
+        logger.warning("No s'ha pogut resoldre el Cobrador; s'omet el cobrament intern")
+        return None
+    shipment = {
+        "order_id": request_data["order_id"],
+        "user_id": request_data["user_id"],
+        "city": request_data["city"],
+        "delivery_date": selected["delivery_date"],
+        "transport_cost": selected["price"],
+        "product_ids": [product["product_id"] for product in request_data["products"]],
+    }
+    logger.info(
+        "Productes de la comanda %s enviats; notificant el Cobrador perque cobri",
+        shipment["order_id"],
+    )
+    message = build_peticio_cobrament_intern(
+        shipment,
         sender=AGENT.uri,
-        receiver=receiver,
-        request_content=request_content,
+        receiver=cobrador.uri,
         msgcnt=next_counter(),
     )
-
-
-def pla_producte_sha_enviat():
-    return None
+    try:
+        confirmation = extract_confirmacio_pagament(MESSAGE_SENDER(message, cobrador.address))
+    except Exception:
+        logger.warning("El cobrament intern de la comanda %s no s'ha pogut completar", shipment["order_id"])
+        return None
+    if not confirmation.get("payment_id"):
+        logger.warning("El Cobrador no ha retornat una factura per a la comanda %s", shipment["order_id"])
+        return None
+    logger.info(
+        "Cobrament intern confirmat per la comanda %s (pagament %s, %.2f EUR)",
+        shipment["order_id"],
+        confirmation["payment_id"],
+        confirmation["amount"],
+    )
+    return confirmation
 
 
 # Communication handling -----------------------------------------------------------
@@ -162,10 +214,31 @@ def comm():
         ).serialize(format="xml")
     content = properties["content"]
     request_data = parse_productes_localitzats(message_graph, content)
-    lot = pla_assignar_producte_a_lot(request_data)
-    offers = pla_cerca_de_transportista(lot)
-    response = pla_de_transportista_escollit(lot, offers, properties.get("sender"), request_content=content)
-    return response.serialize(format="xml")
+    try:
+        lot = pla_assignar_producte_a_lot(request_data)
+        offers = pla_cerca_de_transportista(lot)
+        selected = pla_de_transportista_escollit(lot, offers, request_content=content)
+        invoice = pla_producte_sha_enviat(request_data, selected)
+        response = build_shipping_details_response(
+            lot["order_id"],
+            lot["city"],
+            selected,
+            sender=AGENT.uri,
+            receiver=properties.get("sender"),
+            request_content=content,
+            invoice=invoice,
+            msgcnt=next_counter(),
+        )
+        return response.serialize(format="xml")
+    except Exception as exc:
+        logger.error("Error processant la comanda %s: %s", request_data.get("order_id"), exc)
+        return build_message(
+            Graph(),
+            ACL.failure,
+            sender=AGENT.uri,
+            receiver=properties.get("sender"),
+            msgcnt=next_counter(),
+        ).serialize(format="xml")
 
 
 @app.route("/iface")
@@ -195,6 +268,7 @@ def main():
     configure_runtime(
         {
             "agent": build_agent("CentreLogisticAgent", "CentreLogistic", args.port, host=hostname),
+            "directory_agent": build_directory_agent(args.directory_host, args.directory_port),
             "data_dir": Path(args.data_dir),
             "transport_agents": [
                 build_agent(

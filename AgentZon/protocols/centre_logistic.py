@@ -6,6 +6,7 @@ from rdflib.namespace import XSD
 from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AGN, AZON, ONTOLOGY_URI, bind_namespaces
+from protocols.pagament import embed_invoice_in_content, extract_invoice_from_content
 
 
 # Product localization -------------------------------------------------------------
@@ -185,7 +186,16 @@ def build_eleccio_transportista(lot, offer, sender=None, receiver=None, request_
     )
 
 
-def build_shipping_details_response(order_id, city, offer, sender=None, receiver=None, request_content=None, msgcnt=0):
+def build_shipping_details_response(
+    order_id,
+    city,
+    offer,
+    sender=None,
+    receiver=None,
+    request_content=None,
+    invoice=None,
+    msgcnt=0,
+):
     graph = Graph()
     bind_namespaces(graph)
     content = AZON[f"shipping-confirmation-{order_id}"]
@@ -204,6 +214,8 @@ def build_shipping_details_response(order_id, city, offer, sender=None, receiver
     graph.add((content, AZON.SobreComanda, AZON[f"order-{order_id}"]))
     graph.add((content, AZON.AssignatATransportista, transport_node))
     graph.add((transport_node, RDF.type, AZON.Transportista))
+    if invoice is not None:
+        embed_invoice_in_content(graph, content, invoice)
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
 
@@ -221,7 +233,7 @@ def build_shipping_details_response(order_id, city, offer, sender=None, receiver
 def extract_shipping_details(graph):
     props = get_message_properties(graph)
     content = props["content"]
-    return {
+    details = {
         "order_id": str(graph.value(content, AZON.IdComanda)),
         "lot_id": str(graph.value(content, AZON.IdLot)),
         "transport_id": str(graph.value(content, AZON.IdTransportista)),
@@ -230,3 +242,7 @@ def extract_shipping_details(graph):
         "delivery_date": str(graph.value(content, AZON.DataEntregaDefinitiva)),
         "price": float(graph.value(content, AZON.CostTransport)),
     }
+    invoice = extract_invoice_from_content(graph, content)
+    if invoice is not None:
+        details["invoice"] = invoice
+    return details

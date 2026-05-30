@@ -1,1 +1,77 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+
+azon:order-ORDER-3C6E20F3 a azon:Comanda ;
+    azon:Carrer "a" ;
+    azon:Ciutat "a" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:DataEntregaDefinitiva "2026-06-02" ;
+    azon:IdComanda "ORDER-3C6E20F3" ;
+    azon:IdUsuari "a" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1019 .
+
+azon:order-ORDER-4A6366C3 a azon:Comanda ;
+    azon:Carrer "a" ;
+    azon:Ciutat "a" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:DataEntregaDefinitiva "2026-06-02" ;
+    azon:IdComanda "ORDER-4A6366C3" ;
+    azon:IdUsuari "a" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1019 .
+
+azon:order-ORDER-56519F0C a azon:Comanda ;
+    azon:Carrer "mm" ;
+    azon:Ciutat "mm" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:DataEntregaDefinitiva "2026-05-31" ;
+    azon:IdComanda "ORDER-56519F0C" ;
+    azon:IdUsuari "1234" ;
+    azon:MetodePagament "121212121212" ;
+    azon:Nom "xelo" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1017,
+        azon:product-P1018 .
+
+azon:order-ORDER-9BC802E7 a azon:Comanda ;
+    azon:Carrer "Matadepera" ;
+    azon:Ciutat "bcn" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:DataEntregaDefinitiva "2026-06-02" ;
+    azon:IdComanda "ORDER-9BC802E7" ;
+    azon:IdUsuari "111111" ;
+    azon:MetodePagament "1122" ;
+    azon:Nom "angi" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1016,
+        azon:product-P1019 .
+
+azon:order-ORDER-BA01C270 a azon:Comanda ;
+    azon:Carrer "mm" ;
+    azon:Ciutat "mm" ;
+    azon:DataEntrega "2026-05-31" ;
+    azon:DataEntregaDefinitiva "2026-06-02" ;
+    azon:IdComanda "ORDER-BA01C270" ;
+    azon:IdUsuari "1234" ;
+    azon:MetodePagament "121212121212" ;
+    azon:Nom "xelo" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1017,
+        azon:product-P1018 .
 

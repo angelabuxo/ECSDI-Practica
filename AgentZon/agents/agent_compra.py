@@ -1,8 +1,10 @@
 """Purchase agent coordinating ACL purchase requests and browser wrappers."""
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.parse import urlencode, urlsplit, urlunsplit
+from uuid import uuid4
 
 from flask import Flask, redirect, render_template, request
 from rdflib import Graph, RDF
@@ -34,6 +36,12 @@ from protocols.compra import (
     parse_peticio_compra,
 )
 from protocols.directory import build_search_message, parse_directory_response
+from protocols.pagament import (
+    build_peticio_pagament,
+    build_peticio_registre_dades_usuari,
+    extract_confirmacio_pagament,
+    extract_confirmacio_registre_dades,
+)
 from services.catalog_service import get_products_by_ids
 from services.order_service import (
     build_order,
@@ -139,7 +147,31 @@ def pla_producte_als_nostres_magatzems(order):
 
 
 def pla_informar_usuari_sobre_l_enviament(order, shipping_details):
-    return render_template("shipping_summary.html", order=order, shipping_details=shipping_details)
+    invoice = shipping_details.get("invoice")
+    if not invoice:
+        lines = [
+            {"product_id": product["product_id"], "name": product["name"], "price": product["price"]}
+            for product in order["products"]
+        ]
+        products_subtotal = round(sum(line["price"] for line in lines), 2)
+        transport_cost = shipping_details["price"]
+        invoice = {
+            "payment_id": "PENDENT",
+            "order_id": order["order_id"],
+            "amount": round(products_subtotal + transport_cost, 2),
+            "method": order["shipping_data"]["payment_method"],
+            "status": "PENDENT",
+            "date": "",
+            "lines": lines,
+            "transport_cost": transport_cost,
+            "products_subtotal": products_subtotal,
+        }
+    return render_template(
+        "shipping_summary.html",
+        order=order,
+        shipping_details=shipping_details,
+        invoice=invoice,
+    )
 
 
 def pla_delegar_registre_compra(order):
@@ -154,6 +186,32 @@ def pla_delegar_registre_compra(order):
     return extract_registration_confirmation(reply)
 
 
+def pla_registrar_dades_d_usuari_al_cobrador(order):
+    # Delega al Cobrador el registre de les dades bancaries de l'usuari (cap. Guardar dades bancaries).
+    try:
+        cobrador = resolve_agent(DSO.CobradorAgent)
+    except Exception:
+        logger.warning("No s'ha pogut resoldre el Cobrador; s'omet el registre de dades bancaries")
+        return None
+    shipping = order["shipping_data"]
+    bank_data = f"card-****-{order['user_id']}"
+    message = build_peticio_registre_dades_usuari(
+        order["user_id"],
+        bank_data,
+        shipping["payment_method"],
+        sender=AGENT.uri,
+        receiver=cobrador.uri,
+        msgcnt=next_counter(),
+    )
+    try:
+        status = extract_confirmacio_registre_dades(MESSAGE_SENDER(message, cobrador.address))
+    except Exception:
+        logger.warning("El Cobrador no ha confirmat el registre de dades bancaries de l'usuari %s", order["user_id"])
+        return None
+    logger.info("Dades bancaries de l'usuari %s registrades al Cobrador (%s)", order["user_id"], status)
+    return status
+
+
 def pla_enviament_extern(order, external_logistics_agent):
     # External-shipping integration point for marketplace products.
     return build_peticio_enviament_extern(
@@ -162,6 +220,43 @@ def pla_enviament_extern(order, external_logistics_agent):
         receiver=external_logistics_agent.uri,
         msgcnt=next_counter(),
     )
+
+
+def pla_cobrament_extern(order, seller_id):
+    # Pla de cobrament extern: demana al Cobrador que cobri els productes d'enviament extern.
+    try:
+        cobrador = resolve_agent(DSO.CobradorAgent)
+    except Exception:
+        logger.warning("No s'ha pogut resoldre el Cobrador; s'omet el cobrament extern")
+        return None
+    amount = round(sum(product.get("price", 0.0) for product in order["products"]), 2)
+    payment = {
+        "payment_id": f"PAY-{uuid4().hex[:8].upper()}",
+        "order_id": order["order_id"],
+        "amount": amount,
+        "method": "transferencia",
+        "user_id": order["user_id"],
+        "seller_id": seller_id,
+        "product_ids": [product["product_id"] for product in order["products"]],
+    }
+    message = build_peticio_pagament(
+        payment,
+        sender=AGENT.uri,
+        receiver=cobrador.uri,
+        msgcnt=next_counter(),
+    )
+    try:
+        confirmation = extract_confirmacio_pagament(MESSAGE_SENDER(message, cobrador.address))
+    except Exception:
+        logger.warning("El cobrament extern de la comanda %s no s'ha pogut completar", order["order_id"])
+        return None
+    logger.info(
+        "Cobrament extern confirmat per la comanda %s (pagament %s, venedor %s)",
+        order["order_id"],
+        confirmation["payment_id"],
+        seller_id,
+    )
+    return confirmation
 
 
 def process_purchase_request(request_data, acl_sender=None, request_content=None):
@@ -180,8 +275,13 @@ def process_purchase_request(request_data, acl_sender=None, request_content=None
     logger.info("Persistint comanda %s amb %d productes", order["order_id"], len(products))
     save_user_shipping_data(SHIPPING_PATH, order)
     save_order(ORDERS_PATH, order)
-    pla_delegar_registre_compra(order)
-    shipping_details = pla_producte_als_nostres_magatzems(order)
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        bank_future = executor.submit(pla_registrar_dades_d_usuari_al_cobrador, order)
+        history_future = executor.submit(pla_delegar_registre_compra, order)
+        shipping_future = executor.submit(pla_producte_als_nostres_magatzems, order)
+        shipping_details = shipping_future.result()
+        bank_future.result()
+        history_future.result()
     update_order_final_delivery_date(ORDERS_PATH, order["order_id"], shipping_details["delivery_date"])
     response = build_confirmacio_enviament(
         order,
