@@ -60,13 +60,13 @@ from services.order_service import (
     update_order_shipping_status,
 )
 from services.shipping_service import (
+    aggregate_order_status,
     build_invoice_summary,
     collect_warehouse_reservations,
     group_shipments_for_display,
 )
 from services.shipping_tracking_service import (
     aggregate_official_delivery_date,
-    aggregate_order_status,
     apply_shipping_update,
     load_tracking_for_order,
     save_localization_confirmations,
@@ -219,6 +219,7 @@ def pla_informar_usuari_sobre_l_enviament(order, shipments):
         [shipment["delivery_date"] for shipment in shipments if shipment.get("delivery_date")],
         default=order.get("final_delivery_date") or order["delivery_date"],
     )
+    order = {**order, "status": aggregate_order_status(shipments)}
     return render_template(
         "shipping_summary.html",
         order=order,
@@ -332,7 +333,7 @@ def carregar_comanda(order_id):
         "shipping_data": stored_order["shipping_data"],
         "delivery_date": stored_order["delivery_date"],
         "final_delivery_date": stored_order.get("final_delivery_date"),
-        "status": aggregate_order_status(tracking_entries, stored_order["product_ids"]),
+        "status": aggregate_order_status(tracking_entries),
     }
 
 
@@ -382,12 +383,10 @@ def process_shipping_update(message_graph, content, sender):
 
     for order_id in touched_orders:
         entries = load_tracking_for_order(TRACKING_PATH, order_id)
-        stored_order = load_order(ORDERS_PATH, order_id)
-        order_product_ids = stored_order["product_ids"] if stored_order else []
         update_order_shipping_status(
             ORDERS_PATH,
             order_id,
-            status=aggregate_order_status(entries, order_product_ids),
+            status=aggregate_order_status(entries),
             final_delivery_date=aggregate_official_delivery_date(entries),
         )
 

@@ -1,6 +1,17 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+azon:reservation-LOT-0C1E71-ORDER-E1DB0A83 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Girona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-E1DB0A83" ;
+    azon:IdLot "LOT-0C1E71" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreComanda azon:order-ORDER-E1DB0A83 ;
+    azon:SobreLot azon:lot-LOT-0C1E71 ;
+    azon:TeProducte azon:product-P1027 .
+
 azon:reservation-LOT-299661-ORDER-9B6F87D3 a azon:ConfirmacioLocalitzacio ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-06" ;
@@ -22,6 +33,17 @@ azon:reservation-LOT-299661-ORDER-E03FD6A5 a azon:ConfirmacioLocalitzacio ;
     azon:SobreComanda azon:order-ORDER-E03FD6A5 ;
     azon:SobreLot azon:lot-LOT-299661 ;
     azon:TeProducte azon:product-P1010 .
+
+azon:reservation-LOT-4C00BE-ORDER-9FA92835 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Lleida" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-9FA92835" ;
+    azon:IdLot "LOT-4C00BE" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreComanda azon:order-ORDER-9FA92835 ;
+    azon:SobreLot azon:lot-LOT-4C00BE ;
+    azon:TeProducte azon:product-P1027 .
 
 azon:reservation-LOT-70C36F-ORDER-E5E26CF8 a azon:ConfirmacioLocalitzacio ;
     azon:Ciutat "d" ;
@@ -107,6 +129,26 @@ azon:reservation-LOT-ECE8F9-ORDER-C9E9EDA5 a azon:ConfirmacioLocalitzacio ;
         azon:product-P1027,
         azon:product-P1028,
         azon:product-P1029 .
+
+azon:lot-LOT-0C1E71 a azon:Lot ;
+    azon:Ciutat "Girona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdCentreLogistic "CL-BCN" ;
+    azon:IdLot "LOT-0C1E71" ;
+    azon:PesTotal "0.22"^^xsd:float ;
+    azon:SobreComanda azon:order-ORDER-E1DB0A83 ;
+    azon:TeProducte azon:product-P1027 .
+
+azon:lot-LOT-4C00BE a azon:Lot ;
+    azon:Ciutat "Lleida" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdCentreLogistic "CL-BCN" ;
+    azon:IdLot "LOT-4C00BE" ;
+    azon:PesTotal "0.22"^^xsd:float ;
+    azon:SobreComanda azon:order-ORDER-9FA92835 ;
+    azon:TeProducte azon:product-P1027 .
 
 azon:lot-LOT-70C36F a azon:Lot ;
     azon:Ciutat "d" ;
@@ -240,12 +282,6 @@ azon:product-P1025 a azon:Producte ;
     azon:Pes "0.05"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-BCN .
 
-azon:product-P1027 a azon:Producte ;
-    azon:IdProducte "P1027" ;
-    azon:Nom "iPhone 17 Pro" ;
-    azon:Pes "0.22"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-BCN .
-
 azon:product-P1028 a azon:Producte ;
     azon:IdProducte "P1028" ;
     azon:Nom "MacBook Pro M4" ;
@@ -268,6 +304,12 @@ azon:product-P1010 a azon:Producte ;
     azon:IdProducte "P1010" ;
     azon:Nom "Slim Desk Lamp" ;
     azon:Pes "1.93"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN .
+
+azon:product-P1027 a azon:Producte ;
+    azon:IdProducte "P1027" ;
+    azon:Nom "iPhone 17 Pro" ;
+    azon:Pes "0.22"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-BCN .
 
 azon:centre-CL-BCN a azon:CentreLogistic ;

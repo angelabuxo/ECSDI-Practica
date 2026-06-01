@@ -513,21 +513,30 @@ class PurchaseFlowTests(unittest.TestCase):
             self.assertEqual(parsed["lots"][0]["lot_id"], "LOT-SHARED")
             self.assertEqual(parsed["lots"][0]["centre_id"], "CL-BCN")
 
-    def test_aggregate_order_status_requires_all_products_shipped(self):
-        from services.shipping_tracking_service import aggregate_order_status
+    def test_aggregate_order_status_requires_all_shipments_sent(self):
+        from services.shipping_service import aggregate_order_status
 
-        partial_entries = [
-            {"status": "ENVIAT", "products": [{"product_id": "P1"}]},
-            {"status": "ASSIGNAT", "products": [{"product_id": "P2"}]},
+        partial_shipments = [
+            {
+                "status": "ENVIAT",
+                "centre_id": "CL-BCN",
+                "lot_id": "LOT-1",
+                "products": [{"product_id": "P1", "name": "Alpha"}],
+            },
+            {
+                "status": "ASSIGNAT",
+                "centre_id": "CL-GI",
+                "lot_id": "LOT-2",
+                "products": [{"product_id": "P2", "name": "Beta"}],
+            },
         ]
-        self.assertEqual(aggregate_order_status(partial_entries, ["P1", "P2"]), "ASSIGNAT")
-        self.assertEqual(aggregate_order_status(partial_entries, ["P1"]), "ENVIAT")
+        self.assertEqual(aggregate_order_status(partial_shipments), "ASSIGNAT")
 
-        complete_entries = [
-            {"status": "ENVIAT", "products": [{"product_id": "P1"}]},
-            {"status": "ENVIAT", "products": [{"product_id": "P2"}]},
+        complete_shipments = [
+            {**partial_shipments[0]},
+            {**partial_shipments[1], "status": "ENVIAT"},
         ]
-        self.assertEqual(aggregate_order_status(complete_entries, ["P1", "P2"]), "ENVIAT")
+        self.assertEqual(aggregate_order_status(complete_shipments), "ENVIAT")
 
     def test_bank_registration_skipped_when_user_already_in_database(self):
         from AgentUtil.Agent import Agent

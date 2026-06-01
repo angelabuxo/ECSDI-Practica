@@ -166,38 +166,6 @@ def load_tracking_for_order(tracking_path, order_id):
     return sorted(entries, key=lambda entry: (entry["lot_id"], entry["order_id"]))
 
 
-def _collect_shipped_product_ids(entries):
-    shipped = set()
-    for entry in entries:
-        if entry.get("status") != "ENVIAT":
-            continue
-        for product in entry.get("products", []):
-            product_id = product.get("product_id")
-            if product_id:
-                shipped.add(product_id)
-    return shipped
-
-
-def aggregate_order_status(entries, order_product_ids=None):
-    if not entries:
-        return "OBERT"
-
-    expected = {product_id for product_id in (order_product_ids or []) if product_id}
-    if expected:
-        shipped = _collect_shipped_product_ids(entries)
-        if shipped >= expected:
-            return "ENVIAT"
-        if shipped & expected:
-            return "ASSIGNAT"
-
-    statuses = {entry["status"] for entry in entries}
-    if statuses == {"ENVIAT"}:
-        return "ENVIAT"
-    if statuses.issubset({"ASSIGNAT", "ENVIAT"}):
-        return "ASSIGNAT"
-    return "OBERT"
-
-
 def aggregate_official_delivery_date(entries):
     official_dates = [entry["official_delivery_date"] for entry in entries if entry.get("official_delivery_date")]
     if len(official_dates) != len(entries):

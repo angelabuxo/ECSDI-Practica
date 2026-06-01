@@ -1,6 +1,19 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+azon:reservation-LOT-10024E-ORDER-9FA92835 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Lleida" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-9FA92835" ;
+    azon:IdLot "LOT-10024E" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreComanda azon:order-ORDER-9FA92835 ;
+    azon:SobreLot azon:lot-LOT-10024E ;
+    azon:TeProducte azon:product-P1006,
+        azon:product-P1018,
+        azon:product-P1024 .
+
 azon:reservation-LOT-427EBF-ORDER-9B6F87D3 a azon:ConfirmacioLocalitzacio ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-06" ;
@@ -47,6 +60,17 @@ azon:reservation-LOT-4D77E8-ORDER-8B0B0369 a azon:ConfirmacioLocalitzacio ;
     azon:TeProducte azon:product-P1003,
         azon:product-P1006,
         azon:product-P1009 .
+
+azon:reservation-LOT-4D77E8-ORDER-E1DB0A83 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Girona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-E1DB0A83" ;
+    azon:IdLot "LOT-4D77E8" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreComanda azon:order-ORDER-E1DB0A83 ;
+    azon:SobreLot azon:lot-LOT-4D77E8 ;
+    azon:TeProducte azon:product-P1003 .
 
 azon:reservation-LOT-863768-ORDER-E5E26CF8 a azon:ConfirmacioLocalitzacio ;
     azon:Ciutat "d" ;
@@ -118,17 +142,17 @@ azon:reservation-LOT-D70C56-ORDER-8322112D a azon:ConfirmacioLocalitzacio ;
     azon:SobreLot azon:lot-LOT-D70C56 ;
     azon:TeProducte azon:product-P1009 .
 
-azon:lot-LOT-4D77E8 a azon:Lot ;
-    azon:Ciutat "Girona" ;
+azon:lot-LOT-10024E a azon:Lot ;
+    azon:Ciutat "Lleida" ;
     azon:DataEntrega "2026-06-06" ;
     azon:Estat "OBERT" ;
     azon:IdCentreLogistic "CL-TGN" ;
-    azon:IdLot "LOT-4D77E8" ;
-    azon:PesTotal "3.47"^^xsd:float ;
-    azon:SobreComanda azon:order-ORDER-8B0B0369 ;
-    azon:TeProducte azon:product-P1003,
-        azon:product-P1006,
-        azon:product-P1009 .
+    azon:IdLot "LOT-10024E" ;
+    azon:PesTotal "4.23"^^xsd:float ;
+    azon:SobreComanda azon:order-ORDER-9FA92835 ;
+    azon:TeProducte azon:product-P1006,
+        azon:product-P1018,
+        azon:product-P1024 .
 
 azon:lot-LOT-863768 a azon:Lot ;
     azon:Ciutat "d" ;
@@ -150,6 +174,19 @@ azon:lot-LOT-D70C56 a azon:Lot ;
     azon:PesTotal "1.85"^^xsd:float ;
     azon:SobreComanda azon:order-ORDER-8322112D ;
     azon:TeProducte azon:product-P1009 .
+
+azon:lot-LOT-4D77E8 a azon:Lot ;
+    azon:Ciutat "Girona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdCentreLogistic "CL-TGN" ;
+    azon:IdLot "LOT-4D77E8" ;
+    azon:PesTotal "4.04"^^xsd:float ;
+    azon:SobreComanda azon:order-ORDER-8B0B0369,
+        azon:order-ORDER-E1DB0A83 ;
+    azon:TeProducte azon:product-P1003,
+        azon:product-P1006,
+        azon:product-P1009 .
 
 azon:lot-LOT-AB50F6 a azon:Lot ;
     azon:Ciutat "a" ;
@@ -183,12 +220,6 @@ azon:product-P1015 a azon:Producte ;
     azon:Pes "0.31"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-TGN .
 
-azon:product-P1018 a azon:Producte ;
-    azon:IdProducte "P1018" ;
-    azon:Nom "Ambient Desk Lamp" ;
-    azon:Pes "1.47"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-TGN .
-
 azon:lot-LOT-427EBF a azon:Lot ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-06" ;
@@ -203,22 +234,16 @@ azon:lot-LOT-427EBF a azon:Lot ;
         azon:product-P1009,
         azon:product-P1015 .
 
+azon:product-P1018 a azon:Producte ;
+    azon:IdProducte "P1018" ;
+    azon:Nom "Ambient Desk Lamp" ;
+    azon:Pes "1.47"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
 azon:product-P1003 a azon:Producte ;
     azon:IdProducte "P1003" ;
     azon:Nom "Smart Speaker" ;
     azon:Pes "0.57"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-TGN .
-
-azon:product-P1024 a azon:Producte ;
-    azon:IdProducte "P1024" ;
-    azon:Nom "Compact Speaker" ;
-    azon:Pes "1.71"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-TGN .
-
-azon:product-P1006 a azon:Producte ;
-    azon:IdProducte "P1006" ;
-    azon:Nom "Smart Speaker" ;
-    azon:Pes "1.05"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-TGN .
 
 azon:product-P1021 a azon:Producte ;
@@ -227,9 +252,21 @@ azon:product-P1021 a azon:Producte ;
     azon:Pes "0.68"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-TGN .
 
+azon:product-P1024 a azon:Producte ;
+    azon:IdProducte "P1024" ;
+    azon:Nom "Compact Speaker" ;
+    azon:Pes "1.71"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
 azon:centre-CL-TGN a azon:CentreLogistic ;
     azon:Ciutat "Tarragona" ;
     azon:IdCentreLogistic "CL-TGN" .
+
+azon:product-P1006 a azon:Producte ;
+    azon:IdProducte "P1006" ;
+    azon:Nom "Smart Speaker" ;
+    azon:Pes "1.05"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
 
 azon:product-P1009 a azon:Producte ;
     azon:IdProducte "P1009" ;

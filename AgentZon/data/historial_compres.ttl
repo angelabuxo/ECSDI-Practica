@@ -59,6 +59,26 @@ azon:purchase-ORDER-9B6F87D3 azon:IdComanda "ORDER-9B6F87D3" ;
         azon:product-P1010,
         azon:product-P1011 .
 
+azon:purchase-ORDER-9FA92835 azon:IdComanda "ORDER-9FA92835" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreComanda azon:order-ORDER-9FA92835 ;
+    azon:SobreProducte azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1008,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 .
+
 azon:purchase-ORDER-B966E37B azon:IdComanda "ORDER-B966E37B" ;
     azon:IdUsuari "127.0.0.1" ;
     azon:SobreComanda azon:order-ORDER-B966E37B ;
@@ -102,6 +122,20 @@ azon:purchase-ORDER-E03FD6A5 azon:IdComanda "ORDER-E03FD6A5" ;
     azon:SobreProducte azon:product-P1009,
         azon:product-P1010,
         azon:product-P1011 .
+
+azon:purchase-ORDER-E1DB0A83 azon:IdComanda "ORDER-E1DB0A83" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreComanda azon:order-ORDER-E1DB0A83 ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 .
 
 azon:purchase-ORDER-E5E26CF8 azon:IdComanda "ORDER-E5E26CF8" ;
     azon:IdUsuari "127.0.0.1" ;

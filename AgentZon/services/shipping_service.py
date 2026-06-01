@@ -98,7 +98,7 @@ def build_invoice_summary(order, shipments):
             "order_id": order["order_id"],
             "amount": round(fallback_products_subtotal + fallback_transport_cost, 2),
             "method": order["shipping_data"]["payment_method"],
-            "status": "PENDENT",
+            "payment_status": "PENDENT",
             "date": "",
             "lines": lines,
             "transport_cost": fallback_transport_cost,
@@ -125,7 +125,7 @@ def build_invoice_summary(order, shipments):
         "order_id": order["order_id"],
         "amount": amount,
         "method": methods[0] if len(methods) == 1 else order["shipping_data"]["payment_method"],
-        "status": ", ".join(statuses) if statuses else "PENDENT",
+        "payment_status": ", ".join(statuses) if statuses else "PENDENT",
         "date": ", ".join(dates),
         "lines": lines,
         "transport_cost": transport_cost,
@@ -191,6 +191,25 @@ def group_shipments_for_display(shipments):
         groups[group_key]["index"] = index
         groups[group_key]["shared_shipment"] = len(groups[group_key]["products"]) > 1
     return [groups[group_key] for group_key in group_order]
+
+
+def aggregate_order_status(shipments):
+    """Estat global de la comanda segons els enviaments mostrats al resum.
+
+    ENVIAT només quan tots els grans d'enviament (centre + lot) estan ENVIAT.
+    """
+    shipment_groups = group_shipments_for_display(shipments)
+    if not shipment_groups:
+        return "OBERT"
+
+    statuses = [group.get("status", "OBERT") for group in shipment_groups]
+    if all(status == "ENVIAT" for status in statuses):
+        return "ENVIAT"
+    if any(status == "ENVIAT" for status in statuses):
+        return "ASSIGNAT"
+    if all(status == "ASSIGNAT" for status in statuses):
+        return "ASSIGNAT"
+    return "OBERT"
 
 
 def fulfill_centre_group(order, group, sender_uri, message_sender, next_msgcnt):
