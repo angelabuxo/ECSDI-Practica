@@ -3,252 +3,94 @@
 <head>
   <meta charset="utf-8">
   <title>AgentZon Opinador</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f4efe7;
-      --panel: #fffaf2;
-      --ink: #1f2933;
-      --muted: #6b7280;
-      --accent: #0f766e;
-      --accent-2: #b45309;
-      --line: #e5dccf;
-      --shadow: 0 18px 48px rgba(31, 41, 51, 0.12);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Georgia, "Times New Roman", serif;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at top left, rgba(15, 118, 110, 0.14), transparent 34%),
-        radial-gradient(circle at top right, rgba(180, 83, 9, 0.12), transparent 28%),
-        linear-gradient(180deg, #f8f4eb 0%, var(--bg) 100%);
-      min-height: 100vh;
-    }
-    .shell {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 2rem 1rem 3rem;
-    }
-    .hero {
-      display: grid;
-      grid-template-columns: 1.4fr 0.8fr;
-      gap: 1rem;
-      align-items: end;
-      margin-bottom: 1.25rem;
-    }
-    .hero-card, .panel {
-      background: rgba(255, 250, 242, 0.9);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(8px);
-    }
-    .hero-card { padding: 1.5rem; }
-    h1 {
-      margin: 0 0 0.5rem;
-      font-size: clamp(2rem, 4vw, 3.6rem);
-      line-height: 0.95;
-      letter-spacing: -0.03em;
-    }
-    .lede {
-      margin: 0;
-      color: var(--muted);
-      max-width: 60ch;
-      font-size: 1.05rem;
-    }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0.75rem;
-    }
-    .stat {
-      padding: 1rem;
-      border-radius: 18px;
-      background: linear-gradient(180deg, rgba(15, 118, 110, 0.08), rgba(180, 83, 9, 0.04));
-      border: 1px solid var(--line);
-    }
-    .stat strong { display: block; font-size: 1.35rem; margin-bottom: 0.2rem; }
-    .stat span { color: var(--muted); font-size: 0.92rem; }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-    .panel { padding: 1.2rem; }
-    .panel h2 { margin: 0 0 0.75rem; font-size: 1.25rem; }
-    .panel p.meta { margin: 0.2rem 0; color: var(--muted); }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      padding: 0.35rem 0.7rem;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      background: rgba(15, 118, 110, 0.12);
-      color: var(--accent);
-    }
-    form { display: grid; gap: 0.8rem; }
-    .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
-    label { display: grid; gap: 0.35rem; font-size: 0.93rem; color: var(--muted); }
-    input, textarea, select {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 0.8rem 0.9rem;
-      font: inherit;
-      color: var(--ink);
-      background: #fffdf9;
-    }
-    textarea { min-height: 110px; resize: vertical; }
-    button {
-      justify-self: start;
-      border: none;
-      border-radius: 999px;
-      padding: 0.85rem 1.2rem;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      background: linear-gradient(135deg, var(--accent), #115e59);
-      color: white;
-      box-shadow: 0 8px 20px rgba(15, 118, 110, 0.18);
-    }
-    .button-secondary {
-      background: linear-gradient(135deg, var(--accent-2), #7c2d12);
-    }
-    .feedback-list, .product-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      gap: 0.75rem;
-    }
-    .feedback-item, .product-item {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 0.9rem 1rem;
-      background: #fffdf8;
-    }
-    .product-item strong { display: block; margin-bottom: 0.15rem; }
-    .product-item .meta { font-size: 0.9rem; }
-    .confirmation {
-      padding: 0.8rem 1rem;
-      border-radius: 14px;
-      background: rgba(15, 118, 110, 0.12);
-      border: 1px solid rgba(15, 118, 110, 0.25);
-      color: #0f3d3a;
-      margin-bottom: 0.85rem;
-    }
-    @media (max-width: 900px) {
-      .hero, .grid, .fields { grid-template-columns: 1fr; }
-    }
-  </style>
 </head>
 <body>
-  <div class="shell">
-    <section class="hero">
-      <div class="hero-card">
-        <span class="badge">Agent Opinador</span>
-        <h1>Feedback, recomanacions i devolucions</h1>
-        <p class="lede">
-          Aquest espai reuneix les tres capacitats de postvenda: recollir valoracions, generar suggeriments personalitzats i validar les consultes de devolució a partir de l'historial.
-        </p>
-      </div>
-      <div class="stats">
-        <div class="stat">
-          <strong>{{ stats.feedback_count }}</strong>
-          <span>feedback registrats</span>
-        </div>
-        <div class="stat">
-          <strong>{{ stats.purchase_count }}</strong>
-          <span>compres a l'historial</span>
-        </div>
-        <div class="stat">
-          <strong>{{ stats.recommendation_count }}</strong>
-          <span>suggeriments visibles</span>
-        </div>
-      </div>
-    </section>
+  <h1>AgentZon Opinador</h1>
 
-    {% if confirmation %}
-    <div class="confirmation">{{ confirmation }}</div>
-    {% endif %}
+  {% if not show_dashboard %}
+  <p>
+    Aquest espai de l'agent Opinador permet gestionar suggeriments i registrar feedback
+    dels productes comprats.
+  </p>
+  <p>
+    <strong>Estat ràpid</strong>: {{ stats.feedback_count }} feedback registrats,
+    {{ stats.purchase_count }} compres a l'historial.
+  </p>
+  <form method="get" action="{{ iface_path }}">
+    <input type="hidden" name="view" value="dashboard">
+    <button type="submit">Obrir suggeriments i feedback</button>
+  </form>
+  {% else %}
+  <p>
+    <a href="{{ iface_path }}">Tornar a la pantalla inicial d'Opinador</a>
+  </p>
 
-    <section class="grid">
-      <article class="panel">
-        <h2>Demanar feedback</h2>
-        {% if feedback_context %}
-        <p class="meta">Usuari: <strong>{{ feedback_context.user_id }}</strong></p>
-        <p class="meta">Comanda: <strong>{{ feedback_context.order_id }}</strong></p>
-        <p class="meta">Productes: <strong>{{ feedback_context.product_ids|join(', ') }}</strong></p>
-        {% endif %}
-        <form method="post" action="{{ iface_path }}">
-          <input type="hidden" name="action" value="feedback">
-          <div class="fields">
-            <label>Feedback ID<input type="text" name="feedback_id" value="{{ feedback_context.feedback_id if feedback_context else '' }}" required></label>
-            <label>Usuari ID<input type="text" name="user_id" value="{{ feedback_context.user_id if feedback_context else '' }}" required></label>
-            <label>Comanda ID<input type="text" name="order_id" value="{{ feedback_context.order_id if feedback_context else '' }}" required></label>
-            <label>Puntuació
-              <select name="rating" required>
-                {% for rating in range(1, 6) %}
-                <option value="{{ rating }}">{{ rating }}</option>
-                {% endfor %}
-              </select>
-            </label>
-          </div>
-          <label>Productes (separats per comes)
-            <input type="text" name="product_ids" value="{{ feedback_context.product_ids|join(', ') if feedback_context else '' }}" required>
-          </label>
-          <label>Comentari
-            <textarea name="comment" placeholder="Descriu la teva experiència"></textarea>
-          </label>
-          <button type="submit">Registrar feedback</button>
-        </form>
-      </article>
+  {% if confirmation %}
+  <p><strong>{{ confirmation }}</strong></p>
+  {% endif %}
 
-      <article class="panel">
-        <h2>Crear suggeriments</h2>
-        {% if recommendation_context %}
-        <p class="meta">Usuari prioritzat: <strong>{{ recommendation_context.user_id }}</strong></p>
-        {% endif %}
-        <form method="get" action="{{ iface_path }}">
-          <div class="fields">
-            <label>Usuari ID<input type="text" name="user_id" value="{{ recommendation_context.user_id if recommendation_context else '' }}" placeholder="Opcional"></label>
-            <label>Nombre de suggeriments<input type="number" min="1" max="10" name="limit" value="{{ recommendation_limit }}"></label>
-          </div>
-          <button class="button-secondary" type="submit">Actualitzar suggeriments</button>
-        </form>
-
-        <ul class="product-list" style="margin-top: 1rem;">
-          {% for product in recommendations %}
-          <li class="product-item">
-            <strong>{{ product.name }}</strong>
-            <div class="meta">{{ product.product_id }} · {{ product.brand }} · {{ product.category }}</div>
-            <div class="meta">{{ product.price }} €</div>
-          </li>
-          {% else %}
-          <li class="product-item">Encara no hi ha suggeriments disponibles.</li>
-          {% endfor %}
-        </ul>
-      </article>
-    </section>
-
-    <section class="panel" style="margin-top: 1rem;">
-      <h2>Últimes compres detectades</h2>
-      <ul class="feedback-list">
-        {% for purchase in recent_purchases %}
-        <li class="feedback-item">
-          <strong>{{ purchase.order_id }}</strong>
-          <div class="meta">Usuari: {{ purchase.user_id }} · Data compra: {{ purchase.purchase_date or '—' }}</div>
-          <div class="meta">Productes: {{ purchase.product_ids|join(', ') }}</div>
-        </li>
-        {% else %}
-        <li class="feedback-item">No hi ha compres registrades encara.</li>
+  <h2>Demanar feedback</h2>
+  {% if feedback_context %}
+  <p>Usuari: <strong>{{ feedback_context.user_id }}</strong></p>
+  <p>Comanda: <strong>{{ feedback_context.order_id }}</strong></p>
+  <p>Productes: <strong>{{ feedback_context.product_ids|join(', ') }}</strong></p>
+  {% endif %}
+  <form method="post" action="{{ iface_path }}">
+    <input type="hidden" name="view" value="dashboard">
+    <input type="hidden" name="action" value="feedback">
+    <label>Feedback ID <input type="text" name="feedback_id" value="{{ feedback_context.feedback_id if feedback_context else '' }}" required></label>
+    <label>Usuari ID <input type="text" name="user_id" value="{{ feedback_context.user_id if feedback_context else '' }}" required></label>
+    <label>Comanda ID <input type="text" name="order_id" value="{{ feedback_context.order_id if feedback_context else '' }}" required></label>
+    <label>Puntuació
+      <select name="rating" required>
+        {% for rating in range(1, 6) %}
+        <option value="{{ rating }}">{{ rating }}</option>
         {% endfor %}
-      </ul>
-    </section>
-  </div>
+      </select>
+    </label>
+    <label>Productes (separats per comes)
+      <input type="text" name="product_ids" value="{{ feedback_context.product_ids|join(', ') if feedback_context else '' }}" required>
+    </label>
+    <label>Comentari
+      <textarea name="comment" placeholder="Descriu la teva experiència"></textarea>
+    </label>
+    <button type="submit">Registrar feedback</button>
+  </form>
+
+  <h2>Crear suggeriments</h2>
+  {% if recommendation_context %}
+  <p>Usuari prioritzat: <strong>{{ recommendation_context.user_id }}</strong></p>
+  {% endif %}
+  <form method="get" action="{{ iface_path }}">
+    <input type="hidden" name="view" value="dashboard">
+    <label>Usuari ID <input type="text" name="user_id" value="{{ recommendation_context.user_id if recommendation_context else '' }}" placeholder="Opcional"></label>
+    <label>Nombre de suggeriments <input type="number" min="1" max="10" name="limit" value="{{ recommendation_limit }}"></label>
+    <button type="submit">Actualitzar suggeriments</button>
+  </form>
+
+  <ul>
+    {% for product in recommendations %}
+    <li>
+      <strong>{{ product.name }}</strong>
+      <div>{{ product.product_id }} | {{ product.brand }} | {{ product.category }} | {{ product.price }} €</div>
+    </li>
+    {% else %}
+    <li>Encara no hi ha suggeriments disponibles.</li>
+    {% endfor %}
+  </ul>
+
+  <h2>Últimes compres detectades</h2>
+  <ul>
+    {% for purchase in recent_purchases %}
+    <li>
+      <strong>{{ purchase.order_id }}</strong>
+      <div>Usuari: {{ purchase.user_id }} | Data compra: {{ purchase.purchase_date or '—' }}</div>
+      <div>Productes: {{ purchase.product_ids|join(', ') }}</div>
+    </li>
+    {% else %}
+    <li>No hi ha compres registrades encara.</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
 </body>
 </html>

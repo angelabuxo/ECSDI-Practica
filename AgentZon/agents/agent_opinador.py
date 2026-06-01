@@ -111,8 +111,37 @@ def _load_dashboard_stats(recommendations):
     }
 
 
+def _parse_recommendation_limit(raw_value):
+    try:
+        parsed = int(raw_value)
+    except (TypeError, ValueError):
+        return 5
+    return max(1, min(10, parsed))
+
+
+def _build_dashboard_context(interface_user_id, recommendation_limit, confirmation):
+    feedback_context = _build_feedback_request_context(interface_user_id or None)
+    recommendation_user_id = _resolve_recommendation_user_id(interface_user_id or (feedback_context or {}).get("user_id"))
+    recommendations = pla_de_creacio_de_suggeriments(recommendation_user_id, limit=recommendation_limit)
+    recent_purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=interface_user_id or None)
+    if not recent_purchases:
+        recent_purchases = load_purchase_records(PURCHASE_HISTORY_PATH)[-5:]
+    stats = _load_dashboard_stats(recommendations)
+    return {
+        "iface_path": "/iface",
+        "show_dashboard": True,
+        "confirmation": confirmation,
+        "feedback_context": feedback_context,
+        "recommendation_context": {"user_id": recommendation_user_id} if recommendation_user_id else None,
+        "recommendation_limit": recommendation_limit,
+        "recommendations": recommendations,
+        "recent_purchases": recent_purchases[-5:],
+        "stats": stats,
+    }
+
+
 # Agent logic ----------------------------------------------------------------------
-def pla_registre_de_compra(request_data):
+def pla_de_registre_de_compra(request_data):
     order = {
         "order_id": request_data["order_id"],
         "user_id": request_data["user_id"],
@@ -135,18 +164,18 @@ def pla_registre_de_compra(request_data):
     return order
 
 
-def pla_registrar_feedback(feedback_data):
+def pla_de_registre_de_feedback(feedback_data):
     logger.info("Registrant feedback %s per a la comanda %s", feedback_data["feedback_id"], feedback_data["order_id"])
     record_feedback(FEEDBACK_PATH, feedback_data)
     return feedback_data
 
 
-def pla_crear_suggeriments(user_id=None, limit=5):
+def pla_de_creacio_de_suggeriments(user_id=None, limit=5):
     resolved_user_id = _resolve_recommendation_user_id(user_id)
     return generate_recommendations(CATALOG_PATH, SEARCH_HISTORY_PATH, PURCHASE_HISTORY_PATH, user_id=resolved_user_id, limit=limit)
 
 
-def pla_consulta_criteris_devolucio(request_data):
+def pla_de_consulta_de_criteris_devolucio(request_data):
     return evaluate_return_request(CATALOG_PATH, PURCHASE_HISTORY_PATH, request_data)
 
 
@@ -190,7 +219,7 @@ def comm():
 
     if content_type == AZON.PeticioRegistreCompra:
         request_data = parse_peticio_registre_compra(message_graph, content)
-        pla_registre_de_compra(request_data)
+        pla_de_registre_de_compra(request_data)
         response = build_confirmacio_registre_compra(
             request_data["order_id"],
             sender=AGENT.uri,
@@ -202,7 +231,7 @@ def comm():
 
     if content_type == AZON.PeticioDevolucio:
         request_data = parse_peticio_devolucio(message_graph, content)
-        decision = pla_consulta_criteris_devolucio(request_data)
+        decision = pla_de_consulta_de_criteris_devolucio(request_data)
         response = build_resolucio_devolucio(
             decision,
             sender=AGENT.uri,
@@ -214,7 +243,7 @@ def comm():
 
     if content_type == AZON.RespostaFeedback:
         feedback_data = parse_resposta_feedback(message_graph, content)
-        pla_registrar_feedback(feedback_data)
+        pla_de_registre_de_feedback(feedback_data)
         response_graph = Graph()
         response = build_message(
             response_graph,
@@ -239,9 +268,10 @@ def comm():
 # Web interface -------------------------------------------------------------------
 @app.route("/iface", methods=["GET", "POST"])
 def iface():
+    view = request.values.get("view", "home").strip().lower()
     confirmation = request.args.get("confirmation", "")
     interface_user_id = request.values.get("user_id", "").strip()
-    recommendation_limit = int(request.values.get("limit", 5) or 5)
+    recommendation_limit = _parse_recommendation_limit(request.values.get("limit", 5))
 
     if request.method == "POST" and request.form.get("action") == "feedback":
         feedback_data = {
@@ -252,30 +282,20 @@ def iface():
             "comment": request.form.get("comment", "").strip(),
             "product_ids": _parse_product_ids(request.form.get("product_ids", "")),
         }
-        pla_registrar_feedback(feedback_data)
+        pla_de_registre_de_feedback(feedback_data)
         confirmation = _build_feedback_confirmation(feedback_data)
         interface_user_id = feedback_data["user_id"]
+        view = "dashboard"
 
-    feedback_context = _build_feedback_request_context(interface_user_id or None)
-    recommendation_user_id = _resolve_recommendation_user_id(interface_user_id or (feedback_context or {}).get("user_id"))
-    recommendations = pla_crear_suggeriments(recommendation_user_id, limit=recommendation_limit)
-    recent_purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=interface_user_id or None)
-    if not recent_purchases:
-        recent_purchases = load_purchase_records(PURCHASE_HISTORY_PATH)[-5:]
+    if view != "dashboard":
+        return render_template(
+            "opinador.html",
+            iface_path="/iface",
+            show_dashboard=False,
+            stats=_load_dashboard_stats([]),
+        )
 
-    stats = _load_dashboard_stats(recommendations)
-
-    return render_template(
-        "opinador.html",
-        iface_path="/iface",
-        confirmation=confirmation,
-        feedback_context=feedback_context,
-        recommendation_context={"user_id": recommendation_user_id} if recommendation_user_id else None,
-        recommendation_limit=recommendation_limit,
-        recommendations=recommendations,
-        recent_purchases=recent_purchases[-5:],
-        stats=stats,
-    )
+    return render_template("opinador.html", **_build_dashboard_context(interface_user_id, recommendation_limit, confirmation))
 
 
 @app.route("/Stop")

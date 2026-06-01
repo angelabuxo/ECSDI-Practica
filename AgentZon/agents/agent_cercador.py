@@ -73,6 +73,12 @@ def resolve_compra_agent():
     return parse_directory_response(response)
 
 
+def resolve_opinador_agent():
+    message = build_search_message(AGENT, DSO.OpinadorAgent, DIRECTORY_AGENT, msgcnt=next_counter())
+    response = MESSAGE_SENDER(message, DIRECTORY_AGENT.address)
+    return parse_directory_response(response)
+
+
 def pla_de_cerca(criteria):
     logger.info("Executant cerca amb criteris: %s", criteria)
     products = search_products(CATALOG_PATH, criteria)
@@ -88,11 +94,18 @@ def purchase_error_message():
 def pla_de_presentacio(criteria, products, purchase_error=""):
     compra_agent = resolve_compra_agent()
     compra_url = replace_path(compra_agent.address, "/iface")
+    opinador_url = ""
+    try:
+        opinador_agent = resolve_opinador_agent()
+        opinador_url = replace_path(opinador_agent.address, "/iface")
+    except Exception:
+        logger.warning("No s'ha pogut resoldre l'agent Opinador per a la interfície")
     return render_template(
         "cercador.html",
         criteria=criteria,
         products=products,
         compra_url=compra_url,
+        opinador_url=opinador_url,
         search_path="/iface",
         purchase_error=purchase_error,
     )
@@ -107,11 +120,18 @@ def replace_path(address, new_path):
 @app.route("/iface", methods=["GET", "POST"])
 def iface():
     if request.method == "GET":
+        opinador_url = ""
+        try:
+            opinador_agent = resolve_opinador_agent()
+            opinador_url = replace_path(opinador_agent.address, "/iface")
+        except Exception:
+            logger.warning("No s'ha pogut resoldre l'agent Opinador per a la interfície")
         return render_template(
             "cercador.html",
             criteria=default_criteria(),
             products=[],
             compra_url="",
+            opinador_url=opinador_url,
             search_path="/iface",
             purchase_error=purchase_error_message(),
         )
