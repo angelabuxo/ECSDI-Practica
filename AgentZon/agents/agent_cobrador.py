@@ -22,9 +22,12 @@ from config import (
     build_directory_agent,
     register_with_directory,
     resolve_runtime_hostname,
+    serve_agent,
 )
 from protocols.directory import build_search_message, parse_directory_response
 from protocols.pagament import (
+    SENTIT_COBRAMENT,
+    SENTIT_PAGAMENT,
     build_confirmacio_pagament,
     build_confirmacio_registre_dades,
     build_confirmacio_retorn_diners,
@@ -162,6 +165,7 @@ def pla_cobrament_intern(message_graph, content, sender):
         "order_id": shipment["order_id"],
         "amount": amount,
         "method": payment_method,
+        "sentit": SENTIT_COBRAMENT,
         "user_id": shipment["user_id"],
         "product_ids": shipment["product_ids"],
         "products": products,
@@ -201,6 +205,7 @@ def pla_cobrament_extern(message_graph, content, sender):
         "order_id": request_data["order_id"],
         "amount": request_data["amount"],
         "method": request_data["method"] or "transferencia",
+        "sentit": request_data.get("sentit") or SENTIT_PAGAMENT,
         "user_id": request_data.get("user_id"),
         "seller_id": request_data.get("seller_id"),
         "product_ids": request_data.get("product_ids", []),
@@ -249,6 +254,7 @@ def pla_retornar_diners(message_graph, content, sender):
         "order_id": request_data["order_id"],
         "amount": request_data["amount"],
         "method": "transferencia",
+        "sentit": SENTIT_PAGAMENT,
         "user_id": request_data["user_id"],
         "seller_id": request_data.get("seller_id"),
         "product_ids": request_data.get("product_ids", []),
@@ -341,10 +347,13 @@ def main():
             "data_dir": Path(args.data_dir),
         }
     )
-    logger.info("Registrant %s al directori %s", AGENT.name, DIRECTORY_AGENT.address)
-    register_with_directory(AGENT, DIRECTORY_AGENT, DSO.CobradorAgent, 0)
     logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
-    app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
+    serve_agent(
+        app,
+        hostname,
+        args.port,
+        register_fn=lambda: register_with_directory(AGENT, DIRECTORY_AGENT, DSO.CobradorAgent, 0),
+    )
 
 
 if __name__ == "__main__":

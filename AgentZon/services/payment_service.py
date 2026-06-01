@@ -62,6 +62,8 @@ def record_payment(path, payment):
     graph.add((node, AZON.IdComanda, Literal(payment["order_id"])))
     graph.add((node, AZON.ImportPagament, Literal(payment["amount"], datatype=XSD.float)))
     graph.add((node, AZON.MetodePagament, Literal(payment["method"])))
+    if payment.get("sentit"):
+        graph.add((node, AZON.SentitPagament, Literal(payment["sentit"])))
     graph.add((node, AZON.Estat, Literal(payment.get("status", "PAGAT"))))
     graph.add((node, AZON.DataPagament, Literal(payment["date"])))
     graph.add((node, AZON.SobreComanda, order_node))

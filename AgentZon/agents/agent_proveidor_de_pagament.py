@@ -20,6 +20,7 @@ from config import (
     build_directory_agent,
     register_with_directory,
     resolve_runtime_hostname,
+    serve_agent,
 )
 from protocols.pagament import build_confirmacio_pagament, parse_peticio_pagament
 
@@ -63,6 +64,7 @@ def processar_pagament(request_data):
         "order_id": request_data["order_id"],
         "amount": request_data["amount"],
         "method": request_data["method"],
+        "sentit": request_data.get("sentit"),
         "status": "PAGAT",
         "date": date.today().isoformat(),
         "product_ids": request_data.get("product_ids", []),
@@ -134,10 +136,13 @@ def main():
         }
     )
     directory = build_directory_agent(args.directory_host, args.directory_port)
-    logger.info("Registrant %s al directori %s", AGENT.name, directory.address)
-    register_with_directory(AGENT, directory, DSO.ProveidorPagamentAgent, 0)
     logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
-    app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
+    serve_agent(
+        app,
+        hostname,
+        args.port,
+        register_fn=lambda: register_with_directory(AGENT, directory, DSO.ProveidorPagamentAgent, 0),
+    )
 
 
 if __name__ == "__main__":

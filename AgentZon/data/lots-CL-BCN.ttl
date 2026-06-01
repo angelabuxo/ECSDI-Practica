@@ -1,6 +1,19 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+azon:lot-LOT-39B672 a azon:Lot ;
+    azon:Ciutat "1" ;
+    azon:DataEntrega "2026-06-02" ;
+    azon:IdCentreLogistic "CL-BCN" ;
+    azon:IdLot "LOT-39B672" ;
+    azon:PesTotal 2.28e+00 ;
+    azon:SobreComanda azon:order-ORDER-E6E81DE7 ;
+    azon:TeProducte azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 .
+
 azon:lot-LOT-8EC1CC a azon:Lot ;
     azon:Ciutat "a" ;
     azon:DataEntrega "2026-05-31" ;
@@ -69,6 +82,17 @@ azon:lot-LOT-C6EBD3 a azon:Lot ;
         azon:product-P1023,
         azon:product-P1024 .
 
+azon:lot-LOT-CAFF7C a azon:Lot ;
+    azon:Ciutat "s" ;
+    azon:DataEntrega "2026-06-02" ;
+    azon:IdCentreLogistic "CL-BCN" ;
+    azon:IdLot "LOT-CAFF7C" ;
+    azon:PesTotal 3.1e+00 ;
+    azon:SobreComanda azon:order-ORDER-7CAD298C ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1028,
+        azon:product-P1029 .
+
 azon:lot-LOT-D90303 a azon:Lot ;
     azon:Ciutat "a" ;
     azon:DataEntrega "2026-05-31" ;
@@ -80,4 +104,13 @@ azon:lot-LOT-D90303 a azon:Lot ;
     azon:TeProducte azon:product-P1001,
         azon:product-P1004,
         azon:product-P1022 .
+
+azon:lot-LOT-E6F25F a azon:Lot ;
+    azon:Ciutat "a" ;
+    azon:DataEntrega "2026-06-02" ;
+    azon:IdCentreLogistic "CL-BCN" ;
+    azon:IdLot "LOT-E6F25F" ;
+    azon:PesTotal 2.2e-01 ;
+    azon:SobreComanda azon:order-ORDER-5464FC0C ;
+    azon:TeProducte azon:product-P1027 .
 

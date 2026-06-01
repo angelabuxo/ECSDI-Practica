@@ -3,6 +3,7 @@
 import socket
 import subprocess
 import sys
+import sys
 import tempfile
 import time
 import unittest
@@ -11,6 +12,9 @@ from pathlib import Path
 import requests
 
 from tests.support import load_catalog_products
+
+# Arrel del paquet AgentZon (carpeta que conté agents/, services/, ...).
+AGENTZON_DIR = Path(__file__).resolve().parents[1]
 
 
 class DistributedSmokeTests(unittest.TestCase):
@@ -188,7 +192,10 @@ class DistributedSmokeTests(unittest.TestCase):
             try:
                 for command in commands:
                     processes.append(
-                        subprocess.Popen(command, cwd=Path(__file__).resolve().parents[1])
+                        subprocess.Popen(
+                            command,
+                            cwd=str(AGENTZON_DIR),
+                        )
                     )
                     time.sleep(0.4)
 

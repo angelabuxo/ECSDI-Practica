@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Obre una finestra de Terminal per cada agent del sistema distribuït.
-# Segueix l'ordre i les comandes de README.md (secció 2) des de l'arrel d'AgentZon/.
+# Segueix l'ordre i les comandes de README.md (secció 3) des de l'arrel d'AgentZon/.
 
 set -euo pipefail
 

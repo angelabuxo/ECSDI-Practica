@@ -16,6 +16,7 @@ from config import (
     add_runtime_arguments,
     build_agent,
     resolve_runtime_hostname,
+    serve_agent,
 )
 from protocols.centre_logistic import build_resposta_oferta_transport, parse_peticio_transport
 
@@ -147,7 +148,7 @@ def main():
         }
     )
     logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
-    app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
+    serve_agent(app, hostname, args.port)
 
 
 if __name__ == "__main__":
