@@ -47,6 +47,7 @@ from protocols.pagament import (
     extract_confirmacio_registre_dades,
 )
 from services.catalog_service import get_products_by_ids
+from services.payment_service import has_user_bank_data
 from services.logistics_routing_service import (
     group_order_products_by_logistics_centre,
     load_product_location_candidates,
@@ -84,6 +85,7 @@ ORDERS_PATH = None
 SHIPPING_PATH = None
 LOCATIONS_PATH = None
 TRACKING_PATH = None
+USER_BANK_PATH = None
 COUNTER = 0
 _MSGCNT_LOCK = threading.Lock()
 NO_PRODUCTS_ERROR = "Has de seleccionar almenys un producte abans de continuar la compra."
@@ -91,7 +93,7 @@ NO_PRODUCTS_ERROR = "Has de seleccionar almenys un producte abans de continuar l
 
 # Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
-    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, CATALOG_PATH, ORDERS_PATH, SHIPPING_PATH, LOCATIONS_PATH, TRACKING_PATH, COUNTER
+    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, CATALOG_PATH, ORDERS_PATH, SHIPPING_PATH, LOCATIONS_PATH, TRACKING_PATH, USER_BANK_PATH, COUNTER
     AGENT = settings["agent"]
     DIRECTORY_AGENT = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
@@ -101,6 +103,7 @@ def configure_runtime(settings, message_sender=send_message):
     SHIPPING_PATH = data_dir / "dades_enviament_usuari.ttl"
     LOCATIONS_PATH = data_dir / "ubicacions_productes.ttl"
     TRACKING_PATH = data_dir / "seguiment_enviaments.ttl"
+    USER_BANK_PATH = data_dir / "dades_bancaries_usuari.ttl"
     COUNTER = 0
 
 
@@ -143,20 +146,33 @@ def normalize_selected_product_ids(product_ids):
     return [product_id for product_id in product_ids if product_id]
 
 
+def get_client_ip():
+    """Adreça IP del client HTTP (proxy-aware) com a identificador d'usuari."""
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.remote_addr or "unknown"
+
+
 # Plans ----------------------------------------------------------------------------
-def pla_demanar_informacio_usuari(selected_product_ids):
+def pla_demanar_informacio_usuari(selected_product_ids, client_ip):
     product_ids = normalize_selected_product_ids(selected_product_ids)
     if not product_ids:
         return redirect_to_cercador_with_error()
     products = get_products_by_ids(CATALOG_PATH, product_ids)
     if not products:
         return redirect_to_cercador_with_error()
-    return render_template("compra.html", products=products, iface_path="/iface")
+    return render_template(
+        "compra.html",
+        products=products,
+        iface_path="/iface",
+        client_ip=client_ip,
+    )
 
 
-def pla_registrar_dades_d_usuari(selected_product_ids, form_data):
+def pla_registrar_dades_d_usuari(selected_product_ids, form_data, user_id):
     shipping = {
-        "user_id": form_data["user_id"],
+        "user_id": user_id,
         "user_name": form_data["user_name"],
         "street_address": form_data["street_address"],
         "city": form_data["city"],
@@ -226,6 +242,12 @@ def pla_delegar_registre_compra(order):
 
 
 def pla_registrar_dades_d_usuari_al_cobrador(order):
+    if has_user_bank_data(USER_BANK_PATH, order["user_id"]):
+        logger.info(
+            "Ometent registre de dades bancaries: l'usuari %s ja en té registrades",
+            order["user_id"],
+        )
+        return None
     try:
         cobrador = resolve_agent(DSO.CobradorAgent)
     except Exception:
@@ -301,6 +323,7 @@ def carregar_comanda(order_id):
     if stored_order is None:
         return None
     products = get_products_by_ids(CATALOG_PATH, stored_order["product_ids"])
+    tracking_entries = load_tracking_for_order(TRACKING_PATH, order_id)
     return {
         "order_id": stored_order["order_id"],
         "user_id": stored_order["user_id"],
@@ -309,7 +332,7 @@ def carregar_comanda(order_id):
         "shipping_data": stored_order["shipping_data"],
         "delivery_date": stored_order["delivery_date"],
         "final_delivery_date": stored_order.get("final_delivery_date"),
-        "status": stored_order.get("status", "OBERT"),
+        "status": aggregate_order_status(tracking_entries, stored_order["product_ids"]),
     }
 
 
@@ -359,10 +382,12 @@ def process_shipping_update(message_graph, content, sender):
 
     for order_id in touched_orders:
         entries = load_tracking_for_order(TRACKING_PATH, order_id)
+        stored_order = load_order(ORDERS_PATH, order_id)
+        order_product_ids = stored_order["product_ids"] if stored_order else []
         update_order_shipping_status(
             ORDERS_PATH,
             order_id,
-            status=aggregate_order_status(entries),
+            status=aggregate_order_status(entries, order_product_ids),
             final_delivery_date=aggregate_official_delivery_date(entries),
         )
 
@@ -404,10 +429,10 @@ def process_purchase_request(request_data, acl_sender=None, request_content=None
     return response, order, shipping_details
 
 
-def build_purchase_request_from_form(form_data):
+def build_purchase_request_from_form(form_data, user_id):
     request_graph = build_peticio_compra(
         f"iface-purchase-{next_counter()}",
-        user_id=form_data["user_id"],
+        user_id=user_id,
         payment_method=form_data["payment_method"],
         shipping_data={
             "user_name": form_data["user_name"],
@@ -435,10 +460,11 @@ def iface():
         logger.warning("Compra interrompuda: cap producte seleccionat")
         return redirect_to_cercador_with_error()
 
-    if "user_id" not in request.form:
-        return pla_demanar_informacio_usuari(selected_product_ids)
+    client_ip = get_client_ip()
+    if "user_name" not in request.form:
+        return pla_demanar_informacio_usuari(selected_product_ids, client_ip)
 
-    request_graph, content = build_purchase_request_from_form(request.form)
+    request_graph, content = build_purchase_request_from_form(request.form, client_ip)
     request_data = parse_peticio_compra(request_graph, content)
     _, order, shipping_details = process_purchase_request(
         request_data,

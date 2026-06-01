@@ -213,7 +213,6 @@ class DistributedSmokeTests(unittest.TestCase):
                     f"http://{host}:{ports['compra']}/iface",
                     data={
                         "selected_product_ids": [sample_product["product_id"], second_product["product_id"]],
-                        "user_id": "USER-DIST",
                         "user_name": "Distributed Demo",
                         "street_address": "Gran Via 100",
                         "city": "Barcelona",

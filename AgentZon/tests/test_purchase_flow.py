@@ -513,6 +513,59 @@ class PurchaseFlowTests(unittest.TestCase):
             self.assertEqual(parsed["lots"][0]["lot_id"], "LOT-SHARED")
             self.assertEqual(parsed["lots"][0]["centre_id"], "CL-BCN")
 
+    def test_aggregate_order_status_requires_all_products_shipped(self):
+        from services.shipping_tracking_service import aggregate_order_status
+
+        partial_entries = [
+            {"status": "ENVIAT", "products": [{"product_id": "P1"}]},
+            {"status": "ASSIGNAT", "products": [{"product_id": "P2"}]},
+        ]
+        self.assertEqual(aggregate_order_status(partial_entries, ["P1", "P2"]), "ASSIGNAT")
+        self.assertEqual(aggregate_order_status(partial_entries, ["P1"]), "ENVIAT")
+
+        complete_entries = [
+            {"status": "ENVIAT", "products": [{"product_id": "P1"}]},
+            {"status": "ENVIAT", "products": [{"product_id": "P2"}]},
+        ]
+        self.assertEqual(aggregate_order_status(complete_entries, ["P1", "P2"]), "ENVIAT")
+
+    def test_bank_registration_skipped_when_user_already_in_database(self):
+        from AgentUtil.Agent import Agent
+        from agents import agent_compra, agent_directory
+        from services.payment_service import save_user_bank_data
+
+        with tempfile.TemporaryDirectory() as tmp:
+            data_dir = Path(tmp)
+            save_user_bank_data(
+                data_dir / "dades_bancaries_usuari.ttl",
+                "192.168.1.10",
+                "card-****-existing",
+                "visa",
+            )
+
+            agn = Namespace("http://www.agentes.org#")
+            directory = Agent("DirectoryAgent", agn.Directory, "http://directory.test/Register", "http://directory.test/Stop")
+            compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
+            sent_messages = []
+
+            def fake_send_message(message, address):
+                sent_messages.append((message, address))
+                return Graph()
+
+            agent_compra.configure_runtime(
+                {"agent": compra, "directory_agent": directory, "data_dir": data_dir},
+                message_sender=fake_send_message,
+            )
+            order = {
+                "user_id": "192.168.1.10",
+                "shipping_data": {"payment_method": "visa"},
+            }
+
+            result = agent_compra.pla_registrar_dades_d_usuari_al_cobrador(order)
+
+            self.assertIsNone(result)
+            self.assertEqual(sent_messages, [])
+
 
 if __name__ == "__main__":
     unittest.main()

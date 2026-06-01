@@ -1,57 +1,216 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 
-azon:order-ORDER-8871DCE5 a azon:Comanda ;
-    azon:Carrer "Via Augusta" ;
+azon:order-ORDER-04C81287 a azon:Comanda ;
+    azon:Carrer "s" ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-06" ;
     azon:Estat "OBERT" ;
-    azon:IdComanda "ORDER-8871DCE5" ;
-    azon:IdUsuari "12312412421" ;
-    azon:MetodePagament "aa" ;
-    azon:Nom "gdfsg" ;
+    azon:IdComanda "ORDER-04C81287" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "s" ;
+    azon:Nom "s" ;
     azon:Prioritat "5 dies" ;
     azon:TeProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1006,
-        azon:product-P1008,
-        azon:product-P1009,
         azon:product-P1010,
         azon:product-P1011,
-        azon:product-P1012,
-        azon:product-P1013,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019 .
+
+azon:order-ORDER-509C9D05 a azon:Comanda ;
+    azon:Carrer "a" ;
+    azon:Ciutat "a" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-509C9D05" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "angi" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1007,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1020,
+        azon:product-P1021,
         azon:product-P1028 .
 
-azon:order-ORDER-C5456E1C a azon:Comanda ;
-    azon:Carrer "sblsmvlds" ;
+azon:order-ORDER-813DF66D a azon:Comanda ;
+    azon:Carrer "a" ;
     azon:Ciutat "Girona" ;
     azon:DataEntrega "2026-06-06" ;
     azon:DataEntregaDefinitiva "2026-06-04" ;
     azon:Estat "ENVIAT" ;
-    azon:IdComanda "ORDER-C5456E1C" ;
-    azon:IdUsuari "234235" ;
-    azon:MetodePagament "aaa" ;
-    azon:Nom "hoao" ;
+    azon:IdComanda "ORDER-813DF66D" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
     azon:Prioritat "5 dies" ;
     azon:TeProducte azon:product-P1001,
-        azon:product-P1008,
+        azon:product-P1002,
         azon:product-P1010,
-        azon:product-P1011,
-        azon:product-P1016 .
+        azon:product-P1011 .
 
-azon:order-ORDER-FED93758 a azon:Comanda ;
-    azon:Carrer "Balmes" ;
+azon:order-ORDER-8322112D a azon:Comanda ;
+    azon:Carrer "a" ;
+    azon:Ciutat "Tarragona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-8322112D" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011 .
+
+azon:order-ORDER-8B0B0369 a azon:Comanda ;
+    azon:Carrer "a" ;
+    azon:Ciutat "Girona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-8B0B0369" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1007,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011 .
+
+azon:order-ORDER-9B6F87D3 a azon:Comanda ;
+    azon:Carrer "a" ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-06" ;
     azon:Estat "OBERT" ;
-    azon:IdComanda "ORDER-FED93758" ;
-    azon:IdUsuari "123" ;
-    azon:MetodePagament "v" ;
-    azon:Nom "pol" ;
+    azon:IdComanda "ORDER-9B6F87D3" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
     azon:Prioritat "5 dies" ;
-    azon:TeProducte azon:product-P1001,
+    azon:TeProducte azon:product-P1009,
         azon:product-P1010,
+        azon:product-P1011 .
+
+azon:order-ORDER-B966E37B a azon:Comanda ;
+    azon:Carrer "a" ;
+    azon:Ciutat "a" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-B966E37B" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "lolo" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011 .
+
+azon:order-ORDER-BFD5D310 a azon:Comanda ;
+    azon:Carrer "a" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-BFD5D310" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1010,
         azon:product-P1011,
+        azon:product-P1014,
         azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 .
+
+azon:order-ORDER-C9E9EDA5 a azon:Comanda ;
+    azon:Carrer "a" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-C9E9EDA5" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1020,
+        azon:product-P1021,
         azon:product-P1022,
-        azon:product-P1028 .
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 .
+
+azon:order-ORDER-E03FD6A5 a azon:Comanda ;
+    azon:Carrer "a" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-E03FD6A5" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011 .
+
+azon:order-ORDER-E5E26CF8 a azon:Comanda ;
+    azon:Carrer "d" ;
+    azon:Ciutat "d" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-E5E26CF8" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "d" ;
+    azon:Nom "d" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1002,
+        azon:product-P1021,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1026 .
+
+azon:order-ORDER-EBB56761 a azon:Comanda ;
+    azon:Carrer "a" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-EBB56761" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1007,
+        azon:product-P1014,
+        azon:product-P1015,
+        azon:product-P1023,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 .
 
