@@ -1,12 +1,50 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-azon:lot-LOT-113040 a azon:Lot ;
-    azon:Ciutat "s" ;
-    azon:DataEntrega "2026-06-02" ;
+azon:reservation-LOT-CEF0C9-ORDER-8871DCE5 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-8871DCE5" ;
+    azon:IdLot "LOT-CEF0C9" ;
+    azon:IdUsuari "12312412421" ;
+    azon:SobreComanda azon:order-ORDER-8871DCE5 ;
+    azon:SobreLot azon:lot-LOT-CEF0C9 ;
+    azon:TeProducte azon:product-P1006,
+        azon:product-P1009,
+        azon:product-P1012 .
+
+azon:lot-LOT-CEF0C9 a azon:Lot ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
     azon:IdCentreLogistic "CL-TGN" ;
-    azon:IdLot "LOT-113040" ;
-    azon:PesTotal 5.7e-01 ;
-    azon:SobreComanda azon:order-ORDER-7CAD298C ;
-    azon:TeProducte azon:product-P1003 .
+    azon:IdLot "LOT-CEF0C9" ;
+    azon:PesTotal "3.34"^^xsd:float ;
+    azon:SobreComanda azon:order-ORDER-8871DCE5 ;
+    azon:TeProducte azon:product-P1006,
+        azon:product-P1009,
+        azon:product-P1012 .
+
+azon:product-P1006 a azon:Producte ;
+    azon:IdProducte "P1006" ;
+    azon:Nom "Smart Speaker" ;
+    azon:Pes "1.05"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:product-P1009 a azon:Producte ;
+    azon:IdProducte "P1009" ;
+    azon:Nom "Adjustable Desk Lamp" ;
+    azon:Pes "1.85"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:product-P1012 a azon:Producte ;
+    azon:IdProducte "P1012" ;
+    azon:Nom "Insulated Coffee Mug" ;
+    azon:Pes "0.44"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:centre-CL-TGN a azon:CentreLogistic ;
+    azon:Ciutat "Tarragona" ;
+    azon:IdCentreLogistic "CL-TGN" .
 

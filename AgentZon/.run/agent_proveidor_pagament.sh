@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd $'/Users/angelabuxo/UPC/ECSDI/PraÃ\200ctica/ECSDI-Practica/AgentZon'
+cd /Users/polmontanera/Desktop/Q6\ 2526/ECSDI/ECSDI-Practica/AgentZon
 clear
 echo ===\ Agent\ Prove√Ødor\ de\ Pagament\ ===
-exec $'/Users/angelabuxo/UPC/ECSDI/PraÃ\200ctica/ECSDI-Practica/AgentZon/.venv/bin/python' -m agents.agent_proveidor_de_pagament --host 127.0.0.1 --port 9006 --directory-host 127.0.0.1 --directory-port 9000
+exec /Users/polmontanera/Desktop/Q6\ 2526/ECSDI/ECSDI-Practica/AgentZon/.venv/bin/python -m agents.agent_proveidor_de_pagament --host 127.0.0.1 --port 9006 --directory-host 127.0.0.1 --directory-port 9000

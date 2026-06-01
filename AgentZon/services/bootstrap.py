@@ -190,6 +190,7 @@ def bootstrap_phase2_data(data_dir, product_count=24, seed=None):
         "historial_compres.ttl": _build_empty_graph(),
         "comandes.ttl": _build_empty_graph(),
         "dades_enviament_usuari.ttl": _build_empty_graph(),
+        "seguiment_enviaments.ttl": _build_empty_graph(),
         "lots.ttl": _build_empty_graph(),
     }
 

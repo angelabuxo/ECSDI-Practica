@@ -1,47 +1,17 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 
-azon:bank-user-1 a azon:Usuari ;
-    azon:DadesBancariesUsuari "card-****-1" ;
-    azon:IdUsuari "1" ;
-    azon:MetodePagament "1" .
+azon:bank-user-123 a azon:Usuari ;
+    azon:DadesBancariesUsuari "card-****-123" ;
+    azon:IdUsuari "123" ;
+    azon:MetodePagament "v" .
 
-azon:bank-user-11111 a azon:Usuari ;
-    azon:DadesBancariesUsuari "card-****-11111" ;
-    azon:IdUsuari "11111" ;
-    azon:MetodePagament "09009090909" .
+azon:bank-user-12312412421 a azon:Usuari ;
+    azon:DadesBancariesUsuari "card-****-12312412421" ;
+    azon:IdUsuari "12312412421" ;
+    azon:MetodePagament "aa" .
 
-azon:bank-user-111111 a azon:Usuari ;
-    azon:DadesBancariesUsuari "card-****-111111" ;
-    azon:IdUsuari "111111" ;
-    azon:MetodePagament "1122" .
-
-azon:bank-user-1234 a azon:Usuari ;
-    azon:DadesBancariesUsuari "card-****-1234" ;
-    azon:IdUsuari "1234" ;
-    azon:MetodePagament "121212121212" .
-
-azon:bank-user-123456789 a azon:Usuari ;
-    azon:DadesBancariesUsuari "card-****-123456789" ;
-    azon:IdUsuari "123456789" ;
-    azon:MetodePagament "00000000000000" .
-
-azon:bank-user-a a azon:Usuari ;
-    azon:DadesBancariesUsuari "card-****-a" ;
-    azon:IdUsuari "a" ;
-    azon:MetodePagament "a" .
-
-azon:bank-user-aaaaa a azon:Usuari ;
-    azon:DadesBancariesUsuari "card-****-aaaaa" ;
-    azon:IdUsuari "aaaaa" ;
-    azon:MetodePagament "1212121212" .
-
-azon:bank-user-s a azon:Usuari ;
-    azon:DadesBancariesUsuari "card-****-s" ;
-    azon:IdUsuari "s" ;
-    azon:MetodePagament "s" .
-
-azon:bank-user-xxxx a azon:Usuari ;
-    azon:DadesBancariesUsuari "card-****-xxxx" ;
-    azon:IdUsuari "xxxx" ;
-    azon:MetodePagament "aaaaa" .
+azon:bank-user-234235 a azon:Usuari ;
+    azon:DadesBancariesUsuari "card-****-234235" ;
+    azon:IdUsuari "234235" ;
+    azon:MetodePagament "aaa" .
 

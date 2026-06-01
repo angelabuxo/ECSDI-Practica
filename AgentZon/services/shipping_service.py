@@ -1,12 +1,33 @@
-"""Resums d'enviament, facturació agregada i coordinació amb centres logístics."""
+"""Resums d'enviament, facturacio agregada i coordinacio amb centres logistics."""
 
 from concurrent.futures import ThreadPoolExecutor
 
-from rdflib import Graph
+from rdflib import Graph, RDF
 
 from AgentUtil.ACLMessages import get_message_properties
-from protocols.centre_logistic import build_productes_localitzats, extract_shipping_details_list
+from AgentUtil.OntoNamespaces import AZON
+from protocols.centre_logistic import (
+    build_productes_localitzats,
+    extract_shipping_details_list,
+    parse_confirmacio_localitzacio,
+)
 from protocols.pagament import extract_invoice_from_content
+
+
+def extract_centre_reservations_from_reply(reply):
+    if isinstance(reply, Graph):
+        reply_graph = reply
+    else:
+        reply_graph = Graph()
+        reply_graph.parse(data=reply, format="xml")
+
+    properties = get_message_properties(reply_graph)
+    if not properties:
+        return []
+    content = properties["content"]
+    if (content, RDF.type, AZON.ConfirmacioLocalitzacio) in reply_graph:
+        return [parse_confirmacio_localitzacio(reply_graph)]
+    return []
 
 
 def extract_centre_shipments_from_reply(reply):
@@ -57,20 +78,6 @@ def sum_unique_lot_transport_cost(shipments):
             seen_bundles.add(bundle_key)
         total += shipment.get("price", 0.0)
     return round(total, 2)
-
-
-def enrich_shipment_details(order, product, selected_centre, shipping_details):
-    details = {
-        **shipping_details,
-        "product_id": shipping_details.get("product_id") or product["product_id"],
-        "product_name": product.get("name"),
-        "centre_id": selected_centre.get("centre_id") or shipping_details.get("centre_id"),
-        "centre_city": selected_centre.get("centre_city") or shipping_details.get("centre_city"),
-        "delivery_city": order["shipping_data"]["city"],
-    }
-    if shipping_details.get("invoice") is not None:
-        details["invoice"] = shipping_details["invoice"]
-    return details
 
 
 def build_invoice_summary(order, shipments):
@@ -126,30 +133,23 @@ def build_invoice_summary(order, shipments):
     }
 
 
+def _status_rank(status):
+    return {
+        "OBERT": 0,
+        "PREPARAT": 1,
+        "NEGOCIANT": 2,
+        "ASSIGNAT": 3,
+        "ENVIAT": 4,
+    }.get(status or "OBERT", 0)
+
+
 def group_shipments_for_display(shipments):
     groups = {}
     group_order = []
     for shipment in shipments:
         centre_id = shipment.get("centre_id") or ""
         lot_id = shipment.get("lot_id") or ""
-        if centre_id and lot_id:
-            group_key = f"{centre_id}:{lot_id}"
-        elif centre_id:
-            group_key = "|".join(
-                [
-                    centre_id,
-                    shipment.get("transport_id") or "",
-                    shipment.get("delivery_date") or "",
-                ]
-            )
-        else:
-            group_key = "|".join(
-                [
-                    shipment.get("transport_id") or "",
-                    shipment.get("delivery_date") or "",
-                    shipment.get("product_id") or "",
-                ]
-            )
+        group_key = f"{centre_id}:{lot_id}" if centre_id or lot_id else shipment.get("order_id") or ""
         if group_key not in groups:
             groups[group_key] = {
                 "lot_id": lot_id,
@@ -159,17 +159,32 @@ def group_shipments_for_display(shipments):
                 "transport_name": shipment.get("transport_name"),
                 "city": shipment.get("city"),
                 "delivery_date": shipment.get("delivery_date"),
+                "estimated_delivery_date": shipment.get("estimated_delivery_date") or shipment.get("delivery_date"),
+                "official_delivery_date": shipment.get("official_delivery_date"),
+                "delivery_is_official": bool(shipment.get("official_delivery_date")),
+                "status": shipment.get("status", "OBERT"),
                 "transport_cost": 0.0,
                 "products": [],
             }
             group_order.append(group_key)
         group = groups[group_key]
-        group["products"].append(
-            {
-                "product_id": shipment.get("product_id"),
-                "product_name": shipment.get("product_name") or shipment.get("product_id"),
-            }
-        )
+        if _status_rank(shipment.get("status")) > _status_rank(group["status"]):
+            group["status"] = shipment.get("status")
+        if shipment.get("official_delivery_date"):
+            group["delivery_date"] = shipment["official_delivery_date"]
+            group["official_delivery_date"] = shipment["official_delivery_date"]
+            group["delivery_is_official"] = True
+        if shipment.get("transport_id"):
+            group["transport_id"] = shipment.get("transport_id")
+        if shipment.get("transport_name"):
+            group["transport_name"] = shipment.get("transport_name")
+        for product in shipment.get("products", []):
+            group["products"].append(
+                {
+                    "product_id": product.get("product_id"),
+                    "product_name": product.get("name") or product.get("product_id"),
+                }
+            )
         if not shipment.get("shared_transport"):
             group["transport_cost"] = max(group["transport_cost"], float(shipment.get("price", 0.0)))
     for index, group_key in enumerate(group_order, start=1):
@@ -190,17 +205,19 @@ def fulfill_centre_group(order, group, sender_uri, message_sender, next_msgcnt):
         msgcnt=next_msgcnt(),
     )
     reply = message_sender(message, selected_centre["address"])
-    products_by_id = {product["product_id"]: product for product in centre_products}
-    shipments = []
-    for shipping_details in extract_centre_shipments_from_reply(reply):
-        product = products_by_id.get(shipping_details.get("product_id"))
-        if product is None:
-            continue
-        shipments.append(enrich_shipment_details(order, product, selected_centre, shipping_details))
-    return shipments
+    reservations = []
+    for reservation in extract_centre_reservations_from_reply(reply):
+        reservations.append(
+            {
+                **reservation,
+                "centre_id": reservation.get("centre_id") or selected_centre.get("centre_id"),
+                "centre_city": reservation.get("centre_city") or selected_centre.get("centre_city"),
+            }
+        )
+    return reservations
 
 
-def collect_warehouse_shipments(order, centre_groups, sender_uri, message_sender, next_msgcnt):
+def collect_warehouse_reservations(order, centre_groups, sender_uri, message_sender, next_msgcnt):
     if not centre_groups:
         return []
 
@@ -208,10 +225,14 @@ def collect_warehouse_shipments(order, centre_groups, sender_uri, message_sender
         return fulfill_centre_group(order, group, sender_uri, message_sender, next_msgcnt)
 
     if len(centre_groups) == 1:
-        shipments = dispatch_group(centre_groups[0])
+        reservations = dispatch_group(centre_groups[0])
     else:
-        shipments = []
+        reservations = []
         with ThreadPoolExecutor(max_workers=len(centre_groups)) as executor:
-            for group_shipments in executor.map(dispatch_group, centre_groups):
-                shipments.extend(group_shipments)
-    return mark_shared_transport_costs(shipments)
+            for group_reservations in executor.map(dispatch_group, centre_groups):
+                reservations.extend(group_reservations)
+    return reservations
+
+
+def collect_warehouse_shipments(order, centre_groups, sender_uri, message_sender, next_msgcnt):
+    return collect_warehouse_reservations(order, centre_groups, sender_uri, message_sender, next_msgcnt)

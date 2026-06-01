@@ -29,18 +29,20 @@ from config import (
     serve_agent,
 )
 from protocols.compra import (
-    build_confirmacio_enviament,
     build_peticio_compra,
     build_peticio_enviament_extern,
     build_peticio_registre_compra,
+    build_resultat_compra,
     extract_registration_confirmation,
     parse_peticio_compra,
 )
+from protocols.centre_logistic import extract_shipping_details_list
 from protocols.directory import build_search_message, parse_directory_response, parse_directory_responses
 from protocols.pagament import (
     SENTIT_PAGAMENT,
     build_peticio_pagament,
     build_peticio_registre_dades_usuari,
+    extract_invoice_from_content,
     extract_confirmacio_pagament,
     extract_confirmacio_registre_dades,
 )
@@ -51,14 +53,22 @@ from services.logistics_routing_service import (
 )
 from services.order_service import (
     build_order,
+    load_order,
     save_order,
     save_user_shipping_data,
-    update_order_final_delivery_date,
+    update_order_shipping_status,
 )
 from services.shipping_service import (
     build_invoice_summary,
-    collect_warehouse_shipments,
+    collect_warehouse_reservations,
     group_shipments_for_display,
+)
+from services.shipping_tracking_service import (
+    aggregate_official_delivery_date,
+    aggregate_order_status,
+    apply_shipping_update,
+    load_tracking_for_order,
+    save_localization_confirmations,
 )
 
 
@@ -73,6 +83,7 @@ CATALOG_PATH = None
 ORDERS_PATH = None
 SHIPPING_PATH = None
 LOCATIONS_PATH = None
+TRACKING_PATH = None
 COUNTER = 0
 _MSGCNT_LOCK = threading.Lock()
 NO_PRODUCTS_ERROR = "Has de seleccionar almenys un producte abans de continuar la compra."
@@ -80,7 +91,7 @@ NO_PRODUCTS_ERROR = "Has de seleccionar almenys un producte abans de continuar l
 
 # Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
-    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, CATALOG_PATH, ORDERS_PATH, SHIPPING_PATH, LOCATIONS_PATH, COUNTER
+    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, CATALOG_PATH, ORDERS_PATH, SHIPPING_PATH, LOCATIONS_PATH, TRACKING_PATH, COUNTER
     AGENT = settings["agent"]
     DIRECTORY_AGENT = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
@@ -89,6 +100,7 @@ def configure_runtime(settings, message_sender=send_message):
     ORDERS_PATH = data_dir / "comandes.ttl"
     SHIPPING_PATH = data_dir / "dades_enviament_usuari.ttl"
     LOCATIONS_PATH = data_dir / "ubicacions_productes.ttl"
+    TRACKING_PATH = data_dir / "seguiment_enviaments.ttl"
     COUNTER = 0
 
 
@@ -177,7 +189,7 @@ def pla_producte_als_nostres_magatzems(order):
             order["order_id"],
             group["centre"]["centre_id"],
         )
-    return collect_warehouse_shipments(
+    return collect_warehouse_reservations(
         order,
         centre_groups,
         AGENT.uri,
@@ -187,12 +199,17 @@ def pla_producte_als_nostres_magatzems(order):
 
 
 def pla_informar_usuari_sobre_l_enviament(order, shipments):
+    final_delivery_date = max(
+        [shipment["delivery_date"] for shipment in shipments if shipment.get("delivery_date")],
+        default=order.get("final_delivery_date") or order["delivery_date"],
+    )
     return render_template(
         "shipping_summary.html",
         order=order,
         shipment_groups=group_shipments_for_display(shipments),
-        final_delivery_date=max(shipment["delivery_date"] for shipment in shipments),
+        final_delivery_date=final_delivery_date,
         invoice=build_invoice_summary(order, shipments),
+        order_status_url=f"/orders/{order['order_id']}",
     )
 
 
@@ -279,6 +296,79 @@ def pla_cobrament_extern(order, seller_id):
     return confirmation
 
 
+def carregar_comanda(order_id):
+    stored_order = load_order(ORDERS_PATH, order_id)
+    if stored_order is None:
+        return None
+    products = get_products_by_ids(CATALOG_PATH, stored_order["product_ids"])
+    return {
+        "order_id": stored_order["order_id"],
+        "user_id": stored_order["user_id"],
+        "user_name": stored_order["user_name"],
+        "products": products,
+        "shipping_data": stored_order["shipping_data"],
+        "delivery_date": stored_order["delivery_date"],
+        "final_delivery_date": stored_order.get("final_delivery_date"),
+        "status": stored_order.get("status", "OBERT"),
+    }
+
+
+def _group_shipping_updates_by_lot(shipping_details):
+    grouped = {}
+    for shipment in shipping_details:
+        key = (shipment["order_id"], shipment["lot_id"])
+        if key not in grouped:
+            grouped[key] = {
+                **shipment,
+                "products": [],
+            }
+        if shipment.get("product_id"):
+            grouped[key]["products"].append(
+                {
+                    "product_id": shipment["product_id"],
+                    "name": shipment.get("product_name") or shipment["product_id"],
+                }
+            )
+    return list(grouped.values())
+
+
+def _build_acknowledgement(receiver):
+    return build_message(
+        Graph(),
+        ACL.inform,
+        sender=AGENT.uri,
+        receiver=receiver,
+        msgcnt=next_counter(),
+    )
+
+
+def process_shipping_update(message_graph, content, sender):
+    invoice = extract_invoice_from_content(message_graph, content)
+    grouped_updates = _group_shipping_updates_by_lot(extract_shipping_details_list(message_graph))
+    shipped = (content, RDF.type, AZON.ConfirmacioEnviament) in message_graph
+    touched_orders = set()
+
+    for shipment in grouped_updates:
+        apply_shipping_update(
+            TRACKING_PATH,
+            shipment,
+            shipped=shipped,
+            invoice=invoice,
+        )
+        touched_orders.add(shipment["order_id"])
+
+    for order_id in touched_orders:
+        entries = load_tracking_for_order(TRACKING_PATH, order_id)
+        update_order_shipping_status(
+            ORDERS_PATH,
+            order_id,
+            status=aggregate_order_status(entries),
+            final_delivery_date=aggregate_official_delivery_date(entries),
+        )
+
+    return _build_acknowledgement(sender)
+
+
 def process_purchase_request(request_data, acl_sender=None, request_content=None):
     if not request_data.get("product_ids"):
         raise ValueError(NO_PRODUCTS_ERROR)
@@ -302,9 +392,8 @@ def process_purchase_request(request_data, acl_sender=None, request_content=None
         shipping_details = shipping_future.result()
         bank_future.result()
         history_future.result()
-    final_delivery_date = max(shipment["delivery_date"] for shipment in shipping_details)
-    update_order_final_delivery_date(ORDERS_PATH, order["order_id"], final_delivery_date)
-    response = build_confirmacio_enviament(
+    save_localization_confirmations(TRACKING_PATH, shipping_details)
+    response = build_resultat_compra(
         order,
         shipping_details,
         sender=AGENT.uri,
@@ -359,14 +448,23 @@ def iface():
     return pla_informar_usuari_sobre_l_enviament(order, shipping_details)
 
 
+@app.route("/orders/<order_id>")
+def order_status(order_id):
+    order = carregar_comanda(order_id)
+    if order is None:
+        return ("Comanda no trobada", 404)
+    shipments = load_tracking_for_order(TRACKING_PATH, order_id)
+    return pla_informar_usuari_sobre_l_enviament(order, shipments)
+
+
 # Communication handling -----------------------------------------------------------
 @app.route("/comm")
 def comm():
     message_graph = Graph()
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
-    if not properties or properties.get("performative") != ACL.request:
-        logger.warning("CompraAgent ha rebut un missatge no-request o malformat a /comm")
+    if not properties:
+        logger.warning("CompraAgent ha rebut un missatge malformat a /comm")
         return build_message(
             Graph(),
             ACL["not-understood"],
@@ -374,12 +472,19 @@ def comm():
             msgcnt=next_counter(),
         ).serialize(format="xml")
     content = properties["content"]
-    if message_graph.value(content, RDF.type) != AZON.PeticioCompra:
+    performative = properties.get("performative")
+    message_type = message_graph.value(content, RDF.type)
+
+    if performative == ACL.inform and message_type in {AZON.DadesEnviament, AZON.ConfirmacioEnviament}:
+        return process_shipping_update(message_graph, content, properties.get("sender")).serialize(format="xml")
+
+    if performative != ACL.request or message_type != AZON.PeticioCompra:
         logger.warning("CompraAgent ha rebut una accio no suportada a /comm")
         return build_message(
             Graph(),
             ACL["not-understood"],
             sender=AGENT.uri,
+            receiver=properties.get("sender"),
             msgcnt=next_counter(),
         ).serialize(format="xml")
     request_data = parse_peticio_compra(message_graph, content)

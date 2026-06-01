@@ -77,9 +77,13 @@
   <p class="meta">Data del pagament: <strong>{{ invoice.date or "—" }}</strong></p>
   <p class="meta">Mètode de pagament: <strong>{{ invoice.method }}</strong></p>
   <p class="meta">Estat: <span class="status">{{ invoice.status }}</span></p>
+  <p class="meta">Estat de la comanda: <span class="status">{{ order.status }}</span></p>
   <p class="meta">Client: <strong>{{ order.shipping_data.user_name }}</strong> ({{ order.user_id }})</p>
   <p class="meta">Adreça: <strong>{{ order.shipping_data.street_address }}, {{ order.shipping_data.city }}</strong></p>
-  <p class="meta">Data final d'entrega: <strong>{{ final_delivery_date }}</strong></p>
+  <p class="meta">Data d'entrega actual: <strong>{{ final_delivery_date }}</strong></p>
+  {% if order_status_url %}
+  <p class="meta">Seguiment de la comanda: <a href="{{ order_status_url }}">{{ order_status_url }}</a></p>
+  {% endif %}
 
   <h2>Factura</h2>
   <table>
@@ -137,9 +141,24 @@
         <dt>Centre logístic</dt>
         <dd>{{ group.centre_id }}{% if group.centre_city %} ({{ group.centre_city }}){% endif %}</dd>
         <dt>Transportista</dt>
-        <dd>{{ group.transport_name }} ({{ group.transport_id }})</dd>
+        <dd>
+          {% if group.transport_name %}
+          {{ group.transport_name }}{% if group.transport_id %} ({{ group.transport_id }}){% endif %}
+          {% else %}
+          Pendent d'assignacio
+          {% endif %}
+        </dd>
         <dt>Lliurament</dt>
-        <dd>{{ group.city }} · {{ group.delivery_date }}</dd>
+        <dd>
+          {{ group.city }} · {{ group.delivery_date }}
+          {% if group.delivery_is_official %}
+          (definitiva)
+          {% else %}
+          (estimada)
+          {% endif %}
+        </dd>
+        <dt>Estat</dt>
+        <dd>{{ group.status }}</dd>
       </dl>
       <p><strong>Productes d'aquest enviament</strong></p>
       <ul class="product-list">

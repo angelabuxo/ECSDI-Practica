@@ -4,6 +4,17 @@ AgentZon és un prototip de sistema multiagent per a l'assignatura ECSDI. Implem
 
 Per una explicació detallada de l'arquitectura i els fluxos, consulta [`GUIA_NOU_INTEGRANT.md`](GUIA_NOU_INTEGRANT.md).
 
+## Flux híbrid de lots i enviament
+
+El flux de compra i logística és ara híbrid:
+
+- `Compra` retorna immediatament un `ResultatCompra` amb la data estimada (`DataEntrega`) i les reserves de lot localitzades.
+- `Centre Logístic` només negocia el transport quan un lot queda `PREPARAT`.
+- Un lot passa a `PREPARAT` quan arriba al límit de pes o quan un nou lot ha d'obrir-se perquè l'anterior desbordaria la capacitat.
+- Els lots oberts però imminents també es poden promoure amb l'escombrat diari `GET /cron/negotiate-ready-lots`.
+- Quan la negociació acaba, `Compra` rep `DadesEnviament` (`ASSIGNAT`) amb la data definitiva i el transportista.
+- Quan el lot s'envia, `Compra` rep `ConfirmacioEnviament` (`ENVIAT`) i la comanda queda actualitzada a `/orders/<order_id>`.
+
 ## 1) Generar documentació i graf de l'ontologia
 
 Des de `AgentZon/` (amb l'entorn virtual activat; vegeu la secció 2):
@@ -86,27 +97,27 @@ Substitueix `.venv/bin/python` per `../.venv/bin/python` si el virtualenv està 
 **5. Transportista ràpid**
 
 ```bash
-.venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9010 --transport-id fast --price-per-kg 8.0 --delivery-days 1
+.venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9010 --directory-host 127.0.0.1 --directory-port 9000 --transport-id fast --price-per-kg 8.0 --delivery-days 1
 ```
 
 **6. Transportista econòmic**
 
 ```bash
-.venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9011 --transport-id economy --price-per-kg 4.0 --delivery-days 3
+.venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9011 --directory-host 127.0.0.1 --directory-port 9000 --transport-id economy --price-per-kg 4.0 --delivery-days 3
 ```
 
 **7–9. Agents Centre Logístic (BCN, Girona, Tarragona)**
 
 ```bash
-.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9003 --centre-id CL-BCN --centre-city Barcelona --directory-host 127.0.0.1 --directory-port 9000 --transport-fast-host 127.0.0.1 --transport-fast-port 9010 --transport-economy-host 127.0.0.1 --transport-economy-port 9011 --data-dir data
+.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9003 --centre-id CL-BCN --centre-city Barcelona --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
 ```bash
-.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9007 --centre-id CL-GI --centre-city Girona --directory-host 127.0.0.1 --directory-port 9000 --transport-fast-host 127.0.0.1 --transport-fast-port 9010 --transport-economy-host 127.0.0.1 --transport-economy-port 9011 --data-dir data
+.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9007 --centre-id CL-GI --centre-city Girona --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
 ```bash
-.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9008 --centre-id CL-TGN --centre-city Tarragona --directory-host 127.0.0.1 --directory-port 9000 --transport-fast-host 127.0.0.1 --transport-fast-port 9010 --transport-economy-host 127.0.0.1 --transport-economy-port 9011 --data-dir data
+.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9008 --centre-id CL-TGN --centre-city Tarragona --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
 **10. Agent Compra**
@@ -131,6 +142,14 @@ Endpoints principals:
 
 - `DirectoryAgent`: `/Register`, `/Info`, `/Stop`
 - `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `Transportista`, `CobradorAgent`, `ProveidorPagamentAgent`: `/comm`, `/iface`, `/Stop`
+
+Per forçar la negociació dels lots oberts amb entrega imminent:
+
+```bash
+curl "http://127.0.0.1:9003/cron/negotiate-ready-lots"
+curl "http://127.0.0.1:9007/cron/negotiate-ready-lots"
+curl "http://127.0.0.1:9008/cron/negotiate-ready-lots"
+```
 
 Per a la demo: el sistema ha de funcionar **realment distribuït**. Pots executar agents en màquines diferents passant `--host` i `--directory-host` amb les IP reals.
 
@@ -182,4 +201,4 @@ cd AgentZon
 .venv/bin/python -m unittest discover -s tests -p 'test_*.py'
 ```
 
-Han de passar **tots** els tests, inclòs `test_distributed_smoke`, que arrenca agents com a processos separats i completa una compra de punta a punta.
+Han de passar **tots** els tests. En entorns sandboxats on no es poden obrir ports locals, `test_distributed_smoke` es marca com a `skipped`.

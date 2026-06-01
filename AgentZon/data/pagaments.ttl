@@ -1,43 +1,50 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-azon:payment-PAY-22F83240 a azon:Pagament ;
-    azon:DataPagament "2026-05-30" ;
-    azon:Estat "PAGAT" ;
-    azon:IdComanda "ORDER-9EC27036" ;
-    azon:IdPagament "PAY-22F83240" ;
-    azon:IdUsuari "a" ;
-    azon:ImportPagament "93.62"^^xsd:float ;
-    azon:MetodePagament "a" ;
-    azon:SobreComanda azon:order-ORDER-9EC27036 ;
-    azon:SobreProducte azon:product-P1001,
-        azon:product-P1004 .
-
-azon:payment-PAY-940C81B3 a azon:Pagament ;
+azon:payment-PAY-13828F28 a azon:Pagament ;
     azon:DataPagament "2026-06-01" ;
     azon:Estat "PAGAT" ;
-    azon:IdComanda "ORDER-E6E81DE7" ;
-    azon:IdPagament "PAY-940C81B3" ;
-    azon:IdUsuari "1" ;
-    azon:ImportPagament "4060.12"^^xsd:float ;
-    azon:MetodePagament "1" ;
+    azon:IdComanda "ORDER-8871DCE5" ;
+    azon:IdPagament "PAY-13828F28" ;
+    azon:IdUsuari "12312412421" ;
+    azon:ImportPagament "2275.39"^^xsd:float ;
+    azon:MetodePagament "aa" ;
     azon:SentitPagament "COBRAMENT" ;
-    azon:SobreComanda azon:order-ORDER-E6E81DE7 ;
-    azon:SobreProducte azon:product-P1025,
-        azon:product-P1026,
-        azon:product-P1027,
-        azon:product-P1028,
-        azon:product-P1029 .
+    azon:SobreComanda azon:order-ORDER-8871DCE5 ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1010,
+        azon:product-P1013,
+        azon:product-P1028 .
 
-azon:payment-PAY-99939550 a azon:Pagament ;
-    azon:DataPagament "2026-05-30" ;
+azon:payment-PAY-925F7E84 a azon:Pagament ;
+    azon:DataPagament "2026-06-01" ;
     azon:Estat "PAGAT" ;
-    azon:IdComanda "ORDER-9EC27036" ;
-    azon:IdPagament "PAY-99939550" ;
-    azon:IdUsuari "a" ;
-    azon:ImportPagament "222.92"^^xsd:float ;
-    azon:MetodePagament "a" ;
-    azon:SobreComanda azon:order-ORDER-9EC27036 ;
-    azon:SobreProducte azon:product-P1003,
-        azon:product-P1006 .
+    azon:IdComanda "ORDER-C5456E1C" ;
+    azon:IdPagament "PAY-925F7E84" ;
+    azon:IdUsuari "234235" ;
+    azon:ImportPagament "471.73"^^xsd:float ;
+    azon:MetodePagament "aaa" ;
+    azon:SentitPagament "COBRAMENT" ;
+    azon:SobreComanda azon:order-ORDER-C5456E1C ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1008,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1016 .
+
+azon:payment-PAY-DF32B6B9 a azon:Pagament ;
+    azon:DataPagament "2026-06-01" ;
+    azon:Estat "PAGAT" ;
+    azon:IdComanda "ORDER-FED93758" ;
+    azon:IdPagament "PAY-DF32B6B9" ;
+    azon:IdUsuari "123" ;
+    azon:ImportPagament "2445.81"^^xsd:float ;
+    azon:MetodePagament "v" ;
+    azon:SentitPagament "COBRAMENT" ;
+    azon:SobreComanda azon:order-ORDER-FED93758 ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1010,
+        azon:product-P1016,
+        azon:product-P1022,
+        azon:product-P1028 .
 

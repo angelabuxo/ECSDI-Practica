@@ -284,10 +284,11 @@ def extract_confirmacio_pagament(graph):
 def build_peticio_cobrament_intern(shipment, sender=None, receiver=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
-    content = AZON[f"internal-charge-{shipment['order_id']}"]
+    content = AZON[f"internal-charge-{shipment['order_id']}-{shipment['lot_id']}"]
     order_node = AZON[f"order-{shipment['order_id']}"]
     graph.add((content, RDF.type, AZON.ConfirmacioEnviament))
     graph.add((content, AZON.IdComanda, Literal(shipment["order_id"])))
+    graph.add((content, AZON.IdLot, Literal(shipment["lot_id"])))
     graph.add((content, AZON.IdUsuari, Literal(shipment["user_id"])))
     graph.add((content, AZON.Ciutat, Literal(shipment["city"])))
     graph.add((content, AZON.DataEntregaDefinitiva, Literal(shipment["delivery_date"])))
@@ -319,6 +320,7 @@ def parse_peticio_cobrament_intern(graph, content):
     transport_cost = graph.value(content, AZON.CostTransport)
     return {
         "order_id": str(graph.value(content, AZON.IdComanda)),
+        "lot_id": str(graph.value(content, AZON.IdLot)),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
         "city": str(graph.value(content, AZON.Ciutat)),
         "delivery_date": str(graph.value(content, AZON.DataEntregaDefinitiva)),

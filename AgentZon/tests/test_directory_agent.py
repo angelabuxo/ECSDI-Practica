@@ -141,6 +141,75 @@ class DirectoryAgentTests(unittest.TestCase):
             [centre_bcn.address, centre_gi.address],
         )
 
+    def test_directory_returns_registered_transport_agents_with_transport_id(self):
+        from AgentUtil.Agent import Agent
+        from AgentUtil.DSO import DSO
+        from AgentUtil.OntoNamespaces import AZON
+        from agents import agent_directory
+        from protocols.directory import (
+            build_register_message,
+            build_search_message,
+            parse_directory_responses,
+        )
+        from tests.support import LocalMessageRouter
+
+        agn = Namespace("http://www.agentes.org#")
+        directory = Agent(
+            "DirectoryAgent",
+            agn.Directory,
+            "http://directory.test/Register",
+            "http://directory.test/Stop",
+        )
+        compra = Agent(
+            "CompraAgent",
+            agn.Compra,
+            "http://compra.test/comm",
+            "http://compra.test/Stop",
+        )
+        fast = Agent(
+            "Transportista-fast",
+            agn.TransportFast,
+            "http://fast.test/comm",
+            "http://fast.test/Stop",
+        )
+        economy = Agent(
+            "Transportista-economy",
+            agn.TransportEconomy,
+            "http://economy.test/comm",
+            "http://economy.test/Stop",
+        )
+
+        agent_directory.configure_runtime({"agent": directory})
+        router = LocalMessageRouter()
+        router.register_app(directory.address, agent_directory.app)
+
+        for msgcnt, (agent, transport_id) in enumerate(
+            [(fast, "fast"), (economy, "economy")],
+            start=1,
+        ):
+            register_message = build_register_message(
+                agent,
+                DSO.TransportistaAgent,
+                directory,
+                msgcnt=msgcnt,
+                metadata={AZON.IdTransportista: transport_id},
+            )
+            router.send_message(register_message, directory.address)
+
+        search_message = build_search_message(
+            compra,
+            DSO.TransportistaAgent,
+            directory,
+            msgcnt=10,
+        )
+        search_reply = router.send_message(search_message, directory.address)
+        found = parse_directory_responses(search_reply)
+
+        self.assertEqual(
+            [(entry["transport_id"], entry["address"]) for entry in found],
+            [("economy", economy.address), ("fast", fast.address)],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

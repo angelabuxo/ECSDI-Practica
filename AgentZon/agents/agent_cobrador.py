@@ -89,6 +89,28 @@ def next_counter():
     return current
 
 
+def _shipment_scope_texts(shipment):
+    product_ids = shipment.get("product_ids", [])
+    lot_id = shipment.get("lot_id")
+    if len(product_ids) == 1:
+        base = f"producte {product_ids[0]}"
+        return (
+            f"al {base} del lot {lot_id}" if lot_id else f"al {base}",
+            f"per {('al ' + base + ' del lot ' + lot_id) if lot_id else ('al ' + base)}",
+        )
+    elif product_ids:
+        base = "productes {}".format(", ".join(product_ids))
+        return (
+            f"als {base} del lot {lot_id}" if lot_id else f"als {base}",
+            f"per {('als ' + base + ' del lot ' + lot_id) if lot_id else ('als ' + base)}",
+        )
+    else:
+        if lot_id:
+            return (f"al lot {lot_id}", f"per al lot {lot_id}")
+        order_id = shipment["order_id"]
+        return (f"a la comanda {order_id}", f"per a la comanda {order_id}")
+
+
 # Agent logic ----------------------------------------------------------------------
 def resolve_agent(agent_type):
     message = build_search_message(AGENT, agent_type, DIRECTORY_AGENT, msgcnt=next_counter())
@@ -155,6 +177,7 @@ def pla_registrar_dades_venedor(message_graph, content, sender):
 # Capacitat: Cobrar compra ---------------------------------------------------------
 def pla_cobrament_intern(message_graph, content, sender):
     shipment = parse_peticio_cobrament_intern(message_graph, content)
+    scope_target, scope_per = _shipment_scope_texts(shipment)
     bank = read_user_bank_data(USER_BANK_PATH, shipment["user_id"])
     payment_method = bank["payment_method"] if bank and bank["payment_method"] else "targeta"
     products = get_products_by_ids(CATALOG_PATH, shipment["product_ids"])
@@ -173,8 +196,8 @@ def pla_cobrament_intern(message_graph, content, sender):
         "products_subtotal": products_subtotal,
     }
     logger.info(
-        "Cobrament intern de la comanda %s a l'usuari %s (%.2f EUR)",
-        payment["order_id"],
+        "Iniciant cobrament intern %s a l'usuari %s (%.2f EUR)",
+        scope_target,
         payment["user_id"],
         payment["amount"],
     )
@@ -183,9 +206,9 @@ def pla_cobrament_intern(message_graph, content, sender):
     payment["date"] = confirmation["date"]
     record_payment(PAYMENTS_PATH, payment)
     logger.info(
-        "Factura emesa a l'usuari %s per la comanda %s (pagament %s, %.2f EUR)",
+        "Factura emesa a l'usuari %s %s (pagament %s, %.2f EUR)",
         payment["user_id"],
-        payment["order_id"],
+        scope_per,
         payment["payment_id"],
         payment["amount"],
     )

@@ -1,0 +1,117 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+
+azon:responsable-enviament-P1001 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1001" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1002 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1002" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1003 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1003" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1004 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1004" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1005 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1005" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1006 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1006" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1007 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1007" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1008 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1008" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1009 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1009" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1010 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1010" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1011 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1011" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1012 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1012" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1013 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1013" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1014 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1014" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1015 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1015" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1016 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1016" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1017 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1017" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1018 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1018" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1019 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1019" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1020 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1020" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1021 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1021" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1022 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1022" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1023 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1023" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1024 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1024" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1025 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1025" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1026 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1026" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1027 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1027" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1028 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1028" ;
+    azon:Responsable "agentzon" .
+
+azon:responsable-enviament-P1029 a azon:ResponsableEnviamentProducte ;
+    azon:IdProducte "P1029" ;
+    azon:Responsable "agentzon" .

@@ -948,10 +948,6 @@ Resposta que conté la llista de productes recomanats personalitzats per a l'usu
 
 Resposta que conté els productes trobats segons els criteris de cerca especificats per l'usuari. És enviada per l'Agent Cercador a l'usuari amb la informació detallada de cada producte localitzat (nom, preu, marca, descripció).
 
-**DadesEnviament**
-
-Resposta que comunica que un lot ja té un transportista assignat i una data definitiva d’entrega, però que encara no ha estat enviat. Inclou atributs com IdComanda, IdLot, IdTransportista, NomTransportista, CostTransport, Ciutat i DataEntregaDefinitiva. És enviada per l’Agent Centre Logístic a l’Agent Compra perquè aquest pugui actualitzar l’estat de la comanda i informar l’usuari dels detalls definitius de l’enviament.
-
 # 
 
 6. # **Implementació d’agents** {#implementació-d’agents}
