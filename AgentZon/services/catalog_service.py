@@ -1,15 +1,20 @@
 """Consultes al catàleg de productes (productes.ttl) amb filtres per ID i criteris."""
 
 from rdflib import Graph
+from rdflib.plugins.sparql import prepareQuery
 
 from AgentUtil.OntoNamespaces import AZON
 from services.rdf_store import load_graph
 
 
-# Search operations ----------------------------------------------------------------
-def search_products(catalog_path, criteria):
-    graph = load_graph(catalog_path)
-    query = """
+# La gramàtica SPARQL de rdflib (pyparsing) NO és thread-safe en temps de
+# parseig. Sota Flask (threaded=True) diverses peticions concurrents que
+# analitzin la mateixa cadena SPARQL corrompen l'estat compartit del parser i
+# llancen errors com "Param.postParse2() missing 1 required positional argument".
+# Preparem la consulta una sola vegada a la importació (single-thread) i
+# reutilitzem l'objecte ja parsejat a cada crida, evitant el parseig concurrent.
+_PRODUCTS_QUERY = prepareQuery(
+    """
         PREFIX azon: <http://www.semanticweb.org/agentzon#>
         SELECT ?id ?name ?description ?category ?brand ?price ?weight
         WHERE {
@@ -23,7 +28,13 @@ def search_products(catalog_path, criteria):
                 azon:Pes ?weight .
         }
     """
-    rows = graph.query(query)
+)
+
+
+# Search operations ----------------------------------------------------------------
+def search_products(catalog_path, criteria):
+    graph = load_graph(catalog_path)
+    rows = graph.query(_PRODUCTS_QUERY)
     results = []
     lowered_text = criteria.get("text", "").lower()
     for row in rows:

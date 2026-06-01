@@ -23,6 +23,7 @@ from config import (
     build_directory_agent,
     register_with_directory,
     resolve_runtime_hostname,
+    serve_agent,
 )
 from protocols.cerca import build_peticio_cerca, build_resultat_cerca, parse_peticio_cerca
 from protocols.directory import build_search_message, parse_directory_response
@@ -192,10 +193,13 @@ def main():
             "data_dir": Path(args.data_dir),
         }
     )
-    logger.info("Registrant %s al directori %s", AGENT.name, DIRECTORY_AGENT.address)
-    register_with_directory(AGENT, DIRECTORY_AGENT, DSO.CercadorAgent, 0)
     logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
-    app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
+    serve_agent(
+        app,
+        hostname,
+        args.port,
+        register_fn=lambda: register_with_directory(AGENT, DIRECTORY_AGENT, DSO.CercadorAgent, 0),
+    )
 
 
 if __name__ == "__main__":

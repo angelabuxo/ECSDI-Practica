@@ -73,12 +73,27 @@ azon:purchase-ORDER-35255671 azon:IdComanda "ORDER-35255671" ;
         azon:product-P1023,
         azon:product-P1024 .
 
+azon:purchase-ORDER-5464FC0C azon:IdComanda "ORDER-5464FC0C" ;
+    azon:IdUsuari "a" ;
+    azon:SobreComanda azon:order-ORDER-5464FC0C ;
+    azon:SobreProducte azon:product-P1026,
+        azon:product-P1027 .
+
 azon:purchase-ORDER-7AE3408B azon:IdComanda "ORDER-7AE3408B" ;
     azon:IdUsuari "1243" ;
     azon:SobreComanda azon:order-ORDER-7AE3408B ;
     azon:SobreProducte azon:product-P1002,
         azon:product-P1003,
         azon:product-P1016 .
+
+azon:purchase-ORDER-7CAD298C azon:IdComanda "ORDER-7CAD298C" ;
+    azon:IdUsuari "s" ;
+    azon:SobreComanda azon:order-ORDER-7CAD298C ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1028,
+        azon:product-P1029 .
 
 azon:purchase-ORDER-8269451F azon:IdComanda "ORDER-8269451F" ;
     azon:IdUsuari "11111" ;
@@ -136,6 +151,15 @@ azon:purchase-ORDER-CD6EDDA6 azon:IdComanda "ORDER-CD6EDDA6" ;
         azon:product-P1002,
         azon:product-P1003,
         azon:product-P1004 .
+
+azon:purchase-ORDER-E6E81DE7 azon:IdComanda "ORDER-E6E81DE7" ;
+    azon:IdUsuari "1" ;
+    azon:SobreComanda azon:order-ORDER-E6E81DE7 ;
+    azon:SobreProducte azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 .
 
 azon:purchase-ORDER-FD3C35DB azon:IdComanda "ORDER-FD3C35DB" ;
     azon:IdUsuari "123235358" ;

@@ -13,6 +13,22 @@ azon:payment-PAY-22F83240 a azon:Pagament ;
     azon:SobreProducte azon:product-P1001,
         azon:product-P1004 .
 
+azon:payment-PAY-940C81B3 a azon:Pagament ;
+    azon:DataPagament "2026-06-01" ;
+    azon:Estat "PAGAT" ;
+    azon:IdComanda "ORDER-E6E81DE7" ;
+    azon:IdPagament "PAY-940C81B3" ;
+    azon:IdUsuari "1" ;
+    azon:ImportPagament "4060.12"^^xsd:float ;
+    azon:MetodePagament "1" ;
+    azon:SentitPagament "COBRAMENT" ;
+    azon:SobreComanda azon:order-ORDER-E6E81DE7 ;
+    azon:SobreProducte azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 .
+
 azon:payment-PAY-99939550 a azon:Pagament ;
     azon:DataPagament "2026-05-30" ;
     azon:Estat "PAGAT" ;
