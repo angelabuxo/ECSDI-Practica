@@ -129,6 +129,19 @@ azon:order-ORDER-35255671 a azon:Comanda ;
         azon:product-P1023,
         azon:product-P1024 .
 
+azon:order-ORDER-5464FC0C a azon:Comanda ;
+    azon:Carrer "a" ;
+    azon:Ciutat "a" ;
+    azon:DataEntrega "2026-06-02" ;
+    azon:DataEntregaDefinitiva "2026-06-04" ;
+    azon:IdComanda "ORDER-5464FC0C" ;
+    azon:IdUsuari "a" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1026,
+        azon:product-P1027 .
+
 azon:order-ORDER-7AE3408B a azon:Comanda ;
     azon:Carrer "asfasf" ;
     azon:Ciutat "Barcelona" ;
@@ -142,6 +155,22 @@ azon:order-ORDER-7AE3408B a azon:Comanda ;
     azon:TeProducte azon:product-P1002,
         azon:product-P1003,
         azon:product-P1016 .
+
+azon:order-ORDER-7CAD298C a azon:Comanda ;
+    azon:Carrer "s" ;
+    azon:Ciutat "s" ;
+    azon:DataEntrega "2026-06-02" ;
+    azon:DataEntregaDefinitiva "2026-06-04" ;
+    azon:IdComanda "ORDER-7CAD298C" ;
+    azon:IdUsuari "s" ;
+    azon:MetodePagament "s" ;
+    azon:Nom "s" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1028,
+        azon:product-P1029 .
 
 azon:order-ORDER-8269451F a azon:Comanda ;
     azon:Carrer "mmmtp" ;
@@ -241,6 +270,22 @@ azon:order-ORDER-CD6EDDA6 a azon:Comanda ;
         azon:product-P1002,
         azon:product-P1003,
         azon:product-P1004 .
+
+azon:order-ORDER-E6E81DE7 a azon:Comanda ;
+    azon:Carrer "1" ;
+    azon:Ciutat "1" ;
+    azon:DataEntrega "2026-06-02" ;
+    azon:DataEntregaDefinitiva "2026-06-04" ;
+    azon:IdComanda "ORDER-E6E81DE7" ;
+    azon:IdUsuari "1" ;
+    azon:MetodePagament "1" ;
+    azon:Nom "angi" ;
+    azon:Prioritat "24h" ;
+    azon:TeProducte azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 .
 
 azon:order-ORDER-FD3C35DB a azon:Comanda ;
     azon:Carrer "holajafkaf" ;

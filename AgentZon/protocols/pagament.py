@@ -8,6 +8,13 @@ from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
 
 
+# Sentit del moviment de diners (vegeu azon:SentitPagament a l'ontologia).
+# COBRAMENT = entrant (la botiga cobra l'usuari); PAGAMENT = sortint (la botiga
+# paga un venedor extern o retorna diners a l'usuari).
+SENTIT_COBRAMENT = "COBRAMENT"
+SENTIT_PAGAMENT = "PAGAMENT"
+
+
 # Bank-data registration -----------------------------------------------------------
 def build_peticio_registre_dades_usuari(
     user_id,
@@ -120,6 +127,8 @@ def build_peticio_pagament(payment, sender=None, receiver=None, request_content=
     graph.add((content, AZON.IdComanda, Literal(payment["order_id"])))
     graph.add((content, AZON.ImportPagament, Literal(payment["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MetodePagament, Literal(payment["method"])))
+    if payment.get("sentit"):
+        graph.add((content, AZON.SentitPagament, Literal(payment["sentit"])))
     if payment.get("user_id"):
         graph.add((content, AZON.IdUsuari, Literal(payment["user_id"])))
     if payment.get("seller_id"):
@@ -151,11 +160,13 @@ def parse_peticio_pagament(graph, content):
         product_ids.append(str(product_id))
     user_id = graph.value(content, AZON.IdUsuari)
     seller_id = graph.value(content, AZON.IdVenedorExtern)
+    sentit = graph.value(content, AZON.SentitPagament)
     return {
         "payment_id": str(graph.value(content, AZON.IdPagament)),
         "order_id": str(graph.value(content, AZON.IdComanda)),
         "amount": float(graph.value(content, AZON.ImportPagament)),
         "method": str(graph.value(content, AZON.MetodePagament)),
+        "sentit": str(sentit) if sentit is not None else None,
         "user_id": str(user_id) if user_id is not None else None,
         "seller_id": str(seller_id) if seller_id is not None else None,
         "product_ids": sorted(product_ids),
@@ -207,6 +218,7 @@ def extract_invoice_from_content(graph, content):
         "order_id": str(graph.value(content, AZON.IdComanda) or ""),
         "amount": float(amount) if amount is not None else line_data["products_subtotal"] + line_data["transport_cost"],
         "method": str(graph.value(content, AZON.MetodePagament) or ""),
+        "sentit": str(graph.value(content, AZON.SentitPagament) or ""),
         "status": str(graph.value(content, AZON.Estat) or ""),
         "date": str(graph.value(content, AZON.DataPagament) or ""),
         **line_data,
@@ -217,6 +229,8 @@ def embed_invoice_in_content(graph, content, invoice):
     graph.add((content, AZON.IdPagament, Literal(invoice["payment_id"])))
     graph.add((content, AZON.ImportPagament, Literal(invoice["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MetodePagament, Literal(invoice["method"])))
+    if invoice.get("sentit"):
+        graph.add((content, AZON.SentitPagament, Literal(invoice["sentit"])))
     graph.add((content, AZON.Estat, Literal(invoice.get("status", "PAGAT"))))
     graph.add((content, AZON.DataPagament, Literal(invoice["date"])))
     graph.add((content, AZON.CostTransport, Literal(invoice["transport_cost"], datatype=XSD.float)))
@@ -233,6 +247,8 @@ def build_confirmacio_pagament(payment, sender=None, receiver=None, request_cont
     graph.add((content, AZON.IdComanda, Literal(payment["order_id"])))
     graph.add((content, AZON.ImportPagament, Literal(payment["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MetodePagament, Literal(payment["method"])))
+    if payment.get("sentit"):
+        graph.add((content, AZON.SentitPagament, Literal(payment["sentit"])))
     graph.add((content, AZON.Estat, Literal(payment.get("status", "PAGAT"))))
     graph.add((content, AZON.DataPagament, Literal(payment["date"])))
     if payment.get("transport_cost") is not None:

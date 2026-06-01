@@ -2,9 +2,26 @@
 
 AgentZon és un prototip de sistema multiagent per a l'assignatura ECSDI. Implementa una botiga distribuïda amb cerca de productes, compra i gestió logística basada en ontologia RDF/OWL.
 
+Per una explicació detallada de l'arquitectura i els fluxos, consulta [`GUIA_NOU_INTEGRANT.md`](GUIA_NOU_INTEGRANT.md).
+
 ## 1) Generar documentació i graf de l'ontologia
 
-Des de root del repositori:
+Des de `AgentZon/` (amb l'entorn virtual activat; vegeu la secció 2):
+
+```bash
+cd AgentZon
+python -m pylode ontologia/AgentZonOntology.rdf -o ontologia/docs/ontology.html
+```
+
+Generar el graf de l'ontologia (cal tenir instal·lat Graphviz: `dot`):
+
+```bash
+rdf2dot ontologia/AgentZonOntology.rdf | dot -Tpng -o ontologia/docs/ontology_graph.png
+```
+
+## 2) Preparar l'entorn (un sol cop)
+
+Des de l'arrel del repositori:
 
 ```bash
 python3 -m venv .venv
@@ -13,75 +30,98 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-Generar la documentació HTML de l'ontologia:
+També pots crear el virtualenv dins de `AgentZon/.venv`; el script `run_agents.sh` accepta qualsevol dels dos.
+
+## 3) Executar el sistema distribuït
+
+Totes les comandes d'aquesta secció s'executen des de **`AgentZon/`** (és el directori de treball dels agents). La interfície humana viu a `/iface`; els agents es comuniquen per `/comm` i el directori per `/Register`.
+
+### Opció A (recomanada, macOS)
+
+Un script obre una finestra de Terminal per agent (11 processos):
 
 ```bash
-.venv/bin/python -m pylode ontologia/AgentZonOntology.rdf -o ontologia/docs/ontology.html
+cd AgentZon
+chmod +x run_agents.sh   # només la primera vegada
+./run_agents.sh
 ```
 
-Generar el graf de l'ontologia:
+Variables opcionals: `HOST`, `DELAY_SECONDS`, `OPEN_BROWSER=0` (per no obrir el navegador automàticament).
 
-```bash
-.venv/bin/rdf2dot ontologia/AgentZonOntology.rdf | dot -Tpng -o ontologia/docs/ontology_graph.png
-```
+### Opció B (manual)
 
-## 2) Executar el sistema distribuït
+Obre **una terminal per agent** i executa les comandes següents des de `AgentZon/`. **L'ordre importa**:
 
-Obre terminals separats i executa cada agent des de l'arrel del projecte. La interfície humana viu a `/iface`; els agents es comuniquen per `/comm` i el directori per `/Register`.
+1. Directory  
+2. Proveïdor de Pagament i Cobrador  
+3. Opinador i transportistes  
+4. Centres Logístics, Compra i Cercador (aquest últim, el que exposa la UI)
 
-1. Agent Directory
+Substitueix `.venv/bin/python` per `../.venv/bin/python` si el virtualenv està a l'arrel del repositori.
+
+**1. Agent Directory**
 
 ```bash
 .venv/bin/python -m agents.agent_directory --host 127.0.0.1 --port 9000
 ```
 
-1. Agent Opinador
-
-```bash
-.venv/bin/python -m agents.agent_opinador --host 127.0.0.1 --port 9004 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
-```
-
-1. Transportista ràpid
-
-```bash
-.venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9010 --transport-id fast --price-per-kg 8.0 --delivery-days 1
-```
-
-1. Transportista econòmic
-
-```bash
-.venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9011 --transport-id economy --price-per-kg 4.0 --delivery-days 3
-```
-
-1. Agent Proveïdor de Pagament (banc extern)
+**2. Agent Proveïdor de Pagament**
 
 ```bash
 .venv/bin/python -m agents.agent_proveidor_de_pagament --host 127.0.0.1 --port 9006 --directory-host 127.0.0.1 --directory-port 9000
 ```
 
-1. Agent Cobrador
+**3. Agent Cobrador**
 
 ```bash
 .venv/bin/python -m agents.agent_cobrador --host 127.0.0.1 --port 9005 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
-1. Agent Centre Logístic
+**4. Agent Opinador**
 
 ```bash
-.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9003 --directory-host 127.0.0.1 --directory-port 9000 --transport-fast-host 127.0.0.1 --transport-fast-port 9010 --transport-economy-host 127.0.0.1 --transport-economy-port 9011 --data-dir data
+.venv/bin/python -m agents.agent_opinador --host 127.0.0.1 --port 9004 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
-1. Agent Compra
+**5. Transportista ràpid**
+
+```bash
+.venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9010 --transport-id fast --price-per-kg 8.0 --delivery-days 1
+```
+
+**6. Transportista econòmic**
+
+```bash
+.venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9011 --transport-id economy --price-per-kg 4.0 --delivery-days 3
+```
+
+**7–9. Agents Centre Logístic (BCN, Girona, Tarragona)**
+
+```bash
+.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9003 --centre-id CL-BCN --centre-city Barcelona --directory-host 127.0.0.1 --directory-port 9000 --transport-fast-host 127.0.0.1 --transport-fast-port 9010 --transport-economy-host 127.0.0.1 --transport-economy-port 9011 --data-dir data
+```
+
+```bash
+.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9007 --centre-id CL-GI --centre-city Girona --directory-host 127.0.0.1 --directory-port 9000 --transport-fast-host 127.0.0.1 --transport-fast-port 9010 --transport-economy-host 127.0.0.1 --transport-economy-port 9011 --data-dir data
+```
+
+```bash
+.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9008 --centre-id CL-TGN --centre-city Tarragona --directory-host 127.0.0.1 --directory-port 9000 --transport-fast-host 127.0.0.1 --transport-fast-port 9010 --transport-economy-host 127.0.0.1 --transport-economy-port 9011 --data-dir data
+```
+
+**10. Agent Compra**
 
 ```bash
 .venv/bin/python -m agents.agent_compra --host 127.0.0.1 --port 9002 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
-1. Agent Cercador
+**11. Agent Cercador**
 
 ```bash
 .venv/bin/python -m agents.agent_cercador --host 127.0.0.1 --port 9001 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
+
+### Interfície i endpoints
 
 Quan tots els agents estiguin en marxa, obre:
 
@@ -92,20 +132,54 @@ Endpoints principals:
 - `DirectoryAgent`: `/Register`, `/Info`, `/Stop`
 - `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `Transportista`, `CobradorAgent`, `ProveidorPagamentAgent`: `/comm`, `/iface`, `/Stop`
 
-L'ordre d'arrencada recomanat és: Directory, Proveïdor de Pagament i Cobrador (gestió del pagament), després Opinador i Transportistes, i finalment Centre Logístic, Compra i Cercador. El Cobrador i el Proveïdor s'han d'aixecar abans del Centre Logístic i la Compra perquè aquests els resolen pel Directory en el moment de cobrar.
+Per a la demo: el sistema ha de funcionar **realment distribuït**. Pots executar agents en màquines diferents passant `--host` i `--directory-host` amb les IP reals.
 
-## 3) Regenerar dades aleatòries del catàleg
+### Aturar agents, terminals i ports actius
 
-El catàleg RDF de `productes.ttl` i les ubicacions de `ubicacions_productes.ttl` es poden generar aleatòriament a partir d'una plantilla de categories, marques i rangs coherents.
-
-Exemple:
+Si has obert els agents amb `./run_agents.sh` o manualment i vols reiniciar net (errors `Address already in use`, processos penjats, etc.), executa des de qualsevol directori:
 
 ```bash
+# 1) Aturar tots els processos Python dels agents
+pkill -f '[Pp]ython.*-m agents\.agent_' 2>/dev/null || true
+
+# 2) Alliberar els ports reservats per AgentZon (9000–9008, 9010–9011)
+for port in 9000 9001 9002 9003 9004 9005 9006 9007 9008 9010 9011; do
+  lsof -ti "tcp:$port" -sTCP:LISTEN 2>/dev/null | xargs kill -9 2>/dev/null
+done
+```
+
+Comprovar que no queda res en escolta:
+
+```bash
+lsof -nP -iTCP:9000-9011 -sTCP:LISTEN
+```
+
+Si has usat `./run_agents.sh` a macOS, tanca també les finestres de Terminal que han quedat obertes (Cmd+W a cada una, o tanca-les des del menú Terminal).
+
+## 4) Regenerar dades de prova
+
+El catàleg RDF de `productes.ttl` i les ubicacions de `ubicacions_productes.ttl` es poden generar aleatòriament.
+
+Des de `AgentZon/`:
+
+```bash
+cd AgentZon
 .venv/bin/python -m services.bootstrap --data-dir data --product-count 24
 ```
 
-Si vols que el catàleg sigui reproduïble entre execucions:
+Per reproduir el mateix catàleg entre execucions:
 
 ```bash
 .venv/bin/python -m services.bootstrap --data-dir data --product-count 24 --seed 21
 ```
+
+## 5) Passar els tests
+
+Des de `AgentZon/`:
+
+```bash
+cd AgentZon
+.venv/bin/python -m unittest discover -s tests -p 'test_*.py'
+```
+
+Han de passar **tots** els tests, inclòs `test_distributed_smoke`, que arrenca agents com a processos separats i completa una compra de punta a punta.

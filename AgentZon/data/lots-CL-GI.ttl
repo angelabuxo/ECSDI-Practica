@@ -1,2 +1,21 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:lot-LOT-0F6491 a azon:Lot ;
+    azon:Ciutat "s" ;
+    azon:DataEntrega "2026-06-02" ;
+    azon:IdCentreLogistic "CL-GI" ;
+    azon:IdLot "LOT-0F6491" ;
+    azon:PesTotal 1.05e+00 ;
+    azon:SobreComanda azon:order-ORDER-7CAD298C ;
+    azon:TeProducte azon:product-P1002 .
+
+azon:lot-LOT-38E8EA a azon:Lot ;
+    azon:Ciutat "a" ;
+    azon:DataEntrega "2026-06-02" ;
+    azon:IdCentreLogistic "CL-GI" ;
+    azon:IdLot "LOT-38E8EA" ;
+    azon:PesTotal 3.8e-01 ;
+    azon:SobreComanda azon:order-ORDER-5464FC0C ;
+    azon:TeProducte azon:product-P1026 .
+

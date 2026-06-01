@@ -21,6 +21,7 @@ from config import (
     build_directory_agent,
     register_with_directory,
     resolve_runtime_hostname,
+    serve_agent,
 )
 from protocols.centre_logistic import (
     build_eleccio_transportista,
@@ -284,19 +285,22 @@ def main():
         }
     )
     directory = build_directory_agent(args.directory_host, args.directory_port)
-    logger.info("Registrant %s al directori %s", AGENT.name, directory.address)
-    register_with_directory(
-        AGENT,
-        directory,
-        DSO.CentreLogisticAgent,
-        0,
-        metadata={
-            AZON.IdCentreLogistic: args.centre_id,
-            AZON.Ciutat: args.centre_city,
-        },
-    )
     logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
-    app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
+    serve_agent(
+        app,
+        hostname,
+        args.port,
+        register_fn=lambda: register_with_directory(
+            AGENT,
+            directory,
+            DSO.CentreLogisticAgent,
+            0,
+            metadata={
+                AZON.IdCentreLogistic: args.centre_id,
+                AZON.Ciutat: args.centre_city,
+            },
+        ),
+    )
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ from config import (
     build_directory_agent,
     register_with_directory,
     resolve_runtime_hostname,
+    serve_agent,
 )
 from protocols.compra import (
     build_confirmacio_registre_compra,
@@ -125,10 +126,13 @@ def main():
 
     configure_runtime({"agent": build_agent("OpinadorAgent", "Opinador", args.port, host=hostname), "data_dir": Path(args.data_dir)})
     directory = build_directory_agent(args.directory_host, args.directory_port)
-    logger.info("Registrant %s al directori %s", AGENT.name, directory.address)
-    register_with_directory(AGENT, directory, DSO.OpinadorAgent, 0)
     logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
-    app.run(host=hostname, port=args.port, debug=False, use_reloader=False)
+    serve_agent(
+        app,
+        hostname,
+        args.port,
+        register_fn=lambda: register_with_directory(AGENT, directory, DSO.OpinadorAgent, 0),
+    )
 
 
 if __name__ == "__main__":
