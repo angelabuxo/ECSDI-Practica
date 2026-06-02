@@ -34,32 +34,22 @@
 
   <p>Identificació activa per IP: <strong>{{ interface_user_id }}</strong></p>
 
-  <h2>Demanar feedback per Producte</h2>
-  {% if feedback_context %}
-  <p>Usuari: <strong>{{ feedback_context.user_id }}</strong></p>
-  <p>Última comanda detectada: <strong>{{ feedback_context.order_id }}</strong></p>
-  <p>Productes pendents de valorar: <strong>{{ feedback_context.product_ids|join(', ') }}</strong></p>
-  {% endif %}
+  <h2>Demanar feedback por Producte</h2>
   
   <form method="post" action="{{ iface_path }}">
     <input type="hidden" name="view" value="dashboard">
     <input type="hidden" name="action" value="feedback">
     
     <p>
-      <label>Feedback ID:<br>
-        <input type="text" name="feedback_id" value="{{ feedback_context.feedback_id if feedback_context else '' }}" required>
-      </label>
-    </p>
-    
-    <p>
-      <label>Producte ID (Valoració individual):<br>
-        <input type="text" name="product_id" placeholder="Ex: prod-001" required>
-      </label>
-    </p>
-
-    <p>
-      <label>Comanda ID (Opcional, es buscarà en l'històric automàticament si es deixa en blanc):<br>
-        <input type="text" name="order_id" value="{{ feedback_context.order_id if feedback_context else '' }}">
+      <label>Selecciona el producte a valorar:<br>
+        <select name="product_id" required>
+          <option value="" disabled selected>-- Tria un dels teus productes comprats --</option>
+          {% for product in pending_products %}
+            <option value="{{ product.product_id }}">{{ product.name }} ({{ product.brand }})</option>
+          {% else %}
+            <option value="" disabled>No tens cap producte pendent de valoració</option>
+          {% endfor %}
+        </select>
       </label>
     </p>
     
@@ -79,7 +69,11 @@
       </label>
     </p>
     
-    <button type="submit">Registrar feedback del producte</button>
+    {% if pending_products %}
+      <button type="submit">Registrar feedback del producte</button>
+    {% else %}
+      <button type="submit" disabled>No hi ha productes per valorar</button>
+    {% endif %}
   </form>
 
   <h2>Crear suggeriments</h2>

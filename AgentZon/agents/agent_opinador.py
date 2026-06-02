@@ -33,7 +33,8 @@ from services.history_service import (
     record_feedback,
     record_purchase,
 )
-from services.opinador_service import evaluate_return_request, generate_recommendations, get_feedback_context
+from services.catalog_service import get_products_by_ids
+from services.opinador_service import evaluate_return_request, generate_recommendations
 
 
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
@@ -81,24 +82,6 @@ def next_counter():
         return current
 
 
-def _parse_product_ids(value):
-    return [item.strip() for item in value.split(",") if item.strip()]
-
-
-def _latest_feedback_context(user_id=None):
-    context = get_feedback_context(PURCHASE_HISTORY_PATH, user_id=user_id)
-    if context is None:
-        return None
-    return {
-        "feedback_id": f"FB-{context['order_id']}",
-        **context,
-    }
-
-
-def _resolve_recommendation_user_id(user_id):
-    return user_id if user_id else None
-
-
 def get_client_ip():
     """Adreca IP del client HTTP (proxy-aware) com a identificador d'usuari."""
     forwarded = request.headers.get("X-Forwarded-For", "")
@@ -123,19 +106,41 @@ def _parse_recommendation_limit(raw_value):
     return max(1, min(10, parsed))
 
 
+def _get_pending_products(user_id):
+    """Retorna els productes comprats per l'usuari que encara no tenen feedback registrat."""
+    purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id)
+    feedbacks = load_feedback_records(FEEDBACK_PATH, user_id=user_id)
+    
+    # Conjunt de productes que ja tenen valoració
+    reviewed_product_ids = {pid for fb in feedbacks for pid in fb.get("product_ids", [])}
+    
+    # Conjunt de tots els productes comprats
+    purchased_product_ids = {pid for p in purchases for pid in p.get("product_ids", [])}
+    
+    # Filtrem els pendents
+    pending_ids = list(purchased_product_ids - reviewed_product_ids)
+    if not pending_ids:
+        return []
+        
+    # Obtenim els detalls del catàleg per saber-ne el nom real
+    return get_products_by_ids(CATALOG_PATH, pending_ids)
+
+
 def _build_dashboard_context(interface_user_id, recommendation_limit, confirmation):
-    feedback_context = _build_feedback_request_context(interface_user_id)
-    recommendation_user_id = _resolve_recommendation_user_id(interface_user_id)
-    recommendations = pla_de_creacio_de_suggeriments(recommendation_user_id, limit=recommendation_limit)
+    recommendations = pla_de_creacio_de_suggeriments(interface_user_id, limit=recommendation_limit)
     recent_purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=interface_user_id)
     stats = _load_dashboard_stats(recommendations, interface_user_id)
+    
+    # Obtenir llista de productes sense feedback
+    pending_products = _get_pending_products(interface_user_id)
+    
     return {
         "iface_path": "/iface",
         "interface_user_id": interface_user_id,
         "show_dashboard": True,
         "confirmation": confirmation,
-        "feedback_context": feedback_context,
-        "recommendation_context": {"user_id": recommendation_user_id} if recommendation_user_id else None,
+        "pending_products": pending_products,
+        "recommendation_context": {"user_id": interface_user_id} if interface_user_id else None,
         "recommendation_limit": recommendation_limit,
         "recommendations": recommendations,
         "recent_purchases": recent_purchases[-5:],
@@ -181,38 +186,26 @@ def pla_de_consulta_de_criteris_devolucio(request_data):
     return evaluate_return_request(CATALOG_PATH, PURCHASE_HISTORY_PATH, request_data)
 
 
-def _build_feedback_request_context(user_id=None):
-    context = _latest_feedback_context(user_id=user_id)
-    if context is not None:
-        return context
-    return None
-
-
 def _build_feedback_submission(form_data, user_id):
     requested_product_id = form_data.get("product_id", "").strip()
     if not requested_product_id:
-        return None, "No s'ha pogut registrar el feedback: Has d'especificar un ID de producte."
+        return None, "No s'ha pogut registrar el feedback: No s'ha seleccionat cap producte vàlid."
 
-    order_id = form_data.get("order_id", "").strip()
     purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id)
     
-    # Si s'ha donat una comanda, es busca directament; si no, busquem en qualsevol comanda on surti el producte
-    if order_id:
-        matching_purchases = [p for p in purchases if p["order_id"] == order_id]
-    else:
-        matching_purchases = [p for p in purchases if requested_product_id in p["product_ids"]]
-        if matching_purchases:
-            order_id = matching_purchases[-1]["order_id"]  # Agafem la comanda més recent que el té
-
+    # Cerquem de forma automatitzada quina comanda de l'usuari conté aquest producte
+    matching_purchases = [p for p in purchases if requested_product_id in p.get("product_ids", [])]
+    
     if not matching_purchases:
-        return None, "No s'ha pogut trobar cap comanda vàlida associada a la teva IP."
+        return None, "No s'ha pogut verificar la compra d'aquest producte."
 
-    # Validem que realment s'hagi comprat el producte sol·licitat en aquestes comandes filtrades
-    allowed_product_ids = {pid for p in matching_purchases for pid in p["product_ids"]}
-    if requested_product_id not in allowed_product_ids:
-        return None, f"No s'ha pogut registrar el feedback: El producte '{requested_product_id}' no consta com a comprat."
+    # Escollim la comanda més recent que conté el producte actiu
+    associated_order = matching_purchases[-1]
+    order_id = associated_order["order_id"]
 
-    feedback_id = form_data.get("feedback_id", "").strip() or f"FB-{requested_product_id}-{order_id}"
+    # Generació automàtica i oculta d'IDs estructurats de feedback
+    feedback_id = f"FB-{requested_product_id}-{order_id}"
+    
     try:
         rating = int(form_data.get("rating", "0"))
     except ValueError:
@@ -226,12 +219,8 @@ def _build_feedback_submission(form_data, user_id):
         "order_id": order_id,
         "rating": rating,
         "comment": form_data.get("comment", "").strip(),
-        "product_ids": [requested_product_id],  # Es desa en format llista d'un sol element per compatibilitat amb l'ontologia
+        "product_ids": [requested_product_id],
     }, ""
-
-
-def _build_feedback_confirmation(feedback_data):
-    return f"Feedback {feedback_data['feedback_id']} registrat correctament per al producte '{feedback_data['product_ids'][0]}' (Comanda: {feedback_data['order_id']})."
 
 
 # Communication handling -----------------------------------------------------------
@@ -312,7 +301,7 @@ def iface():
         feedback_data, error = _build_feedback_submission(request.form, interface_user_id)
         if feedback_data is not None:
             pla_de_registre_de_feedback(feedback_data)
-            confirmation = _build_feedback_confirmation(feedback_data)
+            confirmation = f"Feedback registrat correctament per al producte seleccionat!"
         elif error:
             confirmation = error
         view = "dashboard"
