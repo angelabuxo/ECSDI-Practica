@@ -189,39 +189,49 @@ def _build_feedback_request_context(user_id=None):
 
 
 def _build_feedback_submission(form_data, user_id):
+    requested_product_id = form_data.get("product_id", "").strip()
+    if not requested_product_id:
+        return None, "No s'ha pogut registrar el feedback: Has d'especificar un ID de producte."
+
     order_id = form_data.get("order_id", "").strip()
     purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id)
-    matching_purchase = next((purchase for purchase in purchases if purchase["order_id"] == order_id), None)
-    if matching_purchase is None:
-        return None, "No s'ha pogut registrar el feedback: la comanda indicada no pertany a la teva IP."
-
-    allowed_product_ids = set(matching_purchase["product_ids"])
-    requested_product_ids = _parse_product_ids(form_data.get("product_ids", ""))
-    if requested_product_ids:
-        filtered_product_ids = [product_id for product_id in requested_product_ids if product_id in allowed_product_ids]
+    
+    # Si s'ha donat una comanda, es busca directament; si no, busquem en qualsevol comanda on surti el producte
+    if order_id:
+        matching_purchases = [p for p in purchases if p["order_id"] == order_id]
     else:
-        filtered_product_ids = sorted(allowed_product_ids)
-    if not filtered_product_ids:
-        return None, "No s'ha pogut registrar el feedback: només pots valorar productes que hagis comprat."
+        matching_purchases = [p for p in purchases if requested_product_id in p["product_ids"]]
+        if matching_purchases:
+            order_id = matching_purchases[-1]["order_id"]  # Agafem la comanda més recent que el té
 
-    feedback_id = form_data.get("feedback_id", "").strip() or f"FB-{order_id}"
+    if not matching_purchases:
+        return None, "No s'ha pogut trobar cap comanda vàlida associada a la teva IP."
+
+    # Validem que realment s'hagi comprat el producte sol·licitat en aquestes comandes filtrades
+    allowed_product_ids = {pid for p in matching_purchases for pid in p["product_ids"]}
+    if requested_product_id not in allowed_product_ids:
+        return None, f"No s'ha pogut registrar el feedback: El producte '{requested_product_id}' no consta com a comprat."
+
+    feedback_id = form_data.get("feedback_id", "").strip() or f"FB-{requested_product_id}-{order_id}"
     try:
         rating = int(form_data.get("rating", "0"))
     except ValueError:
-        return None, "No s'ha pogut registrar el feedback: puntuacio no valida."
+        return None, "No s'ha pogut registrar el feedback: puntuació no vàlida."
+    
     rating = max(1, min(5, rating))
+    
     return {
         "feedback_id": feedback_id,
         "user_id": user_id,
         "order_id": order_id,
         "rating": rating,
         "comment": form_data.get("comment", "").strip(),
-        "product_ids": sorted(set(filtered_product_ids)),
+        "product_ids": [requested_product_id],  # Es desa en format llista d'un sol element per compatibilitat amb l'ontologia
     }, ""
 
 
 def _build_feedback_confirmation(feedback_data):
-    return f"Feedback {feedback_data['feedback_id']} registrat correctament per a la comanda {feedback_data['order_id']}."
+    return f"Feedback {feedback_data['feedback_id']} registrat correctament per al producte '{feedback_data['product_ids'][0]}' (Comanda: {feedback_data['order_id']})."
 
 
 # Communication handling -----------------------------------------------------------
