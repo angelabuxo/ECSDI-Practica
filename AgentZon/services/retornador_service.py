@@ -14,19 +14,30 @@ from rdflib import RDF
 # Motius de devolució (UI) i política d'acceptació (Opinador)
 RETURN_REASON_DEFECTUOUS = "Producte defectuós"
 RETURN_REASON_NOT_AS_DESCRIBED = "Producte no compleix amb la descripció"
+RETURN_REASON_TRANSPORT_DELAY = "El producte ha arribat més tard del previst"
 RETURN_REASON_WRONG_PURCHASE = "M'he equivocat en comprar-lo"
 RETURN_REASON_DISLIKED = "No m'ha agradat"
+RETURN_REASON_DAMAGED_BY_USER = "El producte ha deixat de ser útil perquè l'he trencat sense voler"
+RETURN_REASON_DESCRIPTION_UNREAD = "No vaig llegir bé la descripció del producte i ja no el vull"
+RETURN_REASON_BETTER_OFFER = "He trobat un producte millor després de comprar-lo"
+RETURN_REASON_OPINION_CHANGED = "He canviat d'opinió i ja no el vull"
 
 RETURN_REASON_OPTIONS = [
     RETURN_REASON_DEFECTUOUS,
     RETURN_REASON_NOT_AS_DESCRIBED,
     RETURN_REASON_WRONG_PURCHASE,
     RETURN_REASON_DISLIKED,
+    RETURN_REASON_DAMAGED_BY_USER,
+    RETURN_REASON_DESCRIPTION_UNREAD,
+    RETURN_REASON_BETTER_OFFER,
+    RETURN_REASON_OPINION_CHANGED,
+    RETURN_REASON_TRANSPORT_DELAY,
 ]
 
 RETURN_REASONS_ACCEPTED_BY_POLICY = {
     RETURN_REASON_DEFECTUOUS,
     RETURN_REASON_NOT_AS_DESCRIBED,
+    RETURN_REASON_TRANSPORT_DELAY,
 }
 
 RETURN_REJECTION_MESSAGE = "Ho sentim, no es compleixen les condicions per retornar el producte."

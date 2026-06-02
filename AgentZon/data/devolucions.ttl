@@ -21,6 +21,74 @@ azon:refund-RET-1EE9E6E4 a azon:Devolucio ;
     azon:SobreProducte azon:product-P1010,
         azon:product-P1011 .
 
+azon:refund-RET-2A0079A2 a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-813DF66D, ORDER-8B0B0369, ORDER-BFD5D310, ORDER-E03FD6A5, ORDER-E1DB0A83, ORDER-EBB56761" ;
+    azon:IdDevolucio "RET-2A0079A2" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "2256.47"^^xsd:float ;
+    azon:MotiuDevolucio "El producte ha arribat més tard del previst" ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1028 .
+
+azon:refund-RET-2A0079A2-1 a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-813DF66D" ;
+    azon:IdDevolucio "RET-2A0079A2-1" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "72.97"^^xsd:float ;
+    azon:MotiuDevolucio "El producte ha arribat més tard del previst" ;
+    azon:SobreProducte azon:product-P1010 .
+
+azon:refund-RET-2A0079A2-2 a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-8B0B0369" ;
+    azon:IdDevolucio "RET-2A0079A2-2" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "62.28"^^xsd:float ;
+    azon:MotiuDevolucio "El producte ha arribat més tard del previst" ;
+    azon:SobreProducte azon:product-P1003 .
+
+azon:refund-RET-2A0079A2-3 a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-BFD5D310" ;
+    azon:IdDevolucio "RET-2A0079A2-3" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "1999.0"^^xsd:float ;
+    azon:MotiuDevolucio "El producte ha arribat més tard del previst" ;
+    azon:SobreProducte azon:product-P1028 .
+
+azon:refund-RET-2A0079A2-4 a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-E03FD6A5" ;
+    azon:IdDevolucio "RET-2A0079A2-4" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "42.48"^^xsd:float ;
+    azon:MotiuDevolucio "El producte ha arribat més tard del previst" ;
+    azon:SobreProducte azon:product-P1011 .
+
+azon:refund-RET-2A0079A2-5 a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-E1DB0A83" ;
+    azon:IdDevolucio "RET-2A0079A2-5" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "68.49"^^xsd:float ;
+    azon:MotiuDevolucio "El producte ha arribat més tard del previst" ;
+    azon:SobreProducte azon:product-P1001 .
+
+azon:refund-RET-2A0079A2-6 a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-EBB56761" ;
+    azon:IdDevolucio "RET-2A0079A2-6" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "11.25"^^xsd:float ;
+    azon:MotiuDevolucio "El producte ha arribat més tard del previst" ;
+    azon:SobreProducte azon:product-P1004 .
+
 azon:refund-RET-30E37E01 a azon:Devolucio ;
     azon:Estat "RETORNAT" ;
     azon:IdComanda "ORDER-4D697D7E" ;
