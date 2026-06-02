@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <title>AgentZon — Venedor Extern</title>
+  <style>
+    .product-row { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; }
+    .product-row legend { font-weight: bold; }
+    .row-actions { margin-top: 0.5rem; }
+    label { display: block; margin-bottom: 0.5rem; }
+    .info-box { background: #f5f5f5; padding: 0.75rem; margin-bottom: 1rem; }
+    .success-box { background: #e8f5e9; padding: 0.75rem; margin-bottom: 1rem; }
+    .error-box { color: #b00020; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Registrar productes externs</h1>
+
+  {% if confirmations %}
+  <section>
+    <h2>{{ confirmations|length }} producte(s) registrat(s) correctament</h2>
+    <ul>
+      {% for item in confirmations %}
+      <li>
+        <strong>{{ item.product.name }}</strong> —
+        ID: {{ item.confirmation.product_id }},
+        SKU: {{ item.confirmation.sku_extern }},
+        logística externa: {{ "Sí" if item.product.requires_external_logistics else "No (AgentZon s'encarrega)" }}
+      </li>
+      {% endfor %}
+    </ul>
+    <p><a href="{{ iface_path }}">Registrar més productes</a></p>
+  </section>
+
+  {% elif needs_vendor_setup %}
+  {% if error %}
+  <p class="error-box">{{ error }}</p>
+  {% endif %}
+  <div class="info-box">
+    <p>Benvingut! És la primera vegada que accedeixes com a venedor extern.</p>
+    <p>Identificador assignat per la teva adreça IP: <strong>{{ client_ip }}</strong></p>
+    <p>Abans de registrar productes, indica el nom comercial del venedor i les dades bancàries on rebre els pagaments.</p>
+  </div>
+
+  <form method="post" action="{{ iface_path }}">
+    <input type="hidden" name="form_type" value="setup">
+    <fieldset>
+      <legend>Perfil del venedor</legend>
+      <label>Nom del venedor <input type="text" name="seller_name" required placeholder="TechShop SL"></label>
+      <label>Dades bancàries (IBAN) <input type="text" name="bank_data" required placeholder="ES12 2100 1234 5678 9012"></label>
+    </fieldset>
+    <button type="submit">Guardar perfil i continuar</button>
+  </form>
+
+  {% else %}
+  {% if error %}
+  <p class="error-box">{{ error }}</p>
+  {% endif %}
+  {% if setup_complete and message %}
+  <div class="success-box">{{ message }}</div>
+  {% endif %}
+  <div class="info-box">
+    <p>Venedor: <strong>{{ seller_profile.seller_name or client_ip }}</strong> (IP: {{ client_ip }})</p>
+    <p>Les dades bancàries ja estan registrades. Pots afegir un o més productes al catàleg.</p>
+  </div>
+
+  <form method="post" action="{{ iface_path }}" id="registration-form">
+    <input type="hidden" name="form_type" value="products">
+    <div id="product-rows">
+      <fieldset class="product-row">
+        <legend>Producte 1</legend>
+        <label>Nom <input type="text" name="name" required></label>
+        <label>Descripció <input type="text" name="description" required></label>
+        <label>Categoria <input type="text" name="category" required placeholder="audio"></label>
+        <label>Marca <input type="text" name="brand" required></label>
+        <label>Preu <input type="number" step="0.01" name="price" required></label>
+        <label>Pes (kg) <input type="number" step="0.01" name="weight" required></label>
+        <label>SKU extern <input type="text" name="sku_extern" required></label>
+        <label>Mode d'enviament
+          <select name="logistics_mode" class="logistics-mode">
+            <option value="platform">AgentZon s'encarrega (magatzem propi)</option>
+            <option value="vendor">El venedor extern s'encarrega</option>
+          </select>
+        </label>
+        <label class="centre-field">Centre logístic
+          <select name="centre_id">
+            {% for centre in centres %}
+            <option value="{{ centre }}">{{ centre }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <div class="row-actions">
+          <button type="button" class="remove-row" hidden>Eliminar</button>
+        </div>
+      </fieldset>
+    </div>
+
+    <p>
+      <button type="button" id="add-product">Afegir un altre producte</button>
+    </p>
+    <button type="submit">Registrar productes</button>
+  </form>
+
+  <template id="product-row-template">
+    <fieldset class="product-row">
+      <legend>Producte</legend>
+      <label>Nom <input type="text" name="name" required></label>
+      <label>Descripció <input type="text" name="description" required></label>
+      <label>Categoria <input type="text" name="category" required placeholder="audio"></label>
+      <label>Marca <input type="text" name="brand" required></label>
+      <label>Preu <input type="number" step="0.01" name="price" required></label>
+      <label>Pes (kg) <input type="number" step="0.01" name="weight" required></label>
+      <label>SKU extern <input type="text" name="sku_extern" required></label>
+      <label>Mode d'enviament
+        <select name="logistics_mode" class="logistics-mode">
+          <option value="platform">AgentZon s'encarrega (magatzem propi)</option>
+          <option value="vendor">El venedor extern s'encarrega</option>
+        </select>
+      </label>
+      <label class="centre-field">Centre logístic
+        <select name="centre_id">
+          {% for centre in centres %}
+          <option value="{{ centre }}">{{ centre }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="row-actions">
+        <button type="button" class="remove-row">Eliminar</button>
+      </div>
+    </fieldset>
+  </template>
+
+  <script>
+    const rowsContainer = document.getElementById("product-rows");
+    const template = document.getElementById("product-row-template");
+    const addButton = document.getElementById("add-product");
+
+    function refreshRowLabels() {
+      rowsContainer.querySelectorAll(".product-row").forEach((row, index) => {
+        row.querySelector("legend").textContent = "Producte " + (index + 1);
+        const removeBtn = row.querySelector(".remove-row");
+        removeBtn.hidden = index === 0;
+      });
+    }
+
+    function toggleCentreField(row) {
+      const mode = row.querySelector(".logistics-mode").value;
+      const centreField = row.querySelector(".centre-field");
+      centreField.style.display = mode === "platform" ? "block" : "none";
+    }
+
+    function bindRow(row) {
+      row.querySelector(".logistics-mode").addEventListener("change", () => toggleCentreField(row));
+      row.querySelector(".remove-row").addEventListener("click", () => {
+        row.remove();
+        refreshRowLabels();
+      });
+      toggleCentreField(row);
+    }
+
+    addButton.addEventListener("click", () => {
+      const clone = template.content.cloneNode(true);
+      rowsContainer.appendChild(clone);
+      bindRow(rowsContainer.lastElementChild);
+      refreshRowLabels();
+    });
+
+    bindRow(rowsContainer.firstElementChild);
+    refreshRowLabels();
+  </script>
+  {% endif %}
+</body>
+</html>

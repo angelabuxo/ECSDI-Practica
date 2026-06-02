@@ -53,6 +53,7 @@ def parse_peticio_registre_dades_usuari(graph, content):
 def build_peticio_registre_dades_venedor(
     seller_id,
     bank_data,
+    seller_name=None,
     sender=None,
     receiver=None,
     msgcnt=0,
@@ -63,6 +64,8 @@ def build_peticio_registre_dades_venedor(
     graph.add((content, RDF.type, AZON.PeticioRegistreDadesBancariesVenedor))
     graph.add((content, AZON.IdVenedorExtern, Literal(seller_id)))
     graph.add((content, AZON.DadesBancariesVenedorExtern, Literal(bank_data)))
+    if seller_name:
+        graph.add((content, AZON.Nom, Literal(seller_name)))
     return build_message(
         graph,
         perf=ACL.request,
@@ -75,9 +78,11 @@ def build_peticio_registre_dades_venedor(
 
 
 def parse_peticio_registre_dades_venedor(graph, content):
+    seller_name = graph.value(content, AZON.Nom)
     return {
         "seller_id": str(graph.value(content, AZON.IdVenedorExtern)),
         "bank_data": str(graph.value(content, AZON.DadesBancariesVenedorExtern)),
+        "seller_name": str(seller_name) if seller_name is not None else "",
     }
 
 

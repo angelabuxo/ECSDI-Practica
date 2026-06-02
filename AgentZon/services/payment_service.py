@@ -36,13 +36,15 @@ def has_user_bank_data(path, user_id):
     return read_user_bank_data(path, user_id) is not None
 
 
-def save_seller_bank_data(path, seller_id, bank_data):
+def save_seller_bank_data(path, seller_id, bank_data, seller_name=None):
     graph = load_graph(path)
     bind_namespaces(graph)
     node = AZON[f"bank-seller-{seller_id}"]
     graph.add((node, RDF.type, AZON.VenedorExtern))
     graph.set((node, AZON.IdVenedorExtern, Literal(seller_id)))
     graph.set((node, AZON.DadesBancariesVenedorExtern, Literal(bank_data)))
+    if seller_name:
+        graph.set((node, AZON.Nom, Literal(seller_name)))
     save_graph(path, graph)
 
 
@@ -52,7 +54,24 @@ def read_seller_bank_data(path, seller_id):
     bank_data = graph.value(node, AZON.DadesBancariesVenedorExtern)
     if bank_data is None:
         return None
-    return {"seller_id": seller_id, "bank_data": str(bank_data)}
+    seller_name = graph.value(node, AZON.Nom)
+    return {
+        "seller_id": seller_id,
+        "bank_data": str(bank_data),
+        "seller_name": str(seller_name) if seller_name is not None else "",
+    }
+
+
+def has_seller_bank_data(path, seller_id):
+    return read_seller_bank_data(path, seller_id) is not None
+
+
+def resolve_seller_display_name(path, seller_id):
+    """Retorna el nom comercial del venedor o l'identificador si no n'hi ha."""
+    profile = read_seller_bank_data(path, seller_id)
+    if profile and profile.get("seller_name"):
+        return profile["seller_name"]
+    return seller_id
 
 
 # Payments / invoices --------------------------------------------------------------

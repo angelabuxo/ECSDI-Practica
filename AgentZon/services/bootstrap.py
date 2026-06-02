@@ -181,6 +181,7 @@ RUNTIME_CLEANUP_FILES = (
     "dades_enviament_usuari.ttl",
     "dades_bancaries_usuari.ttl",
     "dades_bancaries_venedors_externs.ttl",
+    "responsable_enviament_productes.ttl",
     "lots.ttl",
 )
 

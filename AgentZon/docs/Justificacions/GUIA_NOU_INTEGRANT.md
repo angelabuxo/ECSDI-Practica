@@ -42,6 +42,7 @@ Els agents que tenim ara mateix:
 | **Opinador** | 9004 | Registra compres, gestiona feedback, genera suggeriments i avalua devolucions |
 | **Cobrador** | 9005 | Confirma automàticament cobraments, pagaments a venedors i devolucions (protocol ACL mantingut) |
 | **Transportista** | 9010 (ràpid) / 9011 (econòmic) | Agents **externs** que ofereixen preu i data d'entrega |
+| **Venedor Extern** | 9012 | Gateway intern per registrar productes externs i rebre peticions d'enviament delegat. A `/iface` identifica el venedor per IP; la primera vegada demana nom i dades bancàries, i després permet afegir diversos productes d'un sol cop. |
 
 **Idea clau:** la gràcia de la pràctica és que això funcioni de manera **realment distribuïda**
 (processos separats que es parlen amb missatges), i que els missatges utilitzin els **conceptes
@@ -374,12 +375,13 @@ confirmació (`PAGAT` o `RETORNAT`) i registra el moviment als `.ttl` correspone
 | Fitxer | Endpoints | Plans / capacitats principals |
 |--------|-----------|-------------------------------|
 | `agent_directory.py` | `/Register`, `/Info`, `/Stop` | `process_register`, `process_search` |
-| `agent_cercador.py` | `/comm`, `/iface`, `/Stop` | `pla_de_cerca`, `pla_de_presentacio` |
-| `agent_compra.py` | `/comm`, `/iface`, `/Stop` | `pla_demanar_informacio_usuari`, `pla_registrar_dades_d_usuari`, `pla_producte_als_nostres_magatzems`, `pla_informar_usuari_sobre_l_enviament`, `pla_delegar_registre_compra`, `pla_cobrament_extern`… |
+| `agent_cercador.py` | `/comm`, `/iface`, `/Stop` | `pla_de_cerca`, `pla_de_presentacio`, `pla_afegir_info_producte_extern_a_la_bd` |
+| `agent_compra.py` | `/comm`, `/iface`, `/Stop` | `pla_demanar_informacio_usuari`, `pla_registrar_dades_d_usuari`, `pla_enviament_extern`, `pla_producte_als_nostres_magatzems`, `pla_informar_usuari_sobre_l_enviament`, `pla_delegar_registre_compra`, `pla_cobrament_extern`… |
 | `agent_centre_logistic.py` | `/comm`, `/iface`, `/Stop` | `pla_assignar_producte_a_lot`, `pla_cerca_de_transportista`, `pla_de_transportista_escollit`, `pla_producte_sha_enviat` |
 | `agent_transportista.py` | `/comm`, `/iface`, `/Stop` | `generar_oferta_transport` (agent **extern**) |
 | `agent_cobrador.py` | `/comm`, `/iface`, `/Stop` | `pla_cobrament_intern`, `pla_cobrament_extern`, `pla_registrar_dades_usuari/venedor`, `pla_retornar_diners` (confirmació automàtica) |
 | `agent_opinador.py` | `/comm`, `/iface`, `/Stop` | `pla_de_registre_de_compra`, `pla_de_registre_de_feedback`, `pla_de_creacio_de_suggeriments`, `pla_de_consulta_de_criteris_devolucio` |
+| `agent_venedor_extern.py` | `/comm`, `/iface`, `/Stop` | `pla_afegir_producte_extern_a_la_bd`, `pla_delegar_afegir_info_producte_extern`, `pla_delegar_afegir_dades_bancaries_del_venedor_extern`, `pla_comunicar_nou_producte_afegit` |
 
 ### `protocols/` — com es construeix/parseja cada missatge (la capa de missatge)
 
@@ -390,7 +392,8 @@ funcions `build_*` (construir el graf RDF d'un missatge) i `parse_*`/`extract_*`
 |--------|------------------------|
 | `directory.py` | Registre i cerca al Directory (`Register`, `Search`) i lectura de respostes. |
 | `cerca.py` | `PeticioCerca` ↔ `ResultatCerca`. |
-| `compra.py` | `PeticioCompra`, `PeticioRegistreCompra`, `ConfirmacioEnviament`, `PeticioEnviamentExtern`. |
+| `compra.py` | `PeticioCompra`, `PeticioRegistreCompra`, `ConfirmacioEnviament`. |
+| `venedor_extern.py` | `AltaProducteExtern`, `ConfirmacioAltaProducteExtern`, `PeticioEnviamentExtern`, resposta `DadesEnviament` per enviaments externs. |
 | `centre_logistic.py` | `ProducteLocalitzat`, `PeticioTransport`, `RespostaOfertaTransport`, `EleccioTransportista`, `ConfirmacioEnviament` (detalls d'enviament). |
 | `pagament.py` | `PeticioRegistreDadesBancaries*`, `PeticioPagament`, `ConfirmacioPagament`, cobrament intern, `PeticioRetornDiners`. Conté `SENTIT_COBRAMENT`/`SENTIT_PAGAMENT`. |
 
@@ -399,7 +402,8 @@ funcions `build_*` (construir el graf RDF d'un missatge) i `parse_*`/`extract_*`
 | Fitxer | Què fa |
 |--------|--------|
 | `rdf_store.py` | `load_graph` / `save_graph`: llegir i escriure fitxers Turtle (`.ttl`). |
-| `catalog_service.py` | Cerca de productes amb **SPARQL** + filtres per criteris i per ID. |
+| `catalog_service.py` | Cerca de productes amb **SPARQL** + filtres per criteris i per ID; alta de `ProducteExtern`. |
+| `external_vendor_service.py` | Persistència de `responsable_enviament_productes.ttl` i ubicacions de productes externs. |
 | `order_service.py` | Construeix la `Comanda`, calcula la data d'entrega per prioritat, persisteix. |
 | `logistics_routing_service.py` | Tria el Centre Logístic més proper per a cada producte (heurística de ciutat). |
 | `logistics_service.py` | Crea lots, demana ofertes als transportistes **en paral·lel**, aplica la política de negociació (oferta alta / baixa, sostre 115 %). Veure [NegociacioTransport.md](../AgentZon/NegociacioTransport.md). |
@@ -513,7 +517,8 @@ cd AgentZon
 [`README.md`](README.md). **L'ordre importa**: primer el Directory, després Cobrador, després
 Opinador i Transportistes, i finalment Centres Logístics, Compra i Cercador.
 
-Quan tot estigui en marxa, obre: `http://127.0.0.1:9001/iface`.
+Quan tot estigui en marxa, obre: `http://127.0.0.1:9001/iface` (cerca/compra) o
+`http://127.0.0.1:9012/iface` (registre de productes externs per venedors).
 
 > Per a la demo del professor: ha de funcionar **realment distribuït**. Pots executar agents en
 > diferents màquines passant `--host` i `--directory-host` amb les IPs reals.

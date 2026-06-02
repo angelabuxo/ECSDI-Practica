@@ -1,1 +1,25 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:search-0 azon:CategoriaConsulta "" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1030 ;
+    azon:TextConsulta "Test" ;
+    azon:TotalResultats 1 .
+
+azon:search-12 azon:CategoriaConsulta "" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1031,
+        azon:product-P1033 ;
+    azon:TextConsulta "Holamon" ;
+    azon:TotalResultats 2 .
+
+azon:search-6 azon:CategoriaConsulta "" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1031 ;
+    azon:TextConsulta "holamon" ;
+    azon:TotalResultats 1 .
 

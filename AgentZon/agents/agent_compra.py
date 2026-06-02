@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 from uuid import uuid4
 
 from flask import Flask, redirect, render_template, request
-from rdflib import Graph, RDF
+from rdflib import Graph, RDF, URIRef
 
 from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties, send_message
@@ -36,6 +36,10 @@ from protocols.compra import (
     parse_peticio_compra,
 )
 from protocols.centre_logistic import extract_shipping_details_list
+from protocols.venedor_extern import (
+    build_peticio_enviament_extern,
+    extract_external_shipments_from_reply,
+)
 from protocols.pagament import (
     SENTIT_PAGAMENT,
     build_peticio_pagament,
@@ -51,6 +55,7 @@ from services.agent_common_service import (
     resolve_agents_via_directory,
 )
 from services.catalog_service import get_products_by_ids
+from services.external_vendor_service import load_shipping_responsibility_by_product
 from services.payment_service import has_user_bank_data
 from services.logistics_routing_service import (
     group_order_products_by_logistics_centre,
@@ -90,15 +95,17 @@ SHIPPING_PATH = None
 LOCATIONS_PATH = None
 TRACKING_PATH = None
 USER_BANK_PATH = None
+SHIPPING_RESPONSIBILITY_PATH = None
 COUNTER = 0
 _MSGCNT_LOCK = threading.Lock()
 NO_PRODUCTS_ERROR = "Has de seleccionar almenys un producte abans de continuar la compra."
+VENDOR_EXTERN_AGENT_TYPE = URIRef("http://www.semanticweb.org/directory-service-ontology#VenedorExternAgent")
 
 
 # Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
     """Inicialitza estat global, paths de dades i dependències de missatgeria."""
-    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, CATALOG_PATH, ORDERS_PATH, SHIPPING_PATH, LOCATIONS_PATH, TRACKING_PATH, USER_BANK_PATH, COUNTER
+    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, CATALOG_PATH, ORDERS_PATH, SHIPPING_PATH, LOCATIONS_PATH, TRACKING_PATH, USER_BANK_PATH, SHIPPING_RESPONSIBILITY_PATH, COUNTER
     AGENT = settings["agent"]
     DIRECTORY_AGENT = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
@@ -109,6 +116,7 @@ def configure_runtime(settings, message_sender=send_message):
     LOCATIONS_PATH = data_dir / "ubicacions_productes.ttl"
     TRACKING_PATH = data_dir / "seguiment_enviaments.ttl"
     USER_BANK_PATH = data_dir / "dades_bancaries_usuari.ttl"
+    SHIPPING_RESPONSIBILITY_PATH = data_dir / "responsable_enviament_productes.ttl"
     COUNTER = 0
 
 
@@ -169,6 +177,58 @@ def pla_demanar_informacio_usuari(selected_product_ids, client_ip):
         iface_path="/iface",
         client_ip=client_ip,
     )
+
+
+def split_order_products(order):
+    """Separa productes interns, externs amb logística de plataforma i externs delegats."""
+    responsibility = load_shipping_responsibility_by_product(SHIPPING_RESPONSIBILITY_PATH)
+    external_logistics_by_seller = {}
+    platform_shipped = []
+    internal = []
+
+    for product in order["products"]:
+        product_id = product["product_id"]
+        info = responsibility.get(product_id)
+        if info and info.get("requires_external_logistics"):
+            seller_id = info["seller_id"]
+            external_logistics_by_seller.setdefault(seller_id, []).append(product)
+        elif info:
+            platform_shipped.append(product)
+        else:
+            internal.append(product)
+
+    external_groups = [
+        {"seller_id": seller_id, "products": products}
+        for seller_id, products in external_logistics_by_seller.items()
+    ]
+    return external_groups, platform_shipped, internal
+
+
+def pla_enviament_extern(order, external_groups):
+    """Pla d'enviament delegat a venedors externs i cobrament associat."""
+    if not external_groups:
+        return []
+
+    try:
+        venedor_agent = resolve_agent(VENDOR_EXTERN_AGENT_TYPE)
+    except Exception:
+        logger.warning("No s'ha pogut resoldre l'Agent Venedor Extern; s'omet l'enviament extern")
+        return []
+
+    shipments = []
+    for group in external_groups:
+        subset_order = {**order, "products": group["products"]}
+        message = build_peticio_enviament_extern(
+            subset_order,
+            group["seller_id"],
+            sender=AGENT.uri,
+            receiver=venedor_agent.uri,
+            msgcnt=next_counter(),
+        )
+        reply = MESSAGE_SENDER(message, venedor_agent.address)
+        shipments.extend(extract_external_shipments_from_reply(reply))
+        pla_cobrament_extern(subset_order, group["seller_id"])
+    return shipments
 
 
 def pla_producte_als_nostres_magatzems(order):
@@ -377,11 +437,27 @@ def process_purchase_request(request_data, acl_sender=None, request_content=None
     logger.info("Persistint comanda %s amb %d productes", order["order_id"], len(products))
     save_user_shipping_data(SHIPPING_PATH, order)
     save_order(ORDERS_PATH, order)
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    external_groups, platform_shipped, internal_products = split_order_products(order)
+    warehouse_order = {**order, "products": internal_products + platform_shipped}
+    shipping_details = []
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
         bank_future = executor.submit(pla_registrar_dades_d_usuari_al_cobrador, order)
         history_future = executor.submit(pla_delegar_registre_compra, order)
-        shipping_future = executor.submit(pla_producte_als_nostres_magatzems, order)
-        shipping_details = shipping_future.result()
+        warehouse_future = (
+            executor.submit(pla_producte_als_nostres_magatzems, warehouse_order)
+            if warehouse_order["products"]
+            else None
+        )
+        external_future = (
+            executor.submit(pla_enviament_extern, order, external_groups)
+            if external_groups
+            else None
+        )
+        if warehouse_future is not None:
+            shipping_details.extend(warehouse_future.result())
+        if external_future is not None:
+            shipping_details.extend(external_future.result())
         bank_future.result()
         history_future.result()
     save_localization_confirmations(TRACKING_PATH, shipping_details)

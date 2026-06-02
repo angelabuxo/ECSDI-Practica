@@ -36,6 +36,7 @@ DEFAULT_PORTS = {
     "retornador": 9009,
     "transport_fast": 9010,
     "transport_economy": 9011,
+    "venedor_extern": 9012,
 }
 
 

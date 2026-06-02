@@ -144,7 +144,12 @@ def pla_registrar_dades_venedor(message_graph, content, sender):
     """Pla de registre de dades bancàries de venedor extern (confirmació automàtica)."""
     request_data = parse_peticio_registre_dades_venedor(message_graph, content)
     logger.info("Registrant dades bancaries del venedor extern %s", request_data["seller_id"])
-    save_seller_bank_data(SELLER_BANK_PATH, request_data["seller_id"], request_data["bank_data"])
+    save_seller_bank_data(
+        SELLER_BANK_PATH,
+        request_data["seller_id"],
+        request_data["bank_data"],
+        request_data.get("seller_name") or None,
+    )
     return build_confirmacio_registre_dades(
         request_data["seller_id"],
         is_external=True,

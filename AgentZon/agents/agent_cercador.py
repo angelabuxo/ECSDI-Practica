@@ -25,12 +25,16 @@ from config import (
     serve_agent,
 )
 from protocols.cerca import build_peticio_cerca, build_resultat_cerca, parse_peticio_cerca
+from protocols.venedor_extern import (
+    build_confirmacio_alta_producte_extern,
+    parse_alta_producte_extern,
+)
 from services.agent_common_service import (
     get_client_ip_from_request,
     replace_url_path,
     resolve_agent_via_directory,
 )
-from services.catalog_service import search_products
+from services.catalog_service import add_external_product, search_products
 from services.history_service import record_search
 
 
@@ -101,6 +105,21 @@ def resolve_retornador_iface_url():
             fallback,
         )
         return fallback
+
+
+def pla_afegir_info_producte_extern_a_la_bd(message_graph, content, sender):
+    """Pla d'emmagatzematge d'un producte extern al catàleg."""
+    request_data = parse_alta_producte_extern(message_graph, content)
+    product_id = add_external_product(CATALOG_PATH, request_data["product"])
+    logger.info("Producte extern %s registrat al catàleg", product_id)
+    return build_confirmacio_alta_producte_extern(
+        product_id,
+        request_data["product"].get("sku_extern", ""),
+        data_alta=request_data["product"].get("data_alta"),
+        sender=AGENT.uri,
+        receiver=sender,
+        msgcnt=next_counter(),
+    )
 
 
 def pla_de_cerca(criteria):
@@ -196,7 +215,13 @@ def comm():
             msgcnt=next_counter(),
         ).serialize(format="xml")
     content = properties["content"]
-    if message_graph.value(content, RDF.type) != AZON.PeticioCerca:
+    message_type = message_graph.value(content, RDF.type)
+    if message_type == AZON.AltaProducteExtern:
+        logger.info("Rebuda peticio ACL d'alta de producte extern")
+        response = pla_afegir_info_producte_extern_a_la_bd(message_graph, content, properties.get("sender"))
+        return response.serialize(format="xml")
+
+    if message_type != AZON.PeticioCerca:
         logger.warning("Rebut accio no suportada a /comm")
         return build_message(
             Graph(),

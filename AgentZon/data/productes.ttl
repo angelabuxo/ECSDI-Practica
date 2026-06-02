@@ -224,7 +224,7 @@ azon:product-P1025 a azon:Producte ;
     azon:Marca "Apple" ;
     azon:Nom "AirPods" ;
     azon:Pes "0.05"^^xsd:float ;
-    azon:Preu "199.00"^^xsd:float .
+    azon:Preu "199.0"^^xsd:float .
 
 azon:product-P1026 a azon:Producte ;
     azon:Categoria "audio" ;
@@ -233,7 +233,7 @@ azon:product-P1026 a azon:Producte ;
     azon:Marca "Apple" ;
     azon:Nom "AirPods Max" ;
     azon:Pes "0.38"^^xsd:float ;
-    azon:Preu "579.00"^^xsd:float .
+    azon:Preu "579.0"^^xsd:float .
 
 azon:product-P1027 a azon:Producte ;
     azon:Categoria "peripherals" ;
@@ -242,7 +242,7 @@ azon:product-P1027 a azon:Producte ;
     azon:Marca "Apple" ;
     azon:Nom "iPhone 17 Pro" ;
     azon:Pes "0.22"^^xsd:float ;
-    azon:Preu "1229.00"^^xsd:float .
+    azon:Preu "1229.0"^^xsd:float .
 
 azon:product-P1028 a azon:Producte ;
     azon:Categoria "peripherals" ;
@@ -251,7 +251,7 @@ azon:product-P1028 a azon:Producte ;
     azon:Marca "Apple" ;
     azon:Nom "MacBook Pro M4" ;
     azon:Pes "1.55"^^xsd:float ;
-    azon:Preu "1999.00"^^xsd:float .
+    azon:Preu "1999.0"^^xsd:float .
 
 azon:product-P1029 a azon:Producte ;
     azon:Categoria "peripherals" ;
@@ -260,5 +260,57 @@ azon:product-P1029 a azon:Producte ;
     azon:Marca "Apple" ;
     azon:Nom "Carregador MagSafe" ;
     azon:Pes "0.08"^^xsd:float ;
-    azon:Preu "45.00"^^xsd:float .
+    azon:Preu "45.0"^^xsd:float .
+
+azon:product-P1030 a azon:ProducteExtern ;
+    azon:Categoria "audio" ;
+    azon:DataAlta "2026-06-03"^^xsd:date ;
+    azon:Descripcio "Test" ;
+    azon:IdProducte "P1030" ;
+    azon:IdVenedorExtern "VE-JSON" ;
+    azon:Marca "Apple" ;
+    azon:Nom "Test" ;
+    azon:Pes "0.8"^^xsd:float ;
+    azon:Preu "1234.0"^^xsd:float ;
+    azon:RequereixLogisticaExterna false ;
+    azon:SkuExtern "12489124890124" .
+
+azon:product-P1031 a azon:ProducteExtern ;
+    azon:Categoria "holamon" ;
+    azon:DataAlta "2026-06-03"^^xsd:date ;
+    azon:Descripcio "holamon" ;
+    azon:IdProducte "P1031" ;
+    azon:IdVenedorExtern "VE-JSON" ;
+    azon:Marca "holamon" ;
+    azon:Nom "holamon" ;
+    azon:Pes "50.0"^^xsd:float ;
+    azon:Preu "11111.0"^^xsd:float ;
+    azon:RequereixLogisticaExterna true ;
+    azon:SkuExtern "13124124" .
+
+azon:product-P1032 a azon:ProducteExtern ;
+    azon:Categoria "rocha" ;
+    azon:DataAlta "2026-06-03"^^xsd:date ;
+    azon:Descripcio "rocha" ;
+    azon:IdProducte "P1032" ;
+    azon:IdVenedorExtern "VE_ROCHA" ;
+    azon:Marca "rocha" ;
+    azon:Nom "rocha" ;
+    azon:Pes "12.0"^^xsd:float ;
+    azon:Preu "12424.0"^^xsd:float ;
+    azon:RequereixLogisticaExterna false ;
+    azon:SkuExtern "142214124" .
+
+azon:product-P1033 a azon:ProducteExtern ;
+    azon:Categoria "Holamon" ;
+    azon:DataAlta "2026-06-03"^^xsd:date ;
+    azon:Descripcio "Holamon" ;
+    azon:IdProducte "P1033" ;
+    azon:IdVenedorExtern "127.0.0.1" ;
+    azon:Marca "Holamon" ;
+    azon:Nom "Holamon" ;
+    azon:Pes "12.0"^^xsd:float ;
+    azon:Preu "12124.0"^^xsd:float ;
+    azon:RequereixLogisticaExterna true ;
+    azon:SkuExtern "1312214" .
 

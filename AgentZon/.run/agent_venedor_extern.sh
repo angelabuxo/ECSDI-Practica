@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd /Users/angelabuxo/UPC/ECSDI/Pràctica/ECSDI-Practica/AgentZon
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+if [[ -x .venv/bin/python ]]; then
+  PYTHON=.venv/bin/python
+elif [[ -x ../.venv/bin/python ]]; then
+  PYTHON=../.venv/bin/python
+else
+  echo "ERROR: No s'ha trobat cap entorn virtual (.venv)." >&2
+  exit 1
+fi
 clear
 echo ===\ Agent\ Venedor\ Extern\ ===
-exec /Users/angelabuxo/UPC/ECSDI/Pràctica/ECSDI-Practica/AgentZon/.venv/bin/python -m agents.agent_venedor_extern --host 127.0.0.1 --port 9006 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+exec "$PYTHON" -m agents.agent_venedor_extern --host 127.0.0.1 --port 9012 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data

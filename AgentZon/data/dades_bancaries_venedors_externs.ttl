@@ -1,1 +1,15 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+
+azon:bank-seller-127.0.0.1 a azon:VenedorExtern ;
+    azon:DadesBancariesVenedorExtern "12391290390" ;
+    azon:IdVenedorExtern "127.0.0.1" ;
+    azon:Nom "Rochita SL" .
+
+azon:bank-seller-VE-JSON a azon:VenedorExtern ;
+    azon:DadesBancariesVenedorExtern "ES1301024" ;
+    azon:IdVenedorExtern "VE-JSON" .
+
+azon:bank-seller-VE_ROCHA a azon:VenedorExtern ;
+    azon:DadesBancariesVenedorExtern "12312331" ;
+    azon:IdVenedorExtern "VE_ROCHA" .
 

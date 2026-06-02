@@ -1,1 +1,28 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:ploc-070b7e a azon:ProducteLocalitzat ;
+    azon:Ciutat "barcla" ;
+    azon:DataEntrega "2026-06-08" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-BBE34A ;
+    azon:TeProducte azon:product-P1030 .
+
+azon:centre-CL-BCN a azon:CentreLogistic ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdCentreLogistic "CL-BCN" .
+
+azon:lot-LOT-BBE34A a azon:Lot ;
+    azon:Ciutat "barcla" ;
+    azon:DataEntrega "2026-06-08" ;
+    azon:Estat "OBERT" ;
+    azon:IdCentreLogistic "CL-BCN" ;
+    azon:IdLot "LOT-BBE34A" ;
+    azon:PesTotal "0.8"^^xsd:float .
+
+azon:product-P1030 a azon:Producte ;
+    azon:IdProducte "P1030" ;
+    azon:Nom "Test" ;
+    azon:Pes "0.8"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN .
 

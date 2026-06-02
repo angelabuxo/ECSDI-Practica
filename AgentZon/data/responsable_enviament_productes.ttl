@@ -1,1 +1,19 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:resp-P1030 azon:IdProducte "P1030" ;
+    azon:IdVenedorExtern "VE-JSON" ;
+    azon:RequereixLogisticaExterna false .
+
+azon:resp-P1031 azon:IdProducte "P1031" ;
+    azon:IdVenedorExtern "VE-JSON" ;
+    azon:RequereixLogisticaExterna true .
+
+azon:resp-P1032 azon:IdProducte "P1032" ;
+    azon:IdVenedorExtern "VE_ROCHA" ;
+    azon:RequereixLogisticaExterna false .
+
+azon:resp-P1033 azon:IdProducte "P1033" ;
+    azon:IdVenedorExtern "127.0.0.1" ;
+    azon:RequereixLogisticaExterna true .
 

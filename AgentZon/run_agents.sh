@@ -139,6 +139,10 @@ run_agent agent_centre_logistic_tgn "Agent Centre Logístic TGN" \
   --directory-host "$HOST" --directory-port 9000 \
   --data-dir data
 
+run_agent agent_venedor_extern "Agent Venedor Extern" \
+  agents.agent_venedor_extern --host "$HOST" --port 9012 \
+  --directory-host "$HOST" --directory-port 9000 --data-dir data
+
 run_agent agent_compra "Agent Compra" \
   agents.agent_compra --host "$HOST" --port 9002 \
   --directory-host "$HOST" --directory-port 9000 --data-dir data
