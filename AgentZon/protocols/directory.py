@@ -74,16 +74,20 @@ def parse_directory_responses(graph):
         }
         centre_id = graph.value(uri, AZON.IdCentreLogistic)
         centre_city = graph.value(uri, AZON.Ciutat)
+        transport_id = graph.value(uri, AZON.IdTransportista)
         if centre_id is not None:
             entry["centre_id"] = str(centre_id)
         if centre_city is not None:
             entry["centre_city"] = str(centre_city)
+        if transport_id is not None:
+            entry["transport_id"] = str(transport_id)
         entries.append(entry)
 
     return sorted(
         entries,
         key=lambda entry: (
             entry.get("centre_id", ""),
+            entry.get("transport_id", ""),
             entry["name"],
             entry["address"],
         ),

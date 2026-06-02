@@ -104,34 +104,30 @@ run_agent agent_opinador "Agent Opinador" \
 
 run_agent agent_transport_fast "Transportista ràpid" \
   agents.agent_transportista --host "$HOST" --port 9010 \
+  --directory-host "$HOST" --directory-port 9000 \
   --transport-id fast --price-per-kg 8.0 --delivery-days 1
 
 run_agent agent_transport_economy "Transportista econòmic" \
   agents.agent_transportista --host "$HOST" --port 9011 \
+  --directory-host "$HOST" --directory-port 9000 \
   --transport-id economy --price-per-kg 4.0 --delivery-days 3
 
 run_agent agent_centre_logistic_bcn "Agent Centre Logístic BCN" \
   agents.agent_centre_logistic --host "$HOST" --port 9003 \
   --centre-id CL-BCN --centre-city Barcelona \
   --directory-host "$HOST" --directory-port 9000 \
-  --transport-fast-host "$HOST" --transport-fast-port 9010 \
-  --transport-economy-host "$HOST" --transport-economy-port 9011 \
   --data-dir data
 
 run_agent agent_centre_logistic_gi "Agent Centre Logístic GI" \
   agents.agent_centre_logistic --host "$HOST" --port 9007 \
   --centre-id CL-GI --centre-city Girona \
   --directory-host "$HOST" --directory-port 9000 \
-  --transport-fast-host "$HOST" --transport-fast-port 9010 \
-  --transport-economy-host "$HOST" --transport-economy-port 9011 \
   --data-dir data
 
 run_agent agent_centre_logistic_tgn "Agent Centre Logístic TGN" \
   agents.agent_centre_logistic --host "$HOST" --port 9008 \
   --centre-id CL-TGN --centre-city Tarragona \
   --directory-host "$HOST" --directory-port 9000 \
-  --transport-fast-host "$HOST" --transport-fast-port 9010 \
-  --transport-economy-host "$HOST" --transport-economy-port 9011 \
   --data-dir data
 
 run_agent agent_compra "Agent Compra" \

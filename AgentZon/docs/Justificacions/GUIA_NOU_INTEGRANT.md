@@ -460,6 +460,10 @@ flowchart TD
     C -->|shipping_summary.html| U
 ```
 
+A la interfície `compra.html`, l'**identificador d'usuari** (`IdUsuari` a comandes, enviaments, banc i historial) és l'**adreça IP del client** (`request.remote_addr`, o la primera IP de `X-Forwarded-For` si hi ha proxy). L'usuari només omple nom, adreça, prioritat i mètode de pagament.
+
+Abans d'enviar `PeticioRegistreDadesBancariesUsuari` al Cobrador, l'Agent Compra comprova `dades_bancaries_usuari.ttl` (mateix `--data-dir` compartit): si l'usuari ja hi consta, **no** es fa la petició ACL.
+
 Punts a destacar (i per què eviten penalitzacions):
 
 - L'agent Compra llança **en paral·lel** (`ThreadPoolExecutor`) el registre bancari, l'historial

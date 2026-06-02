@@ -81,13 +81,16 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#SobreComanda">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#DadesEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioEnviament"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioLocalitzacio"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#EleccioTransportista"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioCompra"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioEnviamentExtern"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioRegistreCompra"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioTransport"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ProducteLocalitzat"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ResultatCompra"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#RespostaOfertaTransport"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Comanda"/>
     </owl:ObjectProperty>
@@ -98,7 +101,9 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#SobreLot">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#DadesEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioEnviament"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioLocalitzacio"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#EleccioTransportista"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioEnviamentExtern"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioTransport"/>
@@ -216,7 +221,9 @@
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#CentreLogistic"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comanda"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#DadesEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioEnviament"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioLocalitzacio"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#EleccioTransportista"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Lot"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioEnviamentExtern"/>
@@ -254,6 +261,7 @@
 
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#CostTransport">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#DadesEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#EleccioTransportista"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#RespostaOfertaTransport"/>
@@ -322,9 +330,11 @@
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#DataEntrega">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comanda"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioLocalitzacio"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Lot"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioTransport"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ProducteLocalitzat"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ResultatCompra"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#date"/>
     </owl:DatatypeProperty>
     
@@ -335,6 +345,7 @@
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#DataEntregaDefinitiva">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comanda"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#DadesEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#EleccioTransportista"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#RespostaOfertaTransport"/>
@@ -359,9 +370,12 @@
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#Estat">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comanda"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioLocalitzacio"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioPagament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Devolucio"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Lot"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Pagament"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ResultatCompra"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ResolucioDevolucio"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
     </owl:DatatypeProperty>
@@ -394,7 +408,9 @@
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#IdComanda">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comanda"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#DadesEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioEnviament"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioLocalitzacio"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioRegistreCompra"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#EleccioTransportista"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioDevolucio"/>
@@ -403,6 +419,7 @@
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioRegistreCompra"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioTransport"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ProducteLocalitzat"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ResultatCompra"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#RespostaOfertaTransport"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
     </owl:DatatypeProperty>
@@ -437,7 +454,9 @@
 
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#IdLot">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#DadesEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioEnviament"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioLocalitzacio"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#EleccioTransportista"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Lot"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioTransport"/>
@@ -473,6 +492,7 @@
 
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#IdTransportista">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#DadesEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#EleccioTransportista"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#RespostaOfertaTransport"/>
@@ -581,6 +601,7 @@
 
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/agentzon#NomTransportista">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#DadesEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioEnviament"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#EleccioTransportista"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#RespostaOfertaTransport"/>
@@ -792,6 +813,14 @@
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ConfirmacioEnviament">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
     </owl:Class>
+
+
+
+    <!-- http://www.semanticweb.org/agentzon#ConfirmacioLocalitzacio -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ConfirmacioLocalitzacio">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    </owl:Class>
     
 
 
@@ -806,6 +835,14 @@
     <!-- http://www.semanticweb.org/agentzon#ConfirmacioRegistreCompra -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ConfirmacioRegistreCompra">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/agentzon#DadesEnviament -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#DadesEnviament">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
     </owl:Class>
     
@@ -978,6 +1015,14 @@
     <!-- http://www.semanticweb.org/agentzon#ResultatCerca -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ResultatCerca">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/agentzon#ResultatCompra -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ResultatCompra">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
     </owl:Class>
     

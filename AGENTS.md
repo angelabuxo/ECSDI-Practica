@@ -24,10 +24,10 @@ compartida**. Tot ha de seguir les eines i els patrons del professor (carpeta `R
   mateixa manera** que els seus exemples. Dins hi ha `ecsdiLab.md` / `ECSDILab.pdf` (el mateix
   document en dos formats) que expliquen com s'han d'utilitzar; segueix-lo.
 - `@AgentZon/ontologia/AgentZonOntology.rdf` i `@AgentZon/data/*` — ontologia i dades.
-- `@Entrega-3/Entrega3.md` — implementació escrita del sistema.
+- `@AgentZon/Entrega-3/Entrega3.md` — implementació escrita del sistema.
 - `@AgentZon/Entrega-2/Diagrames-Entrega-2.pdf` — diagrames Prometheus de cada agent (plans i
   capacitats). **Els "plans" del codi (`pla_...`) mapegen 1:1 amb aquests diagrames.**
-- `@AgentZon/docs/Justificacions/JUSTIFICACIO_EINES.md` i `@AgentZon/docs/Justificacions/GUIA_NOU_ESTUDIANT.md` — guia d'onboarding i
+- `@AgentZon/GUIA_NOU_INTEGRANT.md` i `@AgentZon/JUSTIFICACIO_EINES.md` — guia d'onboarding i
   justificació de cada eina amb referències al laboratori. Mantén-los coherents si canvies coses.
 
 ---
@@ -158,7 +158,7 @@ dependències noves sense justificar-ho amb el laboratori.
 > **Recomanacions:** n'hi ha prou amb un avís de recepció del missatge.
 > **Pagaments:** "los pagos van en dos direcciones, a veces se cobra y a veces se paga, no sé si
 > los podéis distinguir." → resolt amb `SentitPagament` (COBRAMENT / PAGAMENT). Mantén-ho coherent.
-> **Implementació:** correcta; Asumo que las entradas extra de la API rest que teneis en alguno de los agentes es para hacer pruebas y poder ver que hacen los agentes.
+> **Implementació:** correcta; les entrades extra de l'API són per a proves.
 
 ---
 

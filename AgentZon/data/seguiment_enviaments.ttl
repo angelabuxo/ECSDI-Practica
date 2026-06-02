@@ -1,0 +1,753 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:tracking-ORDER-04C81287-LOT-0482D3 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-04C81287" ;
+    azon:IdLot "LOT-0482D3" ;
+    azon:SobreComanda azon:order-ORDER-04C81287 ;
+    azon:SobreLot azon:lot-LOT-0482D3 ;
+    azon:TeProducte azon:product-P1011,
+        azon:product-P1017 .
+
+azon:tracking-ORDER-04C81287-LOT-AA0E78 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-04C81287" ;
+    azon:IdLot "LOT-AA0E78" ;
+    azon:SobreComanda azon:order-ORDER-04C81287 ;
+    azon:SobreLot azon:lot-LOT-AA0E78 ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1010,
+        azon:product-P1019 .
+
+azon:tracking-ORDER-04C81287-LOT-AD43DE a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-04C81287" ;
+    azon:IdLot "LOT-AD43DE" ;
+    azon:SobreComanda azon:order-ORDER-04C81287 ;
+    azon:SobreLot azon:lot-LOT-AD43DE ;
+    azon:TeProducte azon:product-P1018 .
+
+azon:tracking-ORDER-509C9D05-LOT-471199 a azon:ConfirmacioEnviament,
+        azon:ConfirmacioLocalitzacio,
+        azon:DadesEnviament ;
+    azon:Ciutat "a" ;
+    azon:CostTransport "26.27"^^xsd:float ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:DataEntregaDefinitiva "2026-06-04" ;
+    azon:DataPagament "2026-06-01" ;
+    azon:Estat "ENVIAT",
+        "PAGAT" ;
+    azon:IdComanda "ORDER-509C9D05" ;
+    azon:IdLot "LOT-471199" ;
+    azon:IdPagament "PAY-08C5EA7B" ;
+    azon:IdTransportista "economy" ;
+    azon:ImportPagament "2427.34"^^xsd:float ;
+    azon:MetodePagament "a" ;
+    azon:NomTransportista "Transportista-economy" ;
+    azon:SentitPagament "COBRAMENT" ;
+    azon:SobreComanda azon:order-ORDER-509C9D05 ;
+    azon:SobreLot azon:lot-LOT-471199 ;
+    azon:SobreProducte azon:product-P1005,
+        azon:product-P1007,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1020,
+        azon:product-P1028 ;
+    azon:TeProducte azon:product-P1005,
+        azon:product-P1007,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1020,
+        azon:product-P1028 .
+
+azon:tracking-ORDER-509C9D05-LOT-AB50F6 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "a" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-509C9D05" ;
+    azon:IdLot "LOT-AB50F6" ;
+    azon:SobreComanda azon:order-ORDER-509C9D05 ;
+    azon:SobreLot azon:lot-LOT-AB50F6 ;
+    azon:TeProducte azon:product-P1006,
+        azon:product-P1021 .
+
+azon:tracking-ORDER-813DF66D-LOT-7B7319 a azon:ConfirmacioEnviament,
+        azon:ConfirmacioLocalitzacio,
+        azon:DadesEnviament ;
+    azon:Ciutat "Girona" ;
+    azon:CostTransport "24.91"^^xsd:float ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:DataEntregaDefinitiva "2026-06-04" ;
+    azon:DataPagament "2026-06-01" ;
+    azon:Estat "ENVIAT",
+        "PAGAT" ;
+    azon:IdComanda "ORDER-813DF66D" ;
+    azon:IdLot "LOT-7B7319" ;
+    azon:IdPagament "PAY-4C44CE0B" ;
+    azon:IdTransportista "economy" ;
+    azon:ImportPagament "443.5"^^xsd:float ;
+    azon:MetodePagament "a" ;
+    azon:NomTransportista "Transportista-economy" ;
+    azon:SentitPagament "COBRAMENT" ;
+    azon:SobreComanda azon:order-ORDER-813DF66D ;
+    azon:SobreLot azon:lot-LOT-7B7319 ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1010,
+        azon:product-P1011 ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1010,
+        azon:product-P1011 .
+
+azon:tracking-ORDER-8322112D-LOT-1F4559 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Tarragona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-8322112D" ;
+    azon:IdLot "LOT-1F4559" ;
+    azon:SobreComanda azon:order-ORDER-8322112D ;
+    azon:SobreLot azon:lot-LOT-1F4559 ;
+    azon:TeProducte azon:product-P1011 .
+
+azon:tracking-ORDER-8322112D-LOT-7AB535 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Tarragona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-8322112D" ;
+    azon:IdLot "LOT-7AB535" ;
+    azon:SobreComanda azon:order-ORDER-8322112D ;
+    azon:SobreLot azon:lot-LOT-7AB535 ;
+    azon:TeProducte azon:product-P1010 .
+
+azon:tracking-ORDER-8322112D-LOT-D70C56 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Tarragona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-8322112D" ;
+    azon:IdLot "LOT-D70C56" ;
+    azon:SobreComanda azon:order-ORDER-8322112D ;
+    azon:SobreLot azon:lot-LOT-D70C56 ;
+    azon:TeProducte azon:product-P1009 .
+
+azon:tracking-ORDER-8B0B0369-LOT-4D77E8 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Girona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-8B0B0369" ;
+    azon:IdLot "LOT-4D77E8" ;
+    azon:SobreComanda azon:order-ORDER-8B0B0369 ;
+    azon:SobreLot azon:lot-LOT-4D77E8 ;
+    azon:TeProducte azon:product-P1003,
+        azon:product-P1006,
+        azon:product-P1009 .
+
+azon:tracking-ORDER-8B0B0369-LOT-6F7694 a azon:ConfirmacioEnviament,
+        azon:ConfirmacioLocalitzacio,
+        azon:DadesEnviament ;
+    azon:Ciutat "Girona" ;
+    azon:CostTransport "36.83"^^xsd:float ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:DataEntregaDefinitiva "2026-06-04" ;
+    azon:DataPagament "2026-06-01" ;
+    azon:Estat "ENVIAT",
+        "PAGAT" ;
+    azon:IdComanda "ORDER-8B0B0369" ;
+    azon:IdLot "LOT-6F7694" ;
+    azon:IdPagament "PAY-A08B6D37" ;
+    azon:IdTransportista "economy" ;
+    azon:ImportPagament "799.74"^^xsd:float ;
+    azon:MetodePagament "a" ;
+    azon:NomTransportista "Transportista-economy" ;
+    azon:SentitPagament "COBRAMENT" ;
+    azon:SobreComanda azon:order-ORDER-8B0B0369 ;
+    azon:SobreLot azon:lot-LOT-6F7694 ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1007,
+        azon:product-P1008,
+        azon:product-P1010,
+        azon:product-P1011 ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1007,
+        azon:product-P1008,
+        azon:product-P1010,
+        azon:product-P1011 .
+
+azon:tracking-ORDER-9B6F87D3-LOT-299661 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-9B6F87D3" ;
+    azon:IdLot "LOT-299661" ;
+    azon:SobreComanda azon:order-ORDER-9B6F87D3 ;
+    azon:SobreLot azon:lot-LOT-299661 ;
+    azon:TeProducte azon:product-P1010 .
+
+azon:tracking-ORDER-9B6F87D3-LOT-3D4602 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-9B6F87D3" ;
+    azon:IdLot "LOT-3D4602" ;
+    azon:SobreComanda azon:order-ORDER-9B6F87D3 ;
+    azon:SobreLot azon:lot-LOT-3D4602 ;
+    azon:TeProducte azon:product-P1011 .
+
+azon:tracking-ORDER-9B6F87D3-LOT-427EBF a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-9B6F87D3" ;
+    azon:IdLot "LOT-427EBF" ;
+    azon:SobreComanda azon:order-ORDER-9B6F87D3 ;
+    azon:SobreLot azon:lot-LOT-427EBF ;
+    azon:TeProducte azon:product-P1009 .
+
+azon:tracking-ORDER-9FA92835-LOT-10024E a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Lleida" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-9FA92835" ;
+    azon:IdLot "LOT-10024E" ;
+    azon:SobreComanda azon:order-ORDER-9FA92835 ;
+    azon:SobreLot azon:lot-LOT-10024E ;
+    azon:TeProducte azon:product-P1006,
+        azon:product-P1018,
+        azon:product-P1024 .
+
+azon:tracking-ORDER-9FA92835-LOT-4C00BE a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Lleida" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-9FA92835" ;
+    azon:IdLot "LOT-4C00BE" ;
+    azon:SobreComanda azon:order-ORDER-9FA92835 ;
+    azon:SobreLot azon:lot-LOT-4C00BE ;
+    azon:TeProducte azon:product-P1027 .
+
+azon:tracking-ORDER-9FA92835-LOT-D04651 a azon:ConfirmacioEnviament,
+        azon:ConfirmacioLocalitzacio,
+        azon:DadesEnviament ;
+    azon:Ciutat "Lleida" ;
+    azon:CostTransport "40.35"^^xsd:float ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:DataEntregaDefinitiva "2026-06-04" ;
+    azon:DataPagament "2026-06-01" ;
+    azon:Estat "ENVIAT",
+        "PAGAT" ;
+    azon:IdComanda "ORDER-9FA92835" ;
+    azon:IdLot "LOT-D04651" ;
+    azon:IdPagament "PAY-F3C88ABF" ;
+    azon:IdTransportista "economy" ;
+    azon:ImportPagament "3644.0"^^xsd:float ;
+    azon:MetodePagament "a" ;
+    azon:NomTransportista "Transportista-economy" ;
+    azon:SentitPagament "COBRAMENT" ;
+    azon:SobreComanda azon:order-ORDER-9FA92835 ;
+    azon:SobreLot azon:lot-LOT-D04651 ;
+    azon:SobreProducte azon:product-P1005,
+        azon:product-P1008,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1028,
+        azon:product-P1029 ;
+    azon:TeProducte azon:product-P1005,
+        azon:product-P1008,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1028,
+        azon:product-P1029 .
+
+azon:tracking-ORDER-B966E37B-LOT-5E31AB a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "a" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-B966E37B" ;
+    azon:IdLot "LOT-5E31AB" ;
+    azon:SobreComanda azon:order-ORDER-B966E37B ;
+    azon:SobreLot azon:lot-LOT-5E31AB ;
+    azon:TeProducte azon:product-P1005,
+        azon:product-P1010,
+        azon:product-P1011 .
+
+azon:tracking-ORDER-B966E37B-LOT-AB50F6 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "a" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-B966E37B" ;
+    azon:IdLot "LOT-AB50F6" ;
+    azon:SobreComanda azon:order-ORDER-B966E37B ;
+    azon:SobreLot azon:lot-LOT-AB50F6 ;
+    azon:TeProducte azon:product-P1006,
+        azon:product-P1009 .
+
+azon:tracking-ORDER-BFD5D310-LOT-2C38DE a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-BFD5D310" ;
+    azon:IdLot "LOT-2C38DE" ;
+    azon:SobreComanda azon:order-ORDER-BFD5D310 ;
+    azon:SobreLot azon:lot-LOT-2C38DE ;
+    azon:TeProducte azon:product-P1011,
+        azon:product-P1014,
+        azon:product-P1017 .
+
+azon:tracking-ORDER-BFD5D310-LOT-72354B a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-BFD5D310" ;
+    azon:IdLot "LOT-72354B" ;
+    azon:SobreComanda azon:order-ORDER-BFD5D310 ;
+    azon:SobreLot azon:lot-LOT-72354B ;
+    azon:TeProducte azon:product-P1010,
+        azon:product-P1016,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 .
+
+azon:tracking-ORDER-C9E9EDA5-LOT-AD43DE a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-C9E9EDA5" ;
+    azon:IdLot "LOT-AD43DE" ;
+    azon:SobreComanda azon:order-ORDER-C9E9EDA5 ;
+    azon:SobreLot azon:lot-LOT-AD43DE ;
+    azon:TeProducte azon:product-P1021,
+        azon:product-P1024 .
+
+azon:tracking-ORDER-C9E9EDA5-LOT-CD2297 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-C9E9EDA5" ;
+    azon:IdLot "LOT-CD2297" ;
+    azon:SobreComanda azon:order-ORDER-C9E9EDA5 ;
+    azon:SobreLot azon:lot-LOT-CD2297 ;
+    azon:TeProducte azon:product-P1020,
+        azon:product-P1023 .
+
+azon:tracking-ORDER-C9E9EDA5-LOT-ECE8F9 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-C9E9EDA5" ;
+    azon:IdLot "LOT-ECE8F9" ;
+    azon:SobreComanda azon:order-ORDER-C9E9EDA5 ;
+    azon:SobreLot azon:lot-LOT-ECE8F9 ;
+    azon:TeProducte azon:product-P1022,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 .
+
+azon:tracking-ORDER-E03FD6A5-LOT-299661 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-E03FD6A5" ;
+    azon:IdLot "LOT-299661" ;
+    azon:SobreComanda azon:order-ORDER-E03FD6A5 ;
+    azon:SobreLot azon:lot-LOT-299661 ;
+    azon:TeProducte azon:product-P1010 .
+
+azon:tracking-ORDER-E03FD6A5-LOT-3D4602 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-E03FD6A5" ;
+    azon:IdLot "LOT-3D4602" ;
+    azon:SobreComanda azon:order-ORDER-E03FD6A5 ;
+    azon:SobreLot azon:lot-LOT-3D4602 ;
+    azon:TeProducte azon:product-P1011 .
+
+azon:tracking-ORDER-E03FD6A5-LOT-427EBF a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-E03FD6A5" ;
+    azon:IdLot "LOT-427EBF" ;
+    azon:SobreComanda azon:order-ORDER-E03FD6A5 ;
+    azon:SobreLot azon:lot-LOT-427EBF ;
+    azon:TeProducte azon:product-P1009 .
+
+azon:tracking-ORDER-E1DB0A83-LOT-0C1E71 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Girona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-E1DB0A83" ;
+    azon:IdLot "LOT-0C1E71" ;
+    azon:SobreComanda azon:order-ORDER-E1DB0A83 ;
+    azon:SobreLot azon:lot-LOT-0C1E71 ;
+    azon:TeProducte azon:product-P1027 .
+
+azon:tracking-ORDER-E1DB0A83-LOT-4D77E8 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Girona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-E1DB0A83" ;
+    azon:IdLot "LOT-4D77E8" ;
+    azon:SobreComanda azon:order-ORDER-E1DB0A83 ;
+    azon:SobreLot azon:lot-LOT-4D77E8 ;
+    azon:TeProducte azon:product-P1003 .
+
+azon:tracking-ORDER-E1DB0A83-LOT-890EF1 a azon:ConfirmacioEnviament,
+        azon:ConfirmacioLocalitzacio,
+        azon:DadesEnviament ;
+    azon:Ciutat "Girona" ;
+    azon:CostTransport "29.15"^^xsd:float ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:DataEntregaDefinitiva "2026-06-04" ;
+    azon:DataPagament "2026-06-01" ;
+    azon:Estat "ENVIAT",
+        "PAGAT" ;
+    azon:IdComanda "ORDER-E1DB0A83" ;
+    azon:IdLot "LOT-890EF1" ;
+    azon:IdPagament "PAY-0E34DC2B" ;
+    azon:IdTransportista "economy" ;
+    azon:ImportPagament "3385.91"^^xsd:float ;
+    azon:MetodePagament "a" ;
+    azon:NomTransportista "Transportista-economy" ;
+    azon:SentitPagament "COBRAMENT" ;
+    azon:SobreComanda azon:order-ORDER-E1DB0A83 ;
+    azon:SobreLot azon:lot-LOT-890EF1 ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1028,
+        azon:product-P1029 ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1028,
+        azon:product-P1029 .
+
+azon:tracking-ORDER-E5E26CF8-LOT-70C36F a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "d" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-E5E26CF8" ;
+    azon:IdLot "LOT-70C36F" ;
+    azon:SobreComanda azon:order-ORDER-E5E26CF8 ;
+    azon:SobreLot azon:lot-LOT-70C36F ;
+    azon:TeProducte azon:product-P1022,
+        azon:product-P1026 .
+
+azon:tracking-ORDER-E5E26CF8-LOT-863768 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "d" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-E5E26CF8" ;
+    azon:IdLot "LOT-863768" ;
+    azon:SobreComanda azon:order-ORDER-E5E26CF8 ;
+    azon:SobreLot azon:lot-LOT-863768 ;
+    azon:TeProducte azon:product-P1021,
+        azon:product-P1024 .
+
+azon:tracking-ORDER-E5E26CF8-LOT-F4999A a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "d" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-E5E26CF8" ;
+    azon:IdLot "LOT-F4999A" ;
+    azon:SobreComanda azon:order-ORDER-E5E26CF8 ;
+    azon:SobreLot azon:lot-LOT-F4999A ;
+    azon:TeProducte azon:product-P1002,
+        azon:product-P1023 .
+
+azon:tracking-ORDER-EBB56761-LOT-427EBF a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-EBB56761" ;
+    azon:IdLot "LOT-427EBF" ;
+    azon:SobreComanda azon:order-ORDER-EBB56761 ;
+    azon:SobreLot azon:lot-LOT-427EBF ;
+    azon:TeProducte azon:product-P1003,
+        azon:product-P1015 .
+
+azon:tracking-ORDER-EBB56761-LOT-9EC4D0 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-EBB56761" ;
+    azon:IdLot "LOT-9EC4D0" ;
+    azon:SobreComanda azon:order-ORDER-EBB56761 ;
+    azon:SobreLot azon:lot-LOT-9EC4D0 ;
+    azon:TeProducte azon:product-P1004,
+        azon:product-P1007,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 .
+
+azon:tracking-ORDER-EBB56761-LOT-9FEA54 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-06" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-EBB56761" ;
+    azon:IdLot "LOT-9FEA54" ;
+    azon:SobreComanda azon:order-ORDER-EBB56761 ;
+    azon:SobreLot azon:lot-LOT-9FEA54 ;
+    azon:TeProducte azon:product-P1002,
+        azon:product-P1005,
+        azon:product-P1014,
+        azon:product-P1023 .
+
+azon:product-P1015 a azon:Producte ;
+    azon:IdProducte "P1015" ;
+    azon:Nom "Ultra-Light Mouse" ;
+    azon:Pes "0.31"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:product-P1014 a azon:Producte ;
+    azon:IdProducte "P1014" ;
+    azon:Nom "Wireless Headphones" ;
+    azon:Pes "0.55"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
+azon:product-P1018 a azon:Producte ;
+    azon:IdProducte "P1018" ;
+    azon:Nom "Ambient Desk Lamp" ;
+    azon:Pes "1.47"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:product-P1003 a azon:Producte ;
+    azon:IdProducte "P1003" ;
+    azon:Nom "Smart Speaker" ;
+    azon:Pes "0.57"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:product-P1004 a azon:Producte ;
+    azon:IdProducte "P1004" ;
+    azon:Nom "Minimalist Coffee Mug",
+        "P1004" ;
+    azon:Pes "0.3"^^xsd:float ;
+    azon:Preu "11.25"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1016 a azon:Producte ;
+    azon:IdProducte "P1016" ;
+    azon:Nom "Compact Keyboard",
+        "P1016" ;
+    azon:Pes "0.66"^^xsd:float ;
+    azon:Preu "179.94"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1019 a azon:Producte ;
+    azon:IdProducte "P1019" ;
+    azon:Nom "P1019",
+        "Studio Headphones" ;
+    azon:Pes "0.33"^^xsd:float ;
+    azon:Preu "64.03"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1021 a azon:Producte ;
+    azon:IdProducte "P1021" ;
+    azon:Nom "Ceramic Coffee Mug" ;
+    azon:Pes "0.68"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:product-P1024 a azon:Producte ;
+    azon:IdProducte "P1024" ;
+    azon:Nom "Compact Speaker" ;
+    azon:Pes "1.71"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:product-P1006 a azon:Producte ;
+    azon:IdProducte "P1006" ;
+    azon:Nom "Smart Speaker" ;
+    azon:Pes "1.05"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:product-P1008 a azon:Producte ;
+    azon:IdProducte "P1008" ;
+    azon:Nom "Ergonomic Keyboard",
+        "P1008" ;
+    azon:Pes "1.74"^^xsd:float ;
+    azon:Preu "77.54"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
+azon:product-P1017 a azon:Producte ;
+    azon:IdProducte "P1017" ;
+    azon:Nom "Adjustable Desk Lamp",
+        "P1017" ;
+    azon:Pes "1.53"^^xsd:float ;
+    azon:Preu "48.17"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
+azon:product-P1007 a azon:Producte ;
+    azon:IdProducte "P1007" ;
+    azon:Nom "P1007",
+        "Precision Mouse" ;
+    azon:Pes "0.25"^^xsd:float ;
+    azon:Preu "106.27"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1009 a azon:Producte ;
+    azon:IdProducte "P1009" ;
+    azon:Nom "Adjustable Desk Lamp" ;
+    azon:Pes "1.85"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:product-P1020 a azon:Producte ;
+    azon:IdProducte "P1020" ;
+    azon:Nom "P1020",
+        "Ultra-Light Mouse" ;
+    azon:Pes "0.37"^^xsd:float ;
+    azon:Preu "31.09"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
+azon:product-P1027 a azon:Producte ;
+    azon:IdProducte "P1027" ;
+    azon:Nom "iPhone 17 Pro" ;
+    azon:Pes "0.22"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN .
+
+azon:product-P1022 a azon:Producte ;
+    azon:IdProducte "P1022" ;
+    azon:Nom "Compact Keyboard",
+        "P1022" ;
+    azon:Pes "1.7"^^xsd:float ;
+    azon:Preu "96.18"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1025 a azon:Producte ;
+    azon:IdProducte "P1025" ;
+    azon:Nom "AirPods",
+        "P1025" ;
+    azon:Pes "0.05"^^xsd:float ;
+    azon:Preu "199.0"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:centre-CL-TGN a azon:CentreLogistic ;
+    azon:Ciutat "Tarragona" ;
+    azon:IdCentreLogistic "CL-TGN" .
+
+azon:product-P1001 a azon:Producte ;
+    azon:IdProducte "P1001" ;
+    azon:Nom "P1001",
+        "Slim Desk Lamp" ;
+    azon:Pes "1.47"^^xsd:float ;
+    azon:Preu "68.49"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1023 a azon:Producte ;
+    azon:IdProducte "P1023" ;
+    azon:Nom "P1023",
+        "Portable Speaker" ;
+    azon:Pes "1.01"^^xsd:float ;
+    azon:Preu "135.44"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
+azon:product-P1029 a azon:Producte ;
+    azon:IdProducte "P1029" ;
+    azon:Nom "Carregador MagSafe",
+        "P1029" ;
+    azon:Pes "0.08"^^xsd:float ;
+    azon:Preu "45.0"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1002 a azon:Producte ;
+    azon:IdProducte "P1002" ;
+    azon:Nom "P1002",
+        "Travel Headphones" ;
+    azon:Pes "1.05"^^xsd:float ;
+    azon:Preu "234.65"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
+azon:product-P1005 a azon:Producte ;
+    azon:IdProducte "P1005" ;
+    azon:Nom "P1005",
+        "Party Speaker" ;
+    azon:Pes "0.69"^^xsd:float ;
+    azon:Preu "149.26"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
+azon:product-P1026 a azon:Producte ;
+    azon:IdProducte "P1026" ;
+    azon:Nom "AirPods Max",
+        "P1026" ;
+    azon:Pes "0.38"^^xsd:float ;
+    azon:Preu "579.0"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1028 a azon:Producte ;
+    azon:IdProducte "P1028" ;
+    azon:Nom "MacBook Pro M4",
+        "P1028" ;
+    azon:Pes "1.55"^^xsd:float ;
+    azon:Preu "1999.0"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:centre-CL-BCN a azon:CentreLogistic ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdCentreLogistic "CL-BCN" .
+
+azon:product-P1010 a azon:Producte ;
+    azon:IdProducte "P1010" ;
+    azon:Nom "P1010",
+        "Slim Desk Lamp" ;
+    azon:Pes "1.93"^^xsd:float ;
+    azon:Preu "72.97"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1011 a azon:Producte ;
+    azon:IdProducte "P1011" ;
+    azon:Nom "P1011",
+        "Slim Desk Lamp" ;
+    azon:Pes "1.78"^^xsd:float ;
+    azon:Preu "42.48"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
+azon:centre-CL-GI a azon:CentreLogistic ;
+    azon:Ciutat "Girona" ;
+    azon:IdCentreLogistic "CL-GI" .
+

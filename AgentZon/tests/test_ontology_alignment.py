@@ -67,6 +67,8 @@ class OntologyAlignmentTests(unittest.TestCase):
             AZON.Ciutat: {
                 AZON.CentreLogistic,
                 AZON.Comanda,
+                AZON.DadesEnviament,
+                AZON.ConfirmacioLocalitzacio,
                 AZON.Lot,
                 AZON.PeticioTransport,
                 AZON.ProducteLocalitzat,
@@ -74,6 +76,8 @@ class OntologyAlignmentTests(unittest.TestCase):
             },
             AZON.IdComanda: {
                 AZON.Comanda,
+                AZON.DadesEnviament,
+                AZON.ConfirmacioLocalitzacio,
                 AZON.ConfirmacioRegistreCompra,
                 AZON.PeticioRegistreCompra,
                 AZON.PeticioTransport,
@@ -81,6 +85,8 @@ class OntologyAlignmentTests(unittest.TestCase):
                 AZON.RespostaOfertaTransport,
             },
             AZON.IdLot: {
+                AZON.DadesEnviament,
+                AZON.ConfirmacioLocalitzacio,
                 AZON.Lot,
                 AZON.PeticioTransport,
                 AZON.RespostaOfertaTransport,
@@ -96,16 +102,20 @@ class OntologyAlignmentTests(unittest.TestCase):
                 AZON.ResultatCerca,
             },
             AZON.CostTransport: {
+                AZON.DadesEnviament,
                 AZON.RespostaOfertaTransport,
             },
             AZON.DataEntrega: {
                 AZON.Comanda,
+                AZON.ConfirmacioLocalitzacio,
                 AZON.Lot,
                 AZON.PeticioTransport,
                 AZON.ProducteLocalitzat,
+                AZON.ResultatCompra,
             },
             AZON.DataEntregaDefinitiva: {
                 AZON.Comanda,
+                AZON.DadesEnviament,
                 AZON.RespostaOfertaTransport,
                 AZON.EleccioTransportista,
                 AZON.ConfirmacioEnviament,
@@ -127,6 +137,68 @@ class OntologyAlignmentTests(unittest.TestCase):
         ):
             self.assertIn((cls, RDF.type, OWL.Class), graph)
             self.assertIn((cls, RDFS.subClassOf, AZON.Accio), graph)
+
+    def test_shipping_details_response_is_modeled_as_a_response(self):
+        graph = Graph()
+        graph.parse(ONTOLOGY_PATH, format="xml")
+
+        self.assertIn((AZON.DadesEnviament, RDF.type, OWL.Class), graph)
+        self.assertIn((AZON.DadesEnviament, RDFS.subClassOf, AZON.Resposta), graph)
+
+        for relation in (AZON.SobreComanda, AZON.SobreLot):
+            self.assertIn((relation, RDFS.domain, AZON.DadesEnviament), graph)
+
+        for prop in (
+            AZON.IdTransportista,
+            AZON.NomTransportista,
+            AZON.CostTransport,
+            AZON.Ciutat,
+            AZON.DataEntregaDefinitiva,
+        ):
+            self.assertIn((prop, RDFS.domain, AZON.DadesEnviament), graph)
+
+        self.assertNotIn((AZON.Estat, RDFS.domain, AZON.DadesEnviament), graph)
+
+    def test_purchase_result_response_is_modeled_with_estimated_delivery_fields(self):
+        graph = Graph()
+        graph.parse(ONTOLOGY_PATH, format="xml")
+
+        self.assertIn((AZON.ResultatCompra, RDF.type, OWL.Class), graph)
+        self.assertIn((AZON.ResultatCompra, RDFS.subClassOf, AZON.Resposta), graph)
+        self.assertIn((AZON.SobreComanda, RDFS.domain, AZON.ResultatCompra), graph)
+
+        for prop in (
+            AZON.IdComanda,
+            AZON.Estat,
+            AZON.DataEntrega,
+        ):
+            self.assertIn((prop, RDFS.domain, AZON.ResultatCompra), graph)
+
+        self.assertNotIn((AZON.SobreLot, RDFS.domain, AZON.ResultatCompra), graph)
+        self.assertNotIn((AZON.DataEntregaDefinitiva, RDFS.domain, AZON.ResultatCompra), graph)
+
+    def test_deferred_purchase_classes_exist_in_the_ontology(self):
+        graph = Graph()
+        graph.parse(ONTOLOGY_PATH, format="xml")
+
+        for cls in (AZON.ResultatCompra, AZON.ConfirmacioLocalitzacio):
+            self.assertIn((cls, RDF.type, OWL.Class), graph)
+            self.assertIn((cls, RDFS.subClassOf, AZON.Resposta), graph)
+
+        for triple in [
+            (AZON.SobreComanda, RDFS.domain, AZON.ResultatCompra),
+            (AZON.SobreComanda, RDFS.domain, AZON.ConfirmacioLocalitzacio),
+            (AZON.SobreLot, RDFS.domain, AZON.ConfirmacioLocalitzacio),
+            (AZON.Estat, RDFS.domain, AZON.ResultatCompra),
+            (AZON.Estat, RDFS.domain, AZON.ConfirmacioLocalitzacio),
+            (AZON.Estat, RDFS.domain, AZON.Lot),
+            (AZON.IdComanda, RDFS.domain, AZON.ResultatCompra),
+            (AZON.IdComanda, RDFS.domain, AZON.ConfirmacioLocalitzacio),
+            (AZON.IdLot, RDFS.domain, AZON.ConfirmacioLocalitzacio),
+            (AZON.DataEntrega, RDFS.domain, AZON.ResultatCompra),
+            (AZON.DataEntrega, RDFS.domain, AZON.ConfirmacioLocalitzacio),
+        ]:
+            self.assertIn(triple, graph)
 
     def test_ontology_file_does_not_keep_ui_orange_annotations(self):
         ontology_text = ONTOLOGY_PATH.read_text(encoding="utf-8")

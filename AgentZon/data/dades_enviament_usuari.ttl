@@ -1,135 +1,100 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 
-azon:shipping-ORDER-0213EA53 azon:Carrer "Carrer Aribau" ;
+azon:shipping-ORDER-04C81287 azon:Carrer "s" ;
     azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "123456789" ;
-    azon:MetodePagament "00000000000000" ;
-    azon:Nom "angi" ;
-    azon:Prioritat "24h" .
-
-azon:shipping-ORDER-0776824E azon:Carrer "mtdp" ;
-    azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "aaaaa" ;
-    azon:MetodePagament "1212121212" ;
-    azon:Nom "angi" ;
-    azon:Prioritat "24h" .
-
-azon:shipping-ORDER-09D3C9A8 azon:Carrer "aa" ;
-    azon:Ciutat "a" ;
-    azon:IdUsuari "xxxx" ;
-    azon:MetodePagament "aaaaa" ;
-    azon:Nom "x" ;
-    azon:Prioritat "24h" .
-
-azon:shipping-ORDER-1756FF6A azon:Carrer "Hola" ;
-    azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "1234" ;
-    azon:MetodePagament "vsa" ;
-    azon:Nom "polmonta" ;
-    azon:Prioritat "24h" .
-
-azon:shipping-ORDER-24C34AC2 azon:Carrer "aa" ;
-    azon:Ciutat "a" ;
-    azon:IdUsuari "xxxx" ;
-    azon:MetodePagament "aaaaa" ;
-    azon:Nom "x" ;
-    azon:Prioritat "24h" .
-
-azon:shipping-ORDER-250771F1 azon:Carrer "aa" ;
-    azon:Ciutat "a" ;
-    azon:IdUsuari "xxxx" ;
-    azon:MetodePagament "aaaaa" ;
-    azon:Nom "x" ;
-    azon:Prioritat "24h" .
-
-azon:shipping-ORDER-274C0645 azon:Carrer "Gran Via 100" ;
-    azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "USER-DEMO" ;
-    azon:MetodePagament "placeholder-visa" ;
-    azon:Nom "Dual Centre Demo" ;
-    azon:Prioritat "48h" .
-
-azon:shipping-ORDER-35255671 azon:Carrer "aa" ;
-    azon:Ciutat "a" ;
-    azon:IdUsuari "xxxx" ;
-    azon:MetodePagament "aaaaa" ;
-    azon:Nom "x" ;
-    azon:Prioritat "24h" .
-
-azon:shipping-ORDER-5464FC0C azon:Carrer "a" ;
-    azon:Ciutat "a" ;
-    azon:IdUsuari "a" ;
-    azon:MetodePagament "a" ;
-    azon:Nom "a" ;
-    azon:Prioritat "24h" .
-
-azon:shipping-ORDER-7AE3408B azon:Carrer "asfasf" ;
-    azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "1243" ;
-    azon:MetodePagament "VV" ;
-    azon:Nom "afa" ;
-    azon:Prioritat "24h" .
-
-azon:shipping-ORDER-7CAD298C azon:Carrer "s" ;
-    azon:Ciutat "s" ;
-    azon:IdUsuari "s" ;
+    azon:IdUsuari "127.0.0.1" ;
     azon:MetodePagament "s" ;
     azon:Nom "s" ;
-    azon:Prioritat "24h" .
+    azon:Prioritat "5 dies" .
 
-azon:shipping-ORDER-8269451F azon:Carrer "mmmtp" ;
-    azon:Ciutat "mm" ;
-    azon:IdUsuari "11111" ;
-    azon:MetodePagament "09009090909" ;
-    azon:Nom "xelo" ;
-    azon:Prioritat "24h" .
-
-azon:shipping-ORDER-8B687C0C azon:Carrer "dmsgk" ;
-    azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "124" ;
-    azon:MetodePagament "VISA" ;
-    azon:Nom "polmo" ;
-    azon:Prioritat "24h" .
-
-azon:shipping-ORDER-9EC27036 azon:Carrer "a" ;
+azon:shipping-ORDER-509C9D05 azon:Carrer "a" ;
     azon:Ciutat "a" ;
-    azon:IdUsuari "a" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "angi" ;
+    azon:Prioritat "5 dies" .
+
+azon:shipping-ORDER-813DF66D azon:Carrer "a" ;
+    azon:Ciutat "Girona" ;
+    azon:IdUsuari "127.0.0.1" ;
     azon:MetodePagament "a" ;
     azon:Nom "a" ;
-    azon:Prioritat "24h" .
+    azon:Prioritat "5 dies" .
 
-azon:shipping-ORDER-AC3BDAA2 azon:Carrer "mtdp" ;
+azon:shipping-ORDER-8322112D azon:Carrer "a" ;
+    azon:Ciutat "Tarragona" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" .
+
+azon:shipping-ORDER-8B0B0369 azon:Carrer "a" ;
+    azon:Ciutat "Girona" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" .
+
+azon:shipping-ORDER-9B6F87D3 azon:Carrer "a" ;
     azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "aaaaa" ;
-    azon:MetodePagament "1212121212" ;
-    azon:Nom "angi" ;
-    azon:Prioritat "24h" .
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" .
 
-azon:shipping-ORDER-B1440FC7 azon:Carrer "mtdp" ;
+azon:shipping-ORDER-9FA92835 azon:Carrer "x" ;
+    azon:Ciutat "Lleida" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "x" ;
+    azon:Prioritat "5 dies" .
+
+azon:shipping-ORDER-B966E37B azon:Carrer "a" ;
+    azon:Ciutat "a" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "lolo" ;
+    azon:Prioritat "5 dies" .
+
+azon:shipping-ORDER-BFD5D310 azon:Carrer "a" ;
     azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "aaaaa" ;
-    azon:MetodePagament "1212121212" ;
-    azon:Nom "angi" ;
-    azon:Prioritat "24h" .
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" .
 
-azon:shipping-ORDER-CD6EDDA6 azon:Carrer "Carrer de Guillem Tell " ;
+azon:shipping-ORDER-C9E9EDA5 azon:Carrer "a" ;
     azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "1234" ;
-    azon:MetodePagament "VISA" ;
-    azon:Nom "Pol Mo" ;
-    azon:Prioritat "24h" .
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" .
 
-azon:shipping-ORDER-E6E81DE7 azon:Carrer "1" ;
-    azon:Ciutat "1" ;
-    azon:IdUsuari "1" ;
-    azon:MetodePagament "1" ;
-    azon:Nom "angi" ;
-    azon:Prioritat "24h" .
-
-azon:shipping-ORDER-FD3C35DB azon:Carrer "holajafkaf" ;
+azon:shipping-ORDER-E03FD6A5 azon:Carrer "a" ;
     azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "123235358" ;
-    azon:MetodePagament "vv" ;
-    azon:Nom "josep" ;
-    azon:Prioritat "24h" .
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" .
+
+azon:shipping-ORDER-E1DB0A83 azon:Carrer "a" ;
+    azon:Ciutat "Girona" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" .
+
+azon:shipping-ORDER-E5E26CF8 azon:Carrer "d" ;
+    azon:Ciutat "d" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "d" ;
+    azon:Nom "d" ;
+    azon:Prioritat "5 dies" .
+
+azon:shipping-ORDER-EBB56761 azon:Carrer "a" ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" .
 

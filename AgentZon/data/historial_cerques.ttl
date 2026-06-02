@@ -9,34 +9,6 @@ azon:search-0 azon:CategoriaConsulta "" ;
         azon:product-P1004,
         azon:product-P1005,
         azon:product-P1006,
-        azon:product-P1008,
-        azon:product-P1009,
-        azon:product-P1010,
-        azon:product-P1011,
-        azon:product-P1012,
-        azon:product-P1013,
-        azon:product-P1014,
-        azon:product-P1015,
-        azon:product-P1016,
-        azon:product-P1017,
-        azon:product-P1018,
-        azon:product-P1019,
-        azon:product-P1020,
-        azon:product-P1021,
-        azon:product-P1022,
-        azon:product-P1023,
-        azon:product-P1024 ;
-    azon:TextConsulta "a" ;
-    azon:TotalResultats 23 .
-
-azon:search-104 azon:CategoriaConsulta "" ;
-    azon:MarcaConsulta "" ;
-    azon:MostraProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1003,
-        azon:product-P1004,
-        azon:product-P1005,
-        azon:product-P1006,
         azon:product-P1007,
         azon:product-P1008,
         azon:product-P1009,
@@ -54,16 +26,16 @@ azon:search-104 azon:CategoriaConsulta "" ;
         azon:product-P1021,
         azon:product-P1022,
         azon:product-P1023,
-        azon:product-P1024 ;
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
     azon:TextConsulta "" ;
-    azon:TotalResultats 24 .
+    azon:TotalResultats 29 .
 
-azon:search-132 azon:CategoriaConsulta "" ;
-    azon:MarcaConsulta "" ;
-    azon:TextConsulta "aa" ;
-    azon:TotalResultats 0 .
-
-azon:search-136 azon:CategoriaConsulta "" ;
+azon:search-131 azon:CategoriaConsulta "" ;
     azon:MarcaConsulta "" ;
     azon:MostraProducte azon:product-P1001,
         azon:product-P1002,
@@ -87,9 +59,14 @@ azon:search-136 azon:CategoriaConsulta "" ;
         azon:product-P1021,
         azon:product-P1022,
         azon:product-P1023,
-        azon:product-P1024 ;
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
     azon:TextConsulta "a" ;
-    azon:TotalResultats 23 .
+    azon:TotalResultats 28 .
 
 azon:search-163 azon:CategoriaConsulta "" ;
     azon:MarcaConsulta "" ;
@@ -99,90 +76,7 @@ azon:search-163 azon:CategoriaConsulta "" ;
         azon:product-P1004,
         azon:product-P1005,
         azon:product-P1006,
-        azon:product-P1008,
-        azon:product-P1009,
-        azon:product-P1010,
-        azon:product-P1011,
-        azon:product-P1012,
-        azon:product-P1013,
-        azon:product-P1014,
-        azon:product-P1015,
-        azon:product-P1016,
-        azon:product-P1017,
-        azon:product-P1018,
-        azon:product-P1019,
-        azon:product-P1020,
-        azon:product-P1021,
-        azon:product-P1022,
-        azon:product-P1023,
-        azon:product-P1024 ;
-    azon:TextConsulta "a" ;
-    azon:TotalResultats 23 .
-
-azon:search-190 azon:CategoriaConsulta "" ;
-    azon:MarcaConsulta "" ;
-    azon:MostraProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1003,
-        azon:product-P1004,
-        azon:product-P1005,
-        azon:product-P1006,
-        azon:product-P1008,
-        azon:product-P1009,
-        azon:product-P1010,
-        azon:product-P1011,
-        azon:product-P1012,
-        azon:product-P1013,
-        azon:product-P1014,
-        azon:product-P1015,
-        azon:product-P1016,
-        azon:product-P1017,
-        azon:product-P1018,
-        azon:product-P1019,
-        azon:product-P1020,
-        azon:product-P1021,
-        azon:product-P1022,
-        azon:product-P1023,
-        azon:product-P1024 ;
-    azon:TextConsulta "a" ;
-    azon:TotalResultats 23 .
-
-azon:search-217 azon:CategoriaConsulta "" ;
-    azon:MarcaConsulta "" ;
-    azon:MostraProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1003,
-        azon:product-P1004,
-        azon:product-P1005,
-        azon:product-P1006,
-        azon:product-P1008,
-        azon:product-P1009,
-        azon:product-P1010,
-        azon:product-P1011,
-        azon:product-P1012,
-        azon:product-P1013,
-        azon:product-P1014,
-        azon:product-P1015,
-        azon:product-P1016,
-        azon:product-P1017,
-        azon:product-P1018,
-        azon:product-P1019,
-        azon:product-P1020,
-        azon:product-P1021,
-        azon:product-P1022,
-        azon:product-P1023,
-        azon:product-P1024 ;
-    azon:TextConsulta "a" ;
-    azon:TotalResultats 23 .
-
-azon:search-244 azon:CategoriaConsulta "" ;
-    azon:MarcaConsulta "" ;
-    azon:MostraProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1003,
-        azon:product-P1004,
-        azon:product-P1005,
-        azon:product-P1006,
+        azon:product-P1007,
         azon:product-P1008,
         azon:product-P1009,
         azon:product-P1010,
@@ -205,129 +99,10 @@ azon:search-244 azon:CategoriaConsulta "" ;
         azon:product-P1027,
         azon:product-P1028,
         azon:product-P1029 ;
-    azon:TextConsulta "a" ;
-    azon:TotalResultats 28 .
+    azon:TextConsulta "" ;
+    azon:TotalResultats 29 .
 
-azon:search-27 azon:CategoriaConsulta "" ;
-    azon:MarcaConsulta "" ;
-    azon:MostraProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1003,
-        azon:product-P1004,
-        azon:product-P1005,
-        azon:product-P1006,
-        azon:product-P1008,
-        azon:product-P1009,
-        azon:product-P1010,
-        azon:product-P1011,
-        azon:product-P1012,
-        azon:product-P1013,
-        azon:product-P1014,
-        azon:product-P1015,
-        azon:product-P1016,
-        azon:product-P1017,
-        azon:product-P1018,
-        azon:product-P1019,
-        azon:product-P1020,
-        azon:product-P1021,
-        azon:product-P1022,
-        azon:product-P1023,
-        azon:product-P1024 ;
-    azon:TextConsulta "a" ;
-    azon:TotalResultats 23 .
-
-azon:search-276 azon:CategoriaConsulta "" ;
-    azon:MarcaConsulta "" ;
-    azon:MostraProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1003,
-        azon:product-P1004,
-        azon:product-P1005,
-        azon:product-P1006,
-        azon:product-P1008,
-        azon:product-P1009,
-        azon:product-P1010,
-        azon:product-P1011,
-        azon:product-P1012,
-        azon:product-P1013,
-        azon:product-P1014,
-        azon:product-P1015,
-        azon:product-P1016,
-        azon:product-P1017,
-        azon:product-P1018,
-        azon:product-P1019,
-        azon:product-P1020,
-        azon:product-P1021,
-        azon:product-P1022,
-        azon:product-P1023,
-        azon:product-P1024,
-        azon:product-P1025,
-        azon:product-P1026,
-        azon:product-P1027,
-        azon:product-P1028,
-        azon:product-P1029 ;
-    azon:TextConsulta "a" ;
-    azon:TotalResultats 28 .
-
-azon:search-308 azon:CategoriaConsulta "" ;
-    azon:MarcaConsulta "" ;
-    azon:MostraProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1003,
-        azon:product-P1004,
-        azon:product-P1005,
-        azon:product-P1006,
-        azon:product-P1008,
-        azon:product-P1009,
-        azon:product-P1010,
-        azon:product-P1011,
-        azon:product-P1012,
-        azon:product-P1013,
-        azon:product-P1014,
-        azon:product-P1015,
-        azon:product-P1016,
-        azon:product-P1017,
-        azon:product-P1018,
-        azon:product-P1019,
-        azon:product-P1020,
-        azon:product-P1021,
-        azon:product-P1022,
-        azon:product-P1023,
-        azon:product-P1024,
-        azon:product-P1025,
-        azon:product-P1026,
-        azon:product-P1027,
-        azon:product-P1028,
-        azon:product-P1029 ;
-    azon:TextConsulta "a" ;
-    azon:TotalResultats 28 .
-
-azon:search-54 azon:CategoriaConsulta "" ;
-    azon:MarcaConsulta "" ;
-    azon:TextConsulta "abc" ;
-    azon:TotalResultats 0 .
-
-azon:search-58 azon:CategoriaConsulta "" ;
-    azon:MarcaConsulta "" ;
-    azon:MostraProducte azon:product-P1004,
-        azon:product-P1009,
-        azon:product-P1012,
-        azon:product-P1017,
-        azon:product-P1023 ;
-    azon:TextConsulta "ab" ;
-    azon:TotalResultats 5 .
-
-azon:search-67 azon:CategoriaConsulta "" ;
-    azon:MarcaConsulta "" ;
-    azon:MostraProducte azon:product-P1004,
-        azon:product-P1009,
-        azon:product-P1012,
-        azon:product-P1017,
-        azon:product-P1023 ;
-    azon:TextConsulta "ab" ;
-    azon:TotalResultats 5 .
-
-azon:search-76 azon:CategoriaConsulta "" ;
+azon:search-196 azon:CategoriaConsulta "" ;
     azon:MarcaConsulta "" ;
     azon:MostraProducte azon:product-P1001,
         azon:product-P1002,
@@ -352,7 +127,348 @@ azon:search-76 azon:CategoriaConsulta "" ;
         azon:product-P1021,
         azon:product-P1022,
         azon:product-P1023,
-        azon:product-P1024 ;
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
     azon:TextConsulta "" ;
-    azon:TotalResultats 24 .
+    azon:TotalResultats 29 .
+
+azon:search-229 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1007,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014,
+        azon:product-P1015,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1021,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
+    azon:TextConsulta "" ;
+    azon:TotalResultats 29 .
+
+azon:search-262 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1007,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014,
+        azon:product-P1015,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1021,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
+    azon:TextConsulta "" ;
+    azon:TotalResultats 29 .
+
+azon:search-295 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1007,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014,
+        azon:product-P1015,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1021,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
+    azon:TextConsulta "" ;
+    azon:TotalResultats 29 .
+
+azon:search-328 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1007,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014,
+        azon:product-P1015,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1021,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
+    azon:TextConsulta "s" ;
+    azon:TotalResultats 27 .
+
+azon:search-33 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1007,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014,
+        azon:product-P1015,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1021,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
+    azon:TextConsulta "" ;
+    azon:TotalResultats 29 .
+
+azon:search-359 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014,
+        azon:product-P1015,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1021,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
+    azon:TextConsulta "a" ;
+    azon:TotalResultats 28 .
+
+azon:search-391 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1007,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014,
+        azon:product-P1015,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1021,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
+    azon:TextConsulta "" ;
+    azon:TotalResultats 29 .
+
+azon:search-424 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1007,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014,
+        azon:product-P1015,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1021,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
+    azon:TextConsulta "" ;
+    azon:TotalResultats 29 .
+
+azon:search-66 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1007,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014,
+        azon:product-P1015,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1021,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
+    azon:TextConsulta "" ;
+    azon:TotalResultats 29 .
+
+azon:search-99 azon:CategoriaConsulta "" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014,
+        azon:product-P1015,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1021,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029 ;
+    azon:TextConsulta "a" ;
+    azon:TotalResultats 28 .
 

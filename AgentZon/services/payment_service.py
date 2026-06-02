@@ -32,6 +32,10 @@ def read_user_bank_data(path, user_id):
     }
 
 
+def has_user_bank_data(path, user_id):
+    return read_user_bank_data(path, user_id) is not None
+
+
 def save_seller_bank_data(path, seller_id, bank_data):
     graph = load_graph(path)
     bind_namespaces(graph)

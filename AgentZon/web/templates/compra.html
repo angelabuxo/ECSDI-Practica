@@ -17,15 +17,14 @@
     {% for product in products %}
     <input type="hidden" name="selected_product_ids" value="{{ product.product_id }}">
     {% endfor %}
-    <label>User ID <input type="text" name="user_id" required></label>
+    <p>Identificació: s'utilitzarà la teva adreça IP (<strong>{{ client_ip }}</strong>) com a identificador d'usuari.</p>
     <label>User name <input type="text" name="user_name" required></label>
     <label>Street address <input type="text" name="street_address" required></label>
     <label>City <input type="text" name="city" required></label>
     <label>Priority
       <select name="priority">
-        <option value="24h">24h</option>
-        <option value="48h">48h</option>
-        <option value="72h">72h</option>
+        <option value="5 dies">5 dies</option>
+        <option value="7 dies">7 dies</option>
       </select>
     </label>
     <label>Payment method placeholder <input type="text" name="payment_method" required></label>
