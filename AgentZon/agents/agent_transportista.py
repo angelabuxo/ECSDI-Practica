@@ -108,37 +108,25 @@ def _build_refuse_reply(receiver):
 
 
 def respondre_contraoferta(counter_offer, receiver=None):
-    """Avalua i respon una contraoferta del centre logístic."""
+    """Avalua i respon una contraoferta alineada amb el corredor 110 % / 115 % del centre."""
     previous_offer = LAST_OFFERS.get(counter_offer["lot_id"])
     if previous_offer is None:
         return _build_refuse_reply(receiver)
 
-    initial_price = previous_offer["price"]
     counter_price = counter_offer["price"]
-    minimum_price = round(initial_price * 0.85, 2)
+    cap_price = round(counter_price * 1.15 / 1.10, 2)
 
-    if counter_price >= minimum_price:
-        LAST_OFFERS[counter_offer["lot_id"]] = {**previous_offer, "price": counter_price}
-        return build_message(
-            Graph(),
-            ACL.agree,
-            sender=AGENT.uri,
-            receiver=receiver,
-            msgcnt=next_counter(),
-        )
+    if counter_price > cap_price:
+        return _build_refuse_reply(receiver)
 
-    proposed_price = max(round((initial_price + counter_price) / 2, 2), minimum_price)
-    if counter_price < proposed_price < initial_price:
-        proposed_offer = {**previous_offer, "price": proposed_price}
-        LAST_OFFERS[counter_offer["lot_id"]] = proposed_offer
-        return build_resposta_oferta_transport(
-            proposed_offer,
-            sender=AGENT.uri,
-            receiver=receiver,
-            msgcnt=next_counter(),
-        )
-
-    return _build_refuse_reply(receiver)
+    LAST_OFFERS[counter_offer["lot_id"]] = {**previous_offer, "price": counter_price}
+    return build_message(
+        Graph(),
+        ACL.agree,
+        sender=AGENT.uri,
+        receiver=receiver,
+        msgcnt=next_counter(),
+    )
 
 
 # Communication handling -----------------------------------------------------------

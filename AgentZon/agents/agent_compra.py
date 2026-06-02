@@ -61,10 +61,9 @@ from services.order_service import (
     load_order,
     save_order,
     save_user_shipping_data,
-    update_order_shipping_status,
+    update_order_final_delivery_date,
 )
 from services.shipping_service import (
-    aggregate_order_status,
     build_invoice_summary,
     collect_warehouse_reservations,
     group_shipments_for_display,
@@ -73,6 +72,7 @@ from services.shipping_tracking_service import (
     aggregate_official_delivery_date,
     apply_shipping_update,
     load_tracking_for_order,
+    lookup_order_for_localized_product,
     save_localization_confirmations,
 )
 
@@ -205,7 +205,6 @@ def pla_informar_usuari_sobre_l_enviament(order, shipments):
         [shipment["delivery_date"] for shipment in shipments if shipment.get("delivery_date")],
         default=order.get("final_delivery_date") or order["delivery_date"],
     )
-    order = {**order, "status": aggregate_order_status(shipments)}
     return render_template(
         "shipping_summary.html",
         order=order,
@@ -300,12 +299,11 @@ def pla_cobrament_extern(order, seller_id):
 
 
 def carregar_comanda(order_id):
-    """Carrega una comanda amb el seu estat de seguiment agregat."""
+    """Carrega una comanda amb el seu seguiment d'enviament."""
     stored_order = load_order(ORDERS_PATH, order_id)
     if stored_order is None:
         return None
     products = get_products_by_ids(CATALOG_PATH, stored_order["product_ids"])
-    tracking_entries = load_tracking_for_order(TRACKING_PATH, order_id)
     return {
         "order_id": stored_order["order_id"],
         "user_id": stored_order["user_id"],
@@ -314,27 +312,7 @@ def carregar_comanda(order_id):
         "shipping_data": stored_order["shipping_data"],
         "delivery_date": stored_order["delivery_date"],
         "final_delivery_date": stored_order.get("final_delivery_date"),
-        "status": aggregate_order_status(tracking_entries),
     }
-
-
-def _group_shipping_updates_by_lot(shipping_details):
-    grouped = {}
-    for shipment in shipping_details:
-        key = (shipment["order_id"], shipment["lot_id"])
-        if key not in grouped:
-            grouped[key] = {
-                **shipment,
-                "products": [],
-            }
-        if shipment.get("product_id"):
-            grouped[key]["products"].append(
-                {
-                    "product_id": shipment["product_id"],
-                    "name": shipment.get("product_name") or shipment["product_id"],
-                }
-            )
-    return list(grouped.values())
 
 
 def _build_acknowledgement(receiver):
@@ -350,27 +328,34 @@ def _build_acknowledgement(receiver):
 def process_shipping_update(message_graph, content, sender):
     """Processa actualitzacions logístiques rebudes dels centres."""
     invoice = extract_invoice_from_content(message_graph, content)
-    grouped_updates = _group_shipping_updates_by_lot(extract_shipping_details_list(message_graph))
     shipped = (content, RDF.type, AZON.ConfirmacioEnviament) in message_graph
     touched_orders = set()
 
-    for shipment in grouped_updates:
+    for shipment in extract_shipping_details_list(message_graph):
+        localized_product_id = shipment.get("localized_product_id")
+        if not localized_product_id:
+            continue
+        order_id = lookup_order_for_localized_product(TRACKING_PATH, localized_product_id)
+        if order_id is None:
+            logger.warning(
+                "No s'ha trobat la comanda per al producte localitzat %s",
+                localized_product_id,
+            )
+            continue
+        shipment = {**shipment, "order_id": order_id}
         apply_shipping_update(
             TRACKING_PATH,
             shipment,
             shipped=shipped,
             invoice=invoice,
         )
-        touched_orders.add(shipment["order_id"])
+        touched_orders.add(order_id)
 
     for order_id in touched_orders:
         entries = load_tracking_for_order(TRACKING_PATH, order_id)
-        update_order_shipping_status(
-            ORDERS_PATH,
-            order_id,
-            status=aggregate_order_status(entries),
-            final_delivery_date=aggregate_official_delivery_date(entries),
-        )
+        final_delivery_date = aggregate_official_delivery_date(entries)
+        if final_delivery_date is not None:
+            update_order_final_delivery_date(ORDERS_PATH, order_id, final_delivery_date)
 
     return _build_acknowledgement(sender)
 

@@ -17,6 +17,28 @@ azon:order-ORDER-04C81287 a azon:Comanda ;
         azon:product-P1018,
         azon:product-P1019 .
 
+azon:order-ORDER-12103253 a azon:Comanda ;
+    azon:Carrer "Balmes 234" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-07" ;
+    azon:Estat "ASSIGNAT" ;
+    azon:IdComanda "ORDER-12103253" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "vv" ;
+    azon:Nom "josep" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012 .
+
 azon:order-ORDER-4D697D7E a azon:Comanda ;
     azon:Carrer "a" ;
     azon:Ciutat "Girona" ;
@@ -55,6 +77,27 @@ azon:order-ORDER-509C9D05 a azon:Comanda ;
         azon:product-P1020,
         azon:product-P1021,
         azon:product-P1028 .
+
+azon:order-ORDER-7E8133EC a azon:Comanda ;
+    azon:Carrer "Balmes 234" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-07" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-7E8133EC" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "vv" ;
+    azon:Nom "josepe" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1008,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012 .
 
 azon:order-ORDER-813DF66D a azon:Comanda ;
     azon:Carrer "a" ;
@@ -108,6 +151,31 @@ azon:order-ORDER-8B0B0369 a azon:Comanda ;
         azon:product-P1010,
         azon:product-P1011 .
 
+azon:order-ORDER-977CDB81 a azon:Comanda ;
+    azon:Carrer "Balmes" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-07" ;
+    azon:DataEntregaDefinitiva "2026-06-05" ;
+    azon:Estat "ENVIAT" ;
+    azon:IdComanda "ORDER-977CDB81" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "vv" ;
+    azon:Nom "josep" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014 .
+
 azon:order-ORDER-9B6F87D3 a azon:Comanda ;
     azon:Carrer "a" ;
     azon:Ciutat "Barcelona" ;
@@ -148,6 +216,30 @@ azon:order-ORDER-9FA92835 a azon:Comanda ;
         azon:product-P1027,
         azon:product-P1028,
         azon:product-P1029 .
+
+azon:order-ORDER-ADA7E333 a azon:Comanda ;
+    azon:Carrer "Balmes" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-07" ;
+    azon:Estat "ASSIGNAT" ;
+    azon:IdComanda "ORDER-ADA7E333" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "vv" ;
+    azon:Nom "josep" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014 .
 
 azon:order-ORDER-B966E37B a azon:Comanda ;
     azon:Carrer "a" ;

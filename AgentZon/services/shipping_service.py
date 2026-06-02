@@ -1,6 +1,7 @@
 """Resums d'enviament, facturacio agregada i coordinacio amb centres logistics."""
 
 from concurrent.futures import ThreadPoolExecutor
+from uuid import uuid4
 
 from rdflib import Graph, RDF
 
@@ -50,7 +51,8 @@ def _shipment_bundle_key(shipment):
     lot_id = shipment.get("lot_id") or ""
     if centre_id or lot_id:
         return f"{centre_id}:{lot_id}"
-    return shipment.get("product_id") or ""
+    product = shipment.get("product") or {}
+    return product.get("product_id") or shipment.get("localized_product_id") or ""
 
 
 def mark_shared_transport_costs(shipments):
@@ -178,11 +180,12 @@ def group_shipments_for_display(shipments):
             group["transport_id"] = shipment.get("transport_id")
         if shipment.get("transport_name"):
             group["transport_name"] = shipment.get("transport_name")
-        for product in shipment.get("products", []):
+        product = shipment.get("product")
+        if product and product.get("product_id"):
             group["products"].append(
                 {
-                    "product_id": product.get("product_id"),
-                    "product_name": product.get("name") or product.get("product_id"),
+                    "product_id": product["product_id"],
+                    "product_name": product.get("name") or product["product_id"],
                 }
             )
         if not shipment.get("shared_transport"):
@@ -193,47 +196,37 @@ def group_shipments_for_display(shipments):
     return [groups[group_key] for group_key in group_order]
 
 
-def aggregate_order_status(shipments):
-    """Estat global de la comanda segons els enviaments mostrats al resum.
-
-    ENVIAT només quan tots els grans d'enviament (centre + lot) estan ENVIAT.
-    """
-    shipment_groups = group_shipments_for_display(shipments)
-    if not shipment_groups:
-        return "OBERT"
-
-    statuses = [group.get("status", "OBERT") for group in shipment_groups]
-    if all(status == "ENVIAT" for status in statuses):
-        return "ENVIAT"
-    if any(status == "ENVIAT" for status in statuses):
-        return "ASSIGNAT"
-    if all(status == "ASSIGNAT" for status in statuses):
-        return "ASSIGNAT"
-    return "OBERT"
-
-
 def fulfill_centre_group(order, group, sender_uri, message_sender, next_msgcnt):
     selected_centre = group["centre"]
     centre_products = group["products"]
-    message, _ = build_productes_localitzats(
-        order,
-        products=centre_products,
-        centre=selected_centre,
-        sender=sender_uri,
-        receiver=selected_centre["uri"],
-        msgcnt=next_msgcnt(),
-    )
-    reply = message_sender(message, selected_centre["address"])
-    reservations = []
-    for reservation in extract_centre_reservations_from_reply(reply):
-        reservations.append(
-            {
-                **reservation,
-                "centre_id": reservation.get("centre_id") or selected_centre.get("centre_id"),
-                "centre_city": reservation.get("centre_city") or selected_centre.get("centre_city"),
-            }
+    confirmations = []
+    for product in centre_products:
+        localized_item = {
+            "localized_product_id": f"ploc-{uuid4().hex[:6]}",
+            "user_id": order["user_id"],
+            "city": order["shipping_data"]["city"],
+            "delivery_date": order["delivery_date"],
+            "product": product,
+            "centre_id": selected_centre.get("centre_id"),
+            "centre_city": selected_centre.get("centre_city"),
+        }
+        message, _ = build_productes_localitzats(
+            localized_item,
+            sender=sender_uri,
+            receiver=selected_centre["uri"],
+            msgcnt=next_msgcnt(),
         )
-    return reservations
+        reply = message_sender(message, selected_centre["address"])
+        for confirmation in extract_centre_reservations_from_reply(reply):
+            confirmations.append(
+                {
+                    **confirmation,
+                    "order_id": order["order_id"],
+                    "centre_id": confirmation.get("centre_id") or selected_centre.get("centre_id"),
+                    "centre_city": confirmation.get("centre_city") or selected_centre.get("centre_city"),
+                }
+            )
+    return confirmations
 
 
 def collect_warehouse_reservations(order, centre_groups, sender_uri, message_sender, next_msgcnt):

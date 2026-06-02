@@ -11,5 +11,5 @@ else
   exit 1
 fi
 clear
-echo ===\ Agent\ Compra\ ===
-exec "$PYTHON" -m agents.agent_compra --host 127.0.0.1 --port 9002 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+echo ===\ Agent\ Proveïdor\ de\ Pagament\ ===
+exec "$PYTHON" -m agents.agent_proveidor_de_pagament --host 127.0.0.1 --port 9006 --directory-host 127.0.0.1 --directory-port 9000

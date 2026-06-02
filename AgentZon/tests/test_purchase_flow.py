@@ -82,17 +82,14 @@ class PurchaseFlowTests(unittest.TestCase):
                     centre_requests.append(address)
                     content = message.value(predicate=RDF.type, object=AZON.ProducteLocalitzat)
                     request_data = parse_productes_localitzats(message, content)
-                    self.assertEqual(len(request_data["products"]), 1)
-                    self.assertEqual(request_data["products"][0]["product_id"], product["product_id"])
+                    self.assertEqual(request_data["product"]["product_id"], product["product_id"])
                     return build_confirmacio_localitzacio(
                         request_data,
                         {
                             "lot_id": "LOT-CL-BCN-1",
-                            "order_id": request_data["order_id"],
                             "city": request_data["city"],
                             "delivery_date": request_data["delivery_date"],
                             "status": "OBERT",
-                            "products": request_data["products"],
                             "centre_id": "CL-BCN",
                             "centre_city": "Barcelona",
                         },
@@ -137,7 +134,6 @@ class PurchaseFlowTests(unittest.TestCase):
             parsed = extract_resultat_compra(response)
 
             self.assertEqual(centre_requests, [centre_bcn.address])
-            self.assertEqual(parsed["status"], "OBERT")
             self.assertEqual(len(parsed["lots"]), 1)
             self.assertEqual(parsed["lots"][0]["centre_id"], "CL-BCN")
 
@@ -262,7 +258,6 @@ class PurchaseFlowTests(unittest.TestCase):
             self.assertEqual(confirmation_props["performative"], ACL.inform)
 
             parsed = extract_resultat_compra(confirmation)
-            self.assertEqual(parsed["status"], "OBERT")
             self.assertEqual(len(parsed["lots"]), 1)
             order_id = parsed["order_id"]
 
@@ -338,11 +333,9 @@ class PurchaseFlowTests(unittest.TestCase):
                         request_data,
                         {
                             "lot_id": f"LOT-{centre['centre_id']}",
-                            "order_id": request_data["order_id"],
                             "city": request_data["city"],
                             "delivery_date": request_data["delivery_date"],
                             "status": "OBERT",
-                            "products": request_data["products"],
                             **centre,
                         },
                         sender=centre_gi.uri if address == centre_gi.address else centre_bcn.uri,
@@ -402,7 +395,7 @@ class PurchaseFlowTests(unittest.TestCase):
                 [("CL-BCN", "LOT-CL-BCN"), ("CL-GI", "LOT-CL-GI")],
             )
 
-    def test_two_products_in_same_centre_use_one_grouped_routing_request(self):
+    def test_two_products_in_same_centre_send_one_request_per_product(self):
         from AgentUtil.Agent import Agent
         from AgentUtil.DSO import DSO
         from AgentUtil.OntoNamespaces import AZON, bind_namespaces
@@ -456,11 +449,9 @@ class PurchaseFlowTests(unittest.TestCase):
                         request_data,
                         {
                             "lot_id": "LOT-SHARED",
-                            "order_id": request_data["order_id"],
                             "city": request_data["city"],
                             "delivery_date": request_data["delivery_date"],
                             "status": "OBERT",
-                            "products": request_data["products"],
                             "centre_id": "CL-BCN",
                             "centre_city": "Barcelona",
                         },
@@ -504,39 +495,81 @@ class PurchaseFlowTests(unittest.TestCase):
             confirmation = router.send_message(purchase_message, compra.address)
             parsed = extract_resultat_compra(confirmation)
 
-            self.assertEqual(len(centre_requests), 1)
+            self.assertEqual(len(centre_requests), 2)
             self.assertEqual(
-                sorted(product["product_id"] for product in centre_requests[0]["products"]),
+                sorted(request["product"]["product_id"] for request in centre_requests),
                 sorted(product["product_id"] for product in products),
             )
-            self.assertEqual(len(parsed["lots"]), 1)
+            self.assertEqual(len(parsed["lots"]), 2)
             self.assertEqual(parsed["lots"][0]["lot_id"], "LOT-SHARED")
             self.assertEqual(parsed["lots"][0]["centre_id"], "CL-BCN")
 
-    def test_aggregate_order_status_requires_all_shipments_sent(self):
-        from services.shipping_service import aggregate_order_status
+    def test_process_shipping_update_resolves_order_from_localized_product_id(self):
+        import tempfile
+        from pathlib import Path
 
-        partial_shipments = [
-            {
-                "status": "ENVIAT",
-                "centre_id": "CL-BCN",
-                "lot_id": "LOT-1",
-                "products": [{"product_id": "P1", "name": "Alpha"}],
-            },
-            {
-                "status": "ASSIGNAT",
+        from AgentUtil.Agent import Agent
+        from AgentUtil.OntoNamespaces import AZON
+        from agents import agent_compra
+        from protocols.centre_logistic import build_dades_enviament
+        from services.order_service import save_order, build_order, load_order
+        from services.shipping_tracking_service import save_localization_confirmations
+
+        agn = Namespace("http://www.agentes.org#")
+        compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            agent_compra.configure_runtime({"agent": compra, "directory_agent": None, "data_dir": data_dir})
+            order = build_order(
+                {
+                    "user_id": "127.0.0.1",
+                    "user_name": "Pol",
+                    "street_address": "Carrer Major 1",
+                    "city": "Girona",
+                    "priority": "7 dies",
+                    "payment_method": "visa",
+                },
+                [{"product_id": "P1011", "name": "X", "price": 10.0, "weight": 1.5}],
+            )
+            order["order_id"] = "ORDER-1234"
+            save_order(data_dir / "comandes.ttl", order)
+            save_localization_confirmations(data_dir / "seguiment_enviaments.ttl", [{
+                "localized_product_id": "ploc-9a13e6",
+                "order_id": "ORDER-1234",
+                "lot_id": "LOT-123",
+                "user_id": "127.0.0.1",
+                "city": "Girona",
+                "delivery_date": "2026-06-06",
+                "product": {"product_id": "P1011", "name": "X", "weight": 1.5},
+            }])
+            item = {
+                "localized_product_id": "ploc-9a13e6",
+                "city": "Girona",
+                "delivery_date": "2026-06-06",
+                "product": {"product_id": "P1011", "name": "X", "weight": 1.5},
                 "centre_id": "CL-GI",
-                "lot_id": "LOT-2",
-                "products": [{"product_id": "P2", "name": "Beta"}],
-            },
-        ]
-        self.assertEqual(aggregate_order_status(partial_shipments), "ASSIGNAT")
-
-        complete_shipments = [
-            {**partial_shipments[0]},
-            {**partial_shipments[1], "status": "ENVIAT"},
-        ]
-        self.assertEqual(aggregate_order_status(complete_shipments), "ENVIAT")
+                "centre_city": "Girona",
+            }
+            message = build_dades_enviament(
+                item,
+                {
+                    "lot_id": "LOT-123",
+                    "transport_id": "economy",
+                    "transport_name": "Transportista-economy",
+                    "delivery_date": "2026-06-04",
+                    "price": 6.13,
+                    "lot_transport_price": 18.4,
+                    "total_lot_weight": 4.5,
+                },
+                sender=agn.CentreLogistic,
+                receiver=compra.uri,
+                msgcnt=1,
+            )
+            content = message.value(predicate=RDF.type, object=AZON.DadesEnviament)
+            agent_compra.process_shipping_update(message, content, compra.uri)
+            stored_order = load_order(data_dir / "comandes.ttl", "ORDER-1234")
+            self.assertEqual(stored_order["final_delivery_date"], "2026-06-04")
 
     def test_bank_registration_skipped_when_user_already_in_database(self):
         from AgentUtil.Agent import Agent

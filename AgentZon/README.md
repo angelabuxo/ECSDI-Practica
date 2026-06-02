@@ -10,9 +10,10 @@ El flux de compra i logística és ara híbrid:
 
 - `Compra` retorna immediatament un `ResultatCompra` amb la data estimada (`DataEntrega`) i les reserves de lot localitzades.
 - `Centre Logístic` només negocia el transport quan un lot queda `PREPARAT`.
-- Un lot passa a `PREPARAT` quan arriba al límit de pes o quan un nou lot ha d'obrir-se perquè l'anterior desbordaria la capacitat.
+- Un lot passa a `PREPARAT` quan el seu pes total arriba o supera el límit (`MAX_LOT_WEIGHT_KG`) després d'afegir-hi un producte, encara que el desbordi.
+- Els productes següents (amb mateixa ciutat i data) obren un lot nou `OBERT` un cop l'anterior ja és `PREPARAT`.
 - Els lots oberts però imminents també es poden promoure amb l'escombrat diari `GET /cron/negotiate-ready-lots`.
-- Quan la negociació acaba, `Compra` rep `DadesEnviament` (`ASSIGNAT`) amb la data definitiva i el transportista.
+- Quan la negociació acaba, `Compra` rep `DadesEnviament` (`ASSIGNAT`) amb la data definitiva i el transportista. Política de negociació: [`docs/AgentZon/NegociacioTransport.md`](docs/AgentZon/NegociacioTransport.md).
 - Quan el lot s'envia, `Compra` rep `ConfirmacioEnviament` (`ENVIAT`) i la comanda queda actualitzada a `/orders/<order_id>`.
 
 ## 1) Generar documentació i graf de l'ontologia

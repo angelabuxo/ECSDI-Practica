@@ -15,8 +15,11 @@ from protocols.compra import (
 )
 from protocols.centre_logistic import (
     build_confirmacio_localitzacio,
+    build_dades_enviament,
     build_peticio_transport,
     parse_confirmacio_localitzacio,
+    build_productes_localitzats,
+    parse_productes_localitzats,
 )
 from services.history_service import record_purchase
 from services.order_service import build_order, save_order, save_user_shipping_data
@@ -24,6 +27,26 @@ from services.rdf_store import load_graph
 
 
 class OrderGraphTests(unittest.TestCase):
+    def build_and_parse_roundtrip(self, localized):
+        graph, _ = build_productes_localitzats(localized)
+        content = graph.value(predicate=RDF.type, object=AZON.ProducteLocalitzat)
+        return graph, parse_productes_localitzats(graph, content)
+
+    def test_build_productes_localitzats_uses_opaque_localized_product_id(self):
+        localized = {
+            "localized_product_id": "ploc-9a13e6",
+            "user_id": "127.0.0.1",
+            "city": "Girona",
+            "delivery_date": "2026-06-06",
+            "product": {"product_id": "P1011", "name": "X", "weight": 1.5},
+            "centre_id": "CL-GI",
+            "centre_city": "Girona",
+        }
+        _, parsed = self.build_and_parse_roundtrip(localized)
+        self.assertEqual(parsed["localized_product_id"], "ploc-9a13e6")
+        self.assertEqual(parsed["user_id"], "127.0.0.1")
+        self.assertEqual(parsed["product"]["product_id"], "P1011")
+
     def test_transport_request_carries_max_delivery_date(self):
         lot = {
             "lot_id": "LOT-1",
@@ -61,7 +84,6 @@ class OrderGraphTests(unittest.TestCase):
             self.assertIn((order_node, RDF.type, AZON.Comanda), graph)
             self.assertIn((order_node, AZON.MetodePagament, None), graph)
             self.assertIn((order_node, AZON.DataEntrega, None), graph)
-            self.assertIn((order_node, AZON.Estat, None), graph)
             self.assertNotIn((order_node, AZON.DataEntregaDefinitiva, None), graph)
             self.assertIn((order_node, AZON.TeProducte, AZON["product-P1001"]), graph)
 
@@ -95,7 +117,6 @@ class OrderGraphTests(unittest.TestCase):
             "order_id": "ORDER-1",
             "user_id": "USER-1",
             "user_name": "Pol",
-            "status": "OBERT",
             "delivery_date": "2026-06-02",
             "shipping_data": {
                 "user_name": "Pol",
@@ -110,6 +131,7 @@ class OrderGraphTests(unittest.TestCase):
         }
         reservations = [
             {
+                "localized_product_id": "ploc-9a13e6",
                 "order_id": "ORDER-1",
                 "lot_id": "LOT-1",
                 "centre_id": "CL-BCN",
@@ -117,9 +139,7 @@ class OrderGraphTests(unittest.TestCase):
                 "city": "Barcelona",
                 "delivery_date": "2026-06-02",
                 "status": "OBERT",
-                "products": [
-                    {"product_id": "P1001", "name": "Wireless Headphones", "weight": 1.5},
-                ],
+                "product": {"product_id": "P1001", "name": "Wireless Headphones", "weight": 1.5},
             }
         ]
 
@@ -127,50 +147,47 @@ class OrderGraphTests(unittest.TestCase):
         parsed = extract_resultat_compra(message)
 
         self.assertEqual(parsed["order_id"], "ORDER-1")
-        self.assertEqual(parsed["status"], "OBERT")
         self.assertEqual(parsed["estimated_delivery_date"], "2026-06-02")
         self.assertIsNone(parsed["official_delivery_date"])
         self.assertEqual(parsed["lots"][0]["lot_id"], "LOT-1")
         self.assertEqual(parsed["lots"][0]["centre_id"], "CL-BCN")
 
     def test_confirmacio_localitzacio_round_trip_keeps_open_lot_without_transport(self):
-        request_data = {
-            "order_id": "ORDER-1",
+        localized = {
+            "localized_product_id": "ploc-9a13e6",
             "user_id": "USER-1",
             "city": "Barcelona",
             "delivery_date": "2026-06-02",
-            "products": [
-                {"product_id": "P1001", "name": "Wireless Headphones", "weight": 1.5},
-            ],
+            "product": {"product_id": "P1001", "name": "Wireless Headphones", "weight": 1.5},
             "centre_id": "CL-BCN",
             "centre_city": "Barcelona",
         }
+        request_data = localized
         lot = {
             "lot_id": "LOT-1",
-            "order_id": "ORDER-1",
             "city": "Barcelona",
             "delivery_date": "2026-06-02",
             "status": "OBERT",
-            "products": [
-                {"product_id": "P1001", "name": "Wireless Headphones", "weight": 1.5},
-            ],
             "centre_id": "CL-BCN",
             "centre_city": "Barcelona",
         }
 
+        request_graph, request_content = build_productes_localitzats(localized)
         message = build_confirmacio_localitzacio(
             request_data,
             lot,
             sender=AZON.CentreLogistic,
             receiver=AZON.Compra,
+            request_content=request_content,
             msgcnt=8,
         )
         parsed = parse_confirmacio_localitzacio(message)
 
+        self.assertEqual(parsed["localized_product_id"], "ploc-9a13e6")
         self.assertEqual(parsed["lot_id"], "LOT-1")
         self.assertEqual(parsed["status"], "OBERT")
         self.assertEqual(parsed["centre_id"], "CL-BCN")
-        self.assertEqual(parsed["products"][0]["product_id"], "P1001")
+        self.assertEqual(parsed["product"]["product_id"], "P1001")
 
     def test_purchase_history_links_back_to_the_order(self):
         with tempfile.TemporaryDirectory() as tmpdir:

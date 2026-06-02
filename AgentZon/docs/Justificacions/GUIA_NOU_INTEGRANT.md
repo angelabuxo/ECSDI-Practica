@@ -402,7 +402,7 @@ funcions `build_*` (construir el graf RDF d'un missatge) i `parse_*`/`extract_*`
 | `catalog_service.py` | Cerca de productes amb **SPARQL** + filtres per criteris i per ID. |
 | `order_service.py` | Construeix la `Comanda`, calcula la data d'entrega per prioritat, persisteix. |
 | `logistics_routing_service.py` | Tria el Centre Logístic més proper per a cada producte (heurística de ciutat). |
-| `logistics_service.py` | Crea lots, demana ofertes als transportistes **en paral·lel**, tria la millor. |
+| `logistics_service.py` | Crea lots, demana ofertes als transportistes **en paral·lel**, aplica la política de negociació (oferta alta / baixa, sostre 115 %). Veure [NegociacioTransport.md](../AgentZon/NegociacioTransport.md). |
 | `shipping_service.py` | Coordina centres, agrega factures i resums d'enviament. |
 | `payment_service.py` | Persisteix dades bancàries, pagaments (`pagaments.ttl`) i devolucions. |
 | `history_service.py` | Historial de cerques i de compres. |
@@ -467,14 +467,18 @@ Punts a destacar (i per què eviten penalitzacions):
 - L'agent Compra llança **en paral·lel** (`ThreadPoolExecutor`) el registre bancari, l'historial
   i la logística → aprofitem que el sistema és distribuït en lloc de fer-ho seqüencial.
 - Si una comanda té productes en **centres diferents**, Compra envia **un `ProducteLocalitzat`
-  per centre** i aquests treballen en paral·lel.
+  per producte** (identificador opac `ploc-…`) i les peticions als centres treballen en paral·lel.
+- L’Agent Compra és l’únic que correlaciona `ploc → comanda` (`seguiment_enviaments.ttl`). Els
+  fitxers `lots-CL-*.ttl` del centre només contenen `Lot` + `ProducteLocalitzat`, sense `IdComanda`.
 - Els **transportistes són agents externs** de veritat (no és el Centre Logístic qui fa de
-  transportista): el Centre demana ofertes, les compara i n'escull una.
+  transportista): el Centre demana ofertes, negocia només amb l’oferta més cara dins un sostre del
+  115 % sobre la més barata i, si no hi ha acord, assigna l’econòmica. Detall: [NegociacioTransport.md](../AgentZon/NegociacioTransport.md).
 
 ### 9.3 Pagament (les dues direccions)
 
-- **Cobrament intern (`COBRAMENT`)**: quan el Centre Logístic ha enviat el producte, dispara un
-  cobrament al Cobrador → el Cobrador respon `ConfirmacioPagament` amb estat `PAGAT` i registra a
+- **Cobrament intern (`COBRAMENT`)**: quan el Centre Logístic ha enviat un producte concret, dispara
+  **un cobrament per `ProducteLocalitzat`** al Cobrador (transport repartit per pes dins del lot) →
+  el Cobrador respon `ConfirmacioPagament` amb estat `PAGAT` i registra a
   `pagaments.ttl` amb `SentitPagament = COBRAMENT`.
 - **Cobrament extern (`PAGAMENT`)**: per a productes de venedors externs, l'agent Compra demana al
   Cobrador que **pagui el venedor** → confirmació automàtica amb `SentitPagament = PAGAMENT`.

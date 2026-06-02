@@ -159,23 +159,27 @@ def pla_registrar_dades_venedor(message_graph, content, sender):
 def pla_cobrament_intern(message_graph, content, sender):
     """Pla de cobrament intern: sempre confirma amb estat PAGAT."""
     shipment = parse_peticio_cobrament_intern(message_graph, content)
+    product = shipment.get("product") or {}
+    product_id = product.get("product_id")
+    product_ids = [product_id] if product_id else []
     logger.info(
-        "Processant cobrament intern comanda %s lot %s (%d producte(s))",
-        shipment["order_id"],
+        "Processant cobrament intern comanda %s lot %s ploc %s (%d producte(s))",
+        shipment.get("order_id"),
         shipment["lot_id"],
-        len(shipment["product_ids"]),
+        shipment.get("localized_product_id"),
+        len(product_ids),
     )
-    products = get_products_by_ids(CATALOG_PATH, shipment["product_ids"])
-    products_subtotal = calcular_import(shipment["product_ids"])
+    products = get_products_by_ids(CATALOG_PATH, product_ids)
+    products_subtotal = calcular_import(product_ids)
     amount = round(products_subtotal + shipment["transport_cost"], 2)
     payment = {
         "payment_id": f"PAY-{uuid4().hex[:8].upper()}",
-        "order_id": shipment["order_id"],
+        "order_id": shipment.get("order_id") or shipment.get("localized_product_id") or shipment["lot_id"],
         "amount": amount,
         "method": "targeta",
         "sentit": SENTIT_COBRAMENT,
         "user_id": shipment["user_id"],
-        "product_ids": shipment["product_ids"],
+        "product_ids": product_ids,
         "products": products,
         "transport_cost": shipment["transport_cost"],
         "products_subtotal": products_subtotal,

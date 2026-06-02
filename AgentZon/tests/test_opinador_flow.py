@@ -120,8 +120,6 @@ class OpinadorFlowTests(unittest.TestCase):
                 "/iface",
                 data={
                     "action": "feedback",
-                    "feedback_id": "FB-1",
-                    "order_id": "ORDER-1",
                     "rating": "5",
                     "product_id": purchased_product["product_id"],
                     "comment": "Bon servei",
@@ -129,7 +127,7 @@ class OpinadorFlowTests(unittest.TestCase):
                 environ_base={"REMOTE_ADDR": client_ip},
             )
             html = feedback_response.get_data(as_text=True)
-            self.assertIn("Feedback registrat correctament", html)
+            self.assertIn("Feedback registrat correctament per al producte seleccionat!", html)
 
             feedback_records = load_feedback_records(data_dir / "feedback.ttl")
             self.assertEqual(len(feedback_records), 1)
@@ -249,15 +247,13 @@ class OpinadorFlowTests(unittest.TestCase):
                 data={
                     "view": "dashboard",
                     "action": "feedback",
-                    "feedback_id": "FB-IP1",
-                    "order_id": "ORDER-IP1",
                     "rating": "5",
-                    "product_ids": f"{product_user_1['product_id']}, FAKE-PRODUCT",
+                    "product_id": product_user_1["product_id"],
                     "comment": "Tot correcte",
                 },
                 environ_base={"REMOTE_ADDR": "10.0.0.1"},
             )
-            self.assertIn("Feedback FB-IP1 registrat correctament", feedback_response.get_data(as_text=True))
+            self.assertIn("Feedback registrat correctament per al producte seleccionat!", feedback_response.get_data(as_text=True))
 
             feedback_records = load_feedback_records(data_dir / "feedback.ttl", user_id="10.0.0.1")
             self.assertEqual(len(feedback_records), 1)

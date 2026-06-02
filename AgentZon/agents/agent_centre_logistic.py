@@ -37,14 +37,13 @@ from protocols.centre_logistic import (
     extract_transport_offer,
     parse_productes_localitzats,
 )
-from protocols.directory import parse_directory_response
 from protocols.pagament import build_peticio_cobrament_intern, extract_confirmacio_pagament
 from services.agent_common_service import resolve_agent_via_directory, resolve_agents_via_directory
 from services.logistics_service import (
     assign_transport_to_lot,
-    build_counter_offer_price,
     build_internal_shipment,
-    choose_winning_offer,
+    build_premium_counter_price,
+    build_premium_price_cap,
     create_lot,
     format_centre_uri_name,
     list_ready_lots_for_negotiation,
@@ -53,6 +52,8 @@ from services.logistics_service import (
     mark_lot_shipped,
     match_transport_agent,
     query_transport_offers,
+    select_offer_after_premium_negotiation,
+    split_low_and_high_offers,
 )
 from services.rdf_store import load_graph
 
@@ -97,62 +98,56 @@ def next_counter():
 
 
 def _shipment_scope_texts(shipment):
-    product_ids = shipment.get("product_ids", [])
+    product = shipment.get("product") or {}
+    product_id = product.get("product_id")
     lot_id = shipment.get("lot_id")
-    if len(product_ids) == 1:
-        base = f"producte {product_ids[0]}"
+    localized_product_id = shipment.get("localized_product_id")
+    if product_id:
+        base = f"producte {product_id}"
+        suffix = f" ({localized_product_id})" if localized_product_id else ""
         return (
-            f"S'ha enviat el {base} del lot {lot_id}" if lot_id else f"S'ha enviat el {base}",
-            f"al {base} del lot {lot_id}" if lot_id else f"al {base}",
+            f"S'ha enviat el {base}{suffix} del lot {lot_id}" if lot_id else f"S'ha enviat el {base}{suffix}",
+            f"al {base}{suffix} del lot {lot_id}" if lot_id else f"al {base}{suffix}",
         )
-    elif product_ids:
-        base = "productes {}".format(", ".join(product_ids))
-        return (
-            f"S'han enviat els {base} del lot {lot_id}" if lot_id else f"S'han enviat els {base}",
-            f"als {base} del lot {lot_id}" if lot_id else f"als {base}",
-        )
-    else:
-        if lot_id:
-            return (f"S'ha enviat el lot {lot_id}", f"al lot {lot_id}")
-        order_id = shipment["order_id"]
-        return (f"S'ha enviat la comanda {order_id}", f"a la comanda {order_id}")
+    if lot_id:
+        return (f"S'ha enviat el lot {lot_id}", f"al lot {lot_id}")
+    return ("S'ha enviat un producte", "al producte enviat")
 
 
 # Plans ----------------------------------------------------------------------------
 def pla_assignar_producte_a_lot(request_data):
-    """Pla de magatzem: assigna productes de comanda a un lot."""
+    """Pla de magatzem: assigna un producte localitzat a un lot."""
     centre_id = request_data.get("centre_id") or CENTRE_ID
+    product = request_data["product"]
     logger.info(
-        "Processant %d productes al centre %s (desti=%s, data=%s)",
-        len(request_data["products"]),
+        "Processant producte %s al centre %s (desti=%s, data=%s)",
+        product["product_id"],
         centre_id,
         request_data["city"],
         request_data["delivery_date"],
     )
-    lot = create_lot(
-        LOTS_PATH,
-        request_data["order_id"],
-        request_data["city"],
-        request_data["delivery_date"],
-        request_data["products"],
-        centre_id=centre_id,
-        centre_city=request_data.get("centre_city") or CENTRE_CITY,
-        user_id=request_data.get("user_id"),
-    )
-    action = "Creat" if lot["created_new_lot"] else "Reutilitzat"
-    logger.info(
-        "%s lot %s al centre %s (pes_total=%.2f)",
-        action,
-        lot["lot_id"],
-        centre_id,
-        lot["total_weight"],
-    )
-    for product in request_data["products"]:
+    lot = create_lot(LOTS_PATH, request_data)
+    if lot["created_new_lot"]:
         logger.info(
-            "Assignat producte %s al lot %s",
-            product["product_id"],
+            "Creat lot %s al centre %s (pes_total=%.2f)",
             lot["lot_id"],
+            centre_id,
+            lot["total_weight"],
         )
+    else:
+        item_count = len(lot.get("items", []))
+        logger.info(
+            "Reutilitzat lot %s al centre %s: ara te %d producte(s), pes total %.2f kg",
+            lot["lot_id"],
+            centre_id,
+            item_count,
+            lot["total_weight"],
+        )
+    logger.info(
+        "Assignat producte %s al lot %s",
+        product["product_id"],
+        lot["lot_id"],
+    )
     return lot
 
 
@@ -228,57 +223,93 @@ def pla_cerca_de_transportista(lot):
 
 
 def pla_negociar_contraoferta(lot, transport_agents, offers):
-    """Pla de negociació: envia contraoferta i recull respostes."""
-    counter_price = build_counter_offer_price(offers)
-    logger.info(
-        "Contraoferta comuna per al lot %s: %.2f EUR",
-        lot["lot_id"],
-        counter_price,
-    )
-    negotiated_offers = []
-    for offer in offers:
-        transport_agent = match_transport_agent(transport_agents, offer["transport_id"])
-        message = build_contraoferta_transport(
-            lot,
-            offer,
-            new_price=counter_price,
-            sender=AGENT.uri,
-            receiver=transport_agent.uri,
-            msgcnt=next_counter(),
+    """Pla de negociació: contraoferta només a l'oferta alta (110 % / 115 % sobre la baixa)."""
+    low_offer, high_offer = split_low_and_high_offers(offers)
+    negotiation = {
+        "low_offer": low_offer,
+        "high_offer": high_offer,
+        "counter_price": None,
+        "cap_price": None,
+        "premium_performative": None,
+        "premium_negotiated_offer": None,
+    }
+    if high_offer is None:
+        logger.info(
+            "Lot %s amb una sola oferta (%s); sense contraoferta",
+            lot["lot_id"],
+            low_offer["transport_id"],
         )
-        reply = MESSAGE_SENDER(message, transport_agent.address)
-        performative = get_message_properties(reply).get("performative")
-        if performative == ACL.agree:
-            logger.info(
-                "Resposta a la contraoferta del lot %s per %s: acceptada a %.2f EUR",
-                lot["lot_id"],
-                offer["transport_id"],
-                counter_price,
-            )
-            negotiated_offers.append({**offer, "price": counter_price})
-        elif performative == ACL.propose:
-            negotiated_offer = extract_transport_offer(reply)
-            logger.info(
-                "Resposta a la contraoferta del lot %s per %s: nova proposta de %.2f EUR amb entrega %s",
-                lot["lot_id"],
-                offer["transport_id"],
-                negotiated_offer["price"],
-                negotiated_offer["delivery_date"],
-            )
-            negotiated_offers.append(negotiated_offer)
-        else:
-            logger.info(
-                "Resposta a la contraoferta del lot %s per %s: rebutjada",
-                lot["lot_id"],
-                offer["transport_id"],
-            )
-    return negotiated_offers
+        return negotiation
+
+    counter_price = build_premium_counter_price(low_offer)
+    cap_price = build_premium_price_cap(low_offer)
+    negotiation["counter_price"] = counter_price
+    negotiation["cap_price"] = cap_price
+    logger.info(
+        "Contraoferta oferta alta per al lot %s (%s): %.2f EUR (sostre %.2f EUR, referencia baixa %s %.2f EUR)",
+        lot["lot_id"],
+        high_offer["transport_id"],
+        counter_price,
+        cap_price,
+        low_offer["transport_id"],
+        low_offer["price"],
+    )
+
+    transport_agent = match_transport_agent(transport_agents, high_offer["transport_id"])
+    message = build_contraoferta_transport(
+        lot,
+        high_offer,
+        new_price=counter_price,
+        sender=AGENT.uri,
+        receiver=transport_agent.uri,
+        msgcnt=next_counter(),
+    )
+    reply = MESSAGE_SENDER(message, transport_agent.address)
+    performative = get_message_properties(reply).get("performative")
+    negotiation["premium_performative"] = performative
+    if performative == ACL.agree:
+        logger.info(
+            "Resposta a la contraoferta del lot %s per %s: acceptada a %.2f EUR",
+            lot["lot_id"],
+            high_offer["transport_id"],
+            counter_price,
+        )
+        negotiation["premium_negotiated_offer"] = {**high_offer, "price": counter_price}
+    elif performative == ACL.propose:
+        negotiated_offer = extract_transport_offer(reply)
+        logger.info(
+            "Resposta a la contraoferta del lot %s per %s: nova proposta de %.2f EUR amb entrega %s",
+            lot["lot_id"],
+            high_offer["transport_id"],
+            negotiated_offer["price"],
+            negotiated_offer["delivery_date"],
+        )
+        negotiation["premium_negotiated_offer"] = negotiated_offer
+    else:
+        logger.info(
+            "Resposta a la contraoferta del lot %s per %s: rebutjada; es mantindra l'oferta baixa",
+            lot["lot_id"],
+            high_offer["transport_id"],
+        )
+    return negotiation
 
 
-def pla_de_transportista_escollit(lot, transport_agents, initial_offers, negotiated_offers, request_content=None):
+def pla_de_transportista_escollit(lot, transport_agents, initial_offers, negotiation, request_content=None):
     """Pla de selecció: tria guanyador i notifica acceptacions/rebuigs."""
-    selected = choose_winning_offer(initial_offers, negotiated_offers)
-    source = "negociada" if negotiated_offers else "inicial"
+    selected = select_offer_after_premium_negotiation(
+        negotiation["low_offer"],
+        negotiation["high_offer"],
+        counter_price=negotiation.get("counter_price"),
+        cap_price=negotiation.get("cap_price"),
+        premium_performative=negotiation.get("premium_performative"),
+        premium_negotiated_offer=negotiation.get("premium_negotiated_offer"),
+    )
+    if negotiation.get("high_offer") and selected["transport_id"] == negotiation["high_offer"]["transport_id"]:
+        source = "negociada"
+    elif negotiation.get("high_offer"):
+        source = "oferta baixa"
+    else:
+        source = "inicial"
     logger.info(
         "Transportista seleccionat per al lot %s: %s (%s) amb oferta %s de %.2f EUR i entrega %s",
         lot["lot_id"],
@@ -324,17 +355,8 @@ def pla_de_transportista_escollit(lot, transport_agents, initial_offers, negotia
 
 def pla_producte_sha_enviat(shipment):
     """Pla post-enviament: notifica cobrament intern al Cobrador."""
-    if DIRECTORY_AGENT is None:
-        return None
-    try:
-        cobrador = parse_directory_response(
-            MESSAGE_SENDER(
-                build_search_message(AGENT, DSO.CobradorAgent, DIRECTORY_AGENT, msgcnt=next_counter()),
-                DIRECTORY_AGENT.address,
-            )
-        )
-    except Exception:
-        logger.warning("No s'ha pogut resoldre el Cobrador; s'omet el cobrament intern")
+    cobrador = resolve_cobrador_agent()
+    if cobrador is None:
         return None
     sent_text, payment_target = _shipment_scope_texts(shipment)
     logger.info("%s; demanant cobrament intern al Cobrador", sent_text)
@@ -377,38 +399,46 @@ def resolve_compra_agent():
         return None
 
 
-def _build_order_request_data(lot, reservation):
-    return {
-        "order_id": reservation["order_id"],
-        "user_id": reservation.get("user_id"),
-        "city": reservation["city"],
-        "delivery_date": reservation["delivery_date"],
-        "products": reservation.get("products", []),
-        "centre_id": lot.get("centre_id"),
-        "centre_city": lot.get("centre_city"),
-    }
+def resolve_cobrador_agent():
+    if DIRECTORY_AGENT is None:
+        return None
+    try:
+        return resolve_agent_via_directory(
+            AGENT,
+            DIRECTORY_AGENT,
+            MESSAGE_SENDER,
+            next_counter,
+            DSO.CobradorAgent,
+        )
+    except Exception:
+        logger.warning("No s'ha pogut resoldre el Cobrador; s'omet el cobrament intern")
+        return None
 
 
-def _build_reservation_offer(lot, reservation):
+def _build_item_offer(lot, item):
+    item_weight = float(item["product"].get("weight", 0.0))
+    total_weight = lot["total_weight"] or item_weight or 1.0
+    if total_weight and item_weight:
+        item_price = round(lot["price"] * item_weight / total_weight, 2)
+    else:
+        item_price = round(lot["price"], 2)
     return {
         "lot_id": lot["lot_id"],
-        "order_id": reservation["order_id"],
         "transport_id": lot["transport_id"],
         "transport_name": lot["transport_name"],
-        "city": reservation["city"],
         "delivery_date": lot["official_delivery_date"],
-        "price": reservation.get("price", lot["price"]),
+        "price": item_price,
+        "lot_transport_price": lot["price"],
+        "total_lot_weight": total_weight,
     }
 
 
-def _notify_compra(message_builder, lot, reservation, compra_agent, invoice=None):
+def _notify_compra(message_builder, item, offer, compra_agent, invoice=None):
     if compra_agent is None:
         return
-    request_data = _build_order_request_data(lot, reservation)
-    offer = _build_reservation_offer(lot, reservation)
     if invoice is None:
         message = message_builder(
-            request_data,
+            item,
             offer,
             sender=AGENT.uri,
             receiver=compra_agent.uri,
@@ -416,7 +446,7 @@ def _notify_compra(message_builder, lot, reservation, compra_agent, invoice=None
         )
     else:
         message = message_builder(
-            request_data,
+            item,
             offer,
             sender=AGENT.uri,
             receiver=compra_agent.uri,
@@ -433,23 +463,29 @@ def process_ready_lot(lot_id):
         return None
 
     transport_agents, offers = pla_cerca_de_transportista(lot)
-    negotiated_offers = pla_negociar_contraoferta(lot, transport_agents, offers)
-    selected = pla_de_transportista_escollit(lot, transport_agents, offers, negotiated_offers)
+    negotiation = pla_negociar_contraoferta(lot, transport_agents, offers)
+    selected = pla_de_transportista_escollit(lot, transport_agents, offers, negotiation)
     assigned_lot = assign_transport_to_lot(LOTS_PATH, lot_id, selected)
     compra_agent = resolve_compra_agent()
 
-    for reservation in assigned_lot["reservations"]:
-        _notify_compra(build_dades_enviament, assigned_lot, reservation, compra_agent)
+    for item in assigned_lot["items"]:
+        _notify_compra(build_dades_enviament, item, _build_item_offer(assigned_lot, item), compra_agent)
 
     shipped_lot = mark_lot_shipped(LOTS_PATH, lot_id)
-    for reservation in shipped_lot["reservations"]:
+    for item in shipped_lot["items"]:
         shipment = build_internal_shipment(
-            reservation,
+            item,
             selected,
             total_lot_weight=shipped_lot["total_weight"],
         )
         invoice = pla_producte_sha_enviat(shipment)
-        _notify_compra(build_confirmacio_enviament, shipped_lot, reservation, compra_agent, invoice=invoice)
+        _notify_compra(
+            build_confirmacio_enviament,
+            item,
+            _build_item_offer(shipped_lot, item),
+            compra_agent,
+            invoice=invoice,
+        )
 
     return load_lot_by_id(LOTS_PATH, lot_id)
 
@@ -494,7 +530,7 @@ def comm():
             trigger_ready_lot_negotiation(lot["lot_id"], asynchronous=True)
         return response.serialize(format="xml")
     except Exception as exc:
-        logger.error("Error processant la comanda %s: %s", request_data.get("order_id"), exc)
+        logger.error("Error processant el producte %s: %s", request_data.get("localized_product_id"), exc)
         return build_message(
             Graph(),
             ACL.failure,

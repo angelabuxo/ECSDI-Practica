@@ -38,10 +38,19 @@ write_launcher() {
   {
     echo '#!/usr/bin/env bash'
     echo 'set -euo pipefail'
-    printf 'cd %q\n' "$ROOT_DIR"
+    echo 'ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"'
+    echo 'cd "$ROOT_DIR"'
+    echo 'if [[ -x .venv/bin/python ]]; then'
+    echo '  PYTHON=.venv/bin/python'
+    echo 'elif [[ -x ../.venv/bin/python ]]; then'
+    echo '  PYTHON=../.venv/bin/python'
+    echo 'else'
+    echo '  echo "ERROR: No s'\''ha trobat cap entorn virtual (.venv)." >&2'
+    echo '  exit 1'
+    echo 'fi'
     printf 'clear\n'
     printf 'echo %q\n' "=== $title ==="
-    printf 'exec %q -m' "$PYTHON"
+    printf 'exec "$PYTHON" -m'
     for arg in "$@"; do
       printf ' %q' "$arg"
     done

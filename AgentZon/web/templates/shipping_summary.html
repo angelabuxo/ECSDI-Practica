@@ -76,7 +76,6 @@
   <p class="meta">Pagament(s): <strong>{{ invoice.payment_id }}</strong></p>
   <p class="meta">Data del pagament: <strong>{{ invoice.date or "—" }}</strong></p>
   <p class="meta">Mètode de pagament: <strong>{{ invoice.method }}</strong></p>
-  <p class="meta">Estat de la comanda: <span class="status">{{ order.status }}</span></p>
   <p class="meta">Estat del pagament: <span class="status">{{ invoice.payment_status }}</span></p>
   <p class="meta">Client: <strong>{{ order.shipping_data.user_name }}</strong> — IP: <strong>{{ order.user_id }}</strong></p>
   <p class="meta">Adreça: <strong>{{ order.shipping_data.street_address }}, {{ order.shipping_data.city }}</strong></p>

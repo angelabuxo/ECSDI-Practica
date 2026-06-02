@@ -173,6 +173,41 @@ def _build_empty_graph():
     return graph
 
 
+RUNTIME_CLEANUP_FILES = (
+    "historial_cerques.ttl",
+    "historial_compres.ttl",
+    "pagaments.ttl",
+    "seguiment_enviaments.ttl",
+    "dades_enviament_usuari.ttl",
+    "dades_bancaries_usuari.ttl",
+    "dades_bancaries_venedors_externs.ttl",
+    "lots.ttl",
+)
+
+RUNTIME_CLEANUP_GLOBS = ("lots-CL-*.ttl",)
+
+
+def cleanup_runtime_data(data_dir):
+    """Reinicia fitxers de dades generats en runtime (lots, historials, pagaments, enviaments...)."""
+    data_dir = Path(data_dir)
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    empty_graph = _build_empty_graph()
+    cleared = []
+
+    for filename in RUNTIME_CLEANUP_FILES:
+        path = data_dir / filename
+        save_graph(path, empty_graph)
+        cleared.append(filename)
+
+    for pattern in RUNTIME_CLEANUP_GLOBS:
+        for path in sorted(data_dir.glob(pattern)):
+            save_graph(path, empty_graph)
+            cleared.append(path.name)
+
+    return cleared
+
+
 def bootstrap_phase2_data(data_dir, product_count=24, seed=None):
     if product_count <= 0:
         raise ValueError("product_count must be greater than 0")
@@ -203,7 +238,19 @@ def main():
     parser.add_argument("--data-dir", default=str(DATA_DIR))
     parser.add_argument("--product-count", type=int, default=24)
     parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument(
+        "--cleanup",
+        action="store_true",
+        help="Reinicia dades de runtime (lots, historials, pagaments, enviaments...).",
+    )
     args = parser.parse_args()
+
+    if args.cleanup:
+        cleared = cleanup_runtime_data(args.data_dir)
+        print(f"S'han reiniciat {len(cleared)} fitxers a {args.data_dir}/:")
+        for filename in cleared:
+            print(f"  - {filename}")
+        return
 
     bootstrap_phase2_data(args.data_dir, product_count=args.product_count, seed=args.seed)
 

@@ -29,7 +29,6 @@ def build_order(shipping_data, products):
         "products": products,
         "shipping_data": shipping_data,
         "delivery_date": _priority_to_delivery_date(shipping_data["priority"]),
-        "status": "OBERT",
         "final_delivery_date": None,
     }
 
@@ -62,7 +61,6 @@ def save_order(orders_path, order):
     graph.set((node, AZON.Ciutat, Literal(order["shipping_data"]["city"])))
     graph.set((node, AZON.Prioritat, Literal(order["shipping_data"]["priority"])))
     graph.set((node, AZON.DataEntrega, Literal(order["delivery_date"])))
-    graph.set((node, AZON.Estat, Literal(order.get("status", "OBERT"))))
     graph.set((node, AZON.MetodePagament, Literal(order["shipping_data"]["payment_method"])))
     for product in order["products"]:
         graph.add((node, AZON.TeProducte, AZON[f"product-{product['product_id']}"]))
@@ -93,7 +91,6 @@ def load_order(orders_path, order_id):
         "product_ids": sorted(product_ids),
         "delivery_date": str(graph.value(node, AZON.DataEntrega)),
         "final_delivery_date": str(final_delivery_date) if final_delivery_date is not None else None,
-        "status": str(graph.value(node, AZON.Estat) or "OBERT"),
         "shipping_data": {
             "user_name": str(graph.value(node, AZON.Nom)),
             "street_address": str(graph.value(node, AZON.Carrer)),
@@ -105,20 +102,9 @@ def load_order(orders_path, order_id):
     }
 
 
-def update_order_shipping_status(orders_path, order_id, status=None, final_delivery_date=None):
+def update_order_final_delivery_date(orders_path, order_id, final_delivery_date):
     graph = load_graph(orders_path)
     bind_namespaces(graph)
     node = AZON[f"order-{order_id}"]
-    if status is not None:
-        graph.set((node, AZON.Estat, Literal(status)))
-    if final_delivery_date is not None:
-        graph.set((node, AZON.DataEntregaDefinitiva, Literal(final_delivery_date)))
+    graph.set((node, AZON.DataEntregaDefinitiva, Literal(final_delivery_date)))
     save_graph(orders_path, graph)
-
-
-def update_order_final_delivery_date(orders_path, order_id, final_delivery_date):
-    update_order_shipping_status(
-        orders_path,
-        order_id,
-        final_delivery_date=final_delivery_date,
-    )

@@ -284,21 +284,28 @@ def extract_confirmacio_pagament(graph):
 def build_peticio_cobrament_intern(shipment, sender=None, receiver=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
-    content = AZON[f"internal-charge-{shipment['order_id']}-{shipment['lot_id']}"]
-    order_node = AZON[f"order-{shipment['order_id']}"]
+    localized_product_id = shipment["localized_product_id"]
+    content = AZON[f"internal-charge-{localized_product_id}"]
+    ploc_node = AZON[localized_product_id]
     graph.add((content, RDF.type, AZON.ConfirmacioEnviament))
-    graph.add((content, AZON.IdComanda, Literal(shipment["order_id"])))
     graph.add((content, AZON.IdLot, Literal(shipment["lot_id"])))
     graph.add((content, AZON.IdUsuari, Literal(shipment["user_id"])))
     graph.add((content, AZON.Ciutat, Literal(shipment["city"])))
     graph.add((content, AZON.DataEntregaDefinitiva, Literal(shipment["delivery_date"])))
     graph.add((content, AZON.CostTransport, Literal(shipment["transport_cost"], datatype=XSD.float)))
-    graph.add((content, AZON.SobreComanda, order_node))
-    for product_id in shipment.get("product_ids", []):
-        product_node = AZON[f"product-{product_id}"]
-        graph.add((content, AZON.TeProducte, product_node))
-        graph.add((product_node, RDF.type, AZON.Producte))
-        graph.add((product_node, AZON.IdProducte, Literal(product_id)))
+    graph.add((content, AZON.EsRespostaA, ploc_node))
+    product = shipment["product"]
+    product_node = AZON[f"product-{product['product_id']}"]
+    graph.add((content, AZON.TeProducte, product_node))
+    graph.add((product_node, RDF.type, AZON.Producte))
+    graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
+    if product.get("name"):
+        graph.add((product_node, AZON.Nom, Literal(product["name"])))
+    if product.get("weight") is not None:
+        graph.add((product_node, AZON.Pes, Literal(product["weight"], datatype=XSD.float)))
+    if shipment.get("order_id"):
+        graph.add((content, AZON.IdComanda, Literal(shipment["order_id"])))
+        graph.add((content, AZON.SobreComanda, AZON[f"order-{shipment['order_id']}"]))
     return build_message(
         graph,
         perf=ACL.request,
@@ -311,21 +318,31 @@ def build_peticio_cobrament_intern(shipment, sender=None, receiver=None, msgcnt=
 
 
 def parse_peticio_cobrament_intern(graph, content):
-    product_ids = []
+    product = None
     for product_node in graph.objects(content, AZON.TeProducte):
         product_id = graph.value(product_node, AZON.IdProducte)
         if product_id is None:
             product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
-        product_ids.append(str(product_id))
+        weight_value = graph.value(product_node, AZON.Pes)
+        product = {
+            "product_id": str(product_id),
+            "name": str(graph.value(product_node, AZON.Nom) or product_id),
+            "weight": float(weight_value) if weight_value is not None else 0.0,
+        }
+        break
     transport_cost = graph.value(content, AZON.CostTransport)
+    ploc_node = graph.value(content, AZON.EsRespostaA)
+    localized_product_id = str(ploc_node).rsplit("#", 1)[-1] if ploc_node is not None else None
+    order_id = graph.value(content, AZON.IdComanda)
     return {
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "localized_product_id": localized_product_id,
+        "order_id": str(order_id) if order_id is not None else None,
         "lot_id": str(graph.value(content, AZON.IdLot)),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
         "city": str(graph.value(content, AZON.Ciutat)),
         "delivery_date": str(graph.value(content, AZON.DataEntregaDefinitiva)),
         "transport_cost": float(transport_cost) if transport_cost is not None else 0.0,
-        "product_ids": sorted(product_ids),
+        "product": product,
     }
 
 

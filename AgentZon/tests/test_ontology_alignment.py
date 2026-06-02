@@ -13,6 +13,24 @@ ONTOLOGY_PATH = Path(__file__).resolve().parents[1] / "ontologia" / "AgentZonOnt
 
 
 class OntologyAlignmentTests(unittest.TestCase):
+    def object_property_domains(self):
+        graph = Graph()
+        graph.parse(ONTOLOGY_PATH, format="xml")
+        return {
+            (str(prop), str(domain))
+            for prop, domain in graph.subject_objects(RDFS.domain)
+            if (prop, RDF.type, OWL.ObjectProperty) in graph
+        }
+
+    def test_sobre_lot_accepts_producte_localitzat(self):
+        self.assertIn(
+            (
+                "http://www.semanticweb.org/agentzon#SobreLot",
+                "http://www.semanticweb.org/agentzon#ProducteLocalitzat",
+            ),
+            self.object_property_domains(),
+        )
+
     def test_refined_ontology_removes_internal_agent_branch_and_legacy_terms(self):
         graph = Graph()
         graph.parse(ONTOLOGY_PATH, format="xml")

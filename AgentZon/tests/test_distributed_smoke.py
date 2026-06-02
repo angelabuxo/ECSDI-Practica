@@ -235,7 +235,10 @@ class DistributedSmokeTests(unittest.TestCase):
 
                 order_page = requests.get(f"http://{host}:{ports['compra']}/orders/{order_id}", timeout=10)
                 self.assertEqual(order_page.status_code, 200)
-                self.assertIn("economy", order_page.text)
+                self.assertTrue(
+                    "fast" in order_page.text or "economy" in order_page.text,
+                    "S'esperava un transportista assignat (fast o economy)",
+                )
                 self.assertIn("ENVIAT", order_page.text)
                 self.assertIn("CL-BCN", order_page.text)
                 self.assertIn("CL-GI", order_page.text)

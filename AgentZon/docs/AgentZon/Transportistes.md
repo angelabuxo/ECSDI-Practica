@@ -87,47 +87,62 @@ Avui no hi ha:
 
 ## Com negocia el centre logístic
 
-El protocol implementat és aquest:
+La política de negociació està especificada en detall a **[NegociacioTransport.md](NegociacioTransport.md)**. Aquest apartat en resumeix el flux implementat al codi.
 
-1. El centre logístic descobreix tots els transportistes registrats al directori.
+### Idea general
+
+Després de dues (o més) ofertes inicials, el centre distingeix:
+
+- **Oferta baixa** — la més barata (`P_baix`). Serveix de referència i **no rep contraoferta**.
+- **Oferta alta** — la més cara (en la demo, sol ser el servei ràpid). És l’**únic** interlocutor de la ronda de contraoferta.
+
+El centre vol el servei ràpid només si el preu final no supera un sostre del **115 %** de `P_baix`. La contraoferta enviada a l’oferta alta és del **110 %** de `P_baix`:
+
+```
+P_contra  = round(P_baix × 1,10, 2)
+P_sostre  = round(P_baix × 1,15, 2)
+```
+
+No s’utilitzen noms fixos (`fast` / `economy`): els papers es deriven del **preu** (i, en empat, de la data d’entrega i `transport_id`).
+
+### Protocol (passos)
+
+1. El centre descobreix tots els transportistes al directori.
 2. Envia una `PeticioTransport` a tots en paral·lel.
-3. Cada transportista respon amb una `RespostaOfertaTransport`.
-4. El centre calcula una única contraoferta comuna:
-   `contraoferta = preu_mes_barat - 0.01`
-5. El centre envia aquesta contraoferta a cada transportista.
-6. Cada transportista pot:
-   - acceptar-la amb `agree`
-   - rebutjar-la amb `refuse`
-   - respondre amb una nova proposta amb `propose`
-7. El centre tria l'oferta final guanyadora.
-8. Envia `accept-proposal` al guanyador i `reject-proposal` a la resta.
+3. Cada transportista respon amb `RespostaOfertaTransport`.
+4. Es classifiquen `oferta_baixa` i `oferta_alta` (veure document complet).
+5. Es calculen `P_contra` i `P_sostre`.
+6. Es envia **una** `ContraofertaTransport` **només** al transportista de l’oferta alta, amb preu `P_contra`.
+7. Segons la resposta ACL de l’oferta alta:
+   - `agree` → si el preu acordat ≤ `P_sostre`, guanyador = oferta alta; sinó → oferta baixa (inicial).
+   - `propose` → si el preu proposat ≤ `P_sostre`, guanyador = oferta alta a aquest preu; sinó → oferta baixa.
+   - `refuse` o sense resposta → guanyador = oferta baixa (preu i data inicials).
+8. `accept-proposal` al guanyador i `reject-proposal` a la resta que van participar al CFP.
 
-## Regla de contraoferta del transportista
+### Exemple (5 kg, economy 4 €/kg, fast 8 €/kg)
 
-La regla del transportista també és simple:
+| | Economy | Fast |
+|---|---------|------|
+| Oferta inicial | 20,00 € | 40,00 € |
+| Contraoferta | — | 22,00 € (110 % de 20) |
+| Sostre màxim per quedar-se fast | — | 23,00 € (115 % de 20) |
 
-- accepta directament si la contraoferta és com a mínim el `85%` del seu preu inicial
-- si no arriba a aquest llindar, intenta proposar un preu intermedi
-- si no hi ha marge per fer una proposta intermèdia vàlida, rebutja
+Si fast accepta 22 € o proposa fins a 23 €, guanya fast; si proposa més o rebutja, guanya economy a 20 €.
 
-Aquest llindar del `85%` està fixat al codi de [agent_transportista.py](/Users/polmontanera/Desktop/Q6%202526/ECSDI/ECSDI-Practica/AgentZon/agents/agent_transportista.py). Avui no es pot configurar per línia de comandes.
+### Regla del transportista (oferta alta)
 
-## Com s'escull el transportista guanyador
+Cal alinear [agent_transportista.py](../../agents/agent_transportista.py) amb el corredor `[P_contra, P_sostre]` (veure secció 5 de [NegociacioTransport.md](NegociacioTransport.md)). La regla antiga del **85 % del preu inicial propi** feia que, amb tarifes 4 vs 8 €/kg, fast gairebé mai acceptés la contraoferta i el centre acabés sempre amb economy sense negociació visible.
 
-El criteri principal actual és el cost:
+El transportista de l’oferta baixa **no** rep contraoferta.
 
-- si hi ha ofertes negociades, es tria entre les negociades
-- si no n'hi ha, es tria entre les ofertes inicials
-- guanya el preu final més baix
+### Com s'escull el transportista guanyador
 
-En cas d'empat exacte de preu, el codi ordena els candidats per:
+**No** és «el preu més baix de totes les respostes negociades». És:
 
-- `delivery_date`
-- `transport_id`
+1. Oferta alta amb preu final ≤ `P_sostre` (després d’`agree` o `propose` vàlid), o
+2. En qualsevol altre cas, l’**oferta baixa** amb el seu preu i data **inicials**.
 
-i després es queda amb el primer.
-
-Per tant, la data d'entrega ajuda a desempatar, però no és el criteri principal de selecció.
+La data d’entrega millor de l’oferta alta només s’aplica quan es guanya dins del sostre; en recaure en economy es manté el termini més llarg de l’oferta barata.
 
 ## Quan es negocia un lot
 
@@ -270,8 +285,7 @@ El que no pots definir avui sense tocar codi és:
 - trams de pes
 - preus per ciutat, província o zona
 - preus diferents segons la prioritat de l'usuari
-- una política pròpia de negociació per transportista
-- el llindar del `85%`
+- factors de negociació diferents del 110 % / 115 % sense tocar codi
 - restriccions de capacitat o calendari
 
 ## Limitacions pràctiques

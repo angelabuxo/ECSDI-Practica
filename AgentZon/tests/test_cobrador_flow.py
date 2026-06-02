@@ -66,13 +66,14 @@ azon:product-P1001 a azon:Producte ;
     )
     message = build_peticio_cobrament_intern(
       {
+        "localized_product_id": "ploc-test-1",
         "lot_id": "LOT-1",
         "order_id": "ORDER-1",
         "user_id": "USER-1",
         "city": "Barcelona",
         "delivery_date": "2026-06-02",
         "transport_cost": 4.5,
-        "product_ids": ["P1001"],
+        "product": {"product_id": "P1001", "name": "Producte prova", "weight": 1.0},
       },
       sender=centre.uri,
       receiver=agent_cobrador.AGENT.uri,

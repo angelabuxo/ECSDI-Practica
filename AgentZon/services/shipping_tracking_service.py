@@ -8,8 +8,8 @@ from protocols.pagament import embed_invoice_in_content, extract_invoice_from_co
 from services.rdf_store import load_graph, save_graph
 
 
-def _tracking_node(order_id, lot_id):
-    return AZON[f"tracking-{order_id}-{lot_id}"]
+def _tracking_node(localized_product_id):
+    return AZON[f"tracking-{localized_product_id}"]
 
 
 def _add_product_reference(graph, subject, product, centre_node=None):
@@ -37,41 +37,54 @@ def _ensure_centre_node(graph, centre_id=None, centre_city=None):
     return centre_node
 
 
-def save_localization_confirmations(tracking_path, reservations):
+def save_localization_confirmations(tracking_path, items):
     graph = load_graph(tracking_path)
     bind_namespaces(graph)
 
-    for reservation in reservations:
-        node = _tracking_node(reservation["order_id"], reservation["lot_id"])
-        order_node = AZON[f"order-{reservation['order_id']}"]
-        lot_node = AZON[f"lot-{reservation['lot_id']}"]
+    for item in items:
+        localized_product_id = item["localized_product_id"]
+        node = _tracking_node(localized_product_id)
+        order_node = AZON[f"order-{item['order_id']}"]
+        lot_node = AZON[f"lot-{item['lot_id']}"]
         centre_node = _ensure_centre_node(
             graph,
-            centre_id=reservation.get("centre_id"),
-            centre_city=reservation.get("centre_city"),
+            centre_id=item.get("centre_id"),
+            centre_city=item.get("centre_city"),
         )
+        product = item["product"]
 
         graph.add((node, RDF.type, AZON.ConfirmacioLocalitzacio))
-        graph.set((node, AZON.IdComanda, Literal(reservation["order_id"])))
-        graph.set((node, AZON.IdLot, Literal(reservation["lot_id"])))
-        graph.set((node, AZON.Estat, Literal(reservation.get("status", "OBERT"))))
-        graph.set((node, AZON.Ciutat, Literal(reservation["city"])))
-        graph.set((node, AZON.DataEntrega, Literal(reservation["delivery_date"])))
+        graph.set((node, AZON.IdComanda, Literal(item["order_id"])))
+        graph.set((node, AZON.IdLot, Literal(item["lot_id"])))
+        graph.set((node, AZON.Estat, Literal(item.get("status", "OBERT"))))
+        graph.set((node, AZON.Ciutat, Literal(item["city"])))
+        graph.set((node, AZON.DataEntrega, Literal(item["delivery_date"])))
         graph.set((node, AZON.SobreComanda, order_node))
         graph.set((node, AZON.SobreLot, lot_node))
-
-        for product in reservation.get("products", []):
+        if product.get("product_id"):
             _add_product_reference(graph, node, product, centre_node=centre_node)
 
     save_graph(tracking_path, graph)
+
+
+def lookup_order_for_localized_product(tracking_path, localized_product_id):
+    graph = load_graph(tracking_path)
+    bind_namespaces(graph)
+    node = _tracking_node(localized_product_id)
+    order_id = graph.value(node, AZON.IdComanda)
+    return str(order_id) if order_id is not None else None
 
 
 def apply_shipping_update(tracking_path, shipment, shipped=False, invoice=None):
     graph = load_graph(tracking_path)
     bind_namespaces(graph)
 
-    node = _tracking_node(shipment["order_id"], shipment["lot_id"])
-    order_node = AZON[f"order-{shipment['order_id']}"]
+    localized_product_id = shipment["localized_product_id"]
+    node = _tracking_node(localized_product_id)
+    order_id = shipment.get("order_id") or graph.value(node, AZON.IdComanda)
+    if order_id is None:
+        raise KeyError(f"No order mapping for localized product {localized_product_id}")
+    order_node = AZON[f"order-{order_id}"]
     lot_node = AZON[f"lot-{shipment['lot_id']}"]
     centre_node = _ensure_centre_node(
         graph,
@@ -79,7 +92,7 @@ def apply_shipping_update(tracking_path, shipment, shipped=False, invoice=None):
         centre_city=shipment.get("centre_city"),
     )
 
-    graph.set((node, AZON.IdComanda, Literal(shipment["order_id"])))
+    graph.set((node, AZON.IdComanda, Literal(str(order_id))))
     graph.set((node, AZON.IdLot, Literal(shipment["lot_id"])))
     graph.set((node, AZON.Ciutat, Literal(shipment["city"])))
     graph.set((node, AZON.SobreComanda, order_node))
@@ -94,7 +107,8 @@ def apply_shipping_update(tracking_path, shipment, shipped=False, invoice=None):
     if shipped:
         graph.add((node, RDF.type, AZON.ConfirmacioEnviament))
 
-    for product in shipment.get("products", []):
+    product = shipment.get("product")
+    if product and product.get("product_id"):
         _add_product_reference(graph, node, product, centre_node=centre_node)
 
     if invoice is not None:
@@ -107,7 +121,7 @@ def _load_tracking_entry(graph, node):
     product_nodes = list(graph.objects(node, AZON.TeProducte))
     centre_id = None
     centre_city = None
-    products = []
+    product = None
     for product_node in product_nodes:
         centre_node = graph.value(product_node, AZON.UbicatACentre)
         if centre_node is not None and centre_id is None:
@@ -116,13 +130,12 @@ def _load_tracking_entry(graph, node):
             centre_id = str(centre_id_value) if centre_id_value is not None else None
             centre_city = str(centre_city_value) if centre_city_value is not None else None
         weight_value = graph.value(product_node, AZON.Pes)
-        products.append(
-            {
-                "product_id": str(graph.value(product_node, AZON.IdProducte)),
-                "name": str(graph.value(product_node, AZON.Nom) or ""),
-                "weight": float(weight_value) if weight_value is not None else 0.0,
-            }
-        )
+        product = {
+            "product_id": str(graph.value(product_node, AZON.IdProducte)),
+            "name": str(graph.value(product_node, AZON.Nom) or ""),
+            "weight": float(weight_value) if weight_value is not None else 0.0,
+        }
+        break
 
     explicit_status = graph.value(node, AZON.Estat)
     if (node, RDF.type, AZON.ConfirmacioEnviament) in graph:
@@ -135,7 +148,9 @@ def _load_tracking_entry(graph, node):
     official_delivery_date = graph.value(node, AZON.DataEntregaDefinitiva)
     transport_cost = graph.value(node, AZON.CostTransport)
     invoice = extract_invoice_from_content(graph, node)
+    localized_product_id = str(node).rsplit("tracking-", 1)[-1]
     return {
+        "localized_product_id": localized_product_id,
         "order_id": str(graph.value(node, AZON.IdComanda)),
         "lot_id": str(graph.value(node, AZON.IdLot)),
         "status": status,
@@ -148,9 +163,7 @@ def _load_tracking_entry(graph, node):
         "price": float(transport_cost) if transport_cost is not None else 0.0,
         "centre_id": centre_id,
         "centre_city": centre_city,
-        "products": products,
-        "product_id": products[0]["product_id"] if len(products) == 1 else None,
-        "product_name": products[0]["name"] if len(products) == 1 else None,
+        "product": product,
         "invoice": invoice,
     }
 
@@ -163,7 +176,7 @@ def load_tracking_for_order(tracking_path, order_id):
         if graph.value(node, AZON.IdLot) is None:
             continue
         entries.append(_load_tracking_entry(graph, node))
-    return sorted(entries, key=lambda entry: (entry["lot_id"], entry["order_id"]))
+    return sorted(entries, key=lambda entry: (entry["lot_id"], entry["localized_product_id"]))
 
 
 def aggregate_official_delivery_date(entries):
