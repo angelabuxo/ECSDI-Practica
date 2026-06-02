@@ -14,6 +14,11 @@
     <a href="{{ opinador_url }}"><button type="button">Open suggestions and feedback</button></a>
   </p>
   {% endif %}
+  {% if retornador_url %}
+  <p>
+    <a href="{{ retornador_url }}"><button type="button">Open returns</button></a>
+  </p>
+  {% endif %}
   <form method="post" action="{{ search_path or '/iface' }}">
     <label>Text <input type="text" name="text" value="{{ criteria.text if criteria else '' }}"></label>
     <label>Category <input type="text" name="category" value="{{ criteria.category if criteria else '' }}"></label>

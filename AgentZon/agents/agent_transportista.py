@@ -44,6 +44,7 @@ LAST_OFFERS = {}
 
 # Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings):
+    """Inicialitza paràmetres operatius del transportista."""
     global AGENT, TRANSPORT_ID, PRICE_PER_KG, DELIVERY_DAYS, COUNTER, LAST_OFFERS
     AGENT = settings["agent"]
     TRANSPORT_ID = settings["transport_id"]
@@ -54,6 +55,7 @@ def configure_runtime(settings):
 
 
 def next_counter():
+    """Retorna un identificador incremental per missatges ACL."""
     global COUNTER
     current = COUNTER
     COUNTER += 1
@@ -62,6 +64,7 @@ def next_counter():
 
 # Agent logic ----------------------------------------------------------------------
 def generar_oferta_transport(request_data):
+    """Calcula oferta de transport segons pes, tarifes i termini."""
     return {
         "lot_id": request_data["lot_id"],
         "order_id": request_data["order_id"],
@@ -74,6 +77,7 @@ def generar_oferta_transport(request_data):
 
 
 def register_transport_agent(directory_agent, msgcnt=0):
+    """Registra el transportista al directori amb metadades pròpies."""
     return register_with_directory(
         AGENT,
         directory_agent,
@@ -104,6 +108,7 @@ def _build_refuse_reply(receiver):
 
 
 def respondre_contraoferta(counter_offer, receiver=None):
+    """Avalua i respon una contraoferta del centre logístic."""
     previous_offer = LAST_OFFERS.get(counter_offer["lot_id"])
     if previous_offer is None:
         return _build_refuse_reply(receiver)
@@ -139,6 +144,7 @@ def respondre_contraoferta(counter_offer, receiver=None):
 # Communication handling -----------------------------------------------------------
 @app.route("/comm")
 def comm():
+    """Entrada ACL del transportista: CFP, contraoferta, accept/reject."""
     message_graph = Graph()
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
@@ -196,6 +202,7 @@ def comm():
 
 @app.route("/iface")
 def iface():
+    """Vista tècnica del transportista (graf buit serialitzat)."""
     graph = Graph()
     bind_namespaces(graph)
     return graph.serialize(format="turtle")
@@ -203,12 +210,14 @@ def iface():
 
 @app.route("/Stop")
 def stop():
+    """Atura el servidor Flask de l'agent."""
     shutdown_server()
     return "Stopping"
 
 
 # Bootstrap -----------------------------------------------------------------------
 def main():
+    """Punt d'entrada executable de l'Agent Transportista."""
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["transport_fast"])
     add_directory_arguments(parser)

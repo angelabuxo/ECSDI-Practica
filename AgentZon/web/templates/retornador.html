@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <title>AgentZon Retornador</title>
+</head>
+<body>
+  <h1>AgentZon Retornador</h1>
+  {% if compra_url %}
+  <p><a href="{{ compra_url }}"><button type="button">Obrir compres</button></a></p>
+  {% endif %}
+
+  <p>Identificació activa per IP: <strong>{{ interface_user_id }}</strong></p>
+
+  {% if error %}
+  <p><strong>{{ error }}</strong></p>
+  {% endif %}
+
+  <form method="post" action="{{ iface_path or '/iface' }}">
+    <p>
+      <label>Selecciona un o més productes comprats:<br>
+        <select name="selected_products" multiple size="8" required>
+          {% for product in purchased_products %}
+          {% set value = product.order_id ~ "::" ~ product.product_id %}
+          <option value="{{ value }}" {% if value in selected_products %}selected{% endif %}>
+            {{ product.name }}{% if product.brand %} ({{ product.brand }}){% endif %} - {{ product.product_id }} [Comanda {{ product.order_id }}]
+          </option>
+          {% else %}
+          <option value="" disabled>No hi ha productes comprats disponibles</option>
+          {% endfor %}
+        </select>
+      </label>
+    </p>
+    <p>
+      <label>Motiu de la devolució:<br>
+        <textarea name="reason" rows="4" cols="50" placeholder="Explica breument el motiu">{{ reason or '' }}</textarea>
+      </label>
+    </p>
+    {% if purchased_products %}
+    <button type="submit">Demanar devolució</button>
+    {% else %}
+    <button type="submit" disabled>No hi ha productes per retornar</button>
+    {% endif %}
+  </form>
+
+  {% if decision %}
+  <h2>Resolució de devolució</h2>
+  <p><strong>Id devolució:</strong> {{ decision.return_id }}</p>
+  <p><strong>Comanda:</strong> {{ decision.order_id }}</p>
+  <p><strong>Acceptada:</strong> {{ "Sí" if decision.accepted else "No" }}</p>
+  <p><strong>Import:</strong> {{ decision.amount }} €</p>
+  <p><strong>Detalls:</strong> {{ decision.reason }}</p>
+  {% endif %}
+</body>
+</html>

@@ -34,6 +34,51 @@ azon:tracking-ORDER-04C81287-LOT-AD43DE a azon:ConfirmacioLocalitzacio ;
     azon:SobreLot azon:lot-LOT-AD43DE ;
     azon:TeProducte azon:product-P1018 .
 
+azon:tracking-ORDER-4D697D7E-LOT-4D4D8B a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Girona" ;
+    azon:DataEntrega "2026-06-07" ;
+    azon:Estat "OBERT" ;
+    azon:IdComanda "ORDER-4D697D7E" ;
+    azon:IdLot "LOT-4D4D8B" ;
+    azon:SobreComanda azon:order-ORDER-4D697D7E ;
+    azon:SobreLot azon:lot-LOT-4D4D8B ;
+    azon:TeProducte azon:product-P1003,
+        azon:product-P1006,
+        azon:product-P1009 .
+
+azon:tracking-ORDER-4D697D7E-LOT-B64979 a azon:ConfirmacioEnviament,
+        azon:ConfirmacioLocalitzacio,
+        azon:DadesEnviament ;
+    azon:Ciutat "Girona" ;
+    azon:CostTransport "28.71"^^xsd:float ;
+    azon:DataEntrega "2026-06-07" ;
+    azon:DataEntregaDefinitiva "2026-06-05" ;
+    azon:DataPagament "2026-06-02" ;
+    azon:Estat "ENVIAT",
+        "PAGAT" ;
+    azon:IdComanda "ORDER-4D697D7E" ;
+    azon:IdLot "LOT-B64979" ;
+    azon:IdPagament "PAY-EF3A1615" ;
+    azon:IdTransportista "economy" ;
+    azon:ImportPagament "642.87"^^xsd:float ;
+    azon:MetodePagament "a" ;
+    azon:NomTransportista "Transportista-economy" ;
+    azon:SentitPagament "COBRAMENT" ;
+    azon:SobreComanda azon:order-ORDER-4D697D7E ;
+    azon:SobreLot azon:lot-LOT-B64979 ;
+    azon:SobreProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1008,
+        azon:product-P1010 ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1008,
+        azon:product-P1010 .
+
 azon:tracking-ORDER-509C9D05-LOT-471199 a azon:ConfirmacioEnviament,
         azon:ConfirmacioLocalitzacio,
         azon:DadesEnviament ;
@@ -548,21 +593,6 @@ azon:product-P1018 a azon:Producte ;
     azon:Pes "1.47"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-TGN .
 
-azon:product-P1003 a azon:Producte ;
-    azon:IdProducte "P1003" ;
-    azon:Nom "Smart Speaker" ;
-    azon:Pes "0.57"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-TGN .
-
-azon:product-P1004 a azon:Producte ;
-    azon:IdProducte "P1004" ;
-    azon:Nom "Minimalist Coffee Mug",
-        "P1004" ;
-    azon:Pes "0.3"^^xsd:float ;
-    azon:Preu "11.25"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-BCN,
-        azon:centre-CL-GI .
-
 azon:product-P1016 a azon:Producte ;
     azon:IdProducte "P1016" ;
     azon:Nom "Compact Keyboard",
@@ -593,19 +623,11 @@ azon:product-P1024 a azon:Producte ;
     azon:Pes "1.71"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-TGN .
 
-azon:product-P1006 a azon:Producte ;
-    azon:IdProducte "P1006" ;
+azon:product-P1003 a azon:Producte ;
+    azon:IdProducte "P1003" ;
     azon:Nom "Smart Speaker" ;
-    azon:Pes "1.05"^^xsd:float ;
+    azon:Pes "0.57"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-TGN .
-
-azon:product-P1008 a azon:Producte ;
-    azon:IdProducte "P1008" ;
-    azon:Nom "Ergonomic Keyboard",
-        "P1008" ;
-    azon:Pes "1.74"^^xsd:float ;
-    azon:Preu "77.54"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-GI .
 
 azon:product-P1017 a azon:Producte ;
     azon:IdProducte "P1017" ;
@@ -615,6 +637,21 @@ azon:product-P1017 a azon:Producte ;
     azon:Preu "48.17"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-GI .
 
+azon:product-P1004 a azon:Producte ;
+    azon:IdProducte "P1004" ;
+    azon:Nom "Minimalist Coffee Mug",
+        "P1004" ;
+    azon:Pes "0.3"^^xsd:float ;
+    azon:Preu "11.25"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1006 a azon:Producte ;
+    azon:IdProducte "P1006" ;
+    azon:Nom "Smart Speaker" ;
+    azon:Pes "1.05"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
 azon:product-P1007 a azon:Producte ;
     azon:IdProducte "P1007" ;
     azon:Nom "P1007",
@@ -623,12 +660,6 @@ azon:product-P1007 a azon:Producte ;
     azon:Preu "106.27"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-BCN,
         azon:centre-CL-GI .
-
-azon:product-P1009 a azon:Producte ;
-    azon:IdProducte "P1009" ;
-    azon:Nom "Adjustable Desk Lamp" ;
-    azon:Pes "1.85"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-TGN .
 
 azon:product-P1020 a azon:Producte ;
     azon:IdProducte "P1020" ;
@@ -643,6 +674,20 @@ azon:product-P1027 a azon:Producte ;
     azon:Nom "iPhone 17 Pro" ;
     azon:Pes "0.22"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-BCN .
+
+azon:product-P1008 a azon:Producte ;
+    azon:IdProducte "P1008" ;
+    azon:Nom "Ergonomic Keyboard",
+        "P1008" ;
+    azon:Pes "1.74"^^xsd:float ;
+    azon:Preu "77.54"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
+azon:product-P1009 a azon:Producte ;
+    azon:IdProducte "P1009" ;
+    azon:Nom "Adjustable Desk Lamp" ;
+    azon:Pes "1.85"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
 
 azon:product-P1022 a azon:Producte ;
     azon:IdProducte "P1022" ;
@@ -666,15 +711,6 @@ azon:centre-CL-TGN a azon:CentreLogistic ;
     azon:Ciutat "Tarragona" ;
     azon:IdCentreLogistic "CL-TGN" .
 
-azon:product-P1001 a azon:Producte ;
-    azon:IdProducte "P1001" ;
-    azon:Nom "P1001",
-        "Slim Desk Lamp" ;
-    azon:Pes "1.47"^^xsd:float ;
-    azon:Preu "68.49"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-BCN,
-        azon:centre-CL-GI .
-
 azon:product-P1023 a azon:Producte ;
     azon:IdProducte "P1023" ;
     azon:Nom "P1023",
@@ -689,6 +725,33 @@ azon:product-P1029 a azon:Producte ;
         "P1029" ;
     azon:Pes "0.08"^^xsd:float ;
     azon:Preu "45.0"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1026 a azon:Producte ;
+    azon:IdProducte "P1026" ;
+    azon:Nom "AirPods Max",
+        "P1026" ;
+    azon:Pes "0.38"^^xsd:float ;
+    azon:Preu "579.0"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1001 a azon:Producte ;
+    azon:IdProducte "P1001" ;
+    azon:Nom "P1001",
+        "Slim Desk Lamp" ;
+    azon:Pes "1.47"^^xsd:float ;
+    azon:Preu "68.49"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN,
+        azon:centre-CL-GI .
+
+azon:product-P1028 a azon:Producte ;
+    azon:IdProducte "P1028" ;
+    azon:Nom "MacBook Pro M4",
+        "P1028" ;
+    azon:Pes "1.55"^^xsd:float ;
+    azon:Preu "1999.0"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-BCN,
         azon:centre-CL-GI .
 
@@ -708,27 +771,17 @@ azon:product-P1005 a azon:Producte ;
     azon:Preu "149.26"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-GI .
 
-azon:product-P1026 a azon:Producte ;
-    azon:IdProducte "P1026" ;
-    azon:Nom "AirPods Max",
-        "P1026" ;
-    azon:Pes "0.38"^^xsd:float ;
-    azon:Preu "579.0"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-BCN,
-        azon:centre-CL-GI .
-
-azon:product-P1028 a azon:Producte ;
-    azon:IdProducte "P1028" ;
-    azon:Nom "MacBook Pro M4",
-        "P1028" ;
-    azon:Pes "1.55"^^xsd:float ;
-    azon:Preu "1999.0"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-BCN,
-        azon:centre-CL-GI .
-
 azon:centre-CL-BCN a azon:CentreLogistic ;
     azon:Ciutat "Barcelona" ;
     azon:IdCentreLogistic "CL-BCN" .
+
+azon:product-P1011 a azon:Producte ;
+    azon:IdProducte "P1011" ;
+    azon:Nom "P1011",
+        "Slim Desk Lamp" ;
+    azon:Pes "1.78"^^xsd:float ;
+    azon:Preu "42.48"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
 
 azon:product-P1010 a azon:Producte ;
     azon:IdProducte "P1010" ;
@@ -738,14 +791,6 @@ azon:product-P1010 a azon:Producte ;
     azon:Preu "72.97"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-BCN,
         azon:centre-CL-GI .
-
-azon:product-P1011 a azon:Producte ;
-    azon:IdProducte "P1011" ;
-    azon:Nom "P1011",
-        "Slim Desk Lamp" ;
-    azon:Pes "1.78"^^xsd:float ;
-    azon:Preu "42.48"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-GI .
 
 azon:centre-CL-GI a azon:CentreLogistic ;
     azon:Ciutat "Girona" ;

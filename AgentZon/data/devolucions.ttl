@@ -1,1 +1,74 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:refund-RET-02592D2E a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-9FA92835" ;
+    azon:IdDevolucio "RET-02592D2E" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "0.0"^^xsd:float ;
+    azon:MotiuDevolucio "La comanda compleix els criteris de devolució disponibles a l'historial." ;
+    azon:SobreProducte azon:product-P1006,
+        azon:product-P1016 .
+
+azon:refund-RET-1EE9E6E4 a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-E03FD6A5" ;
+    azon:IdDevolucio "RET-1EE9E6E4" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "0.0"^^xsd:float ;
+    azon:MotiuDevolucio "La comanda compleix els criteris de devolució disponibles a l'historial." ;
+    azon:SobreProducte azon:product-P1010,
+        azon:product-P1011 .
+
+azon:refund-RET-30E37E01 a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-4D697D7E" ;
+    azon:IdDevolucio "RET-30E37E01" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "0.0"^^xsd:float ;
+    azon:MotiuDevolucio "La comanda compleix els criteris de devolució disponibles a l'historial." ;
+    azon:SobreProducte azon:product-P1002,
+        azon:product-P1004,
+        azon:product-P1006 .
+
+azon:refund-RET-86CFD52F a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-813DF66D" ;
+    azon:IdDevolucio "RET-86CFD52F" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "234.65"^^xsd:float ;
+    azon:MotiuDevolucio "La comanda compleix els criteris de devolució disponibles a l'historial." ;
+    azon:SobreProducte azon:product-P1002 .
+
+azon:refund-RET-8ACACAAA a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-C9E9EDA5" ;
+    azon:IdDevolucio "RET-8ACACAAA" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "0.0"^^xsd:float ;
+    azon:MotiuDevolucio "La comanda compleix els criteris de devolució disponibles a l'historial." ;
+    azon:SobreProducte azon:product-P1024,
+        azon:product-P1025 .
+
+azon:refund-RET-DE72443B a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-C9E9EDA5" ;
+    azon:IdDevolucio "RET-DE72443B" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "0.0"^^xsd:float ;
+    azon:MotiuDevolucio "La comanda compleix els criteris de devolució disponibles a l'historial." ;
+    azon:SobreProducte azon:product-P1024,
+        azon:product-P1025 .
+
+azon:refund-RET-E41FFF0C a azon:Devolucio ;
+    azon:Estat "RETORNAT" ;
+    azon:IdComanda "ORDER-9B6F87D3" ;
+    azon:IdDevolucio "RET-E41FFF0C" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:ImportPagament "140.99"^^xsd:float ;
+    azon:MotiuDevolucio "La comanda compleix els criteris de devolució disponibles a l'historial." ;
+    azon:SobreProducte azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011 .
 

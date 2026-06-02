@@ -36,6 +36,7 @@ COUNTER = 0
 
 # Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings):
+    """Inicialitza configuració bàsica del proveïdor de pagament."""
     global AGENT, BANK_ID, COUNTER
     AGENT = settings["agent"]
     BANK_ID = settings["bank_id"]
@@ -43,6 +44,7 @@ def configure_runtime(settings):
 
 
 def next_counter():
+    """Retorna un identificador incremental per als missatges ACL."""
     global COUNTER
     current = COUNTER
     COUNTER += 1
@@ -51,6 +53,7 @@ def next_counter():
 
 # Agent logic ----------------------------------------------------------------------
 def processar_pagament(request_data):
+    """Simula el processament bancari d'un pagament/reemborsament."""
     logger.info(
         "Banc %s processant pagament %s de la comanda %s (%.2f EUR, metode=%s)",
         BANK_ID,
@@ -74,6 +77,7 @@ def processar_pagament(request_data):
 # Communication handling -----------------------------------------------------------
 @app.route("/comm")
 def comm():
+    """Entrada ACL del proveïdor (`PeticioPagament` -> confirmació)."""
     message_graph = Graph()
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
@@ -109,6 +113,7 @@ def comm():
 
 @app.route("/iface")
 def iface():
+    """Vista tècnica del proveïdor (graf buit serialitzat)."""
     graph = Graph()
     bind_namespaces(graph)
     return graph.serialize(format="turtle")
@@ -116,12 +121,14 @@ def iface():
 
 @app.route("/Stop")
 def stop():
+    """Atura el servidor Flask de l'agent."""
     shutdown_server()
     return "Stopping"
 
 
 # Bootstrap -----------------------------------------------------------------------
 def main():
+    """Punt d'entrada executable de l'Agent Proveïdor de Pagament."""
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["proveidor_pagament"])
     add_directory_arguments(parser)

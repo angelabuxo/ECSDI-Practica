@@ -253,5 +253,3 @@ def collect_warehouse_reservations(order, centre_groups, sender_uri, message_sen
     return reservations
 
 
-def collect_warehouse_shipments(order, centre_groups, sender_uri, message_sender, next_msgcnt):
-    return collect_warehouse_reservations(order, centre_groups, sender_uri, message_sender, next_msgcnt)

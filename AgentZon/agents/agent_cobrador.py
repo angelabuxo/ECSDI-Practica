@@ -24,7 +24,7 @@ from config import (
     resolve_runtime_hostname,
     serve_agent,
 )
-from protocols.directory import build_search_message, parse_directory_response
+from services.agent_common_service import resolve_agent_via_directory
 from protocols.pagament import (
     SENTIT_COBRAMENT,
     SENTIT_PAGAMENT,
@@ -68,6 +68,7 @@ COUNTER = 0
 
 # Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
+    """Inicialitza rutes de dades i dependències del Cobrador."""
     global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, CATALOG_PATH
     global USER_BANK_PATH, SELLER_BANK_PATH, PAYMENTS_PATH, REFUNDS_PATH, COUNTER
     AGENT = settings["agent"]
@@ -83,6 +84,7 @@ def configure_runtime(settings, message_sender=send_message):
 
 
 def next_counter():
+    """Retorna un identificador incremental per als missatges ACL."""
     global COUNTER
     current = COUNTER
     COUNTER += 1
@@ -113,17 +115,18 @@ def _shipment_scope_texts(shipment):
 
 # Agent logic ----------------------------------------------------------------------
 def resolve_agent(agent_type):
-    message = build_search_message(AGENT, agent_type, DIRECTORY_AGENT, msgcnt=next_counter())
-    response = MESSAGE_SENDER(message, DIRECTORY_AGENT.address)
-    return parse_directory_response(response)
+    """Resol un agent (p. ex. Proveïdor de Pagament) via directori."""
+    return resolve_agent_via_directory(AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, next_counter, agent_type)
 
 
 def calcular_import(product_ids):
+    """Calcula l'import total dels productes indicats."""
     products = get_products_by_ids(CATALOG_PATH, product_ids)
     return round(sum(product.get("price", 0.0) for product in products), 2)
 
 
 def pagar_via_proveidor(payment):
+    """Delega l'operació econòmica al Proveïdor de Pagament extern."""
     proveidor = resolve_agent(DSO.ProveidorPagamentAgent)
     logger.info(
         "Enviant l'accio de cobrar %s (%.2f EUR) al proveidor de pagament %s",
@@ -142,6 +145,7 @@ def pagar_via_proveidor(payment):
 
 # Capacitat: Guardar dades bancaries -----------------------------------------------
 def pla_registrar_dades_usuari(message_graph, content, sender):
+    """Pla de registre de dades bancàries d'usuari."""
     request_data = parse_peticio_registre_dades_usuari(message_graph, content)
     logger.info("Registrant dades bancaries de l'usuari %s", request_data["user_id"])
     save_user_bank_data(
@@ -161,6 +165,7 @@ def pla_registrar_dades_usuari(message_graph, content, sender):
 
 
 def pla_registrar_dades_venedor(message_graph, content, sender):
+    """Pla de registre de dades bancàries de venedor extern."""
     request_data = parse_peticio_registre_dades_venedor(message_graph, content)
     logger.info("Registrant dades bancaries del venedor extern %s", request_data["seller_id"])
     save_seller_bank_data(SELLER_BANK_PATH, request_data["seller_id"], request_data["bank_data"])
@@ -176,6 +181,7 @@ def pla_registrar_dades_venedor(message_graph, content, sender):
 
 # Capacitat: Cobrar compra ---------------------------------------------------------
 def pla_cobrament_intern(message_graph, content, sender):
+    """Pla de cobrament intern després de confirmació d'enviament."""
     shipment = parse_peticio_cobrament_intern(message_graph, content)
     scope_target, scope_per = _shipment_scope_texts(shipment)
     bank = read_user_bank_data(USER_BANK_PATH, shipment["user_id"])
@@ -222,6 +228,7 @@ def pla_cobrament_intern(message_graph, content, sender):
 
 
 def pla_cobrament_extern(message_graph, content, sender):
+    """Pla de cobrament/transferència externa per productes de venedor."""
     request_data = parse_peticio_pagament(message_graph, content)
     payment = {
         "payment_id": request_data["payment_id"] or f"PAY-{uuid4().hex[:8].upper()}",
@@ -254,6 +261,7 @@ def pla_cobrament_extern(message_graph, content, sender):
 
 # Capacitat: Gestionar Devolucions -------------------------------------------------
 def pla_retornar_diners(message_graph, content, sender):
+    """Pla de reemborsament de devolució (usuari o venedor extern)."""
     request_data = parse_peticio_retorn_diners(message_graph, content)
     is_external = bool(request_data.get("seller_id"))
     if is_external:
@@ -316,6 +324,7 @@ PLANS = {
 
 @app.route("/comm")
 def comm():
+    """Entrada ACL del Cobrador: dispatch de plans per tipus d'acció."""
     message_graph = Graph()
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
@@ -345,17 +354,20 @@ def comm():
 
 @app.route("/iface")
 def iface():
+    """Vista tècnica del Cobrador: estat de pagaments en Turtle."""
     return load_graph(PAYMENTS_PATH).serialize(format="turtle")
 
 
 @app.route("/Stop")
 def stop():
+    """Atura el servidor Flask de l'agent."""
     shutdown_server()
     return "Stopping"
 
 
 # Bootstrap -----------------------------------------------------------------------
 def main():
+    """Punt d'entrada executable de l'Agent Cobrador."""
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["cobrador"])
     add_directory_arguments(parser)

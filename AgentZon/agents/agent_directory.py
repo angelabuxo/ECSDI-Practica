@@ -34,6 +34,7 @@ COUNTER_LOCK = Lock()
 
 # Runtime configuration ------------------------------------------------------------
 def _new_directory_graph():
+    """Crea el graf RDF intern del directori amb els namespaces necessaris."""
     graph = Graph()
     bind_namespaces(graph)
     graph.bind("foaf", FOAF)
@@ -42,6 +43,7 @@ def _new_directory_graph():
 
 
 def configure_runtime(settings):
+    """Inicialitza estat global de l'agent de directori."""
     global AGENT, DIRECTORY_GRAPH, COUNTER
     AGENT = settings["agent"]
     DIRECTORY_GRAPH = _new_directory_graph()
@@ -49,6 +51,7 @@ def configure_runtime(settings):
 
 
 def next_counter():
+    """Retorna un contador incremental segur per concurrència."""
     global COUNTER
     with COUNTER_LOCK:
         current = COUNTER
@@ -58,6 +61,7 @@ def next_counter():
 
 # Directory logic ------------------------------------------------------------------
 def process_register(message_graph, content):
+    """Processa una alta d'agent al directori."""
     address = message_graph.value(content, DSO.Address)
     name = message_graph.value(content, FOAF.name)
     uri = message_graph.value(content, DSO.Uri)
@@ -82,6 +86,7 @@ def process_register(message_graph, content):
 
 
 def process_search(message_graph, content, requester):
+    """Processa una cerca d'agents per tipus i retorna coincidències."""
     agent_type = message_graph.value(content, DSO.AgentType)
     logger.info("Cerca al directori sol.licitada per al tipus d'agent %s", agent_type)
     reply = Graph()
@@ -105,6 +110,7 @@ def process_search(message_graph, content, requester):
 # Communication handling -----------------------------------------------------------
 @app.route("/Register")
 def register():
+    """Endpoint ACL de registre/cerca (`/Register`)."""
     message_graph = Graph()
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
@@ -136,17 +142,20 @@ def register():
 # Inspection endpoints -------------------------------------------------------------
 @app.route("/Info")
 def info():
+    """Endpoint d'inspecció que retorna el contingut del directori."""
     return DIRECTORY_GRAPH.serialize(format="turtle")
 
 
 @app.route("/Stop")
 def stop():
+    """Atura el servidor Flask de l'agent."""
     shutdown_server()
     return "Stopping"
 
 
 # Bootstrap -----------------------------------------------------------------------
 def main():
+    """Punt d'entrada executable del Directory Agent."""
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["directory"])
     args = parser.parse_args()

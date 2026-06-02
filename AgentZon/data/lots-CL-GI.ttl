@@ -168,6 +168,26 @@ azon:reservation-LOT-9FEA54-ORDER-EBB56761 a azon:ConfirmacioLocalitzacio ;
         azon:product-P1014,
         azon:product-P1023 .
 
+azon:reservation-LOT-B64979-ORDER-4D697D7E a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Girona" ;
+    azon:CostTransport "28.71"^^xsd:float ;
+    azon:DataEntrega "2026-06-07" ;
+    azon:DataEntregaDefinitiva "2026-06-05" ;
+    azon:Estat "ENVIAT" ;
+    azon:IdComanda "ORDER-4D697D7E" ;
+    azon:IdLot "LOT-B64979" ;
+    azon:IdTransportista "economy" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:NomTransportista "Transportista-economy" ;
+    azon:SobreComanda azon:order-ORDER-4D697D7E ;
+    azon:SobreLot azon:lot-LOT-B64979 ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1008,
+        azon:product-P1010 .
+
 azon:reservation-LOT-CD2297-ORDER-C9E9EDA5 a azon:ConfirmacioLocalitzacio ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-06" ;
@@ -358,6 +378,26 @@ azon:lot-LOT-9FEA54 a azon:Lot ;
         azon:product-P1014,
         azon:product-P1023 .
 
+azon:lot-LOT-B64979 a azon:Lot ;
+    azon:AssignatATransportista azon:transport-economy ;
+    azon:Ciutat "Girona" ;
+    azon:CostTransport "28.71"^^xsd:float ;
+    azon:DataEntrega "2026-06-07" ;
+    azon:DataEntregaDefinitiva "2026-06-05" ;
+    azon:Estat "ENVIAT" ;
+    azon:IdCentreLogistic "CL-GI" ;
+    azon:IdLot "LOT-B64979" ;
+    azon:IdTransportista "economy" ;
+    azon:NomTransportista "Transportista-economy" ;
+    azon:PesTotal "7.18"^^xsd:float ;
+    azon:SobreComanda azon:order-ORDER-4D697D7E ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1008,
+        azon:product-P1010 .
+
 azon:lot-LOT-CD2297 a azon:Lot ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-06" ;
@@ -417,12 +457,6 @@ azon:lot-LOT-3D4602 a azon:Lot ;
         azon:order-ORDER-E03FD6A5 ;
     azon:TeProducte azon:product-P1011 .
 
-azon:product-P1004 a azon:Producte ;
-    azon:IdProducte "P1004" ;
-    azon:Nom "Minimalist Coffee Mug" ;
-    azon:Pes "0.3"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-GI .
-
 azon:product-P1016 a azon:Producte ;
     azon:IdProducte "P1016" ;
     azon:Nom "Compact Keyboard" ;
@@ -435,16 +469,16 @@ azon:product-P1019 a azon:Producte ;
     azon:Pes "0.33"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-GI .
 
+azon:product-P1004 a azon:Producte ;
+    azon:IdProducte "P1004" ;
+    azon:Nom "Minimalist Coffee Mug" ;
+    azon:Pes "0.3"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
 azon:product-P1007 a azon:Producte ;
     azon:IdProducte "P1007" ;
     azon:Nom "Precision Mouse" ;
     azon:Pes "0.25"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-GI .
-
-azon:product-P1008 a azon:Producte ;
-    azon:IdProducte "P1008" ;
-    azon:Nom "Ergonomic Keyboard" ;
-    azon:Pes "1.74"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-GI .
 
 azon:product-P1014 a azon:Producte ;
@@ -477,12 +511,10 @@ azon:product-P1029 a azon:Producte ;
     azon:Pes "0.08"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-GI .
 
-azon:transport-economy a azon:Transportista .
-
-azon:product-P1001 a azon:Producte ;
-    azon:IdProducte "P1001" ;
-    azon:Nom "Slim Desk Lamp" ;
-    azon:Pes "1.47"^^xsd:float ;
+azon:product-P1008 a azon:Producte ;
+    azon:IdProducte "P1008" ;
+    azon:Nom "Ergonomic Keyboard" ;
+    azon:Pes "1.74"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-GI .
 
 azon:product-P1017 a azon:Producte ;
@@ -503,10 +535,24 @@ azon:product-P1028 a azon:Producte ;
     azon:Pes "1.55"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-GI .
 
+azon:transport-economy a azon:Transportista .
+
+azon:product-P1001 a azon:Producte ;
+    azon:IdProducte "P1001" ;
+    azon:Nom "Slim Desk Lamp" ;
+    azon:Pes "1.47"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
 azon:product-P1010 a azon:Producte ;
     azon:IdProducte "P1010" ;
     azon:Nom "Slim Desk Lamp" ;
     azon:Pes "1.93"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
+azon:product-P1023 a azon:Producte ;
+    azon:IdProducte "P1023" ;
+    azon:Nom "Portable Speaker" ;
+    azon:Pes "1.01"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-GI .
 
 azon:product-P1002 a azon:Producte ;
@@ -519,12 +565,6 @@ azon:product-P1005 a azon:Producte ;
     azon:IdProducte "P1005" ;
     azon:Nom "Party Speaker" ;
     azon:Pes "0.69"^^xsd:float ;
-    azon:UbicatACentre azon:centre-CL-GI .
-
-azon:product-P1023 a azon:Producte ;
-    azon:IdProducte "P1023" ;
-    azon:Nom "Portable Speaker" ;
-    azon:Pes "1.01"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-GI .
 
 azon:product-P1011 a azon:Producte ;

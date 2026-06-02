@@ -2,13 +2,13 @@
 
 import argparse
 from pathlib import Path
-from urllib.parse import urlsplit, urlunsplit
+from rdflib import URIRef
 
 from flask import Flask, render_template, request
 from rdflib import Graph, RDF
 
 from AgentUtil.ACL import ACL
-from AgentUtil.ACLMessages import build_message, get_message_properties, register_agent, send_message
+from AgentUtil.ACLMessages import build_message, get_message_properties, send_message
 from AgentUtil.DSO import DSO
 from AgentUtil.FlaskServer import shutdown_server
 from AgentUtil.Logging import config_logger
@@ -26,7 +26,11 @@ from config import (
     serve_agent,
 )
 from protocols.cerca import build_peticio_cerca, build_resultat_cerca, parse_peticio_cerca
-from protocols.directory import build_search_message, parse_directory_response
+from services.agent_common_service import (
+    get_client_ip_from_request,
+    replace_url_path,
+    resolve_agent_via_directory,
+)
 from services.catalog_service import search_products
 from services.history_service import record_search
 
@@ -41,10 +45,12 @@ MESSAGE_SENDER = send_message
 CATALOG_PATH = None
 SEARCH_HISTORY_PATH = None
 COUNTER = 0
+RETORNADOR_AGENT_TYPE = URIRef("http://www.semanticweb.org/directory-service-ontology#RetornadorAgent")
 
 
 # Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
+    """Inicialitza dependències i rutes de dades del Cercador."""
     global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, CATALOG_PATH, SEARCH_HISTORY_PATH, COUNTER
     AGENT = settings["agent"]
     DIRECTORY_AGENT = settings["directory_agent"]
@@ -56,6 +62,7 @@ def configure_runtime(settings, message_sender=send_message):
 
 
 def next_counter():
+    """Retorna un identificador incremental per als missatges ACL."""
     global COUNTER
     current = COUNTER
     COUNTER += 1
@@ -64,22 +71,27 @@ def next_counter():
 
 # Agent logic ----------------------------------------------------------------------
 def default_criteria():
+    """Retorna criteris de cerca per defecte."""
     return {"text": "", "category": "", "brand": "", "min_price": None, "max_price": None}
 
 
 def resolve_compra_agent():
-    message = build_search_message(AGENT, DSO.CompraAgent, DIRECTORY_AGENT, msgcnt=next_counter())
-    response = MESSAGE_SENDER(message, DIRECTORY_AGENT.address)
-    return parse_directory_response(response)
+    """Resol l'Agent Compra via servei de directori."""
+    return resolve_agent_via_directory(AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, next_counter, DSO.CompraAgent)
 
 
 def resolve_opinador_agent():
-    message = build_search_message(AGENT, DSO.OpinadorAgent, DIRECTORY_AGENT, msgcnt=next_counter())
-    response = MESSAGE_SENDER(message, DIRECTORY_AGENT.address)
-    return parse_directory_response(response)
+    """Resol l'Agent Opinador via servei de directori."""
+    return resolve_agent_via_directory(AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, next_counter, DSO.OpinadorAgent)
+
+
+def resolve_retornador_agent():
+    """Resol l'Agent Retornador via servei de directori."""
+    return resolve_agent_via_directory(AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, next_counter, RETORNADOR_AGENT_TYPE)
 
 
 def pla_de_cerca(criteria):
+    """Executa el pla de cerca sobre el catàleg."""
     logger.info("Executant cerca amb criteris: %s", criteria)
     products = search_products(CATALOG_PATH, criteria)
     logger.info("La cerca ha retornat %d productes", len(products))
@@ -87,58 +99,67 @@ def pla_de_cerca(criteria):
 
 
 def purchase_error_message():
+    """Recupera missatges d'error de compra passats per query string."""
     return request.args.get("purchase_error", "")
 
 
 def get_client_ip():
     """Adreca IP del client HTTP (proxy-aware) com a identificador d'usuari."""
-    forwarded = request.headers.get("X-Forwarded-For", "")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.remote_addr or "unknown"
+    return get_client_ip_from_request(request)
 
 
 def pla_de_presentacio(criteria, products, purchase_error=""):
+    """Construeix la vista de resultats de cerca amb enllaços d'accions."""
     compra_agent = resolve_compra_agent()
-    compra_url = replace_path(compra_agent.address, "/iface")
+    compra_url = replace_url_path(compra_agent.address, "/iface")
     opinador_url = ""
+    retornador_url = ""
     try:
         opinador_agent = resolve_opinador_agent()
-        opinador_url = replace_path(opinador_agent.address, "/iface")
+        opinador_url = replace_url_path(opinador_agent.address, "/iface")
     except Exception:
         logger.warning("No s'ha pogut resoldre l'agent Opinador per a la interfície")
+    try:
+        retornador_agent = resolve_retornador_agent()
+        retornador_url = replace_url_path(retornador_agent.address, "/iface")
+    except Exception:
+        logger.warning("No s'ha pogut resoldre l'agent Retornador per a la interfície")
     return render_template(
         "cercador.html",
         criteria=criteria,
         products=products,
         compra_url=compra_url,
         opinador_url=opinador_url,
+        retornador_url=retornador_url,
         search_path="/iface",
         purchase_error=purchase_error,
     )
 
 
-def replace_path(address, new_path):
-    parsed = urlsplit(address)
-    return urlunsplit((parsed.scheme, parsed.netloc, new_path, "", ""))
-
-
 # Web interface --------------------------------------------------------------------
 @app.route("/iface", methods=["GET", "POST"])
 def iface():
+    """Interfície web del Cercador: formulari i resultats."""
     if request.method == "GET":
         opinador_url = ""
+        retornador_url = ""
         try:
             opinador_agent = resolve_opinador_agent()
-            opinador_url = replace_path(opinador_agent.address, "/iface")
+            opinador_url = replace_url_path(opinador_agent.address, "/iface")
         except Exception:
             logger.warning("No s'ha pogut resoldre l'agent Opinador per a la interfície")
+        try:
+            retornador_agent = resolve_retornador_agent()
+            retornador_url = replace_url_path(retornador_agent.address, "/iface")
+        except Exception:
+            logger.warning("No s'ha pogut resoldre l'agent Retornador per a la interfície")
         return render_template(
             "cercador.html",
             criteria=default_criteria(),
             products=[],
             compra_url="",
             opinador_url=opinador_url,
+            retornador_url=retornador_url,
             search_path="/iface",
             purchase_error=purchase_error_message(),
         )
@@ -159,6 +180,7 @@ def iface():
 # Communication handling -----------------------------------------------------------
 @app.route("/comm")
 def comm():
+    """Entrada ACL del Cercador (`PeticioCerca` -> `ResultatCerca`)."""
     message_graph = Graph()
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
@@ -201,12 +223,14 @@ def comm():
 
 @app.route("/Stop")
 def stop():
+    """Atura el servidor Flask de l'agent."""
     shutdown_server()
     return "Stopping"
 
 
 # Bootstrap -----------------------------------------------------------------------
 def main():
+    """Punt d'entrada executable del Cercador."""
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["cercador"])
     add_directory_arguments(parser)

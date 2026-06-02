@@ -81,16 +81,17 @@ def evaluate_return_request(catalog_path, purchase_history_path, request_data):
                 reason="La compra supera el termini de devolució de 30 dies.",
             )
 
-    purchased_products = get_products_by_ids(catalog_path, list(purchased_product_ids))
+    target_product_ids = requested_product_ids or purchased_product_ids
+    target_products = get_products_by_ids(catalog_path, list(target_product_ids))
     amount = request_data.get("amount")
     if amount is None:
-        amount = round(sum(product.get("price", 0.0) for product in purchased_products), 2)
+        amount = round(sum(product.get("price", 0.0) for product in target_products), 2)
 
     return _build_return_decision(
         {
             **request_data,
             "amount": amount,
-            "product_ids": sorted(requested_product_ids or purchased_product_ids),
+            "product_ids": sorted(target_product_ids),
         },
         accepted=True,
         reason="La comanda compleix els criteris de devolució disponibles a l'historial.",

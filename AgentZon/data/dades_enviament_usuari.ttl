@@ -7,6 +7,13 @@ azon:shipping-ORDER-04C81287 azon:Carrer "s" ;
     azon:Nom "s" ;
     azon:Prioritat "5 dies" .
 
+azon:shipping-ORDER-4D697D7E azon:Carrer "a" ;
+    azon:Ciutat "Girona" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" .
+
 azon:shipping-ORDER-509C9D05 azon:Carrer "a" ;
     azon:Ciutat "a" ;
     azon:IdUsuari "127.0.0.1" ;

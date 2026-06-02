@@ -49,7 +49,7 @@ Totes les comandes d'aquesta secció s'executen des de **`AgentZon/`** (és el d
 
 ### Opció A (recomanada, macOS)
 
-Un script obre una finestra de Terminal per agent (11 processos):
+Un script obre una finestra de Terminal per agent (12 processos):
 
 ```bash
 cd AgentZon
@@ -65,7 +65,7 @@ Obre **una terminal per agent** i executa les comandes següents des de `AgentZo
 
 1. Directory  
 2. Proveïdor de Pagament i Cobrador  
-3. Opinador i transportistes  
+3. Opinador, Retornador i transportistes  
 4. Centres Logístics, Compra i Cercador (aquest últim, el que exposa la UI)
 
 Substitueix `.venv/bin/python` per `../.venv/bin/python` si el virtualenv està a l'arrel del repositori.
@@ -93,21 +93,26 @@ Substitueix `.venv/bin/python` per `../.venv/bin/python` si el virtualenv està 
 ```bash
 .venv/bin/python -m agents.agent_opinador --host 127.0.0.1 --port 9004 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
-.\.venv\Scripts\Activate.ps1
 
-**5. Transportista ràpid**
+**5. Agent Retornador**
+
+```bash
+.venv/bin/python -m agents.agent_retornador --host 127.0.0.1 --port 9009 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+```
+
+**6. Transportista ràpid**
 
 ```bash
 .venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9010 --directory-host 127.0.0.1 --directory-port 9000 --transport-id fast --price-per-kg 8.0 --delivery-days 1
 ```
 
-**6. Transportista econòmic**
+**7. Transportista econòmic**
 
 ```bash
 .venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9011 --directory-host 127.0.0.1 --directory-port 9000 --transport-id economy --price-per-kg 4.0 --delivery-days 3
 ```
 
-**7–9. Agents Centre Logístic (BCN, Girona, Tarragona)**
+**8–10. Agents Centre Logístic (BCN, Girona, Tarragona)**
 
 ```bash
 .venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9003 --centre-id CL-BCN --centre-city Barcelona --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
@@ -121,13 +126,13 @@ Substitueix `.venv/bin/python` per `../.venv/bin/python` si el virtualenv està 
 .venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9008 --centre-id CL-TGN --centre-city Tarragona --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
-**10. Agent Compra**
+**11. Agent Compra**
 
 ```bash
 .venv/bin/python -m agents.agent_compra --host 127.0.0.1 --port 9002 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
-**11. Agent Cercador**
+**12. Agent Cercador**
 
 ```bash
 .venv/bin/python -m agents.agent_cercador --host 127.0.0.1 --port 9001 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
@@ -142,7 +147,7 @@ Quan tots els agents estiguin en marxa, obre:
 Endpoints principals:
 
 - `DirectoryAgent`: `/Register`, `/Info`, `/Stop`
-- `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `Transportista`, `CobradorAgent`, `ProveidorPagamentAgent`: `/comm`, `/iface`, `/Stop`
+- `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `RetornadorAgent`, `Transportista`, `CobradorAgent`, `ProveidorPagamentAgent`: `/comm`, `/iface`, `/Stop`
 
 Per forçar la negociació dels lots oberts amb entrega imminent:
 
@@ -162,8 +167,8 @@ Si has obert els agents amb `./run_agents.sh` o manualment i vols reiniciar net 
 # 1) Aturar tots els processos Python dels agents
 pkill -f '[Pp]ython.*-m agents\.agent_' 2>/dev/null || true
 
-# 2) Alliberar els ports reservats per AgentZon (9000–9008, 9010–9011)
-for port in 9000 9001 9002 9003 9004 9005 9006 9007 9008 9010 9011; do
+# 2) Alliberar els ports reservats per AgentZon (9000–9009, 9010–9011)
+for port in 9000 9001 9002 9003 9004 9005 9006 9007 9008 9009 9010 9011; do
   lsof -ti "tcp:$port" -sTCP:LISTEN 2>/dev/null | xargs kill -9 2>/dev/null
 done
 ```

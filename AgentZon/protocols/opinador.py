@@ -157,7 +157,8 @@ def build_peticio_devolucio(return_request, sender=None, receiver=None, msgcnt=0
     graph.add((content, AZON.IdDevolucio, Literal(return_request["return_id"])))
     graph.add((content, AZON.IdComanda, Literal(return_request["order_id"])))
     graph.add((content, AZON.IdUsuari, Literal(return_request["user_id"])))
-    graph.add((content, AZON.ImportPagament, Literal(return_request.get("amount", 0.0), datatype=XSD.float)))
+    if return_request.get("amount") is not None:
+        graph.add((content, AZON.ImportPagament, Literal(return_request["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MotiuDevolucio, Literal(return_request.get("reason", ""))))
     if return_request.get("seller_id"):
         graph.add((content, AZON.IdVenedorExtern, Literal(return_request["seller_id"])))
@@ -182,11 +183,12 @@ def parse_peticio_devolucio(graph, content):
             product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
         products.append({"product_id": str(product_id)})
     seller_id = graph.value(content, AZON.IdVenedorExtern)
+    amount_value = graph.value(content, AZON.ImportPagament)
     return {
         "return_id": str(graph.value(content, AZON.IdDevolucio)),
         "order_id": str(graph.value(content, AZON.IdComanda)),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
-        "amount": float(graph.value(content, AZON.ImportPagament)),
+        "amount": float(amount_value) if amount_value is not None else None,
         "reason": str(graph.value(content, AZON.MotiuDevolucio) or ""),
         "seller_id": str(seller_id) if seller_id is not None else None,
         "product_ids": sorted(product["product_id"] for product in products),

@@ -17,6 +17,26 @@ azon:order-ORDER-04C81287 a azon:Comanda ;
         azon:product-P1018,
         azon:product-P1019 .
 
+azon:order-ORDER-4D697D7E a azon:Comanda ;
+    azon:Carrer "a" ;
+    azon:Ciutat "Girona" ;
+    azon:DataEntrega "2026-06-07" ;
+    azon:Estat "ASSIGNAT" ;
+    azon:IdComanda "ORDER-4D697D7E" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "a" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010 .
+
 azon:order-ORDER-509C9D05 a azon:Comanda ;
     azon:Carrer "a" ;
     azon:Ciutat "a" ;
