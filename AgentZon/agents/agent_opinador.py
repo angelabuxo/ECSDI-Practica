@@ -28,7 +28,6 @@ from config import (
 from protocols.compra import build_confirmacio_registre_compra, parse_peticio_registre_compra
 from protocols.opinador import build_resolucio_devolucio, parse_peticio_devolucio, parse_resposta_feedback
 from services.history_service import (
-    get_latest_purchase_for_user,
     load_feedback_records,
     load_purchase_records,
     record_feedback,
@@ -97,16 +96,21 @@ def _latest_feedback_context(user_id=None):
 
 
 def _resolve_recommendation_user_id(user_id):
-    if user_id:
-        return user_id
-    purchases = load_purchase_records(PURCHASE_HISTORY_PATH)
-    return purchases[-1]["user_id"] if purchases else None
+    return user_id if user_id else None
 
 
-def _load_dashboard_stats(recommendations):
+def get_client_ip():
+    """Adreca IP del client HTTP (proxy-aware) com a identificador d'usuari."""
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.remote_addr or "unknown"
+
+
+def _load_dashboard_stats(recommendations, user_id):
     return {
-        "feedback_count": len(load_feedback_records(FEEDBACK_PATH)),
-        "purchase_count": len(load_purchase_records(PURCHASE_HISTORY_PATH)),
+        "feedback_count": len(load_feedback_records(FEEDBACK_PATH, user_id=user_id)),
+        "purchase_count": len(load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id)),
         "recommendation_count": len(recommendations),
     }
 
@@ -120,15 +124,14 @@ def _parse_recommendation_limit(raw_value):
 
 
 def _build_dashboard_context(interface_user_id, recommendation_limit, confirmation):
-    feedback_context = _build_feedback_request_context(interface_user_id or None)
-    recommendation_user_id = _resolve_recommendation_user_id(interface_user_id or (feedback_context or {}).get("user_id"))
+    feedback_context = _build_feedback_request_context(interface_user_id)
+    recommendation_user_id = _resolve_recommendation_user_id(interface_user_id)
     recommendations = pla_de_creacio_de_suggeriments(recommendation_user_id, limit=recommendation_limit)
-    recent_purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=interface_user_id or None)
-    if not recent_purchases:
-        recent_purchases = load_purchase_records(PURCHASE_HISTORY_PATH)[-5:]
-    stats = _load_dashboard_stats(recommendations)
+    recent_purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=interface_user_id)
+    stats = _load_dashboard_stats(recommendations, interface_user_id)
     return {
         "iface_path": "/iface",
+        "interface_user_id": interface_user_id,
         "show_dashboard": True,
         "confirmation": confirmation,
         "feedback_context": feedback_context,
@@ -171,8 +174,7 @@ def pla_de_registre_de_feedback(feedback_data):
 
 
 def pla_de_creacio_de_suggeriments(user_id=None, limit=5):
-    resolved_user_id = _resolve_recommendation_user_id(user_id)
-    return generate_recommendations(CATALOG_PATH, SEARCH_HISTORY_PATH, PURCHASE_HISTORY_PATH, user_id=resolved_user_id, limit=limit)
+    return generate_recommendations(CATALOG_PATH, SEARCH_HISTORY_PATH, PURCHASE_HISTORY_PATH, user_id=user_id, limit=limit)
 
 
 def pla_de_consulta_de_criteris_devolucio(request_data):
@@ -183,16 +185,39 @@ def _build_feedback_request_context(user_id=None):
     context = _latest_feedback_context(user_id=user_id)
     if context is not None:
         return context
-    purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id)
-    if purchases:
-        purchase = purchases[-1]
-        return {
-            "feedback_id": f"FB-{purchase['order_id']}",
-            "user_id": purchase["user_id"],
-            "order_id": purchase["order_id"],
-            "product_ids": purchase["product_ids"],
-        }
     return None
+
+
+def _build_feedback_submission(form_data, user_id):
+    order_id = form_data.get("order_id", "").strip()
+    purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id)
+    matching_purchase = next((purchase for purchase in purchases if purchase["order_id"] == order_id), None)
+    if matching_purchase is None:
+        return None, "No s'ha pogut registrar el feedback: la comanda indicada no pertany a la teva IP."
+
+    allowed_product_ids = set(matching_purchase["product_ids"])
+    requested_product_ids = _parse_product_ids(form_data.get("product_ids", ""))
+    if requested_product_ids:
+        filtered_product_ids = [product_id for product_id in requested_product_ids if product_id in allowed_product_ids]
+    else:
+        filtered_product_ids = sorted(allowed_product_ids)
+    if not filtered_product_ids:
+        return None, "No s'ha pogut registrar el feedback: només pots valorar productes que hagis comprat."
+
+    feedback_id = form_data.get("feedback_id", "").strip() or f"FB-{order_id}"
+    try:
+        rating = int(form_data.get("rating", "0"))
+    except ValueError:
+        return None, "No s'ha pogut registrar el feedback: puntuacio no valida."
+    rating = max(1, min(5, rating))
+    return {
+        "feedback_id": feedback_id,
+        "user_id": user_id,
+        "order_id": order_id,
+        "rating": rating,
+        "comment": form_data.get("comment", "").strip(),
+        "product_ids": sorted(set(filtered_product_ids)),
+    }, ""
 
 
 def _build_feedback_confirmation(feedback_data):
@@ -270,29 +295,25 @@ def comm():
 def iface():
     view = request.values.get("view", "home").strip().lower()
     confirmation = request.args.get("confirmation", "")
-    interface_user_id = request.values.get("user_id", "").strip()
+    interface_user_id = get_client_ip()
     recommendation_limit = _parse_recommendation_limit(request.values.get("limit", 5))
 
     if request.method == "POST" and request.form.get("action") == "feedback":
-        feedback_data = {
-            "feedback_id": request.form["feedback_id"].strip(),
-            "user_id": request.form["user_id"].strip(),
-            "order_id": request.form["order_id"].strip(),
-            "rating": int(request.form["rating"]),
-            "comment": request.form.get("comment", "").strip(),
-            "product_ids": _parse_product_ids(request.form.get("product_ids", "")),
-        }
-        pla_de_registre_de_feedback(feedback_data)
-        confirmation = _build_feedback_confirmation(feedback_data)
-        interface_user_id = feedback_data["user_id"]
+        feedback_data, error = _build_feedback_submission(request.form, interface_user_id)
+        if feedback_data is not None:
+            pla_de_registre_de_feedback(feedback_data)
+            confirmation = _build_feedback_confirmation(feedback_data)
+        elif error:
+            confirmation = error
         view = "dashboard"
 
     if view != "dashboard":
         return render_template(
             "opinador.html",
             iface_path="/iface",
+            interface_user_id=interface_user_id,
             show_dashboard=False,
-            stats=_load_dashboard_stats([]),
+            stats=_load_dashboard_stats([], interface_user_id),
         )
 
     return render_template("opinador.html", **_build_dashboard_context(interface_user_id, recommendation_limit, confirmation))

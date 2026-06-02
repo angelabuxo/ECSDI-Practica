@@ -20,7 +20,7 @@ def generate_recommendations(catalog_path, search_history_path, purchase_history
     category_counter = Counter(product["category"] for product in purchased_products if product.get("category"))
     brand_counter = Counter(product["brand"] for product in purchased_products if product.get("brand"))
 
-    search_records = load_search_records(search_history_path)
+    search_records = load_search_records(search_history_path, user_id=user_id)
     searched_categories = Counter(
         record["criteria"]["category"] for record in search_records if record["criteria"]["category"]
     )
@@ -98,12 +98,9 @@ def evaluate_return_request(catalog_path, purchase_history_path, request_data):
 
 
 def get_feedback_context(purchase_history_path, user_id=None):
-    if user_id:
-        purchase = get_latest_purchase_for_user(purchase_history_path, user_id)
-        if purchase is not None:
-            return purchase
-    purchases = load_purchase_records(purchase_history_path)
-    return purchases[-1] if purchases else None
+    if not user_id:
+        return None
+    return get_latest_purchase_for_user(purchase_history_path, user_id)
 
 
 def _build_return_decision(request_data, accepted, reason):

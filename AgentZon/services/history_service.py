@@ -9,13 +9,15 @@ from services.rdf_store import load_graph, save_graph
 
 
 # Search history -------------------------------------------------------------------
-def record_search(path, criteria, products):
+def record_search(path, criteria, products, user_id=None):
     graph = load_graph(path)
     bind_namespaces(graph)
     record = AZON[f"search-{len(graph)}"]
     graph.add((record, AZON.TextConsulta, Literal(criteria.get("text", ""))))
     graph.add((record, AZON.CategoriaConsulta, Literal(criteria.get("category", ""))))
     graph.add((record, AZON.MarcaConsulta, Literal(criteria.get("brand", ""))))
+    if user_id:
+        graph.add((record, AZON.IdUsuari, Literal(user_id)))
     if criteria.get("min_price") is not None:
         graph.add((record, AZON.PreuMinim, Literal(criteria["min_price"])))
     if criteria.get("max_price") is not None:
@@ -26,10 +28,13 @@ def record_search(path, criteria, products):
     save_graph(path, graph)
 
 
-def load_search_records(path):
+def load_search_records(path, user_id=None):
     graph = load_graph(path)
     records = []
     for record in set(graph.subjects(AZON.TextConsulta, None)) | set(graph.subjects(AZON.TotalResultats, None)):
+        record_user_id = str(graph.value(record, AZON.IdUsuari) or "")
+        if user_id is not None and record_user_id != user_id:
+            continue
         product_ids = []
         for product_node in graph.objects(record, AZON.MostraProducte):
             product_id = graph.value(product_node, AZON.IdProducte)
@@ -39,6 +44,7 @@ def load_search_records(path):
         records.append(
             {
                 "search_id": str(record).rsplit("search-", 1)[-1],
+                "user_id": record_user_id,
                 "criteria": {
                     "text": str(graph.value(record, AZON.TextConsulta) or ""),
                     "category": str(graph.value(record, AZON.CategoriaConsulta) or ""),
@@ -117,10 +123,13 @@ def record_feedback(path, feedback):
     save_graph(path, graph)
 
 
-def load_feedback_records(path):
+def load_feedback_records(path, user_id=None):
     graph = load_graph(path)
     records = []
     for node in set(graph.subjects(RDF.type, AZON.Feedback)):
+        record_user_id = str(graph.value(node, AZON.IdUsuari) or "")
+        if user_id is not None and record_user_id != user_id:
+            continue
         product_ids = []
         for product_node in graph.objects(node, AZON.SobreProducte):
             product_id = graph.value(product_node, AZON.IdProducte)
@@ -130,7 +139,7 @@ def load_feedback_records(path):
         records.append(
             {
                 "feedback_id": str(graph.value(node, AZON.IdFeedback) or ""),
-                "user_id": str(graph.value(node, AZON.IdUsuari) or ""),
+                "user_id": record_user_id,
                 "order_id": str(graph.value(node, AZON.IdComanda) or ""),
                 "rating": int(graph.value(node, AZON.Puntuacio) or 0),
                 "comment": str(graph.value(node, AZON.Comentari) or ""),

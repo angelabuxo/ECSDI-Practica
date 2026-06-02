@@ -82,13 +82,20 @@ def resolve_opinador_agent():
 def pla_de_cerca(criteria):
     logger.info("Executant cerca amb criteris: %s", criteria)
     products = search_products(CATALOG_PATH, criteria)
-    record_search(SEARCH_HISTORY_PATH, criteria, products)
     logger.info("La cerca ha retornat %d productes", len(products))
     return products
 
 
 def purchase_error_message():
     return request.args.get("purchase_error", "")
+
+
+def get_client_ip():
+    """Adreca IP del client HTTP (proxy-aware) com a identificador d'usuari."""
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.remote_addr or "unknown"
 
 
 def pla_de_presentacio(criteria, products, purchase_error=""):
@@ -145,6 +152,7 @@ def iface():
     )
     criteria = parse_peticio_cerca(request_graph, content)
     products = pla_de_cerca(criteria)
+    record_search(SEARCH_HISTORY_PATH, criteria, products, user_id=get_client_ip())
     return pla_de_presentacio(criteria, products)
 
 

@@ -13,6 +13,9 @@
     dels productes comprats.
   </p>
   <p>
+    Identificació activa per IP: <strong>{{ interface_user_id }}</strong>
+  </p>
+  <p>
     <strong>Estat ràpid</strong>: {{ stats.feedback_count }} feedback registrats,
     {{ stats.purchase_count }} compres a l'historial.
   </p>
@@ -29,6 +32,8 @@
   <p><strong>{{ confirmation }}</strong></p>
   {% endif %}
 
+  <p>Identificació activa per IP: <strong>{{ interface_user_id }}</strong></p>
+
   <h2>Demanar feedback</h2>
   {% if feedback_context %}
   <p>Usuari: <strong>{{ feedback_context.user_id }}</strong></p>
@@ -39,7 +44,6 @@
     <input type="hidden" name="view" value="dashboard">
     <input type="hidden" name="action" value="feedback">
     <label>Feedback ID <input type="text" name="feedback_id" value="{{ feedback_context.feedback_id if feedback_context else '' }}" required></label>
-    <label>Usuari ID <input type="text" name="user_id" value="{{ feedback_context.user_id if feedback_context else '' }}" required></label>
     <label>Comanda ID <input type="text" name="order_id" value="{{ feedback_context.order_id if feedback_context else '' }}" required></label>
     <label>Puntuació
       <select name="rating" required>
@@ -63,7 +67,6 @@
   {% endif %}
   <form method="get" action="{{ iface_path }}">
     <input type="hidden" name="view" value="dashboard">
-    <label>Usuari ID <input type="text" name="user_id" value="{{ recommendation_context.user_id if recommendation_context else '' }}" placeholder="Opcional"></label>
     <label>Nombre de suggeriments <input type="number" min="1" max="10" name="limit" value="{{ recommendation_limit }}"></label>
     <button type="submit">Actualitzar suggeriments</button>
   </form>
