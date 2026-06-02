@@ -39,7 +39,7 @@ Els agents que tenim ara mateix:
 | **Cercador** | 9001 | Cerca productes al catàleg segons restriccions; mostra la interfície web |
 | **Compra** | 9002 | Orquestra una comanda de principi a fi (l'agent "director d'orquestra") |
 | **Centre Logístic** | 9003 / 9007 / 9008 | Agrupa productes en lots, negocia amb transportistes, demana el cobrament |
-| **Opinador** | 9004 | Registra l'historial de compres completades |
+| **Opinador** | 9004 | Registra compres, gestiona feedback, genera suggeriments i avalua devolucions |
 | **Cobrador** | 9005 | Gestiona els diners: cobra l'usuari, paga venedors externs, devolucions |
 | **Proveïdor de Pagament** | 9006 | El "banc" extern que confirma els pagaments |
 | **Transportista** | 9010 (ràpid) / 9011 (econòmic) | Agents **externs** que ofereixen preu i data d'entrega |
@@ -380,7 +380,7 @@ l'ontologia i als fitxers `pagaments.ttl`/`devolucions.ttl`**.
 | `agent_transportista.py` | `/comm`, `/iface`, `/Stop` | `generar_oferta_transport` (agent **extern**) |
 | `agent_cobrador.py` | `/comm`, `/iface`, `/Stop` | `pla_cobrament_intern`, `pla_cobrament_extern`, `pla_registrar_dades_usuari/venedor`, `pla_retornar_diners` |
 | `agent_proveidor_de_pagament.py` | `/comm`, `/iface`, `/Stop` | `processar_pagament` (el "banc" extern) |
-| `agent_opinador.py` | `/comm`, `/iface`, `/Stop` | `pla_registre_de_compra` |
+| `agent_opinador.py` | `/comm`, `/iface`, `/Stop` | `pla_de_registre_de_compra`, `pla_de_registre_de_feedback`, `pla_de_creacio_de_suggeriments`, `pla_de_consulta_de_criteris_devolucio` |
 
 ### `protocols/` — com es construeix/parseja cada missatge (la capa de missatge)
 

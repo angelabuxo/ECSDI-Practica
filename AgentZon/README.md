@@ -93,6 +93,7 @@ Substitueix `.venv/bin/python` per `../.venv/bin/python` si el virtualenv està 
 ```bash
 .venv/bin/python -m agents.agent_opinador --host 127.0.0.1 --port 9004 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
+.\.venv\Scripts\Activate.ps1
 
 **5. Transportista ràpid**
 
