@@ -45,9 +45,9 @@ function Start-AgentWindow {
 
 $agents = @(
     @{ Title = "Agent Directory"; Module = "agents.agent_directory"; Args = @("--host", $HostAddress, "--port", "9000") },
-    @{ Title = "Agent Proveidor de Pagament"; Module = "agents.agent_proveidor_de_pagament"; Args = @("--host", $HostAddress, "--port", "9006", "--directory-host", $HostAddress, "--directory-port", "9000") },
     @{ Title = "Agent Cobrador"; Module = "agents.agent_cobrador"; Args = @("--host", $HostAddress, "--port", "9005", "--directory-host", $HostAddress, "--directory-port", "9000", "--data-dir", "data") },
     @{ Title = "Agent Opinador"; Module = "agents.agent_opinador"; Args = @("--host", $HostAddress, "--port", "9004", "--directory-host", $HostAddress, "--directory-port", "9000", "--data-dir", "data") },
+    @{ Title = "Agent Retornador"; Module = "agents.agent_retornador"; Args = @("--host", $HostAddress, "--port", "9009", "--directory-host", $HostAddress, "--directory-port", "9000", "--data-dir", "data") },
     @{ Title = "Transportista Fast"; Module = "agents.agent_transportista"; Args = @("--host", $HostAddress, "--port", "9010", "--transport-id", "fast", "--price-per-kg", "8.0", "--delivery-days", "1") },
     @{ Title = "Transportista Economy"; Module = "agents.agent_transportista"; Args = @("--host", $HostAddress, "--port", "9011", "--transport-id", "economy", "--price-per-kg", "4.0", "--delivery-days", "3") },
     @{ Title = "Centre Logistic BCN"; Module = "agents.agent_centre_logistic"; Args = @("--host", $HostAddress, "--port", "9003", "--centre-id", "CL-BCN", "--centre-city", "Barcelona", "--directory-host", $HostAddress, "--directory-port", "9000", "--transport-fast-host", $HostAddress, "--transport-fast-port", "9010", "--transport-economy-host", $HostAddress, "--transport-economy-port", "9011", "--data-dir", "data") },

@@ -6,7 +6,9 @@
 </head>
 <body>
   <h1>AgentZon Opinador</h1>
-
+  {% if compra_url %}
+  <p><a href="{{ compra_url }}"><button type="button">Enrere</button></a></p>
+  {% endif %}
   {% if not show_dashboard %}
   <p>
     Aquest espai de l'agent Opinador permet gestionar suggeriments i registrar feedback

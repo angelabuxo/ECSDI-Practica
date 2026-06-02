@@ -2,7 +2,6 @@
 
 import argparse
 from pathlib import Path
-from rdflib import URIRef
 
 from flask import Flask, render_template, request
 from rdflib import Graph, RDF
@@ -45,7 +44,6 @@ MESSAGE_SENDER = send_message
 CATALOG_PATH = None
 SEARCH_HISTORY_PATH = None
 COUNTER = 0
-RETORNADOR_AGENT_TYPE = URIRef("http://www.semanticweb.org/directory-service-ontology#RetornadorAgent")
 
 
 # Runtime configuration ------------------------------------------------------------
@@ -87,7 +85,22 @@ def resolve_opinador_agent():
 
 def resolve_retornador_agent():
     """Resol l'Agent Retornador via servei de directori."""
-    return resolve_agent_via_directory(AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, next_counter, RETORNADOR_AGENT_TYPE)
+    return resolve_agent_via_directory(AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, next_counter, DSO.RetornadorAgent)
+
+
+def resolve_retornador_iface_url():
+    """URL de la interfície del Retornador (directori o port per defecte)."""
+    try:
+        retornador_agent = resolve_retornador_agent()
+        return replace_url_path(retornador_agent.address, "/iface")
+    except Exception:
+        host = request.host.split(":")[0] if request.host else "127.0.0.1"
+        fallback = f"http://{host}:{DEFAULT_PORTS['retornador']}/iface"
+        logger.warning(
+            "No s'ha pogut resoldre l'agent Retornador via directori; s'utilitza %s",
+            fallback,
+        )
+        return fallback
 
 
 def pla_de_cerca(criteria):
@@ -113,17 +126,12 @@ def pla_de_presentacio(criteria, products, purchase_error=""):
     compra_agent = resolve_compra_agent()
     compra_url = replace_url_path(compra_agent.address, "/iface")
     opinador_url = ""
-    retornador_url = ""
+    retornador_url = resolve_retornador_iface_url()
     try:
         opinador_agent = resolve_opinador_agent()
         opinador_url = replace_url_path(opinador_agent.address, "/iface")
     except Exception:
         logger.warning("No s'ha pogut resoldre l'agent Opinador per a la interfície")
-    try:
-        retornador_agent = resolve_retornador_agent()
-        retornador_url = replace_url_path(retornador_agent.address, "/iface")
-    except Exception:
-        logger.warning("No s'ha pogut resoldre l'agent Retornador per a la interfície")
     return render_template(
         "cercador.html",
         criteria=criteria,
@@ -142,17 +150,12 @@ def iface():
     """Interfície web del Cercador: formulari i resultats."""
     if request.method == "GET":
         opinador_url = ""
-        retornador_url = ""
+        retornador_url = resolve_retornador_iface_url()
         try:
             opinador_agent = resolve_opinador_agent()
             opinador_url = replace_url_path(opinador_agent.address, "/iface")
         except Exception:
             logger.warning("No s'ha pogut resoldre l'agent Opinador per a la interfície")
-        try:
-            retornador_agent = resolve_retornador_agent()
-            retornador_url = replace_url_path(retornador_agent.address, "/iface")
-        except Exception:
-            logger.warning("No s'ha pogut resoldre l'agent Retornador per a la interfície")
         return render_template(
             "cercador.html",
             criteria=default_criteria(),

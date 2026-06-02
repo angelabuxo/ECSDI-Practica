@@ -34,7 +34,6 @@ DEFAULT_PORTS = {
     "opinador": 9004,
     "cobrador": 9005,
     "retornador": 9009,
-    "proveidor_pagament": 9006,
     "transport_fast": 9010,
     "transport_economy": 9011,
 }

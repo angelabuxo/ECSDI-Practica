@@ -64,7 +64,7 @@ Variables opcionals: `HOST`, `DELAY_SECONDS`, `OPEN_BROWSER=0` (per no obrir el 
 Obre **una terminal per agent** i executa les comandes següents des de `AgentZon/`. **L'ordre importa**:
 
 1. Directory  
-2. Proveïdor de Pagament i Cobrador  
+2. Cobrador  
 3. Opinador, Retornador i transportistes  
 4. Centres Logístics, Compra i Cercador (aquest últim, el que exposa la UI)
 
@@ -76,43 +76,37 @@ Substitueix `.venv/bin/python` per `../.venv/bin/python` si el virtualenv està 
 .venv/bin/python -m agents.agent_directory --host 127.0.0.1 --port 9000
 ```
 
-**2. Agent Proveïdor de Pagament**
-
-```bash
-.venv/bin/python -m agents.agent_proveidor_de_pagament --host 127.0.0.1 --port 9006 --directory-host 127.0.0.1 --directory-port 9000
-```
-
-**3. Agent Cobrador**
+**2. Agent Cobrador**
 
 ```bash
 .venv/bin/python -m agents.agent_cobrador --host 127.0.0.1 --port 9005 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
-**4. Agent Opinador**
+**3. Agent Opinador**
 
 ```bash
 .venv/bin/python -m agents.agent_opinador --host 127.0.0.1 --port 9004 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
-**5. Agent Retornador**
+**4. Agent Retornador**
 
 ```bash
 .venv/bin/python -m agents.agent_retornador --host 127.0.0.1 --port 9009 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
-**6. Transportista ràpid**
+**5. Transportista ràpid**
 
 ```bash
 .venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9010 --directory-host 127.0.0.1 --directory-port 9000 --transport-id fast --price-per-kg 8.0 --delivery-days 1
 ```
 
-**7. Transportista econòmic**
+**6. Transportista econòmic**
 
 ```bash
 .venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9011 --directory-host 127.0.0.1 --directory-port 9000 --transport-id economy --price-per-kg 4.0 --delivery-days 3
 ```
 
-**8–10. Agents Centre Logístic (BCN, Girona, Tarragona)**
+**7–9. Agents Centre Logístic (BCN, Girona, Tarragona)**
 
 ```bash
 .venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9003 --centre-id CL-BCN --centre-city Barcelona --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
@@ -126,13 +120,13 @@ Substitueix `.venv/bin/python` per `../.venv/bin/python` si el virtualenv està 
 .venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9008 --centre-id CL-TGN --centre-city Tarragona --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
-**11. Agent Compra**
+**10. Agent Compra**
 
 ```bash
 .venv/bin/python -m agents.agent_compra --host 127.0.0.1 --port 9002 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
-**12. Agent Cercador**
+**11. Agent Cercador**
 
 ```bash
 .venv/bin/python -m agents.agent_cercador --host 127.0.0.1 --port 9001 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
@@ -147,7 +141,7 @@ Quan tots els agents estiguin en marxa, obre:
 Endpoints principals:
 
 - `DirectoryAgent`: `/Register`, `/Info`, `/Stop`
-- `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `RetornadorAgent`, `Transportista`, `CobradorAgent`, `ProveidorPagamentAgent`: `/comm`, `/iface`, `/Stop`
+- `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `RetornadorAgent`, `Transportista`, `CobradorAgent`: `/comm`, `/iface`, `/Stop`
 
 Per forçar la negociació dels lots oberts amb entrega imminent:
 

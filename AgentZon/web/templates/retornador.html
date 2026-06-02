@@ -7,7 +7,7 @@
 <body>
   <h1>AgentZon Retornador</h1>
   {% if compra_url %}
-  <p><a href="{{ compra_url }}"><button type="button">Obrir compres</button></a></p>
+  <p><a href="{{ compra_url }}"><button type="button">Enrere</button></a></p>
   {% endif %}
 
   <p>Identificació activa per IP: <strong>{{ interface_user_id }}</strong></p>
@@ -18,7 +18,7 @@
 
   <form method="post" action="{{ iface_path or '/iface' }}">
     <p>
-      <label>Selecciona un o més productes comprats:<br>
+      <label>Selecciona un o més productes comprats (poden ser de comandes diferents):<br>
         <select name="selected_products" multiple size="8" required>
           {% for product in purchased_products %}
           {% set value = product.order_id ~ "::" ~ product.product_id %}
@@ -31,11 +31,17 @@
         </select>
       </label>
     </p>
-    <p>
-      <label>Motiu de la devolució:<br>
-        <textarea name="reason" rows="4" cols="50" placeholder="Explica breument el motiu">{{ reason or '' }}</textarea>
-      </label>
-    </p>
+    <fieldset>
+      <legend>Motiu de la devolució</legend>
+      {% for option in return_reason_options %}
+      <p>
+        <label>
+          <input type="radio" name="reason" value="{{ option }}" {% if reason == option %}checked{% endif %} required>
+          {{ option }}
+        </label>
+      </p>
+      {% endfor %}
+    </fieldset>
     {% if purchased_products %}
     <button type="submit">Demanar devolució</button>
     {% else %}
@@ -46,10 +52,29 @@
   {% if decision %}
   <h2>Resolució de devolució</h2>
   <p><strong>Id devolució:</strong> {{ decision.return_id }}</p>
-  <p><strong>Comanda:</strong> {{ decision.order_id }}</p>
-  <p><strong>Acceptada:</strong> {{ "Sí" if decision.accepted else "No" }}</p>
-  <p><strong>Import:</strong> {{ decision.amount }} €</p>
-  <p><strong>Detalls:</strong> {{ decision.reason }}</p>
+  {% if decision.accepted %}
+  <p><strong>Import reemborsat:</strong> {{ decision.amount }} €</p>
+  <p>{{ decision.reason }}</p>
+  {% if decision.accepted_items %}
+  <h3>Productes acceptats</h3>
+  <ul>
+    {% for item in decision.accepted_items %}
+    <li>{{ item.product_id }} — Comanda {{ item.order_id }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if decision.rejected_items %}
+  <h3>Productes no acceptats</h3>
+  <p>Ho sentim, no es compleixen les condicions per retornar el producte:</p>
+  <ul>
+    {% for item in decision.rejected_items %}
+    <li>{{ item.product_id }} — Comanda {{ item.order_id }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% else %}
+  <p><strong>{{ decision.reason }}</strong></p>
+  {% endif %}
   {% endif %}
 </body>
 </html>

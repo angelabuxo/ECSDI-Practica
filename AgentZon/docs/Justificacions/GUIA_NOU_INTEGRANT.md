@@ -40,8 +40,7 @@ Els agents que tenim ara mateix:
 | **Compra** | 9002 | Orquestra una comanda de principi a fi (l'agent "director d'orquestra") |
 | **Centre Logístic** | 9003 / 9007 / 9008 | Agrupa productes en lots, negocia amb transportistes, demana el cobrament |
 | **Opinador** | 9004 | Registra compres, gestiona feedback, genera suggeriments i avalua devolucions |
-| **Cobrador** | 9005 | Gestiona els diners: cobra l'usuari, paga venedors externs, devolucions |
-| **Proveïdor de Pagament** | 9006 | El "banc" extern que confirma els pagaments |
+| **Cobrador** | 9005 | Confirma automàticament cobraments, pagaments a venedors i devolucions (protocol ACL mantingut) |
 | **Transportista** | 9010 (ràpid) / 9011 (econòmic) | Agents **externs** que ofereixen preu i data d'entrega |
 
 **Idea clau:** la gràcia de la pràctica és que això funcioni de manera **realment distribuïda**
@@ -223,7 +222,7 @@ Tot passa pel **Directory Service**, exactament com a l'exemple
 Fem servir una ontologia auxiliar, la **DSO** (Directory Service Ontology), definida a
 [`AgentUtil/DSO.py`](AgentUtil/DSO.py). Conté els termes `Register`, `Search`, `AgentType`,
 `Uri`, `Address`… i el **tipus de cada agent nostre** (`CercadorAgent`, `CompraAgent`,
-`CentreLogisticAgent`, `CobradorAgent`, `ProveidorPagamentAgent`, `OpinadorAgent`).
+`CentreLogisticAgent`, `CobradorAgent`, `OpinadorAgent`).
 
 ### 5.1 Registre (en arrencar)
 
@@ -350,8 +349,9 @@ les distingíem. Ara sí: la propietat **`azon:SentitPagament`** marca cada `Pag
 - **`PAGAMENT`** → diners **sortints**: la botiga **paga** un venedor extern, o **retorna** diners
   a l'usuari (devolució).
 
-Així, encara que tots dos passin pel mateix Cobrador i el mateix Proveïdor, queden **distingits a
-l'ontologia i als fitxers `pagaments.ttl`/`devolucions.ttl`**.
+Així, encara que tots dos passin pel mateix Cobrador, queden **distingits a l'ontologia i als fitxers
+`pagaments.ttl`/`devolucions.ttl`**. El Cobrador **no delega** en cap banc extern: respon sempre amb
+confirmació (`PAGAT` o `RETORNAT`) i registra el moviment als `.ttl` corresponents.
 
 ---
 
@@ -378,8 +378,7 @@ l'ontologia i als fitxers `pagaments.ttl`/`devolucions.ttl`**.
 | `agent_compra.py` | `/comm`, `/iface`, `/Stop` | `pla_demanar_informacio_usuari`, `pla_registrar_dades_d_usuari`, `pla_producte_als_nostres_magatzems`, `pla_informar_usuari_sobre_l_enviament`, `pla_delegar_registre_compra`, `pla_cobrament_extern`… |
 | `agent_centre_logistic.py` | `/comm`, `/iface`, `/Stop` | `pla_assignar_producte_a_lot`, `pla_cerca_de_transportista`, `pla_de_transportista_escollit`, `pla_producte_sha_enviat` |
 | `agent_transportista.py` | `/comm`, `/iface`, `/Stop` | `generar_oferta_transport` (agent **extern**) |
-| `agent_cobrador.py` | `/comm`, `/iface`, `/Stop` | `pla_cobrament_intern`, `pla_cobrament_extern`, `pla_registrar_dades_usuari/venedor`, `pla_retornar_diners` |
-| `agent_proveidor_de_pagament.py` | `/comm`, `/iface`, `/Stop` | `processar_pagament` (el "banc" extern) |
+| `agent_cobrador.py` | `/comm`, `/iface`, `/Stop` | `pla_cobrament_intern`, `pla_cobrament_extern`, `pla_registrar_dades_usuari/venedor`, `pla_retornar_diners` (confirmació automàtica) |
 | `agent_opinador.py` | `/comm`, `/iface`, `/Stop` | `pla_de_registre_de_compra`, `pla_de_registre_de_feedback`, `pla_de_creacio_de_suggeriments`, `pla_de_consulta_de_criteris_devolucio` |
 
 ### `protocols/` — com es construeix/parseja cada missatge (la capa de missatge)
@@ -454,8 +453,7 @@ flowchart TD
     T2 -->|RespostaOfertaTransport| CL
     CL -->|EleccioTransportista| Tx[Transportista escollit]
     CL -->|cobrament intern: ConfirmacioEnviament| COB[Cobrador]
-    COB -->|PeticioPagament COBRAMENT| PROV[Proveïdor de Pagament]
-    PROV -->|ConfirmacioPagament| COB
+    COB -->|ConfirmacioPagament PAGAT| CL
     CL -->|ConfirmacioEnviament amb factura| C
     C -->|shipping_summary.html| U
 ```
@@ -476,11 +474,12 @@ Punts a destacar (i per què eviten penalitzacions):
 ### 9.3 Pagament (les dues direccions)
 
 - **Cobrament intern (`COBRAMENT`)**: quan el Centre Logístic ha enviat el producte, dispara un
-  cobrament al Cobrador → el Cobrador demana l'operació al Proveïdor (banc) → es registra a
+  cobrament al Cobrador → el Cobrador respon `ConfirmacioPagament` amb estat `PAGAT` i registra a
   `pagaments.ttl` amb `SentitPagament = COBRAMENT`.
 - **Cobrament extern (`PAGAMENT`)**: per a productes de venedors externs, l'agent Compra demana al
-  Cobrador que **pagui el venedor** → `SentitPagament = PAGAMENT`.
-- **Devolució (`PAGAMENT`)**: el Cobrador retorna diners i ho registra a `devolucions.ttl`.
+  Cobrador que **pagui el venedor** → confirmació automàtica amb `SentitPagament = PAGAMENT`.
+- **Devolució (`PAGAMENT`)**: el Retornador demana `PeticioRetornDiners` → el Cobrador confirma
+  `RETORNAT` i ho registra a `devolucions.ttl`.
 
 ---
 
@@ -507,8 +506,8 @@ cd AgentZon
 ```
 
 **Opció B (manual):** obre una terminal per agent i executa cada comanda de la secció 3 del
-[`README.md`](README.md). **L'ordre importa**: primer el Directory, després Proveïdor i Cobrador,
-després Opinador i Transportistes, i finalment Centres Logístics, Compra i Cercador.
+[`README.md`](README.md). **L'ordre importa**: primer el Directory, després Cobrador, després
+Opinador i Transportistes, i finalment Centres Logístics, Compra i Cercador.
 
 Quan tot estigui en marxa, obre: `http://127.0.0.1:9001/iface`.
 

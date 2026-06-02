@@ -1,6 +1,7 @@
-"""Agent cobrador: cobraments, transferències a venedors i devolucions."""
+"""Agent cobrador: accepta peticions de pagament i devolució amb confirmació automàtica."""
 
 import argparse
+from datetime import date
 from pathlib import Path
 from uuid import uuid4
 
@@ -24,15 +25,12 @@ from config import (
     resolve_runtime_hostname,
     serve_agent,
 )
-from services.agent_common_service import resolve_agent_via_directory
 from protocols.pagament import (
     SENTIT_COBRAMENT,
     SENTIT_PAGAMENT,
     build_confirmacio_pagament,
     build_confirmacio_registre_dades,
     build_confirmacio_retorn_diners,
-    build_peticio_pagament,
-    extract_confirmacio_pagament,
     parse_peticio_cobrament_intern,
     parse_peticio_pagament,
     parse_peticio_registre_dades_usuari,
@@ -41,8 +39,6 @@ from protocols.pagament import (
 )
 from services.catalog_service import get_products_by_ids
 from services.payment_service import (
-    read_seller_bank_data,
-    read_user_bank_data,
     record_payment,
     record_refund,
     save_seller_bank_data,
@@ -53,6 +49,9 @@ from services.rdf_store import load_graph
 
 app = Flask(__name__)
 logger = config_logger(level=1)
+
+OK_PAYMENT_STATUS = "PAGAT"
+OK_REFUND_STATUS = "RETORNAT"
 
 # Agent attributes -----------------------------------------------------------------
 AGENT = None
@@ -91,32 +90,9 @@ def next_counter():
     return current
 
 
-def _shipment_scope_texts(shipment):
-    product_ids = shipment.get("product_ids", [])
-    lot_id = shipment.get("lot_id")
-    if len(product_ids) == 1:
-        base = f"producte {product_ids[0]}"
-        return (
-            f"al {base} del lot {lot_id}" if lot_id else f"al {base}",
-            f"per {('al ' + base + ' del lot ' + lot_id) if lot_id else ('al ' + base)}",
-        )
-    elif product_ids:
-        base = "productes {}".format(", ".join(product_ids))
-        return (
-            f"als {base} del lot {lot_id}" if lot_id else f"als {base}",
-            f"per {('als ' + base + ' del lot ' + lot_id) if lot_id else ('als ' + base)}",
-        )
-    else:
-        if lot_id:
-            return (f"al lot {lot_id}", f"per al lot {lot_id}")
-        order_id = shipment["order_id"]
-        return (f"a la comanda {order_id}", f"per a la comanda {order_id}")
-
-
-# Agent logic ----------------------------------------------------------------------
-def resolve_agent(agent_type):
-    """Resol un agent (p. ex. Proveïdor de Pagament) via directori."""
-    return resolve_agent_via_directory(AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, next_counter, agent_type)
+def _payment_date():
+    """Data de confirmació per als missatges de pagament."""
+    return date.today().isoformat()
 
 
 def calcular_import(product_ids):
@@ -125,27 +101,27 @@ def calcular_import(product_ids):
     return round(sum(product.get("price", 0.0) for product in products), 2)
 
 
-def pagar_via_proveidor(payment):
-    """Delega l'operació econòmica al Proveïdor de Pagament extern."""
-    proveidor = resolve_agent(DSO.ProveidorPagamentAgent)
+def _confirm_payment(payment, sender, request_content):
+    """Registra el pagament i construeix la confirmació ACL."""
+    record_payment(PAYMENTS_PATH, payment)
     logger.info(
-        "Enviant l'accio de cobrar %s (%.2f EUR) al proveidor de pagament %s",
+        "Pagament acceptat automaticament %s (comanda %s, %.2f EUR)",
         payment["payment_id"],
+        payment["order_id"],
         payment["amount"],
-        proveidor.name,
     )
-    message = build_peticio_pagament(
+    return build_confirmacio_pagament(
         payment,
         sender=AGENT.uri,
-        receiver=proveidor.uri,
+        receiver=sender,
+        request_content=request_content,
         msgcnt=next_counter(),
     )
-    return extract_confirmacio_pagament(MESSAGE_SENDER(message, proveidor.address))
 
 
 # Capacitat: Guardar dades bancaries -----------------------------------------------
 def pla_registrar_dades_usuari(message_graph, content, sender):
-    """Pla de registre de dades bancàries d'usuari."""
+    """Pla de registre de dades bancàries d'usuari (confirmació automàtica)."""
     request_data = parse_peticio_registre_dades_usuari(message_graph, content)
     logger.info("Registrant dades bancaries de l'usuari %s", request_data["user_id"])
     save_user_bank_data(
@@ -165,7 +141,7 @@ def pla_registrar_dades_usuari(message_graph, content, sender):
 
 
 def pla_registrar_dades_venedor(message_graph, content, sender):
-    """Pla de registre de dades bancàries de venedor extern."""
+    """Pla de registre de dades bancàries de venedor extern (confirmació automàtica)."""
     request_data = parse_peticio_registre_dades_venedor(message_graph, content)
     logger.info("Registrant dades bancaries del venedor extern %s", request_data["seller_id"])
     save_seller_bank_data(SELLER_BANK_PATH, request_data["seller_id"], request_data["bank_data"])
@@ -181,11 +157,14 @@ def pla_registrar_dades_venedor(message_graph, content, sender):
 
 # Capacitat: Cobrar compra ---------------------------------------------------------
 def pla_cobrament_intern(message_graph, content, sender):
-    """Pla de cobrament intern després de confirmació d'enviament."""
+    """Pla de cobrament intern: sempre confirma amb estat PAGAT."""
     shipment = parse_peticio_cobrament_intern(message_graph, content)
-    scope_target, scope_per = _shipment_scope_texts(shipment)
-    bank = read_user_bank_data(USER_BANK_PATH, shipment["user_id"])
-    payment_method = bank["payment_method"] if bank and bank["payment_method"] else "targeta"
+    logger.info(
+        "Processant cobrament intern comanda %s lot %s (%d producte(s))",
+        shipment["order_id"],
+        shipment["lot_id"],
+        len(shipment["product_ids"]),
+    )
     products = get_products_by_ids(CATALOG_PATH, shipment["product_ids"])
     products_subtotal = calcular_import(shipment["product_ids"])
     amount = round(products_subtotal + shipment["transport_cost"], 2)
@@ -193,42 +172,21 @@ def pla_cobrament_intern(message_graph, content, sender):
         "payment_id": f"PAY-{uuid4().hex[:8].upper()}",
         "order_id": shipment["order_id"],
         "amount": amount,
-        "method": payment_method,
+        "method": "targeta",
         "sentit": SENTIT_COBRAMENT,
         "user_id": shipment["user_id"],
         "product_ids": shipment["product_ids"],
         "products": products,
         "transport_cost": shipment["transport_cost"],
         "products_subtotal": products_subtotal,
+        "status": OK_PAYMENT_STATUS,
+        "date": _payment_date(),
     }
-    logger.info(
-        "Iniciant cobrament intern %s a l'usuari %s (%.2f EUR)",
-        scope_target,
-        payment["user_id"],
-        payment["amount"],
-    )
-    confirmation = pagar_via_proveidor(payment)
-    payment["status"] = confirmation["status"]
-    payment["date"] = confirmation["date"]
-    record_payment(PAYMENTS_PATH, payment)
-    logger.info(
-        "Factura emesa a l'usuari %s %s (pagament %s, %.2f EUR)",
-        payment["user_id"],
-        scope_per,
-        payment["payment_id"],
-        payment["amount"],
-    )
-    return build_confirmacio_pagament(
-        payment,
-        sender=AGENT.uri,
-        receiver=sender,
-        request_content=content,
-        msgcnt=next_counter(),
-    )
+    return _confirm_payment(payment, sender, content)
 
 
 def pla_cobrament_extern(message_graph, content, sender):
-    """Pla de cobrament/transferència externa per productes de venedor."""
+    """Pla de cobrament/transferència externa: sempre confirma amb estat PAGAT."""
     request_data = parse_peticio_pagament(message_graph, content)
     payment = {
         "payment_id": request_data["payment_id"] or f"PAY-{uuid4().hex[:8].upper()}",
@@ -239,58 +197,21 @@ def pla_cobrament_extern(message_graph, content, sender):
         "user_id": request_data.get("user_id"),
         "seller_id": request_data.get("seller_id"),
         "product_ids": request_data.get("product_ids", []),
+        "status": OK_PAYMENT_STATUS,
+        "date": _payment_date(),
     }
     logger.info(
-        "Cobrament extern de la comanda %s, transferint %.2f EUR al venedor %s",
+        "Cobrament extern acceptat automaticament (comanda %s, %.2f EUR)",
         payment["order_id"],
         payment["amount"],
-        payment["seller_id"],
     )
-    confirmation = pagar_via_proveidor(payment)
-    payment["status"] = confirmation["status"]
-    payment["date"] = confirmation["date"]
-    record_payment(PAYMENTS_PATH, payment)
-    return build_confirmacio_pagament(
-        payment,
-        sender=AGENT.uri,
-        receiver=sender,
-        request_content=content,
-        msgcnt=next_counter(),
-    )
+    return _confirm_payment(payment, sender, content)
 
 
 # Capacitat: Gestionar Devolucions -------------------------------------------------
 def pla_retornar_diners(message_graph, content, sender):
-    """Pla de reemborsament de devolució (usuari o venedor extern)."""
+    """Pla de reemborsament: sempre confirma amb estat RETORNAT."""
     request_data = parse_peticio_retorn_diners(message_graph, content)
-    is_external = bool(request_data.get("seller_id"))
-    if is_external:
-        bank = read_seller_bank_data(SELLER_BANK_PATH, request_data["seller_id"])
-        logger.info(
-            "Devolucio %s d'un producte extern: llegint dades del venedor %s",
-            request_data["return_id"],
-            request_data["seller_id"],
-        )
-    else:
-        bank = read_user_bank_data(USER_BANK_PATH, request_data["user_id"])
-        logger.info(
-            "Devolucio %s: llegint dades bancaries de l'usuari %s",
-            request_data["return_id"],
-            request_data["user_id"],
-        )
-    if bank is None:
-        logger.warning("No s'han trobat dades bancaries per a la devolucio %s", request_data["return_id"])
-    payment = {
-        "payment_id": f"REFUND-{request_data['return_id']}",
-        "order_id": request_data["order_id"],
-        "amount": request_data["amount"],
-        "method": "transferencia",
-        "sentit": SENTIT_PAGAMENT,
-        "user_id": request_data["user_id"],
-        "seller_id": request_data.get("seller_id"),
-        "product_ids": request_data.get("product_ids", []),
-    }
-    pagar_via_proveidor(payment)
     refund = {
         "return_id": request_data["return_id"],
         "order_id": request_data["order_id"],
@@ -299,10 +220,14 @@ def pla_retornar_diners(message_graph, content, sender):
         "reason": request_data.get("reason", ""),
         "seller_id": request_data.get("seller_id"),
         "product_ids": request_data.get("product_ids", []),
-        "status": "RETORNAT",
+        "status": OK_REFUND_STATUS,
     }
     record_refund(REFUNDS_PATH, refund)
-    logger.info("Devolucio %s completada (%.2f EUR retornats)", refund["return_id"], refund["amount"])
+    logger.info(
+        "Devolucio acceptada automaticament %s (%.2f EUR)",
+        refund["return_id"],
+        refund["amount"],
+    )
     return build_confirmacio_retorn_diners(
         refund,
         sender=AGENT.uri,
@@ -338,6 +263,7 @@ def comm():
         ).serialize(format="xml")
     content = properties["content"]
     action = message_graph.value(content, RDF.type)
+    logger.info("Cobrador /comm rep peticio %s des de %s", action, properties.get("sender"))
     plan = PLANS.get(action)
     if plan is None:
         logger.warning("CobradorAgent ha rebut una accio no suportada a /comm: %s", action)

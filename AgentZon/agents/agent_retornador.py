@@ -10,7 +10,7 @@ import argparse
 from pathlib import Path
 
 from flask import Flask, render_template, request
-from rdflib import Graph, RDF, URIRef
+from rdflib import Graph, RDF
 
 from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties, send_message
@@ -47,6 +47,8 @@ from services.agent_common_service import (
 )
 from services.payment_service import record_refund
 from services.retornador_service import (
+    RETURN_REASON_OPTIONS,
+    build_aggregate_return_decision,
     build_purchased_products_for_user,
     build_refund_batches,
     build_return_request_from_selection,
@@ -55,8 +57,6 @@ from services.retornador_service import (
 
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 logger = config_logger(level=1)
-
-RETORNADOR_AGENT_TYPE = URIRef("http://www.semanticweb.org/directory-service-ontology#RetornadorAgent")
 
 # Agent attributes -----------------------------------------------------------------
 AGENT = None
@@ -112,76 +112,140 @@ def resolve_agent(agent_type):
 
 
 # Plans ----------------------------------------------------------------------------
-def pla_compliment_de_devolucio(return_request):
-    """Valida devolució amb Opinador i executa reemborsament si s'accepta."""
-    logger.info(
-        "Iniciant validacio devolucio %s (comanda %s)",
-        return_request.get("return_id", ""),
-        return_request.get("order_id", ""),
-    )
-    opinador = resolve_agent(DSO.OpinadorAgent)
-    opinion_message = build_peticio_devolucio(
-        {
-            "return_id": return_request["return_id"],
-            "order_id": return_request["order_id"],
-            "user_id": return_request["user_id"],
-            "amount": return_request.get("amount"),
-            "reason": return_request.get("reason", ""),
-            "seller_id": return_request.get("seller_id"),
-            "products": [{"product_id": product_id} for product_id in return_request.get("product_ids", [])],
+def _normalize_return_request(return_request):
+    """Unifica peticions UI (multi-comanda) i ACL (una comanda)."""
+    if return_request.get("order_groups"):
+        return return_request
+    return {
+        "return_id": return_request["return_id"],
+        "user_id": return_request["user_id"],
+        "reason": return_request.get("reason", ""),
+        "order_groups": {
+            return_request["order_id"]: sorted(set(return_request.get("product_ids", []))),
         },
-        sender=AGENT.uri,
-        receiver=opinador.uri,
-        msgcnt=next_counter(),
-    )
-    decision_graph = MESSAGE_SENDER(opinion_message, opinador.address)
-    decision = parse_resolucio_devolucio(decision_graph)
-    decision["seller_id"] = return_request.get("seller_id")
+    }
+
+
+def _consult_opinador_per_order(return_request):
+    """Demana a l'Opinador la validació de cada comanda per separat."""
+    opinador = resolve_agent(DSO.OpinadorAgent)
+    order_decisions = {}
+    for order_id, product_ids in return_request["order_groups"].items():
+        logger.info(
+            "Consultant Opinador per comanda %s (%d producte(s))",
+            order_id,
+            len(product_ids),
+        )
+        opinion_message = build_peticio_devolucio(
+            {
+                "return_id": f"{return_request['return_id']}-{order_id}",
+                "order_id": order_id,
+                "user_id": return_request["user_id"],
+                "amount": None,
+                "reason": return_request.get("reason", ""),
+                "seller_id": None,
+                "products": [{"product_id": product_id} for product_id in product_ids],
+            },
+            sender=AGENT.uri,
+            receiver=opinador.uri,
+            msgcnt=next_counter(),
+        )
+        decision_graph = MESSAGE_SENDER(opinion_message, opinador.address)
+        decision = parse_resolucio_devolucio(decision_graph)
+        decision["requested_product_ids"] = product_ids
+        if decision.get("accepted"):
+            decision["accepted_product_ids"] = decision.get("product_ids", [])
+        else:
+            decision["accepted_product_ids"] = []
+        order_decisions[order_id] = decision
+        logger.info(
+            "Comanda %s: %d producte(s) acceptat(s) de %d",
+            order_id,
+            len(decision["accepted_product_ids"]),
+            len(product_ids),
+        )
+    return order_decisions
+
+
+def pla_compliment_de_devolucio(return_request):
+    """Valida devolució amb Opinador (per comanda) i reemborsa productes acceptats."""
+    normalized = _normalize_return_request(return_request)
+    parent_return_id = normalized["return_id"]
     logger.info(
-        "Decisio devolucio %s rebuda d'Opinador: %s",
-        decision.get("return_id", ""),
-        "ACCEPTADA" if decision.get("accepted") else "DENEGADA",
+        "Iniciant validacio devolucio %s (%d comandes)",
+        parent_return_id,
+        len(normalized["order_groups"]),
     )
-    if not decision.get("accepted", False):
-        return decision, None
-    refund_batches = build_refund_batches(decision, SHIPPING_RESPONSIBILITY_PATH, CATALOG_PATH)
+
+    order_decisions = _consult_opinador_per_order(normalized)
+    aggregate = build_aggregate_return_decision(
+        parent_return_id,
+        normalized["user_id"],
+        normalized.get("reason", ""),
+        order_decisions,
+        CATALOG_PATH,
+    )
+    if not aggregate.get("accepted"):
+        return aggregate, None
+
     refund_confirmations = []
-    for index, batch in enumerate(refund_batches, start=1):
-        batch_decision = {
-            **decision,
-            "return_id": decision["return_id"] if len(refund_batches) == 1 else f"{decision['return_id']}-{index}",
-            "seller_id": batch["seller_id"],
-            "product_ids": batch["product_ids"],
-            "amount": batch["amount"],
+    batch_index = 0
+    for order_id in sorted(normalized["order_groups"]):
+        accepted_ids = order_decisions[order_id].get("accepted_product_ids", [])
+        if not accepted_ids:
+            continue
+        sub_decision = {
+            "return_id": parent_return_id,
+            "order_id": order_id,
+            "user_id": normalized["user_id"],
+            "reason": normalized.get("reason", ""),
+            "product_ids": accepted_ids,
+            "seller_id": None,
         }
-        refund_confirmations.append(pla_retorn(batch_decision))
+        for batch in build_refund_batches(sub_decision, SHIPPING_RESPONSIBILITY_PATH, CATALOG_PATH):
+            batch_index += 1
+            batch_decision = {
+                **sub_decision,
+                "return_id": (
+                    parent_return_id
+                    if batch_index == 1 and len(normalized["order_groups"]) == 1
+                    else f"{parent_return_id}-{batch_index}"
+                ),
+                "seller_id": batch["seller_id"],
+                "product_ids": batch["product_ids"],
+                "amount": batch["amount"],
+            }
+            refund_confirmations.append(pla_retorn(batch_decision))
 
     total_refund_amount = round(sum(refund["amount"] for refund in refund_confirmations), 2)
-    global_status = "RETORNAT" if all(refund["status"] == "RETORNAT" for refund in refund_confirmations) else "PARCIAL"
+    global_status = "RETORNAT" if refund_confirmations and all(
+        refund["status"] == "RETORNAT" for refund in refund_confirmations
+    ) else "PARCIAL"
     record_refund(
         REFUNDS_PATH,
         {
-            "return_id": decision["return_id"],
-            "order_id": decision["order_id"],
-            "user_id": decision["user_id"],
+            "return_id": parent_return_id,
+            "order_id": aggregate.get("order_id", ""),
+            "user_id": normalized["user_id"],
             "amount": total_refund_amount,
-            "reason": decision.get("reason", ""),
-            "seller_id": decision.get("seller_id"),
-            "product_ids": decision.get("product_ids", []),
+            "reason": normalized.get("reason", ""),
+            "seller_id": None,
+            "product_ids": aggregate.get("product_ids", []),
             "status": global_status,
         },
     )
-    decision["amount"] = total_refund_amount
-    decision["reason"] = (
-        f"{decision.get('reason', '')} Reemborsament {global_status} "
-        f"de {total_refund_amount:.2f} EUR."
-    ).strip()
+    aggregate["amount"] = total_refund_amount
+    if total_refund_amount > 0:
+        aggregate["reason"] = (
+            f"{aggregate['reason']} Reemborsament {global_status} de {total_refund_amount:.2f} EUR."
+        ).strip()
     logger.info(
-        "Devolucio %s completada i registrada amb estat %s",
-        decision.get("return_id", ""),
-        global_status,
+        "Devolucio %s completada (%d productes acceptats, %.2f EUR)",
+        parent_return_id,
+        len(aggregate.get("accepted_items", [])),
+        total_refund_amount,
     )
-    return decision, {"amount": total_refund_amount, "status": global_status}
+    return aggregate, {"amount": total_refund_amount, "status": global_status}
 
 
 def pla_retorn(decision):
@@ -246,6 +310,7 @@ def iface():
             purchased_products=purchased_products,
             selected_products=[],
             reason="",
+            return_reason_options=RETURN_REASON_OPTIONS,
             decision=None,
             error="",
         )
@@ -273,6 +338,7 @@ def iface():
             purchased_products=purchased_products,
             selected_products=selected_products,
             reason=reason,
+            return_reason_options=RETURN_REASON_OPTIONS,
             decision=None,
             error=build_error,
         )
@@ -292,6 +358,7 @@ def iface():
             purchased_products=purchased_products,
             selected_products=selected_products,
             reason=reason,
+            return_reason_options=RETURN_REASON_OPTIONS,
             decision=decision,
             error="",
         )
@@ -305,6 +372,7 @@ def iface():
             purchased_products=purchased_products,
             selected_products=selected_products,
             reason=reason,
+            return_reason_options=RETURN_REASON_OPTIONS,
             decision=None,
             error="No s'ha pogut processar la devolució ara mateix.",
         )
@@ -387,7 +455,7 @@ def main():
         app,
         hostname,
         args.port,
-        register_fn=lambda: register_with_directory(AGENT, DIRECTORY_AGENT, RETORNADOR_AGENT_TYPE, 0),
+        register_fn=lambda: register_with_directory(AGENT, DIRECTORY_AGENT, DSO.RetornadorAgent, 0),
     )
 
 

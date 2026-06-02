@@ -196,6 +196,16 @@ def parse_peticio_devolucio(graph, content):
     }
 
 
+def _amount_as_float(amount):
+    """Normalitza imports opcionals (None) a float per literals XSD."""
+    if amount is None:
+        return 0.0
+    try:
+        return float(amount)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def build_resolucio_devolucio(decision, sender=None, receiver=None, request_content=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
@@ -204,7 +214,7 @@ def build_resolucio_devolucio(decision, sender=None, receiver=None, request_cont
     graph.add((content, AZON.IdDevolucio, Literal(decision["return_id"])))
     graph.add((content, AZON.IdComanda, Literal(decision["order_id"])))
     graph.add((content, AZON.IdUsuari, Literal(decision["user_id"])))
-    graph.add((content, AZON.ImportPagament, Literal(decision["amount"], datatype=XSD.float)))
+    graph.add((content, AZON.ImportPagament, Literal(_amount_as_float(decision.get("amount")), datatype=XSD.float)))
     graph.add((content, AZON.Acceptada, Literal(bool(decision["accepted"]), datatype=XSD.boolean)))
     graph.add((content, AZON.MotiuDevolucio, Literal(decision.get("reason", ""))))
     for product_id in decision.get("product_ids", []):
@@ -236,11 +246,12 @@ def parse_resolucio_devolucio(graph, content=None):
         if product_id is None:
             product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
         product_ids.append(str(product_id))
+    amount_value = graph.value(content, AZON.ImportPagament)
     return {
         "return_id": str(graph.value(content, AZON.IdDevolucio)),
         "order_id": str(graph.value(content, AZON.IdComanda)),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
-        "amount": float(graph.value(content, AZON.ImportPagament)),
+        "amount": _amount_as_float(amount_value),
         "accepted": bool(graph.value(content, AZON.Acceptada).toPython()),
         "reason": str(graph.value(content, AZON.MotiuDevolucio) or ""),
         "product_ids": sorted(product_ids),

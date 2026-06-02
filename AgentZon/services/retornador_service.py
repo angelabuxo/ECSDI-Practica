@@ -11,12 +11,31 @@ from uuid import uuid4
 
 from rdflib import RDF
 
+# Motius de devolució (UI) i política d'acceptació (Opinador)
+RETURN_REASON_DEFECTUOUS = "Producte defectuós"
+RETURN_REASON_NOT_AS_DESCRIBED = "Producte no compleix amb la descripció"
+RETURN_REASON_WRONG_PURCHASE = "M'he equivocat en comprar-lo"
+RETURN_REASON_DISLIKED = "No m'ha agradat"
+
+RETURN_REASON_OPTIONS = [
+    RETURN_REASON_DEFECTUOUS,
+    RETURN_REASON_NOT_AS_DESCRIBED,
+    RETURN_REASON_WRONG_PURCHASE,
+    RETURN_REASON_DISLIKED,
+]
+
+RETURN_REASONS_ACCEPTED_BY_POLICY = {
+    RETURN_REASON_DEFECTUOUS,
+    RETURN_REASON_NOT_AS_DESCRIBED,
+}
+
+RETURN_REJECTION_MESSAGE = "Ho sentim, no es compleixen les condicions per retornar el producte."
+MAX_RETURN_DAYS = 15
+
 from AgentUtil.OntoNamespaces import AZON
 from services.catalog_service import get_products_by_ids
 from services.history_service import load_purchase_records
 from services.rdf_store import load_graph
-
-
 def build_purchased_products_for_user(purchase_history_path, catalog_path, user_id, logger=None):
     """Retorna els productes comprats per un usuari (IP) amb dades de catàleg."""
     purchases = load_purchase_records(purchase_history_path, user_id=user_id)
@@ -61,28 +80,95 @@ def build_return_request_from_selection(selected_values, reason, user_id, logger
     if not selections:
         return None, "Has de seleccionar almenys un producte comprat."
 
-    distinct_orders = {item["order_id"] for item in selections}
-    if len(distinct_orders) != 1:
-        return None, "Per ara només es poden retornar productes d'una mateixa comanda alhora."
+    normalized_reason = (reason or "").strip()
+    if normalized_reason not in RETURN_REASON_OPTIONS:
+        return None, "Has de seleccionar un motiu de devolució."
+
+    order_groups = {}
+    for item in selections:
+        order_groups.setdefault(item["order_id"], []).append(item["product_id"])
+    for order_id in order_groups:
+        order_groups[order_id] = sorted(set(order_groups[order_id]))
 
     request_payload = {
         "return_id": f"RET-{uuid4().hex[:8].upper()}",
-        "order_id": selections[0]["order_id"],
         "user_id": user_id,
-        "amount": None,
-        "reason": reason.strip(),
-        "seller_id": None,
-        "product_ids": sorted({item["product_id"] for item in selections}),
+        "reason": normalized_reason,
+        "order_groups": order_groups,
     }
     if logger is not None:
         logger.info(
-            "Construida peticio de devolucio %s per usuari %s (comanda %s, %d productes)",
+            "Construida peticio de devolucio %s per usuari %s (%d comandes, %d productes)",
             request_payload["return_id"],
             user_id,
-            request_payload["order_id"],
-            len(request_payload["product_ids"]),
+            len(order_groups),
+            sum(len(product_ids) for product_ids in order_groups.values()),
         )
     return request_payload, ""
+
+
+def build_aggregate_return_decision(parent_return_id, user_id, reason, order_decisions, catalog_path):
+    """Agrupa les resolucions per comanda en una resposta per a la UI."""
+    accepted_items = []
+    rejected_items = []
+    total_amount = 0.0
+
+    for order_id, decision in sorted(order_decisions.items()):
+        accepted_ids = set(decision.get("accepted_product_ids") or decision.get("product_ids") or [])
+        requested_ids = set(decision.get("requested_product_ids") or accepted_ids)
+        for product_id in sorted(requested_ids):
+            item = {"order_id": order_id, "product_id": product_id}
+            if product_id in accepted_ids:
+                accepted_items.append(item)
+            else:
+                rejected_items.append(item)
+
+    if accepted_items:
+        products = get_products_by_ids(
+            catalog_path,
+            sorted({item["product_id"] for item in accepted_items}),
+        )
+        price_by_id = {product["product_id"]: product.get("price", 0.0) for product in products}
+        total_amount = round(
+            sum(price_by_id.get(item["product_id"], 0.0) for item in accepted_items),
+            2,
+        )
+
+    if not accepted_items:
+        return {
+            "return_id": parent_return_id,
+            "order_id": ", ".join(sorted(order_decisions.keys())),
+            "user_id": user_id,
+            "amount": 0.0,
+            "reason": RETURN_REJECTION_MESSAGE,
+            "accepted": False,
+            "product_ids": [],
+            "accepted_items": [],
+            "rejected_items": rejected_items,
+            "partial": False,
+        }
+
+    partial = bool(rejected_items)
+    if partial:
+        detail = (
+            f"S'han acceptat {len(accepted_items)} producte(s) "
+            f"i n'han quedat {len(rejected_items)} fora de política."
+        )
+    else:
+        detail = "Tots els productes sol·licitats compleixen la política de devolució."
+
+    return {
+        "return_id": parent_return_id,
+        "order_id": ", ".join(sorted({item["order_id"] for item in accepted_items})),
+        "user_id": user_id,
+        "amount": total_amount,
+        "reason": detail,
+        "accepted": True,
+        "product_ids": sorted({item["product_id"] for item in accepted_items}),
+        "accepted_items": accepted_items,
+        "rejected_items": rejected_items,
+        "partial": partial,
+    }
 
 
 def _extract_product_id_from_node(graph, node):

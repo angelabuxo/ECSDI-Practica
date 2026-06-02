@@ -13,6 +13,7 @@ from protocols.opinador import build_peticio_devolucio, parse_resolucio_devoluci
 from services.bootstrap import bootstrap_phase2_data
 from services.history_service import load_feedback_records, load_purchase_records
 from services.opinador_service import generate_recommendations
+from services.retornador_service import RETURN_REASON_DEFECTUOUS, RETURN_REJECTION_MESSAGE
 
 
 class OpinadorFlowTests(unittest.TestCase):
@@ -122,13 +123,13 @@ class OpinadorFlowTests(unittest.TestCase):
                     "feedback_id": "FB-1",
                     "order_id": "ORDER-1",
                     "rating": "5",
-                    "product_ids": purchased_product["product_id"],
+                    "product_id": purchased_product["product_id"],
                     "comment": "Bon servei",
                 },
                 environ_base={"REMOTE_ADDR": client_ip},
             )
             html = feedback_response.get_data(as_text=True)
-            self.assertIn("Feedback FB-1 registrat correctament", html)
+            self.assertIn("Feedback registrat correctament", html)
 
             feedback_records = load_feedback_records(data_dir / "feedback.ttl")
             self.assertEqual(len(feedback_records), 1)
@@ -139,9 +140,9 @@ class OpinadorFlowTests(unittest.TestCase):
                 {
                     "return_id": "RET-1",
                     "order_id": "ORDER-1",
-                    "user_id": "USER-1",
+                    "user_id": client_ip,
                     "amount": purchased_product["price"],
-                    "reason": "No satisfà",
+                    "reason": RETURN_REASON_DEFECTUOUS,
                     "products": [{"product_id": purchased_product["product_id"]}],
                 },
                 sender=opinador.uri,
@@ -154,6 +155,29 @@ class OpinadorFlowTests(unittest.TestCase):
             decision = parse_resolucio_devolucio(return_graph)
             self.assertTrue(decision["accepted"])
             self.assertEqual(decision["return_id"], "RET-1")
+
+            rejected_message = build_peticio_devolucio(
+                {
+                    "return_id": "RET-2",
+                    "order_id": "ORDER-1",
+                    "user_id": client_ip,
+                    "amount": purchased_product["price"],
+                    "reason": "No m'ha agradat",
+                    "products": [{"product_id": purchased_product["product_id"]}],
+                },
+                sender=opinador.uri,
+                receiver=opinador.uri,
+                msgcnt=3,
+            )
+            rejected_response = client.get(
+                "/comm",
+                query_string={"content": rejected_message.serialize(format="xml")},
+            )
+            rejected_graph = Graph()
+            rejected_graph.parse(data=rejected_response.get_data(as_text=True), format="xml")
+            rejected_decision = parse_resolucio_devolucio(rejected_graph)
+            self.assertFalse(rejected_decision["accepted"])
+            self.assertEqual(rejected_decision["reason"], RETURN_REJECTION_MESSAGE)
 
     def test_opinador_dashboard_and_feedback_are_scoped_by_client_ip(self):
         from agents import agent_opinador
