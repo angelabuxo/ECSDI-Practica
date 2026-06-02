@@ -34,31 +34,52 @@
 
   <p>Identificació activa per IP: <strong>{{ interface_user_id }}</strong></p>
 
-  <h2>Demanar feedback</h2>
+  <h2>Demanar feedback per Producte</h2>
   {% if feedback_context %}
   <p>Usuari: <strong>{{ feedback_context.user_id }}</strong></p>
-  <p>Comanda: <strong>{{ feedback_context.order_id }}</strong></p>
-  <p>Productes: <strong>{{ feedback_context.product_ids|join(', ') }}</strong></p>
+  <p>Última comanda detectada: <strong>{{ feedback_context.order_id }}</strong></p>
+  <p>Productes pendents de valorar: <strong>{{ feedback_context.product_ids|join(', ') }}</strong></p>
   {% endif %}
+  
   <form method="post" action="{{ iface_path }}">
     <input type="hidden" name="view" value="dashboard">
     <input type="hidden" name="action" value="feedback">
-    <label>Feedback ID <input type="text" name="feedback_id" value="{{ feedback_context.feedback_id if feedback_context else '' }}" required></label>
-    <label>Comanda ID <input type="text" name="order_id" value="{{ feedback_context.order_id if feedback_context else '' }}" required></label>
-    <label>Puntuació
-      <select name="rating" required>
-        {% for rating in range(1, 6) %}
-        <option value="{{ rating }}">{{ rating }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label>Productes (separats per comes)
-      <input type="text" name="product_ids" value="{{ feedback_context.product_ids|join(', ') if feedback_context else '' }}" required>
-    </label>
-    <label>Comentari
-      <textarea name="comment" placeholder="Descriu la teva experiència"></textarea>
-    </label>
-    <button type="submit">Registrar feedback</button>
+    
+    <p>
+      <label>Feedback ID:<br>
+        <input type="text" name="feedback_id" value="{{ feedback_context.feedback_id if feedback_context else '' }}" required>
+      </label>
+    </p>
+    
+    <p>
+      <label>Producte ID (Valoració individual):<br>
+        <input type="text" name="product_id" placeholder="Ex: prod-001" required>
+      </label>
+    </p>
+
+    <p>
+      <label>Comanda ID (Opcional, es buscarà en l'històric automàticament si es deixa en blanc):<br>
+        <input type="text" name="order_id" value="{{ feedback_context.order_id if feedback_context else '' }}">
+      </label>
+    </p>
+    
+    <p>
+      <label>Puntuació:<br>
+        <select name="rating" required>
+          {% for rating in range(1, 6) %}
+          <option value="{{ rating }}">{{ rating }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </p>
+    
+    <p>
+      <label>Comentari:<br>
+        <textarea name="comment" rows="4" cols="40" placeholder="Què n'opines d'aquest producte concret?"></textarea>
+      </label>
+    </p>
+    
+    <button type="submit">Registrar feedback del producte</button>
   </form>
 
   <h2>Crear suggeriments</h2>
