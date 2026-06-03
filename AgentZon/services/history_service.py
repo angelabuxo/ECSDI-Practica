@@ -1,6 +1,6 @@
 """Registre d'historial de cerques, compres i feedback."""
 
-from datetime import date
+from datetime import date, datetime
 
 from rdflib import Graph, Literal, RDF
 
@@ -65,7 +65,7 @@ def record_purchase(path, order):
     bind_namespaces(graph)
     record = AZON[f"purchase-{order['order_id']}"]
     order_node = AZON[f"order-{order['order_id']}"]
-    purchase_date = order.get("purchase_date") or date.today().isoformat()
+    purchase_date = order.get("purchase_date") or datetime.now().isoformat(timespec="seconds")
     graph.add((record, AZON.IdComanda, Literal(order["order_id"])))
     graph.add((record, AZON.IdUsuari, Literal(order["user_id"])))
     graph.add((record, AZON.DataCompra, Literal(purchase_date)))

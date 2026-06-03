@@ -19,3 +19,12 @@ azon:feedback-FB-P1003-ORDER-E1DB0A83 a azon:Feedback ;
     azon:Puntuacio 5 ;
     azon:SobreProducte azon:product-P1003 .
 
+azon:feedback-FB-P1028-ORDER-D8B1D572 a azon:Feedback ;
+    azon:Comentari "Apple és la millor marca tecnològica del món" ;
+    azon:DataCompra "2026-06-03" ;
+    azon:IdComanda "ORDER-D8B1D572" ;
+    azon:IdFeedback "FB-P1028-ORDER-D8B1D572" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:Puntuacio 5 ;
+    azon:SobreProducte azon:product-P1028 .
+

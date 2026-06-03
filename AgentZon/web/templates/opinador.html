@@ -6,42 +6,84 @@
 </head>
 <body>
   <h1>AgentZon Opinador</h1>
-  {% if compra_url %}
-  <p><a href="{{ compra_url }}"><button type="button">Enrere</button></a></p>
+
+  {% if cercador_url %}
+  <p><a href="{{ cercador_url }}"><button type="button">Enrere</button></a></p>
   {% endif %}
-  {% if not show_dashboard %}
+
   <p>
-    Aquest espai de l'agent Opinador permet gestionar suggeriments i registrar feedback
-    dels productes comprats.
+    Gestiona el feedback dels productes comprats.
   </p>
-  <p>
-    Identificació activa per IP: <strong>{{ interface_user_id }}</strong>
+  {% if feedback_demo_mode %}
+  <p style="color: red;">
+    <strong>Mode prova</strong>: es pot valorar passats <strong>{{ feedback_min_seconds }}</strong> segons des de la compra.
+    En producció serien <strong>{{ feedback_policy_days }}</strong> dies.
   </p>
-  <p>
-    <strong>Estat ràpid</strong>: {{ stats.feedback_count }} feedback registrats,
-    {{ stats.purchase_count }} compres a l'historial.
-  </p>
-  <form method="get" action="{{ iface_path }}">
-    <input type="hidden" name="view" value="dashboard">
-    <button type="submit">Obrir suggeriments i feedback</button>
-  </form>
   {% else %}
   <p>
-    <a href="{{ iface_path }}">Tornar a la pantalla inicial d'Opinador</a>
+    Només es pot valorar un producte passats <strong>{{ feedback_policy_days }}</strong> dies des de la compra.
+  </p>
+  {% endif %}
+
+  <p>
+    <strong>Estat</strong>: {{ stats.recommendation_count }} suggeriments,
+    {{ stats.feedback_count }} feedback registrats,
+    {{ stats.purchase_count }} compres a l'historial.
   </p>
 
   {% if confirmation %}
   <p><strong>{{ confirmation }}</strong></p>
   {% endif %}
 
-  <p>Identificació activa per IP: <strong>{{ interface_user_id }}</strong></p>
+  <h2>Suggeriments</h2>
+  <p>Recomanacions personalitzades segons el teu historial de cerques i compres.</p>
+  <form method="get" action="{{ iface_path }}">
+    <label>Nombre de suggeriments <input type="number" min="1" max="10" name="limit" value="{{ recommendation_limit }}"></label>
+    <button type="submit">Actualitzar</button>
+  </form>
+  <ul>
+    {% for product in recommendations %}
+    <li>
+      <strong>{{ product.name }}</strong>
+      <div>{{ product.product_id }} | {{ product.brand }} | {{ product.category }} | {{ product.price }} €</div>
+    </li>
+    {% else %}
+    <li>Encara no hi ha suggeriments disponibles.</li>
+    {% endfor %}
+  </ul>
 
-  <h2>Demanar feedback por Producte</h2>
-  
+  {% if feedback_requests %}
+  <h2>Sol·licituds de feedback</h2>
+  <ul>
+    {% for request in feedback_requests %}
+    <li>
+      <strong>{{ request.products[0].name if request.products else request.product_ids[0] }}</strong>
+      <div>{{ request.prompt }}</div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if waiting_products %}
+  <h2>Productes encara no valorables</h2>
+  <ul>
+    {% for product in waiting_products %}
+    <li>
+      {{ product.name }} ({{ product.brand }}) — compra {{ product.purchase_date or '—' }},
+      {% if feedback_demo_mode %}
+      falten {{ product.seconds_until_eligible }} segon(s) per poder valorar-lo (prova: {{ feedback_min_seconds }}s).
+      {% else %}
+      falten {{ product.days_until_eligible }} dia(es) per poder valorar-lo.
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <h2>Valorar un producte</h2>
   <form method="post" action="{{ iface_path }}">
-    <input type="hidden" name="view" value="dashboard">
     <input type="hidden" name="action" value="feedback">
-    
+
     <p>
       <label>Selecciona el producte a valorar:<br>
         <select name="product_id" required>
@@ -54,7 +96,7 @@
         </select>
       </label>
     </p>
-    
+
     <p>
       <label>Puntuació:<br>
         <select name="rating" required>
@@ -64,13 +106,13 @@
         </select>
       </label>
     </p>
-    
+
     <p>
       <label>Comentari:<br>
         <textarea name="comment" rows="4" cols="40" placeholder="Què n'opines d'aquest producte concret?"></textarea>
       </label>
     </p>
-    
+
     {% if pending_products %}
       <button type="submit">Registrar feedback del producte</button>
     {% else %}
@@ -78,39 +120,17 @@
     {% endif %}
   </form>
 
-  <h2>Crear suggeriments</h2>
-  {% if recommendation_context %}
-  <p>Usuari prioritzat: <strong>{{ recommendation_context.user_id }}</strong></p>
-  {% endif %}
-  <form method="get" action="{{ iface_path }}">
-    <input type="hidden" name="view" value="dashboard">
-    <label>Nombre de suggeriments <input type="number" min="1" max="10" name="limit" value="{{ recommendation_limit }}"></label>
-    <button type="submit">Actualitzar suggeriments</button>
-  </form>
-
-  <ul>
-    {% for product in recommendations %}
-    <li>
-      <strong>{{ product.name }}</strong>
-      <div>{{ product.product_id }} | {{ product.brand }} | {{ product.category }} | {{ product.price }} €</div>
-    </li>
-    {% else %}
-    <li>Encara no hi ha suggeriments disponibles.</li>
-    {% endfor %}
-  </ul>
-
   <h2>Últimes compres detectades</h2>
   <ul>
     {% for purchase in recent_purchases %}
     <li>
       <strong>{{ purchase.order_id }}</strong>
-      <div>Usuari: {{ purchase.user_id }} | Data compra: {{ purchase.purchase_date or '—' }}</div>
+      <div>Data compra: {{ purchase.purchase_date or '—' }}</div>
       <div>Productes: {{ purchase.product_ids|join(', ') }}</div>
     </li>
     {% else %}
     <li>No hi ha compres registrades encara.</li>
     {% endfor %}
   </ul>
-  {% endif %}
 </body>
 </html>

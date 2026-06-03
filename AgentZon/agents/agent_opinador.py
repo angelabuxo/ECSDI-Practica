@@ -10,6 +10,10 @@ Agent opinador AgentZon (feedback, suggeriments i devolucions).
 """
 
 import argparse
+import json
+import os
+import queue as queue_lib
+import time
 from pathlib import Path
 
 from flask import Flask, render_template, request
@@ -23,6 +27,10 @@ from AgentUtil.Logging import config_logger
 from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI
 from config import (
     DEFAULT_PORTS,
+    OPINADOR_FEEDBACK_INTERVAL_SEC,
+    OPINADOR_FEEDBACK_MIN_SECONDS,
+    OPINADOR_FEEDBACK_POLICY_DAYS,
+    OPINADOR_RECOMMENDATION_INTERVAL_SEC,
     TEMPLATE_DIR,
     add_data_dir_argument,
     add_directory_arguments,
@@ -32,18 +40,34 @@ from config import (
     register_with_directory,
     resolve_runtime_hostname,
     serve_agent,
+    _wait_for_shutdown_signal,
 )
 from protocols.compra import build_confirmacio_registre_compra, parse_peticio_registre_compra
-from protocols.opinador import build_resolucio_devolucio, parse_peticio_devolucio, parse_resposta_feedback
-from services.agent_common_service import get_client_ip_from_request
+from protocols.opinador import (
+    build_peticio_feedback,
+    build_resolucio_devolucio,
+    parse_peticio_devolucio,
+    parse_resposta_feedback,
+)
+from services.agent_common_service import (
+    get_client_ip_from_request,
+    replace_url_path,
+    resolve_agent_via_directory,
+)
 from services.history_service import (
     load_feedback_records,
     load_purchase_records,
     record_feedback,
     record_purchase,
 )
-from services.catalog_service import get_products_by_ids
-from services.opinador_service import evaluate_return_request, generate_recommendations
+from services.opinador_service import (
+    build_feedback_requests_for_user,
+    evaluate_return_request,
+    generate_recommendations,
+    get_purchases_pending_feedback,
+    is_feedback_eligible,
+    list_known_user_ids,
+)
 
 
 logger = config_logger(level=1)
@@ -58,11 +82,20 @@ CATALOG_PATH = None
 PURCHASE_HISTORY_PATH = None
 SEARCH_HISTORY_PATH = None
 FEEDBACK_PATH = None
+FEEDBACK_POLICY_DAYS = OPINADOR_FEEDBACK_POLICY_DAYS
+FEEDBACK_MIN_SECONDS = OPINADOR_FEEDBACK_MIN_SECONDS
+RECOMMENDATION_INTERVAL_SEC = OPINADOR_RECOMMENDATION_INTERVAL_SEC
+FEEDBACK_INTERVAL_SEC = OPINADOR_FEEDBACK_INTERVAL_SEC
+PROACTIVE_ENABLED = True
+PROACTIVE_RECOMMENDATION_LIMIT = 5
+PROACTIVE_STATE_PATH = None
 
 
 def configure_runtime(settings, message_sender=send_message):
     global AGENT, DirectoryAgent, MESSAGE_SENDER, CATALOG_PATH
     global PURCHASE_HISTORY_PATH, SEARCH_HISTORY_PATH, FEEDBACK_PATH, mss_cnt
+    global FEEDBACK_POLICY_DAYS, FEEDBACK_MIN_SECONDS, RECOMMENDATION_INTERVAL_SEC, FEEDBACK_INTERVAL_SEC
+    global PROACTIVE_ENABLED, PROACTIVE_RECOMMENDATION_LIMIT, PROACTIVE_STATE_PATH
     AGENT = settings["agent"]
     DirectoryAgent = settings.get("directory_agent")
     MESSAGE_SENDER = message_sender
@@ -71,7 +104,21 @@ def configure_runtime(settings, message_sender=send_message):
     PURCHASE_HISTORY_PATH = data_dir / "historial_compres.ttl"
     SEARCH_HISTORY_PATH = data_dir / "historial_cerques.ttl"
     FEEDBACK_PATH = data_dir / "feedback.ttl"
+    PROACTIVE_STATE_PATH = data_dir / "proactive_state.json"
+    FEEDBACK_POLICY_DAYS = settings.get("feedback_policy_days", OPINADOR_FEEDBACK_POLICY_DAYS)
+    if "feedback_min_seconds" in settings:
+        FEEDBACK_MIN_SECONDS = settings["feedback_min_seconds"]
+    else:
+        FEEDBACK_MIN_SECONDS = OPINADOR_FEEDBACK_MIN_SECONDS
+    RECOMMENDATION_INTERVAL_SEC = settings.get(
+        "recommendation_interval_sec",
+        OPINADOR_RECOMMENDATION_INTERVAL_SEC,
+    )
+    FEEDBACK_INTERVAL_SEC = settings.get("feedback_interval_sec", OPINADOR_FEEDBACK_INTERVAL_SEC)
+    PROACTIVE_ENABLED = settings.get("proactive_enabled", True)
+    PROACTIVE_RECOMMENDATION_LIMIT = settings.get("proactive_recommendation_limit", 5)
     mss_cnt = 0
+    _reset_proactive_state()
 
 
 def _msgcnt():
@@ -85,56 +132,137 @@ def get_client_ip():
     return get_client_ip_from_request(request)
 
 
-def _load_dashboard_stats(recommendations, user_id):
-    return {
-        "feedback_count": len(load_feedback_records(FEEDBACK_PATH, user_id=user_id)),
-        "purchase_count": len(load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id)),
-        "recommendation_count": len(recommendations),
-    }
+def _feedback_eligibility_kwargs():
+    if FEEDBACK_MIN_SECONDS is not None:
+        return {"min_seconds": FEEDBACK_MIN_SECONDS, "min_days": 0}
+    return {"min_days": FEEDBACK_POLICY_DAYS, "min_seconds": None}
 
 
 def _parse_recommendation_limit(raw_value):
     try:
         parsed = int(raw_value)
     except (TypeError, ValueError):
-        return 5
+        return PROACTIVE_RECOMMENDATION_LIMIT
     return max(1, min(10, parsed))
 
 
+def resolve_cercador_iface_url():
+    try:
+        cercador_agent = resolve_agent_via_directory(
+            AGENT,
+            DirectoryAgent,
+            MESSAGE_SENDER,
+            _msgcnt,
+            DSO.CercadorAgent,
+        )
+        return replace_url_path(cercador_agent.address, "/iface")
+    except Exception as exc:
+        logger.warning("No s'ha pogut resoldre Cercador per a la interficie: %s", exc)
+        return ""
+
+
+def _empty_proactive_state():
+    return {
+        "recommendations": {},
+        "feedback_requests": {},
+        "last_recommendation_run": None,
+        "last_feedback_run": None,
+    }
+
+
+def _read_proactive_state():
+    if PROACTIVE_STATE_PATH is None or not PROACTIVE_STATE_PATH.exists():
+        return _empty_proactive_state()
+    try:
+        return json.loads(PROACTIVE_STATE_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("No s'ha pogut llegir l'estat proactiu: %s", exc)
+        return _empty_proactive_state()
+
+
+def _write_proactive_state(state):
+    if PROACTIVE_STATE_PATH is None:
+        return
+    temp_path = PROACTIVE_STATE_PATH.with_suffix(".json.tmp")
+    temp_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+    temp_path.replace(PROACTIVE_STATE_PATH)
+
+
+def _reset_proactive_state():
+    if PROACTIVE_STATE_PATH is not None and PROACTIVE_STATE_PATH.exists():
+        PROACTIVE_STATE_PATH.unlink(missing_ok=True)
+    tmp_path = PROACTIVE_STATE_PATH.with_suffix(".json.tmp") if PROACTIVE_STATE_PATH else None
+    if tmp_path is not None:
+        tmp_path.unlink(missing_ok=True)
+
+
 def _get_pending_products(user_id):
-    purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id)
-    feedbacks = load_feedback_records(FEEDBACK_PATH, user_id=user_id)
-    reviewed_product_ids = {pid for fb in feedbacks for pid in fb.get("product_ids", [])}
-    purchased_product_ids = {pid for p in purchases for pid in p.get("product_ids", [])}
-    pending_ids = list(purchased_product_ids - reviewed_product_ids)
-    if not pending_ids:
-        return []
-    return get_products_by_ids(CATALOG_PATH, pending_ids)
+    pending = get_purchases_pending_feedback(
+        PURCHASE_HISTORY_PATH,
+        FEEDBACK_PATH,
+        CATALOG_PATH,
+        user_id,
+        **_feedback_eligibility_kwargs(),
+    )
+    return pending["eligible_products"]
 
 
-def _build_dashboard_context(interface_user_id, recommendation_limit, confirmation):
-    recommendations = pla_de_creacio_de_suggeriments(interface_user_id, limit=recommendation_limit)
+def _get_proactive_recommendations(user_id, limit):
+    cached = _read_proactive_state()["recommendations"].get(user_id, [])
+    if cached:
+        return cached[:limit]
+    return pla_de_creacio_de_suggeriments(user_id, limit=limit)
+
+
+def _get_proactive_feedback_requests(user_id):
+    return list(_read_proactive_state()["feedback_requests"].get(user_id, []))
+
+
+def _build_iface_context(interface_user_id, confirmation="", recommendation_limit=None):
+    limit = recommendation_limit or PROACTIVE_RECOMMENDATION_LIMIT
+    recommendations = _get_proactive_recommendations(interface_user_id, limit)
     recent_purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=interface_user_id)
-    stats = _load_dashboard_stats(recommendations, interface_user_id)
-    pending_products = _get_pending_products(interface_user_id)
+    pending_state = get_purchases_pending_feedback(
+        PURCHASE_HISTORY_PATH,
+        FEEDBACK_PATH,
+        CATALOG_PATH,
+        interface_user_id,
+        **_feedback_eligibility_kwargs(),
+    )
+    pending_products = pending_state["eligible_products"]
+    waiting_products = pending_state["waiting_products"]
+    feedback_requests = _get_proactive_feedback_requests(interface_user_id)
     logger.info(
-        "Dashboard Opinador per %s: %d recomanacions, %d compres recents, %d productes pendents",
+        "Interficie Opinador per %s: %d suggeriments, %d compres recents, "
+        "%d productes valorables, %d encara en espera",
         interface_user_id,
         len(recommendations),
         len(recent_purchases),
         len(pending_products),
+        len(waiting_products),
     )
     return {
         "iface_path": "/iface",
-        "interface_user_id": interface_user_id,
-        "show_dashboard": True,
+        "cercador_url": resolve_cercador_iface_url(),
         "confirmation": confirmation,
-        "pending_products": pending_products,
-        "recommendation_context": {"user_id": interface_user_id} if interface_user_id else None,
-        "recommendation_limit": recommendation_limit,
         "recommendations": recommendations,
+        "recommendation_limit": limit,
+        "pending_products": pending_products,
+        "waiting_products": waiting_products,
+        "feedback_requests": feedback_requests,
+        "feedback_policy_days": FEEDBACK_POLICY_DAYS,
+        "feedback_min_seconds": FEEDBACK_MIN_SECONDS,
+        "feedback_demo_mode": FEEDBACK_MIN_SECONDS is not None,
         "recent_purchases": recent_purchases[-5:],
-        "stats": stats,
+        "stats": {
+            "feedback_count": len(load_feedback_records(FEEDBACK_PATH, user_id=interface_user_id)),
+            "purchase_count": len(recent_purchases),
+            "recommendation_count": len(recommendations),
+        },
+        "proactive_last_recommendation_run": _read_proactive_state()["last_recommendation_run"],
+        "proactive_last_feedback_run": _read_proactive_state()["last_feedback_run"],
+        "recommendation_interval": RECOMMENDATION_INTERVAL_SEC,
+        "feedback_interval": FEEDBACK_INTERVAL_SEC,
     }
 
 
@@ -184,6 +312,115 @@ def pla_de_creacio_de_suggeriments(user_id=None, limit=5):
     return recommendations
 
 
+def pla_de_demanar_feedback(user_id=None):
+    if not user_id:
+        return []
+
+    feedback_requests = build_feedback_requests_for_user(
+        PURCHASE_HISTORY_PATH,
+        FEEDBACK_PATH,
+        CATALOG_PATH,
+        user_id,
+        **_feedback_eligibility_kwargs(),
+    )
+    for feedback_request in feedback_requests:
+        message = build_peticio_feedback(
+            feedback_request,
+            sender=AGENT.uri if AGENT is not None else None,
+            receiver=AZON[f"usuari-{feedback_request['user_id'].replace('.', '-')}"],
+            msgcnt=_msgcnt(),
+        )
+        logger.info(
+            "Pla demanar feedback: sol·licitud %s per usuari %s (comanda %s, %d productes)",
+            feedback_request["feedback_id"],
+            feedback_request["user_id"],
+            feedback_request["order_id"],
+            len(feedback_request.get("products", [])),
+        )
+        print(
+            "INFO AgenteOpinador => PeticioFeedback proactiva %s\n%s"
+            % (feedback_request["feedback_id"], message.serialize(format="xml")[:240])
+        )
+
+    return feedback_requests
+
+
+def _run_proactive_recommendation_cycle():
+    user_ids = list_known_user_ids(PURCHASE_HISTORY_PATH, SEARCH_HISTORY_PATH)
+    generated = {}
+    for user_id in user_ids:
+        generated[user_id] = pla_de_creacio_de_suggeriments(
+            user_id,
+            limit=PROACTIVE_RECOMMENDATION_LIMIT,
+        )
+    state = _read_proactive_state()
+    state["recommendations"] = generated
+    state["last_recommendation_run"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    _write_proactive_state(state)
+    logger.info(
+        "Cicle proactiu de recomanacions completat per a %d usuaris",
+        len(generated),
+    )
+
+
+def _run_proactive_feedback_cycle():
+    user_ids = list_known_user_ids(PURCHASE_HISTORY_PATH, SEARCH_HISTORY_PATH)
+    feedback_by_user = {}
+    for user_id in user_ids:
+        feedback_by_user[user_id] = pla_de_demanar_feedback(user_id)
+    state = _read_proactive_state()
+    state["feedback_requests"] = feedback_by_user
+    state["last_feedback_run"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    _write_proactive_state(state)
+    logger.info(
+        "Cicle proactiu de feedback completat per a %d usuaris",
+        len(user_ids),
+    )
+
+
+def _run_proactive_scheduler_loop(queue):
+    """Bucle proactiu dins del Process concurrent (patro SimplePersonalAgent + cua d'aturada)."""
+    try:
+        _run_proactive_recommendation_cycle()
+        _run_proactive_feedback_cycle()
+    except Exception as exc:
+        logger.exception("Error al primer cicle proactiu de l'Opinador: %s", exc)
+
+    next_recommendation = time.monotonic() + RECOMMENDATION_INTERVAL_SEC
+    next_feedback = time.monotonic() + FEEDBACK_INTERVAL_SEC
+    while True:
+        try:
+            if queue.get(timeout=1.0) == 0:
+                return
+        except queue_lib.Empty:
+            if os.getppid() == 1:
+                return
+
+        now = time.monotonic()
+        if now >= next_recommendation:
+            try:
+                _run_proactive_recommendation_cycle()
+            except Exception as exc:
+                logger.exception("Error al cicle proactiu de recomanacions: %s", exc)
+            next_recommendation = now + RECOMMENDATION_INTERVAL_SEC
+        if now >= next_feedback:
+            try:
+                _run_proactive_feedback_cycle()
+            except Exception as exc:
+                logger.exception("Error al cicle proactiu de feedback: %s", exc)
+            next_feedback = now + FEEDBACK_INTERVAL_SEC
+
+
+def _opinador_agent_behaviour(queue, register_fn):
+    """Comportament concurrent: registre al directori + plans proactius periòdics."""
+    if register_fn is not None:
+        register_fn()
+    if not PROACTIVE_ENABLED:
+        _wait_for_shutdown_signal(queue)
+        return
+    _run_proactive_scheduler_loop(queue)
+
+
 def pla_de_consulta_de_criteris_devolucio(request_data):
     logger.info(
         "Validant devolucio %s de la comanda %s (%d productes)",
@@ -212,6 +449,35 @@ def _build_feedback_submission(form_data, user_id):
         return None, "No s'ha pogut verificar la compra d'aquest producte."
 
     associated_order = matching_purchases[-1]
+    if not is_feedback_eligible(
+        associated_order.get("purchase_date", ""),
+        **_feedback_eligibility_kwargs(),
+    ):
+        pending = get_purchases_pending_feedback(
+            PURCHASE_HISTORY_PATH,
+            FEEDBACK_PATH,
+            CATALOG_PATH,
+            user_id,
+            **_feedback_eligibility_kwargs(),
+        )
+        waiting = next(
+            (item for item in pending["waiting_products"] if item["product_id"] == requested_product_id),
+            None,
+        )
+        if FEEDBACK_MIN_SECONDS is not None:
+            seconds_until = waiting["seconds_until_eligible"] if waiting else FEEDBACK_MIN_SECONDS
+            return (
+                None,
+                f"Encara no pots valorar aquest producte. Cal esperar {seconds_until} segon(s) més "
+                f"(mode prova: {FEEDBACK_MIN_SECONDS}s; en producció: {FEEDBACK_POLICY_DAYS} dies).",
+            )
+        days_until = waiting["days_until_eligible"] if waiting else FEEDBACK_POLICY_DAYS
+        return (
+            None,
+            f"Encara no pots valorar aquest producte. Cal esperar {days_until} dia(es) més "
+            f"(mínim {FEEDBACK_POLICY_DAYS} dies des de la compra).",
+        )
+
     order_id = associated_order["order_id"]
     logger.info(
         "Feedback UI: producte %s associat a comanda %s per usuari %s",
@@ -334,10 +600,9 @@ def browser_iface():
     """
     Permet la comunicacio amb l'agent via un navegador.
     """
-    view = request.values.get("view", "home").strip().lower()
     confirmation = request.args.get("confirmation", "")
     interface_user_id = get_client_ip()
-    recommendation_limit = _parse_recommendation_limit(request.values.get("limit", 5))
+    recommendation_limit = _parse_recommendation_limit(request.values.get("limit"))
 
     if request.method == "POST" and request.form.get("action") == "feedback":
         print("INFO AgenteOpinador => POST feedback de %s" % interface_user_id)
@@ -347,18 +612,11 @@ def browser_iface():
             confirmation = "Feedback registrat correctament per al producte seleccionat!"
         elif error:
             confirmation = error
-        view = "dashboard"
 
-    if view != "dashboard":
-        return render_template(
-            "opinador.html",
-            iface_path="/iface",
-            interface_user_id=interface_user_id,
-            show_dashboard=False,
-            stats=_load_dashboard_stats([], interface_user_id),
-        )
-
-    return render_template("opinador.html", **_build_dashboard_context(interface_user_id, recommendation_limit, confirmation))
+    return render_template(
+        "opinador.html",
+        **_build_iface_context(interface_user_id, confirmation, recommendation_limit),
+    )
 
 
 @app.route("/Stop")
@@ -372,6 +630,30 @@ if __name__ == "__main__":
     add_runtime_arguments(parser, DEFAULT_PORTS["opinador"])
     add_directory_arguments(parser)
     add_data_dir_argument(parser)
+    parser.add_argument(
+        "--feedback-policy-days",
+        type=int,
+        default=OPINADOR_FEEDBACK_POLICY_DAYS,
+        help="Dies de la política real (es mostra a la interficie).",
+    )
+    parser.add_argument(
+        "--feedback-min-seconds",
+        type=int,
+        default=OPINADOR_FEEDBACK_MIN_SECONDS,
+        help="Segons mínims abans de permetre valorar (mode prova; 0 = desactivat, usa dies).",
+    )
+    parser.add_argument(
+        "--recommendation-interval",
+        type=int,
+        default=OPINADOR_RECOMMENDATION_INTERVAL_SEC,
+        help="Segons entre cicles proactius de recomanació.",
+    )
+    parser.add_argument(
+        "--feedback-interval",
+        type=int,
+        default=OPINADOR_FEEDBACK_INTERVAL_SEC,
+        help="Segons entre cicles proactius de sol·licitud de feedback.",
+    )
     args = parser.parse_args()
     hostname = resolve_runtime_hostname(args)
 
@@ -380,6 +662,10 @@ if __name__ == "__main__":
             "agent": build_agent("OpinadorAgent", "Opinador", args.port, host=hostname),
             "directory_agent": build_directory_agent(args.directory_host, args.directory_port),
             "data_dir": Path(args.data_dir),
+            "feedback_policy_days": args.feedback_policy_days,
+            "feedback_min_seconds": args.feedback_min_seconds or None,
+            "recommendation_interval_sec": args.recommendation_interval,
+            "feedback_interval_sec": args.feedback_interval,
         }
     )
     logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
@@ -392,4 +678,5 @@ if __name__ == "__main__":
             if DirectoryAgent is not None
             else False
         ),
+        behaviour_fn=_opinador_agent_behaviour,
     )

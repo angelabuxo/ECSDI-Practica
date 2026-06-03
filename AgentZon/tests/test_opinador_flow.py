@@ -2,6 +2,7 @@
 
 import tempfile
 import unittest
+from datetime import date, timedelta
 from pathlib import Path
 
 from rdflib import Graph, Namespace, RDF
@@ -11,9 +12,24 @@ from AgentUtil.OntoNamespaces import AZON
 from protocols.compra import build_peticio_registre_compra
 from protocols.opinador import build_peticio_devolucio, parse_resolucio_devolucio
 from services.bootstrap import bootstrap_phase2_data
-from services.history_service import load_feedback_records, load_purchase_records
-from services.opinador_service import generate_recommendations
+from services.history_service import load_feedback_records, load_purchase_records, record_purchase
+from services.opinador_service import (
+    MIN_DAYS_BEFORE_FEEDBACK,
+    generate_recommendations,
+    get_purchases_pending_feedback,
+    is_feedback_eligible,
+)
 from services.retornador_service import RETURN_REASON_DEFECTUOUS, RETURN_REJECTION_MESSAGE
+
+
+def _test_runtime_settings(agent, data_dir):
+    return {
+        "agent": agent,
+        "data_dir": data_dir,
+        "feedback_min_seconds": 0,
+        "feedback_policy_days": 14,
+        "proactive_enabled": False,
+    }
 
 
 class OpinadorFlowTests(unittest.TestCase):
@@ -32,7 +48,6 @@ class OpinadorFlowTests(unittest.TestCase):
             self.assertTrue(all_recommendations)
 
             first_product = all_recommendations[0]
-            from services.history_service import record_purchase
 
             record_purchase(
                 data_dir / "historial_compres.ttl",
@@ -81,7 +96,7 @@ class OpinadorFlowTests(unittest.TestCase):
             products = generate_recommendations(catalog_path, data_dir / "historial_cerques.ttl", data_dir / "historial_compres.ttl", limit=8)
             purchased_product = products[0]
 
-            agent_opinador.configure_runtime({"agent": opinador, "data_dir": data_dir})
+            agent_opinador.configure_runtime(_test_runtime_settings(opinador, data_dir))
             client = agent_opinador.app.test_client()
 
             purchase_order = {
@@ -196,7 +211,7 @@ class OpinadorFlowTests(unittest.TestCase):
             product_user_1 = products[0]
             product_user_2 = products[1]
 
-            agent_opinador.configure_runtime({"agent": opinador, "data_dir": data_dir})
+            agent_opinador.configure_runtime(_test_runtime_settings(opinador, data_dir))
             client = agent_opinador.app.test_client()
 
             for order in (
@@ -237,7 +252,7 @@ class OpinadorFlowTests(unittest.TestCase):
                 )
                 client.get("/comm", query_string={"content": message.serialize(format="xml")})
 
-            dashboard_ip1 = client.get("/iface", query_string={"view": "dashboard"}, environ_base={"REMOTE_ADDR": "10.0.0.1"})
+            dashboard_ip1 = client.get("/iface", environ_base={"REMOTE_ADDR": "10.0.0.1"})
             html_ip1 = dashboard_ip1.get_data(as_text=True)
             self.assertIn("ORDER-IP1", html_ip1)
             self.assertNotIn("ORDER-IP2", html_ip1)
@@ -245,7 +260,6 @@ class OpinadorFlowTests(unittest.TestCase):
             feedback_response = client.post(
                 "/iface",
                 data={
-                    "view": "dashboard",
                     "action": "feedback",
                     "rating": "5",
                     "product_id": product_user_1["product_id"],
@@ -259,6 +273,141 @@ class OpinadorFlowTests(unittest.TestCase):
             self.assertEqual(len(feedback_records), 1)
             self.assertEqual(feedback_records[0]["order_id"], "ORDER-IP1")
             self.assertEqual(feedback_records[0]["product_ids"], [product_user_1["product_id"]])
+
+    def test_feedback_requires_minimum_days_after_purchase(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            bootstrap_phase2_data(data_dir, product_count=8, seed=21)
+            catalog_path = data_dir / "productes.ttl"
+            products = generate_recommendations(
+                catalog_path,
+                data_dir / "historial_cerques.ttl",
+                data_dir / "historial_compres.ttl",
+                limit=8,
+            )
+            product = products[0]
+            recent_date = date.today().isoformat()
+            old_date = (date.today() - timedelta(days=MIN_DAYS_BEFORE_FEEDBACK)).isoformat()
+
+            record_purchase(
+                data_dir / "historial_compres.ttl",
+                {
+                    "order_id": "ORDER-RECENT",
+                    "user_id": "USER-FEEDBACK",
+                    "user_name": "Tester",
+                    "purchase_date": recent_date,
+                    "products": [{"product_id": product["product_id"]}],
+                    "shipping_data": {
+                        "user_id": "USER-FEEDBACK",
+                        "user_name": "Tester",
+                        "street_address": "Carrer 1",
+                        "city": "Barcelona",
+                        "priority": "48h",
+                        "payment_method": "visa",
+                    },
+                },
+            )
+
+            pending_recent = get_purchases_pending_feedback(
+                data_dir / "historial_compres.ttl",
+                data_dir / "feedback.ttl",
+                catalog_path,
+                "USER-FEEDBACK",
+                min_days=MIN_DAYS_BEFORE_FEEDBACK,
+            )
+            self.assertEqual(pending_recent["eligible_products"], [])
+            self.assertEqual(len(pending_recent["waiting_products"]), 1)
+            self.assertFalse(is_feedback_eligible(recent_date))
+
+            record_purchase(
+                data_dir / "historial_compres.ttl",
+                {
+                    "order_id": "ORDER-OLD",
+                    "user_id": "USER-FEEDBACK",
+                    "user_name": "Tester",
+                    "purchase_date": old_date,
+                    "products": [{"product_id": products[1]["product_id"]}],
+                    "shipping_data": {
+                        "user_id": "USER-FEEDBACK",
+                        "user_name": "Tester",
+                        "street_address": "Carrer 1",
+                        "city": "Barcelona",
+                        "priority": "48h",
+                        "payment_method": "visa",
+                    },
+                },
+            )
+
+            pending_old = get_purchases_pending_feedback(
+                data_dir / "historial_compres.ttl",
+                data_dir / "feedback.ttl",
+                catalog_path,
+                "USER-FEEDBACK",
+                min_days=MIN_DAYS_BEFORE_FEEDBACK,
+            )
+            self.assertEqual(len(pending_old["eligible_products"]), 1)
+            self.assertTrue(is_feedback_eligible(old_date))
+
+    def test_proactive_cycles_cache_recommendations_and_feedback_requests(self):
+        from agents import agent_opinador
+
+        agn = Namespace("http://www.agentes.org#")
+        opinador = Agent(
+            "OpinadorAgent",
+            agn.Opinador,
+            "http://opinador.test/comm",
+            "http://opinador.test/Stop",
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            bootstrap_phase2_data(data_dir, product_count=8, seed=21)
+            catalog_path = data_dir / "productes.ttl"
+            products = generate_recommendations(
+                catalog_path,
+                data_dir / "historial_cerques.ttl",
+                data_dir / "historial_compres.ttl",
+                limit=8,
+            )
+            user_id = "10.0.0.99"
+            old_date = (date.today() - timedelta(days=MIN_DAYS_BEFORE_FEEDBACK)).isoformat()
+            record_purchase(
+                data_dir / "historial_compres.ttl",
+                {
+                    "order_id": "ORDER-PROACTIVE",
+                    "user_id": user_id,
+                    "user_name": "Proactive User",
+                    "purchase_date": old_date,
+                    "products": [{"product_id": products[0]["product_id"]}],
+                    "shipping_data": {
+                        "user_id": user_id,
+                        "user_name": "Proactive User",
+                        "street_address": "Carrer Z",
+                        "city": "Barcelona",
+                        "priority": "48h",
+                        "payment_method": "visa",
+                    },
+                },
+            )
+
+            agent_opinador.configure_runtime(
+                {
+                    "agent": opinador,
+                    "data_dir": data_dir,
+                    "feedback_min_seconds": None,
+                    "feedback_policy_days": MIN_DAYS_BEFORE_FEEDBACK,
+                    "proactive_enabled": False,
+                }
+            )
+            agent_opinador._run_proactive_recommendation_cycle()
+            agent_opinador._run_proactive_feedback_cycle()
+
+            recommendations = agent_opinador._get_proactive_recommendations(user_id, limit=5)
+            self.assertTrue(recommendations)
+
+            feedback_requests = agent_opinador._get_proactive_feedback_requests(user_id)
+            self.assertEqual(len(feedback_requests), 1)
+            self.assertEqual(feedback_requests[0]["order_id"], "ORDER-PROACTIVE")
 
 
 if __name__ == "__main__":

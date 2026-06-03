@@ -9,6 +9,7 @@ Configuracio compartida i arrencada concurrent dels agents AgentZon
 import multiprocessing
 import os
 import queue as queue_lib
+import time
 from pathlib import Path
 
 from AgentUtil.ACLMessages import send_message
@@ -30,6 +31,12 @@ DEFAULT_BIND_HOST = "0.0.0.0"
 DEFAULT_LOCAL_HOST = "127.0.0.1"
 MAX_LOT_WEIGHT_KG = 5.0
 READY_DELIVERY_WINDOW_DAYS = 1
+OPINADOR_FEEDBACK_POLICY_DAYS = 14
+OPINADOR_FEEDBACK_MIN_SECONDS = 60
+OPINADOR_RECOMMENDATION_INTERVAL_SEC = 60
+OPINADOR_FEEDBACK_INTERVAL_SEC = 60
+DIRECTORY_REGISTER_RETRIES = 20
+DIRECTORY_REGISTER_RETRY_DELAY_SEC = 0.5
 
 
 DEFAULT_PORTS = {
@@ -88,19 +95,56 @@ def add_data_dir_argument(parser):
     parser.add_argument("--data-dir", default=str(DATA_DIR))
 
 
-def register_with_directory(agent, directory_agent, agent_type, msgcnt=0, metadata=None):
-    try:
-        message = build_register_message(
-            agent,
-            agent_type,
-            directory_agent,
-            msgcnt=msgcnt,
-            metadata=metadata,
-        )
-        send_message(message, directory_agent.address)
-    except Exception:
+def register_with_directory(
+    agent,
+    directory_agent,
+    agent_type,
+    msgcnt=0,
+    metadata=None,
+    retries=DIRECTORY_REGISTER_RETRIES,
+    retry_delay=DIRECTORY_REGISTER_RETRY_DELAY_SEC,
+):
+    if directory_agent is None:
+        _logger.warning("No es pot registrar %s: no hi ha agent de directori configurat", agent.name)
         return False
-    return True
+
+    last_error = None
+    for attempt in range(1, retries + 1):
+        try:
+            message = build_register_message(
+                agent,
+                agent_type,
+                directory_agent,
+                msgcnt=msgcnt,
+                metadata=metadata,
+            )
+            send_message(message, directory_agent.address)
+            _logger.info(
+                "Agent %s registrat al directori com a %s (intent %d)",
+                agent.name,
+                agent_type,
+                attempt,
+            )
+            return True
+        except Exception as exc:
+            last_error = exc
+            _logger.warning(
+                "Registre de %s al directori fallit (intent %d/%d): %s",
+                agent.name,
+                attempt,
+                retries,
+                exc,
+            )
+            if attempt < retries:
+                time.sleep(retry_delay)
+
+    _logger.error(
+        "No s'ha pogut registrar %s al directori després de %d intents: %s",
+        agent.name,
+        retries,
+        last_error,
+    )
+    return False
 
 
 # Concurrent behaviour + Flask server (patró dels agents d'exemple del professor) -----
@@ -113,6 +157,10 @@ def _agent_behaviour(queue, register_fn):
     """
     if register_fn is not None:
         register_fn()
+    _wait_for_shutdown_signal(queue)
+
+
+def _wait_for_shutdown_signal(queue):
     while True:
         try:
             if queue.get(timeout=1.0) == 0:
@@ -124,19 +172,20 @@ def _agent_behaviour(queue, register_fn):
                 return
 
 
-def serve_agent(app, hostname, port, register_fn=None):
+def serve_agent(app, hostname, port, register_fn=None, behaviour_fn=None):
     """Arrenca el comportament concurrent en un Process + el servidor Flask.
 
     Segueix el patró dels exemples del professor:
     `Process(target=agentbehavior1, args=(cola,))` + `app.run(...)` + `join()`.
     El registre al directori passa dins del comportament concurrent.
     """
+    behaviour_target = behaviour_fn or _agent_behaviour
     try:
         context = multiprocessing.get_context("fork")
     except ValueError:  # plataformes sense fork (p.ex. Windows): context per defecte
         context = multiprocessing.get_context()
     queue = context.Queue()
-    behaviour = context.Process(target=_agent_behaviour, args=(queue, register_fn))
+    behaviour = context.Process(target=behaviour_target, args=(queue, register_fn))
     behaviour.daemon = True
     behaviour.start()
     try:

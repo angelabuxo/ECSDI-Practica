@@ -131,8 +131,9 @@ def pla_de_presentacio(criteria, products, purchase_error=""):
     try:
         opinador_agent = resolve_opinador_agent()
         opinador_url = replace_url_path(opinador_agent.address, "/iface")
-    except Exception:
-        print("INFO AgenteCercador => No s'ha pogut resoldre Opinador per a la interficie")
+    except Exception as exc:
+        logger.warning("No s'ha pogut resoldre Opinador per a la interficie: %s", exc)
+        print("INFO AgenteCercador => No s'ha pogut resoldre Opinador per a la interficie: %s" % exc)
     return render_template(
         "cercador.html",
         criteria=criteria,
@@ -156,8 +157,9 @@ def browser_iface():
         try:
             opinador_agent = resolve_opinador_agent()
             opinador_url = replace_url_path(opinador_agent.address, "/iface")
-        except Exception:
-            print("INFO AgenteCercador => No s'ha pogut resoldre Opinador per a la interficie")
+        except Exception as exc:
+            logger.warning("No s'ha pogut resoldre Opinador per a la interficie: %s", exc)
+            print("INFO AgenteCercador => No s'ha pogut resoldre Opinador per a la interficie: %s" % exc)
         return render_template(
             "cercador.html",
             criteria=default_criteria(),
