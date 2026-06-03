@@ -1,10 +1,4 @@
-"""Agent Retornador: validació de devolucions i gestió de reemborsaments.
-
-Aquest fitxer es limita a:
-- exposar rutes Flask (`/iface`, `/comm`, `/Stop`)
-- orquestrar plans de negoci
-- delegar càlculs i transformacions a `services/retornador_service.py`
-"""
+"""Agent Retornador: validació de devolucions i gestió de reemborsaments."""
 
 import argparse
 from pathlib import Path
@@ -71,7 +65,7 @@ COUNTER = 0
 
 # Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
-    """Inicialitza globals de runtime per a execució i tests."""
+    """Inicialitza estat global, paths de dades i dependències de missatgeria."""
     global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, REFUNDS_PATH, PURCHASE_HISTORY_PATH, CATALOG_PATH
     global SHIPPING_RESPONSIBILITY_PATH, COUNTER
     AGENT = settings["agent"]
@@ -86,32 +80,57 @@ def configure_runtime(settings, message_sender=send_message):
 
 
 def next_counter():
-    """Retorna un id incremental per `msgcnt` ACL."""
+    """Retorna un identificador incremental per als missatges ACL."""
     global COUNTER
     current = COUNTER
     COUNTER += 1
     return current
 
 
+# Agent logic ----------------------------------------------------------------------
 def get_client_ip():
-    """Obté la IP real del client HTTP (compatible amb proxy)."""
+    """Adreca IP del client HTTP (proxy-aware) com a identificador d'usuari."""
     return get_client_ip_from_request(request)
 
 
-def replace_path(address, new_path):
-    """Canvia només el path d'una URL mantenint host i esquema."""
-    return replace_url_path(address, new_path)
+def resolve_opinador_agent():
+    """Resol l'Agent Opinador via servei de directori."""
+    return resolve_agent_via_directory(
+        AGENT,
+        DIRECTORY_AGENT,
+        MESSAGE_SENDER,
+        next_counter,
+        DSO.OpinadorAgent,
+    )
 
 
-def resolve_agent(agent_type):
-    """Resol una adreça d'agent via directori DSO."""
-    logger.info("Resolent agent de tipus %s via directori", agent_type)
-    resolved = resolve_agent_via_directory(AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, next_counter, agent_type)
-    logger.info("Agent resolt: %s (%s)", resolved.name, resolved.address)
-    return resolved
+def resolve_cobrador_agent():
+    """Resol l'Agent Cobrador via servei de directori."""
+    return resolve_agent_via_directory(
+        AGENT,
+        DIRECTORY_AGENT,
+        MESSAGE_SENDER,
+        next_counter,
+        DSO.CobradorAgent,
+    )
 
 
-# Plans ----------------------------------------------------------------------------
+def resolve_compra_iface_url():
+    """URL de la interfície de Compra (directori o buit si no es resol)."""
+    try:
+        compra_agent = resolve_agent_via_directory(
+            AGENT,
+            DIRECTORY_AGENT,
+            MESSAGE_SENDER,
+            next_counter,
+            DSO.CompraAgent,
+        )
+        return replace_url_path(compra_agent.address, "/iface")
+    except Exception:
+        logger.warning("No s'ha pogut resoldre l'agent Compra per a la interfície")
+        return ""
+
+
 def _normalize_return_request(return_request):
     """Unifica peticions UI (multi-comanda) i ACL (una comanda)."""
     if return_request.get("order_groups"):
@@ -128,7 +147,7 @@ def _normalize_return_request(return_request):
 
 def _consult_opinador_per_order(return_request):
     """Demana a l'Opinador la validació de cada comanda per separat."""
-    opinador = resolve_agent(DSO.OpinadorAgent)
+    opinador = resolve_opinador_agent()
     order_decisions = {}
     for order_id, product_ids in return_request["order_groups"].items():
         logger.info(
@@ -168,7 +187,7 @@ def _consult_opinador_per_order(return_request):
 
 
 def pla_compliment_de_devolucio(return_request):
-    """Valida devolució amb Opinador (per comanda) i reemborsa productes acceptats."""
+    """Pla: valida devolució amb Opinador (per comanda) i reemborsa productes acceptats."""
     normalized = _normalize_return_request(return_request)
     parent_return_id = normalized["return_id"]
     logger.info(
@@ -249,13 +268,13 @@ def pla_compliment_de_devolucio(return_request):
 
 
 def pla_retorn(decision):
-    """Demana al Cobrador que executi un reemborsament concret."""
+    """Pla: demana al Cobrador que executi un reemborsament concret."""
     logger.info(
         "Iniciant retorn de diners per devolucio %s (%.2f EUR)",
         decision.get("return_id", ""),
         decision.get("amount", 0.0),
     )
-    cobrador = resolve_agent(DSO.CobradorAgent)
+    cobrador = resolve_cobrador_agent()
     refund_message = build_peticio_retorn_diners(
         {
             "return_id": decision["return_id"],
@@ -281,38 +300,55 @@ def pla_retorn(decision):
     return confirmation
 
 
-# Web interface --------------------------------------------------------------------
-@app.route("/iface", methods=["GET", "POST"])
-def iface():
-    """Interfície humana del Retornador."""
-    compra_url = ""
-    try:
-        compra_agent = resolve_agent(DSO.CompraAgent)
-        compra_url = replace_path(compra_agent.address, "/iface")
-    except Exception:
-        logger.warning("No s'ha pogut resoldre l'agent Compra per a la interfície")
-
-    interface_user_id = get_client_ip()
-    purchased_products = build_purchased_products_for_user(
+def _load_purchased_products_for_iface(user_id):
+    """Carrega productes comprats visibles al formulari de devolució."""
+    return build_purchased_products_for_user(
         PURCHASE_HISTORY_PATH,
         CATALOG_PATH,
-        interface_user_id,
+        user_id,
         logger=logger,
     )
 
+
+def _render_retornador_iface(
+    interface_user_id,
+    purchased_products,
+    *,
+    compra_url="",
+    selected_products=None,
+    reason="",
+    decision=None,
+    error="",
+):
+    """Construeix la resposta HTML del formulari de devolucions."""
+    return render_template(
+        "retornador.html",
+        iface_path="/iface",
+        compra_url=compra_url,
+        interface_user_id=interface_user_id,
+        purchased_products=purchased_products,
+        selected_products=selected_products or [],
+        reason=reason,
+        return_reason_options=RETURN_REASON_OPTIONS,
+        decision=decision,
+        error=error,
+    )
+
+
+# Web interface --------------------------------------------------------------------
+@app.route("/iface", methods=["GET", "POST"])
+def iface():
+    """Interfície web del Retornador: selecció de productes i sol·licitud de devolució."""
+    compra_url = resolve_compra_iface_url()
+    interface_user_id = get_client_ip()
+    purchased_products = _load_purchased_products_for_iface(interface_user_id)
+
     if request.method == "GET":
         logger.info("Retornador /iface GET per usuari %s", interface_user_id)
-        return render_template(
-            "retornador.html",
-            iface_path="/iface",
+        return _render_retornador_iface(
+            interface_user_id,
+            purchased_products,
             compra_url=compra_url,
-            interface_user_id=interface_user_id,
-            purchased_products=purchased_products,
-            selected_products=[],
-            reason="",
-            return_reason_options=RETURN_REASON_OPTIONS,
-            decision=None,
-            error="",
         )
 
     selected_products = request.form.getlist("selected_products")
@@ -330,16 +366,12 @@ def iface():
     )
     if return_request is None:
         logger.warning("Peticio de devolucio invalida per %s: %s", interface_user_id, build_error)
-        return render_template(
-            "retornador.html",
-            iface_path="/iface",
+        return _render_retornador_iface(
+            interface_user_id,
+            purchased_products,
             compra_url=compra_url,
-            interface_user_id=interface_user_id,
-            purchased_products=purchased_products,
             selected_products=selected_products,
             reason=reason,
-            return_reason_options=RETURN_REASON_OPTIONS,
-            decision=None,
             error=build_error,
         )
 
@@ -350,30 +382,22 @@ def iface():
             decision.get("return_id", ""),
             "ACCEPTADA" if decision.get("accepted") else "DENEGADA",
         )
-        return render_template(
-            "retornador.html",
-            iface_path="/iface",
+        return _render_retornador_iface(
+            interface_user_id,
+            purchased_products,
             compra_url=compra_url,
-            interface_user_id=interface_user_id,
-            purchased_products=purchased_products,
             selected_products=selected_products,
             reason=reason,
-            return_reason_options=RETURN_REASON_OPTIONS,
             decision=decision,
-            error="",
         )
     except Exception:
         logger.exception("Error processant la devolució des de la interfície")
-        return render_template(
-            "retornador.html",
-            iface_path="/iface",
+        return _render_retornador_iface(
+            interface_user_id,
+            purchased_products,
             compra_url=compra_url,
-            interface_user_id=interface_user_id,
-            purchased_products=purchased_products,
             selected_products=selected_products,
             reason=reason,
-            return_reason_options=RETURN_REASON_OPTIONS,
-            decision=None,
             error="No s'ha pogut processar la devolució ara mateix.",
         )
 
@@ -381,7 +405,7 @@ def iface():
 # Communication handling -----------------------------------------------------------
 @app.route("/comm")
 def comm():
-    """Entrada ACL: accepta `PeticioDevolucio` i retorna `ResolucioDevolucio`."""
+    """Entrada ACL del Retornador (`PeticioDevolucio` -> `ResolucioDevolucio`)."""
     message_graph = Graph()
     message_graph.parse(data=request.args["content"], format="xml")
     properties = get_message_properties(message_graph)
@@ -395,24 +419,27 @@ def comm():
         ).serialize(format="xml")
 
     content = properties["content"]
-    if message_graph.value(content, RDF.type) != AZON.PeticioDevolucio:
-        logger.warning("Rebut accio no suportada a /comm")
+    content_type = message_graph.value(content, RDF.type)
+    logger.info("Retornador /comm rep accio RDF: %s", content_type)
+    if content_type != AZON.PeticioDevolucio:
+        logger.warning("Rebut accio no suportada a /comm: %s", content_type)
         return build_message(
             Graph(),
             ACL["not-understood"],
             sender=AGENT.uri,
+            receiver=properties.get("sender"),
             msgcnt=next_counter(),
         ).serialize(format="xml")
 
     request_data = parse_peticio_devolucio(message_graph, content)
     logger.info(
-        "Retornador /comm rebuda PeticioDevolucio %s (comanda %s)",
+        "Rebuda PeticioDevolucio %s (comanda %s)",
         request_data.get("return_id", ""),
         request_data.get("order_id", ""),
     )
     decision, _ = pla_compliment_de_devolucio(request_data)
     logger.info(
-        "Retornador /comm resposta devolucio %s: %s",
+        "Resposta devolucio %s: %s",
         decision.get("return_id", ""),
         "ACCEPTADA" if decision.get("accepted") else "DENEGADA",
     )
@@ -435,9 +462,9 @@ def stop():
 
 # Bootstrap -----------------------------------------------------------------------
 def main():
-    """Punt d'entrada executable de l'agent."""
+    """Punt d'entrada executable de l'Agent Retornador."""
     parser = argparse.ArgumentParser()
-    add_runtime_arguments(parser, DEFAULT_PORTS.get("retornador", 9012))
+    add_runtime_arguments(parser, DEFAULT_PORTS["retornador"])
     add_directory_arguments(parser)
     add_data_dir_argument(parser)
     args = parser.parse_args()
