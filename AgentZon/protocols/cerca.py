@@ -1,11 +1,13 @@
-"""Missatges de petició i resposta de cerca de productes (PeticioCerca, ResultatCerca)."""
+# -*- coding: utf-8 -*-
+"""
+Missatges RDF de cerca (PeticioCerca, ResultatCerca).
+"""
 
 from rdflib import Graph, Literal, RDF, XSD
 
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
 
 
-# RDF builders --------------------------------------------------------------------
 def build_peticio_cerca(request_id, text="", category="", brand="", min_price=None, max_price=None):
     graph = Graph()
     bind_namespaces(graph)
@@ -21,7 +23,6 @@ def build_peticio_cerca(request_id, text="", category="", brand="", min_price=No
     return graph, content
 
 
-# RDF parsers ---------------------------------------------------------------------
 def parse_peticio_cerca(graph, content):
     return {
         "text": str(graph.value(content, AZON.TextConsulta, default=Literal(""))),
@@ -41,7 +42,7 @@ def build_resultat_cerca(result_id, products, request_content=None):
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
     for product in products:
-        subject = AZON[f"product-{product['product_id']}"]
+        subject = AZON["product-%s" % product["product_id"]]
         graph.add((content, AZON.MostraProducte, subject))
         graph.add((subject, RDF.type, AZON.Producte))
         graph.add((subject, AZON.IdProducte, Literal(product["product_id"])))

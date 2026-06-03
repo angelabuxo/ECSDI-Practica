@@ -1,7 +1,15 @@
-"""Agent de compra: orquestra comandes, centres logístics, pagament i resum web."""
+# -*- coding: utf-8 -*-
+"""
+filename: agent_compra
+
+Agent compra AgentZon (orquestracio de comandes i enviaments).
+
+/comm entrada ACL
+/iface flux de compra web
+/Stop para l'agent
+"""
 
 import argparse
-import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.parse import urlencode
@@ -82,12 +90,13 @@ from services.shipping_tracking_service import (
 )
 
 
-app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 logger = config_logger(level=1)
+app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 
-# Agent attributes -----------------------------------------------------------------
+mss_cnt = 0
+
 AGENT = None
-DIRECTORY_AGENT = None
+DirectoryAgent = None
 MESSAGE_SENDER = send_message
 CATALOG_PATH = None
 ORDERS_PATH = None
@@ -96,18 +105,15 @@ LOCATIONS_PATH = None
 TRACKING_PATH = None
 USER_BANK_PATH = None
 SHIPPING_RESPONSIBILITY_PATH = None
-COUNTER = 0
-_MSGCNT_LOCK = threading.Lock()
 NO_PRODUCTS_ERROR = "Has de seleccionar almenys un producte abans de continuar la compra."
 VENDOR_EXTERN_AGENT_TYPE = URIRef("http://www.semanticweb.org/directory-service-ontology#VenedorExternAgent")
 
 
-# Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
-    """Inicialitza estat global, paths de dades i dependències de missatgeria."""
-    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, CATALOG_PATH, ORDERS_PATH, SHIPPING_PATH, LOCATIONS_PATH, TRACKING_PATH, USER_BANK_PATH, SHIPPING_RESPONSIBILITY_PATH, COUNTER
+    global AGENT, DirectoryAgent, MESSAGE_SENDER, CATALOG_PATH, ORDERS_PATH, SHIPPING_PATH
+    global LOCATIONS_PATH, TRACKING_PATH, USER_BANK_PATH, SHIPPING_RESPONSIBILITY_PATH, mss_cnt
     AGENT = settings["agent"]
-    DIRECTORY_AGENT = settings["directory_agent"]
+    DirectoryAgent = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
     data_dir = Path(settings["data_dir"])
     CATALOG_PATH = data_dir / "productes.ttl"
@@ -117,54 +123,43 @@ def configure_runtime(settings, message_sender=send_message):
     TRACKING_PATH = data_dir / "seguiment_enviaments.ttl"
     USER_BANK_PATH = data_dir / "dades_bancaries_usuari.ttl"
     SHIPPING_RESPONSIBILITY_PATH = data_dir / "responsable_enviament_productes.ttl"
-    COUNTER = 0
+    mss_cnt = 0
 
 
-def next_counter():
-    """Retorna un `msgcnt` incremental segur per concurrència."""
-    global COUNTER
-    with _MSGCNT_LOCK:
-        current = COUNTER
-        COUNTER += 1
-        return current
+def _msgcnt():
+    global mss_cnt
+    current = mss_cnt
+    mss_cnt += 1
+    return current
 
 
-# Directory helpers ----------------------------------------------------------------
 def resolve_agents(agent_type):
-    """Resol tots els agents d'un tipus via directori."""
-    return resolve_agents_via_directory(AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, next_counter, agent_type)
+    return resolve_agents_via_directory(AGENT, DirectoryAgent, MESSAGE_SENDER, _msgcnt, agent_type)
 
 
 def resolve_agent(agent_type):
-    """Resol un únic agent d'un tipus via directori."""
-    return resolve_agent_via_directory(AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, next_counter, agent_type)
+    return resolve_agent_via_directory(AGENT, DirectoryAgent, MESSAGE_SENDER, _msgcnt, agent_type)
 
 
 def resolve_cercador_iface_url():
-    """Construeix l'URL de retorn a la interfície del Cercador."""
     cercador_agent = resolve_agent(DSO.CercadorAgent)
     return replace_url_path(cercador_agent.address, "/iface")
 
 
 def redirect_to_cercador_with_error():
-    """Redirigeix al Cercador amb el missatge d'error de compra."""
     query = urlencode({"purchase_error": NO_PRODUCTS_ERROR})
     return redirect(f"{resolve_cercador_iface_url()}?{query}")
 
 
 def normalize_selected_product_ids(product_ids):
-    """Neteja valors buits del selector de productes."""
     return [product_id for product_id in product_ids if product_id]
 
 
 def get_client_ip():
-    """Adreça IP del client HTTP (proxy-aware) com a identificador d'usuari."""
     return get_client_ip_from_request(request)
 
 
-# Plans ----------------------------------------------------------------------------
 def pla_demanar_informacio_usuari(selected_product_ids, client_ip):
-    """Pla inicial: demanar dades d'usuari abans de confirmar compra."""
     product_ids = normalize_selected_product_ids(selected_product_ids)
     if not product_ids:
         return redirect_to_cercador_with_error()
@@ -180,7 +175,6 @@ def pla_demanar_informacio_usuari(selected_product_ids, client_ip):
 
 
 def split_order_products(order):
-    """Separa productes interns, externs amb logística de plataforma i externs delegats."""
     responsibility = load_shipping_responsibility_by_product(SHIPPING_RESPONSIBILITY_PATH)
     external_logistics_by_seller = {}
     platform_shipped = []
@@ -205,14 +199,13 @@ def split_order_products(order):
 
 
 def pla_enviament_extern(order, external_groups):
-    """Pla d'enviament delegat a venedors externs i cobrament associat."""
     if not external_groups:
         return []
 
     try:
         venedor_agent = resolve_agent(VENDOR_EXTERN_AGENT_TYPE)
     except Exception:
-        logger.warning("No s'ha pogut resoldre l'Agent Venedor Extern; s'omet l'enviament extern")
+        print("INFO AgenteCompra => No s'ha pogut resoldre Venedor Extern")
         return []
 
     shipments = []
@@ -223,7 +216,7 @@ def pla_enviament_extern(order, external_groups):
             group["seller_id"],
             sender=AGENT.uri,
             receiver=venedor_agent.uri,
-            msgcnt=next_counter(),
+            msgcnt=_msgcnt(),
         )
         reply = MESSAGE_SENDER(message, venedor_agent.address)
         shipments.extend(extract_external_shipments_from_reply(reply))
@@ -232,7 +225,6 @@ def pla_enviament_extern(order, external_groups):
 
 
 def pla_producte_als_nostres_magatzems(order):
-    """Pla de localització i reserva de productes als centres logístics."""
     registered_centres = resolve_agents(DSO.CentreLogisticAgent)
     candidate_centres_by_product = load_product_location_candidates(
         LOCATIONS_PATH,
@@ -243,24 +235,16 @@ def pla_producte_als_nostres_magatzems(order):
         registered_centres,
         candidate_centres_by_product,
     )
-    for group in centre_groups:
-        logger.info(
-            "Enviant %d producte(s) de la comanda %s al centre %s",
-            len(group["products"]),
-            order["order_id"],
-            group["centre"]["centre_id"],
-        )
     return collect_warehouse_reservations(
         order,
         centre_groups,
         AGENT.uri,
         MESSAGE_SENDER,
-        next_counter,
+        _msgcnt,
     )
 
 
 def pla_informar_usuari_sobre_l_enviament(order, shipments):
-    """Pla de presentació del resum d'enviament per a l'usuari."""
     final_delivery_date = max(
         [shipment["delivery_date"] for shipment in shipments if shipment.get("delivery_date")],
         default=order.get("final_delivery_date") or order["delivery_date"],
@@ -276,30 +260,24 @@ def pla_informar_usuari_sobre_l_enviament(order, shipments):
 
 
 def pla_delegar_registre_compra(order):
-    """Pla que delega a Opinador el registre d'historial de compra."""
     opinador_agent = resolve_agent(DSO.OpinadorAgent)
     message = build_peticio_registre_compra(
         order,
         sender=AGENT.uri,
         receiver=opinador_agent.uri,
-        msgcnt=next_counter(),
+        msgcnt=_msgcnt(),
     )
     reply = MESSAGE_SENDER(message, opinador_agent.address)
     return extract_registration_confirmation(reply)
 
 
 def pla_registrar_dades_d_usuari_al_cobrador(order):
-    """Pla que registra dades bancàries d'usuari al Cobrador, si cal."""
     if has_user_bank_data(USER_BANK_PATH, order["user_id"]):
-        logger.info(
-            "Ometent registre de dades bancaries: l'usuari %s ja en té registrades",
-            order["user_id"],
-        )
         return None
     try:
         cobrador = resolve_agent(DSO.CobradorAgent)
     except Exception:
-        logger.warning("No s'ha pogut resoldre el Cobrador; s'omet el registre de dades bancaries")
+        print("INFO AgenteCompra => No s'ha pogut resoldre Cobrador per registre bancari")
         return None
     shipping = order["shipping_data"]
     bank_data = f"card-****-{order['user_id']}"
@@ -309,23 +287,21 @@ def pla_registrar_dades_d_usuari_al_cobrador(order):
         shipping["payment_method"],
         sender=AGENT.uri,
         receiver=cobrador.uri,
-        msgcnt=next_counter(),
+        msgcnt=_msgcnt(),
     )
     try:
         status = extract_confirmacio_registre_dades(MESSAGE_SENDER(message, cobrador.address))
     except Exception:
-        logger.warning("El Cobrador no ha confirmat el registre de dades bancaries de l'usuari %s", order["user_id"])
         return None
     logger.info("Dades bancaries de l'usuari %s registrades al Cobrador (%s)", order["user_id"], status)
     return status
 
 
 def pla_cobrament_extern(order, seller_id):
-    """Inicia el cobrament/transferència externa cap a venedor."""
     try:
         cobrador = resolve_agent(DSO.CobradorAgent)
     except Exception:
-        logger.warning("No s'ha pogut resoldre el Cobrador; s'omet el cobrament extern")
+        print("INFO AgenteCompra => No s'ha pogut resoldre Cobrador per cobrament extern")
         return None
     amount = round(sum(product.get("price", 0.0) for product in order["products"]), 2)
     payment = {
@@ -342,12 +318,11 @@ def pla_cobrament_extern(order, seller_id):
         payment,
         sender=AGENT.uri,
         receiver=cobrador.uri,
-        msgcnt=next_counter(),
+        msgcnt=_msgcnt(),
     )
     try:
         confirmation = extract_confirmacio_pagament(MESSAGE_SENDER(message, cobrador.address))
     except Exception:
-        logger.warning("El cobrament extern de la comanda %s no s'ha pogut completar", order["order_id"])
         return None
     logger.info(
         "Cobrament extern confirmat per la comanda %s (pagament %s, venedor %s)",
@@ -359,7 +334,6 @@ def pla_cobrament_extern(order, seller_id):
 
 
 def carregar_comanda(order_id):
-    """Carrega una comanda amb el seu seguiment d'enviament."""
     stored_order = load_order(ORDERS_PATH, order_id)
     if stored_order is None:
         return None
@@ -381,26 +355,21 @@ def _build_acknowledgement(receiver):
         ACL.inform,
         sender=AGENT.uri,
         receiver=receiver,
-        msgcnt=next_counter(),
+        msgcnt=mss_cnt,
     )
 
 
-def process_shipping_update(message_graph, content, sender):
-    """Processa actualitzacions logístiques rebudes dels centres."""
-    invoice = extract_invoice_from_content(message_graph, content)
-    shipped = (content, RDF.type, AZON.ConfirmacioEnviament) in message_graph
+def process_shipping_update(gm, content, sender):
+    invoice = extract_invoice_from_content(gm, content)
+    shipped = (content, RDF.type, AZON.ConfirmacioEnviament) in gm
     touched_orders = set()
 
-    for shipment in extract_shipping_details_list(message_graph):
+    for shipment in extract_shipping_details_list(gm):
         localized_product_id = shipment.get("localized_product_id")
         if not localized_product_id:
             continue
         order_id = lookup_order_for_localized_product(TRACKING_PATH, localized_product_id)
         if order_id is None:
-            logger.warning(
-                "No s'ha trobat la comanda per al producte localitzat %s",
-                localized_product_id,
-            )
             continue
         shipment = {**shipment, "order_id": order_id}
         apply_shipping_update(
@@ -421,7 +390,6 @@ def process_shipping_update(message_graph, content, sender):
 
 
 def process_purchase_request(request_data, acl_sender=None, request_content=None):
-    """Orquestra el flux complet de compra des d'una petició ACL."""
     if not request_data.get("product_ids"):
         raise ValueError(NO_PRODUCTS_ERROR)
     shipping = {
@@ -434,7 +402,6 @@ def process_purchase_request(request_data, acl_sender=None, request_content=None
     }
     products = get_products_by_ids(CATALOG_PATH, request_data["product_ids"])
     order = build_order(shipping, products)
-    logger.info("Persistint comanda %s amb %d productes", order["order_id"], len(products))
     save_user_shipping_data(SHIPPING_PATH, order)
     save_order(ORDERS_PATH, order)
     external_groups, platform_shipped, internal_products = split_order_products(order)
@@ -467,15 +434,14 @@ def process_purchase_request(request_data, acl_sender=None, request_content=None
         sender=AGENT.uri,
         receiver=acl_sender,
         request_content=request_content,
-        msgcnt=next_counter(),
+        msgcnt=mss_cnt,
     )
     return response, order, shipping_details
 
 
 def build_purchase_request_from_form(form_data, user_id):
-    """Construeix una `PeticioCompra` a partir del formulari web."""
     request_graph = build_peticio_compra(
-        f"iface-purchase-{next_counter()}",
+        f"iface-purchase-{_msgcnt()}",
         user_id=user_id,
         payment_method=form_data["payment_method"],
         shipping_data={
@@ -487,22 +453,22 @@ def build_purchase_request_from_form(form_data, user_id):
         product_ids=form_data.getlist("selected_product_ids"),
         sender=AGENT.uri,
         receiver=AGENT.uri,
-        msgcnt=next_counter(),
+        msgcnt=_msgcnt(),
     )
     content = request_graph.value(predicate=RDF.type, object=AZON.PeticioCompra)
     return request_graph, content
 
 
-# Web interface --------------------------------------------------------------------
 @app.route("/iface", methods=["GET", "POST"])
-def iface():
-    """Interfície web de Compra: captura dades i mostra resum."""
+def browser_iface():
+    """
+    Permet la comunicacio amb l'agent via un navegador.
+    """
     if request.method == "GET":
         return redirect(resolve_cercador_iface_url())
 
     selected_product_ids = normalize_selected_product_ids(request.form.getlist("selected_product_ids"))
     if not selected_product_ids:
-        logger.warning("Compra interrompuda: cap producte seleccionat")
         return redirect_to_cercador_with_error()
 
     client_ip = get_client_ip()
@@ -521,7 +487,6 @@ def iface():
 
 @app.route("/orders/<order_id>")
 def order_status(order_id):
-    """Endpoint de consulta de l'estat d'una comanda."""
     order = carregar_comanda(order_id)
     if order is None:
         return ("Comanda no trobada", 404)
@@ -529,65 +494,71 @@ def order_status(order_id):
     return pla_informar_usuari_sobre_l_enviament(order, shipments)
 
 
-# Communication handling -----------------------------------------------------------
 @app.route("/comm")
-def comm():
-    """Entrada ACL de Compra: compra nova i actualitzacions d'enviament."""
-    message_graph = Graph()
-    message_graph.parse(data=request.args["content"], format="xml")
-    properties = get_message_properties(message_graph)
-    if not properties:
-        logger.warning("CompraAgent ha rebut un missatge malformat a /comm")
-        return build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
-    content = properties["content"]
-    performative = properties.get("performative")
-    message_type = message_graph.value(content, RDF.type)
+def comunicacion():
+    """
+    Entrypoint de comunicacio de l'agent compra.
+    """
+    global mss_cnt
 
-    if performative == ACL.inform and message_type in {AZON.DadesEnviament, AZON.ConfirmacioEnviament}:
-        return process_shipping_update(message_graph, content, properties.get("sender")).serialize(format="xml")
+    print("INFO AgenteCompra => Peticio rebuda\n")
 
-    if performative != ACL.request or message_type != AZON.PeticioCompra:
-        logger.warning("CompraAgent ha rebut una accio no suportada a /comm")
-        return build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            receiver=properties.get("sender"),
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
-    request_data = parse_peticio_compra(message_graph, content)
-    if not request_data.get("product_ids"):
-        logger.warning("Compra ACL rebutjada: cap producte a la peticio")
-        return build_message(
-            Graph(),
-            ACL.failure,
-            sender=AGENT.uri,
-            receiver=properties.get("sender"),
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
-    response, _, _ = process_purchase_request(
-        request_data,
-        acl_sender=properties.get("sender"),
-        request_content=content,
-    )
-    return response.serialize(format="xml")
+    message = request.args["content"]
+    gm = Graph()
+    gm.parse(data=message, format="xml")
+
+    msgdic = get_message_properties(gm)
+
+    if msgdic is None:
+        gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+        print("INFO AgenteCompra => El missatge no era un FIPA ACL")
+    else:
+        perf = msgdic["performative"]
+        content = msgdic["content"]
+        accion = gm.value(subject=content, predicate=RDF.type)
+
+        if perf == ACL.inform and accion in {AZON.DadesEnviament, AZON.ConfirmacioEnviament}:
+            print("INFO AgenteCompra => Actualitzacio enviament %s" % accion)
+            gr = process_shipping_update(gm, content, msgdic.get("sender"))
+        elif perf != ACL.request or accion != AZON.PeticioCompra:
+            gr = build_message(
+                Graph(),
+                ACL["not-understood"],
+                sender=AGENT.uri,
+                receiver=msgdic.get("sender"),
+                msgcnt=mss_cnt,
+            )
+            print("INFO AgenteCompra => Accio no suportada: %s" % accion)
+        else:
+            request_data = parse_peticio_compra(gm, content)
+            if not request_data.get("product_ids"):
+                gr = build_message(
+                    Graph(),
+                    ACL.failure,
+                    sender=AGENT.uri,
+                    receiver=msgdic.get("sender"),
+                    msgcnt=mss_cnt,
+                )
+                print("INFO AgenteCompra => PeticioCompra sense productes")
+            else:
+                print("INFO AgenteCompra => PeticioCompra")
+                gr, _, _ = process_purchase_request(
+                    request_data,
+                    acl_sender=msgdic.get("sender"),
+                    request_content=content,
+                )
+
+    mss_cnt += 1
+    return gr.serialize(format="xml")
 
 
 @app.route("/Stop")
 def stop():
-    """Atura el servidor Flask de l'agent."""
     shutdown_server()
-    return "Stopping"
+    return "Parando Servidor"
 
 
-# Bootstrap -----------------------------------------------------------------------
-def main():
-    """Punt d'entrada executable de l'Agent Compra."""
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["compra"])
     add_directory_arguments(parser)
@@ -607,9 +578,5 @@ def main():
         app,
         hostname,
         args.port,
-        register_fn=lambda: register_with_directory(AGENT, DIRECTORY_AGENT, DSO.CompraAgent, 0),
+        register_fn=lambda: register_with_directory(AGENT, DirectoryAgent, DSO.CompraAgent, 0),
     )
-
-
-if __name__ == "__main__":
-    main()

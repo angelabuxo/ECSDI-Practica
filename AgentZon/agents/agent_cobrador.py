@@ -1,4 +1,13 @@
-"""Agent cobrador: accepta peticions de pagament i devolució amb confirmació automàtica."""
+# -*- coding: utf-8 -*-
+"""
+filename: agent_cobrador
+
+Agent cobrador AgentZon (pagaments, dades bancaries i devolucions).
+
+/comm entrada ACL
+/iface mostra pagaments en turtle
+/Stop para l'agent
+"""
 
 import argparse
 from datetime import date
@@ -47,31 +56,28 @@ from services.payment_service import (
 from services.rdf_store import load_graph
 
 
-app = Flask(__name__)
 logger = config_logger(level=1)
+app = Flask(__name__)
 
 OK_PAYMENT_STATUS = "PAGAT"
 OK_REFUND_STATUS = "RETORNAT"
+mss_cnt = 0
 
-# Agent attributes -----------------------------------------------------------------
 AGENT = None
-DIRECTORY_AGENT = None
+DirectoryAgent = None
 MESSAGE_SENDER = send_message
 CATALOG_PATH = None
 USER_BANK_PATH = None
 SELLER_BANK_PATH = None
 PAYMENTS_PATH = None
 REFUNDS_PATH = None
-COUNTER = 0
 
 
-# Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
-    """Inicialitza rutes de dades i dependències del Cobrador."""
-    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, CATALOG_PATH
-    global USER_BANK_PATH, SELLER_BANK_PATH, PAYMENTS_PATH, REFUNDS_PATH, COUNTER
+    global AGENT, DirectoryAgent, MESSAGE_SENDER, CATALOG_PATH
+    global USER_BANK_PATH, SELLER_BANK_PATH, PAYMENTS_PATH, REFUNDS_PATH, mss_cnt
     AGENT = settings["agent"]
-    DIRECTORY_AGENT = settings["directory_agent"]
+    DirectoryAgent = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
     data_dir = Path(settings["data_dir"])
     CATALOG_PATH = data_dir / "productes.ttl"
@@ -79,30 +85,19 @@ def configure_runtime(settings, message_sender=send_message):
     SELLER_BANK_PATH = data_dir / "dades_bancaries_venedors_externs.ttl"
     PAYMENTS_PATH = data_dir / "pagaments.ttl"
     REFUNDS_PATH = data_dir / "devolucions.ttl"
-    COUNTER = 0
-
-
-def next_counter():
-    """Retorna un identificador incremental per als missatges ACL."""
-    global COUNTER
-    current = COUNTER
-    COUNTER += 1
-    return current
+    mss_cnt = 0
 
 
 def _payment_date():
-    """Data de confirmació per als missatges de pagament."""
     return date.today().isoformat()
 
 
 def calcular_import(product_ids):
-    """Calcula l'import total dels productes indicats."""
     products = get_products_by_ids(CATALOG_PATH, product_ids)
     return round(sum(product.get("price", 0.0) for product in products), 2)
 
 
 def _confirm_payment(payment, sender, request_content):
-    """Registra el pagament i construeix la confirmació ACL."""
     record_payment(PAYMENTS_PATH, payment)
     logger.info(
         "Pagament acceptat automaticament %s (comanda %s, %.2f EUR)",
@@ -115,14 +110,12 @@ def _confirm_payment(payment, sender, request_content):
         sender=AGENT.uri,
         receiver=sender,
         request_content=request_content,
-        msgcnt=next_counter(),
+        msgcnt=mss_cnt,
     )
 
 
-# Capacitat: Guardar dades bancaries -----------------------------------------------
-def pla_registrar_dades_usuari(message_graph, content, sender):
-    """Pla de registre de dades bancàries d'usuari (confirmació automàtica)."""
-    request_data = parse_peticio_registre_dades_usuari(message_graph, content)
+def pla_registrar_dades_usuari(gm, content, sender):
+    request_data = parse_peticio_registre_dades_usuari(gm, content)
     logger.info("Registrant dades bancaries de l'usuari %s", request_data["user_id"])
     save_user_bank_data(
         USER_BANK_PATH,
@@ -136,13 +129,12 @@ def pla_registrar_dades_usuari(message_graph, content, sender):
         sender=AGENT.uri,
         receiver=sender,
         request_content=content,
-        msgcnt=next_counter(),
+        msgcnt=mss_cnt,
     )
 
 
-def pla_registrar_dades_venedor(message_graph, content, sender):
-    """Pla de registre de dades bancàries de venedor extern (confirmació automàtica)."""
-    request_data = parse_peticio_registre_dades_venedor(message_graph, content)
+def pla_registrar_dades_venedor(gm, content, sender):
+    request_data = parse_peticio_registre_dades_venedor(gm, content)
     logger.info("Registrant dades bancaries del venedor extern %s", request_data["seller_id"])
     save_seller_bank_data(
         SELLER_BANK_PATH,
@@ -156,14 +148,12 @@ def pla_registrar_dades_venedor(message_graph, content, sender):
         sender=AGENT.uri,
         receiver=sender,
         request_content=content,
-        msgcnt=next_counter(),
+        msgcnt=mss_cnt,
     )
 
 
-# Capacitat: Cobrar compra ---------------------------------------------------------
-def pla_cobrament_intern(message_graph, content, sender):
-    """Pla de cobrament intern: sempre confirma amb estat PAGAT."""
-    shipment = parse_peticio_cobrament_intern(message_graph, content)
+def pla_cobrament_intern(gm, content, sender):
+    shipment = parse_peticio_cobrament_intern(gm, content)
     product = shipment.get("product") or {}
     product_id = product.get("product_id")
     product_ids = [product_id] if product_id else []
@@ -194,9 +184,8 @@ def pla_cobrament_intern(message_graph, content, sender):
     return _confirm_payment(payment, sender, content)
 
 
-def pla_cobrament_extern(message_graph, content, sender):
-    """Pla de cobrament/transferència externa: sempre confirma amb estat PAGAT."""
-    request_data = parse_peticio_pagament(message_graph, content)
+def pla_cobrament_extern(gm, content, sender):
+    request_data = parse_peticio_pagament(gm, content)
     payment = {
         "payment_id": request_data["payment_id"] or f"PAY-{uuid4().hex[:8].upper()}",
         "order_id": request_data["order_id"],
@@ -217,10 +206,8 @@ def pla_cobrament_extern(message_graph, content, sender):
     return _confirm_payment(payment, sender, content)
 
 
-# Capacitat: Gestionar Devolucions -------------------------------------------------
-def pla_retornar_diners(message_graph, content, sender):
-    """Pla de reemborsament: sempre confirma amb estat RETORNAT."""
-    request_data = parse_peticio_retorn_diners(message_graph, content)
+def pla_retornar_diners(gm, content, sender):
+    request_data = parse_peticio_retorn_diners(gm, content)
     refund = {
         "return_id": request_data["return_id"],
         "order_id": request_data["order_id"],
@@ -242,11 +229,10 @@ def pla_retornar_diners(message_graph, content, sender):
         sender=AGENT.uri,
         receiver=sender,
         request_content=content,
-        msgcnt=next_counter(),
+        msgcnt=mss_cnt,
     )
 
 
-# Communication handling -----------------------------------------------------------
 PLANS = {
     AZON.PeticioRegistreDadesBancariesUsuari: pla_registrar_dades_usuari,
     AZON.PeticioRegistreDadesBancariesVenedor: pla_registrar_dades_venedor,
@@ -257,52 +243,59 @@ PLANS = {
 
 
 @app.route("/comm")
-def comm():
-    """Entrada ACL del Cobrador: dispatch de plans per tipus d'acció."""
-    message_graph = Graph()
-    message_graph.parse(data=request.args["content"], format="xml")
-    properties = get_message_properties(message_graph)
-    if not properties or properties.get("performative") != ACL.request:
-        logger.warning("CobradorAgent ha rebut un missatge no-request o malformat a /comm")
-        return build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
-    content = properties["content"]
-    action = message_graph.value(content, RDF.type)
-    logger.info("Cobrador /comm rep peticio %s des de %s", action, properties.get("sender"))
-    plan = PLANS.get(action)
-    if plan is None:
-        logger.warning("CobradorAgent ha rebut una accio no suportada a /comm: %s", action)
-        return build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            receiver=properties.get("sender"),
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
-    response = plan(message_graph, content, properties.get("sender"))
-    return response.serialize(format="xml")
+def comunicacion():
+    """
+    Entrypoint de comunicacio de l'agent cobrador.
+    """
+    global mss_cnt
+
+    print("INFO AgenteCobrador => Peticio rebuda\n")
+
+    message = request.args["content"]
+    gm = Graph()
+    gm.parse(data=message, format="xml")
+    msgdic = get_message_properties(gm)
+
+    if msgdic is None:
+        gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+        print("INFO AgenteCobrador => El missatge no era un FIPA ACL")
+    else:
+        perf = msgdic["performative"]
+        if perf != ACL.request:
+            gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+            print("INFO AgenteCobrador => No es una request FIPA ACL")
+        else:
+            content = msgdic["content"]
+            accion = gm.value(subject=content, predicate=RDF.type)
+            plan = PLANS.get(accion)
+            if plan is None:
+                gr = build_message(
+                    Graph(),
+                    ACL["not-understood"],
+                    sender=AGENT.uri,
+                    receiver=msgdic.get("sender"),
+                    msgcnt=mss_cnt,
+                )
+                print("INFO AgenteCobrador => Accio no suportada: %s" % accion)
+            else:
+                gr = plan(gm, content, msgdic.get("sender"))
+
+    mss_cnt += 1
+    return gr.serialize(format="xml")
 
 
 @app.route("/iface")
-def iface():
-    """Vista tècnica del Cobrador: estat de pagaments en Turtle."""
+def browser_iface():
     return load_graph(PAYMENTS_PATH).serialize(format="turtle")
 
 
 @app.route("/Stop")
 def stop():
-    """Atura el servidor Flask de l'agent."""
     shutdown_server()
-    return "Stopping"
+    return "Parando Servidor"
 
 
-# Bootstrap -----------------------------------------------------------------------
-def main():
-    """Punt d'entrada executable de l'Agent Cobrador."""
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["cobrador"])
     add_directory_arguments(parser)
@@ -322,9 +315,5 @@ def main():
         app,
         hostname,
         args.port,
-        register_fn=lambda: register_with_directory(AGENT, DIRECTORY_AGENT, DSO.CobradorAgent, 0),
+        register_fn=lambda: register_with_directory(AGENT, DirectoryAgent, DSO.CobradorAgent, 0),
     )
-
-
-if __name__ == "__main__":
-    main()

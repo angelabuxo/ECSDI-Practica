@@ -1,4 +1,13 @@
-"""Agent venedor extern: registre de productes externs i gestió d'enviaments delegats."""
+# -*- coding: utf-8 -*-
+"""
+filename: agent_venedor_extern
+
+Agent venedor extern AgentZon (alta productes i enviaments delegats).
+
+/comm entrada ACL
+/iface registre de productes
+/Stop para l'agent
+"""
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
@@ -41,57 +50,52 @@ from services.external_vendor_service import save_external_product_location, sav
 from services.payment_service import has_seller_bank_data, read_seller_bank_data, resolve_seller_display_name
 
 
-app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 logger = config_logger(level=1)
+app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 
 VENDOR_EXTERN_AGENT_TYPE = URIRef("http://www.semanticweb.org/directory-service-ontology#VenedorExternAgent")
 
-# Agent attributes -----------------------------------------------------------------
+mss_cnt = 0
+
 AGENT = None
-DIRECTORY_AGENT = None
+DirectoryAgent = None
 MESSAGE_SENDER = send_message
 CATALOG_PATH = None
 SHIPPING_RESPONSIBILITY_PATH = None
 LOCATIONS_PATH = None
 SELLER_BANK_PATH = None
-COUNTER = 0
 
 
-# Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
-    """Inicialitza dependències i rutes de dades del Venedor Extern."""
-    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, CATALOG_PATH
-    global SHIPPING_RESPONSIBILITY_PATH, LOCATIONS_PATH, SELLER_BANK_PATH, COUNTER
+    global AGENT, DirectoryAgent, MESSAGE_SENDER, CATALOG_PATH
+    global SHIPPING_RESPONSIBILITY_PATH, LOCATIONS_PATH, SELLER_BANK_PATH, mss_cnt
     AGENT = settings["agent"]
-    DIRECTORY_AGENT = settings["directory_agent"]
+    DirectoryAgent = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
     data_dir = Path(settings["data_dir"])
     CATALOG_PATH = data_dir / "productes.ttl"
     SHIPPING_RESPONSIBILITY_PATH = data_dir / "responsable_enviament_productes.ttl"
     LOCATIONS_PATH = data_dir / "ubicacions_productes.ttl"
     SELLER_BANK_PATH = data_dir / "dades_bancaries_venedors_externs.ttl"
-    COUNTER = 0
+    mss_cnt = 0
 
 
-def next_counter():
-    """Retorna un identificador incremental per als missatges ACL."""
-    global COUNTER
-    current = COUNTER
-    COUNTER += 1
+def _msgcnt():
+    global mss_cnt
+    current = mss_cnt
+    mss_cnt += 1
     return current
 
 
 def resolve_cercador_agent():
-    return resolve_agent_via_directory(AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, next_counter, DSO.CercadorAgent)
+    return resolve_agent_via_directory(AGENT, DirectoryAgent, MESSAGE_SENDER, _msgcnt, DSO.CercadorAgent)
 
 
 def resolve_cobrador_agent():
-    return resolve_agent_via_directory(AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, next_counter, DSO.CobradorAgent)
+    return resolve_agent_via_directory(AGENT, DirectoryAgent, MESSAGE_SENDER, _msgcnt, DSO.CobradorAgent)
 
 
-# Plans ----------------------------------------------------------------------------
 def pla_afegir_producte_extern_a_la_bd(request_data):
-    """Desa responsabilitat d'enviament i ubicació del producte extern."""
     product = request_data["product"]
     seller = request_data["seller"]
     save_shipping_responsibility(
@@ -110,23 +114,21 @@ def pla_afegir_producte_extern_a_la_bd(request_data):
     return product["product_id"]
 
 
-def pla_delegar_afegir_info_producte_extern(message_graph, content):
-    """Delega l'alta de catàleg a l'Agent Cercador."""
+def pla_delegar_afegir_info_producte_extern(gm, content):
     cercador = resolve_cercador_agent()
     message = build_message(
-        message_graph,
+        gm,
         ACL.request,
         sender=AGENT.uri,
         receiver=cercador.uri,
         content=content,
-        msgcnt=next_counter(),
+        msgcnt=_msgcnt(),
     )
     reply = MESSAGE_SENDER(message, cercador.address)
     return parse_confirmacio_alta_producte_extern(reply)
 
 
 def pla_delegar_afegir_dades_bancaries_del_venedor_extern(seller):
-    """Delega el registre bancari del venedor a l'Agent Cobrador."""
     if not seller.get("bank_data"):
         raise ValueError("Calen dades bancaries per registrar el venedor extern")
     cobrador = resolve_cobrador_agent()
@@ -136,31 +138,21 @@ def pla_delegar_afegir_dades_bancaries_del_venedor_extern(seller):
         seller_name=seller.get("seller_name") or None,
         sender=AGENT.uri,
         receiver=cobrador.uri,
-        msgcnt=next_counter(),
+        msgcnt=_msgcnt(),
     )
     reply = MESSAGE_SENDER(message, cobrador.address)
     return extract_confirmacio_registre_dades(reply)
 
 
 def ensure_seller_bank_registered(seller):
-    """Registra dades bancàries del venedor només la primera vegada."""
     if has_seller_bank_data(SELLER_BANK_PATH, seller["seller_id"]):
-        logger.info(
-            "Ometent registre bancari: el venedor %s ja en té registrades",
-            seller["seller_id"],
-        )
         return None
     if not seller.get("bank_data"):
-        logger.warning(
-            "El venedor %s encara no té dades bancaries; cal completar el perfil a /iface",
-            seller["seller_id"],
-        )
         return None
     return pla_delegar_afegir_dades_bancaries_del_venedor_extern(seller)
 
 
 def register_seller_profile(seller_id, seller_name, bank_data):
-    """Registra el perfil inicial del venedor (nom + compte bancari)."""
     seller = {
         "seller_id": seller_id,
         "seller_name": seller_name.strip(),
@@ -170,23 +162,21 @@ def register_seller_profile(seller_id, seller_name, bank_data):
 
 
 def pla_comunicar_nou_producte_afegit(product_id, sku_extern, receiver=None):
-    """Envia confirmació final de registre correcte."""
     return build_confirmacio_alta_producte_extern(
         product_id,
         sku_extern,
         sender=AGENT.uri,
         receiver=receiver,
-        msgcnt=next_counter(),
+        msgcnt=mss_cnt,
     )
 
 
-def process_alta_producte_extern(message_graph, content, receiver=None):
-    """Orquestra el registre local i de catàleg en paral·lel i confirma el resultat."""
-    request_data = parse_alta_producte_extern(message_graph, content)
+def process_alta_producte_extern(gm, content, receiver=None):
+    request_data = parse_alta_producte_extern(gm, content)
     ensure_seller_bank_registered(request_data["seller"])
     with ThreadPoolExecutor(max_workers=2) as executor:
         local_future = executor.submit(pla_afegir_producte_extern_a_la_bd, request_data)
-        catalog_future = executor.submit(pla_delegar_afegir_info_producte_extern, message_graph, content)
+        catalog_future = executor.submit(pla_delegar_afegir_info_producte_extern, gm, content)
         local_future.result()
         catalog_confirmation = catalog_future.result()
     return pla_comunicar_nou_producte_afegit(
@@ -196,17 +186,10 @@ def process_alta_producte_extern(message_graph, content, receiver=None):
     )
 
 
-def process_peticio_enviament_extern(message_graph, content, sender):
-    """Notifica la venda externa i retorna dades d'enviament estimades."""
-    request_data = parse_peticio_enviament_extern(message_graph, content)
+def pla_enviament_extern_acl(gm, content, sender):
+    request_data = parse_peticio_enviament_extern(gm, content)
     delivery_date = (date.today() + timedelta(days=5)).isoformat()
-    logger.info(
-        "Rebuda peticio d'enviament extern per comanda %s (venedor %s, %d producte(s))",
-        request_data["order_id"],
-        request_data["seller_id"],
-        len(request_data["products"]),
-    )
-    response = build_resposta_enviament_extern(
+    return build_resposta_enviament_extern(
         request_data["order_id"],
         request_data["products"],
         request_data["seller_id"],
@@ -218,18 +201,21 @@ def process_peticio_enviament_extern(message_graph, content, sender):
         ),
         sender=AGENT.uri,
         receiver=sender,
-        msgcnt=next_counter(),
+        msgcnt=mss_cnt,
     )
-    return response
+
+
+PLANS = {
+    AZON.AltaProducteExtern: process_alta_producte_extern,
+    AZON.PeticioEnviamentExtern: pla_enviament_extern_acl,
+}
 
 
 def get_client_ip():
-    """Retorna la IP del client com a identificador de venedor extern."""
     return get_client_ip_from_request(request)
 
 
 def parse_products_from_form(form_data):
-    """Extreu una llista de productes del formulari (pot incloure diverses files)."""
     names = form_data.getlist("name")
     descriptions = form_data.getlist("description")
     categories = form_data.getlist("category")
@@ -263,7 +249,6 @@ def parse_products_from_form(form_data):
 
 
 def build_product_payload(product_fields, seller_id):
-    """Construeix el diccionari de producte amb identificador assignat."""
     product_id = allocate_external_product_id(CATALOG_PATH)
     return {
         "product_id": product_id,
@@ -282,7 +267,6 @@ def build_product_payload(product_fields, seller_id):
 
 
 def build_seller_payload(seller_id):
-    """Construeix el venedor a partir de la IP del client i el perfil persistit."""
     profile = read_seller_bank_data(SELLER_BANK_PATH, seller_id) or {}
     return {
         "seller_id": seller_id,
@@ -292,7 +276,6 @@ def build_seller_payload(seller_id):
 
 
 def render_iface_page(client_ip, **context):
-    """Renderitza la interfície amb l'estat del perfil del venedor."""
     seller_profile = read_seller_bank_data(SELLER_BANK_PATH, client_ip)
     defaults = {
         "iface_path": "/iface",
@@ -305,10 +288,11 @@ def render_iface_page(client_ip, **context):
     return render_template("venedor_extern.html", **defaults)
 
 
-# Web interface --------------------------------------------------------------------
 @app.route("/iface", methods=["GET", "POST"])
-def iface():
-    """Interfície del venedor extern per registrar nous productes."""
+def browser_iface():
+    """
+    Permet la comunicacio amb l'agent via un navegador.
+    """
     client_ip = get_client_ip()
     if request.method == "GET":
         return render_iface_page(client_ip)
@@ -355,10 +339,10 @@ def iface():
         message = build_alta_producte_extern(
             product,
             seller,
-            request_id=f"iface-alta-{next_counter()}",
+            request_id=f"iface-alta-{_msgcnt()}",
             sender=AGENT.uri,
             receiver=AGENT.uri,
-            msgcnt=next_counter(),
+            msgcnt=_msgcnt(),
         )
         props = get_message_properties(message)
         content = props["content"]
@@ -369,53 +353,60 @@ def iface():
     return render_iface_page(client_ip, confirmations=confirmations)
 
 
-# Communication handling -----------------------------------------------------------
 @app.route("/comm")
-def comm():
-    """Entrada ACL: alta de producte extern i peticions d'enviament."""
-    message_graph = Graph()
-    message_graph.parse(data=request.args["content"], format="xml")
-    properties = get_message_properties(message_graph)
-    if not properties:
-        return build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
+def comunicacion():
+    """
+    Entrypoint de comunicacio de l'agent venedor extern.
+    """
+    global mss_cnt
 
-    content = properties["content"]
-    performative = properties.get("performative")
-    message_type = message_graph.value(content, RDF.type)
-    sender = properties.get("sender")
+    print("INFO AgenteVenedorExtern => Peticio rebuda\n")
 
-    if performative == ACL.request and message_type == AZON.AltaProducteExtern:
-        response = process_alta_producte_extern(message_graph, content, receiver=sender)
-        return response.serialize(format="xml")
+    message = request.args["content"]
+    gm = Graph()
+    gm.parse(data=message, format="xml")
 
-    if performative == ACL.request and message_type == AZON.PeticioEnviamentExtern:
-        response = process_peticio_enviament_extern(message_graph, content, sender)
-        return response.serialize(format="xml")
+    msgdic = get_message_properties(gm)
 
-    return build_message(
-        Graph(),
-        ACL["not-understood"],
-        sender=AGENT.uri,
-        receiver=sender,
-        msgcnt=next_counter(),
-    ).serialize(format="xml")
+    if msgdic is None:
+        gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+        print("INFO AgenteVenedorExtern => El missatge no era un FIPA ACL")
+    else:
+        perf = msgdic["performative"]
+        if perf != ACL.request:
+            gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+            print("INFO AgenteVenedorExtern => No es una request FIPA ACL")
+        else:
+            content = msgdic["content"]
+            accion = gm.value(subject=content, predicate=RDF.type)
+            plan = PLANS.get(accion)
+            if plan is None:
+                gr = build_message(
+                    Graph(),
+                    ACL["not-understood"],
+                    sender=AGENT.uri,
+                    receiver=msgdic.get("sender"),
+                    msgcnt=mss_cnt,
+                )
+                print("INFO AgenteVenedorExtern => Accio no suportada: %s" % accion)
+            else:
+                print("INFO AgenteVenedorExtern => Accio %s" % accion)
+                if accion == AZON.AltaProducteExtern:
+                    gr = plan(gm, content, msgdic.get("sender"))
+                else:
+                    gr = plan(gm, content, msgdic.get("sender"))
+
+    mss_cnt += 1
+    return gr.serialize(format="xml")
 
 
 @app.route("/Stop")
 def stop():
-    """Atura el servidor Flask de l'agent."""
     shutdown_server()
-    return "Stopping"
+    return "Parando Servidor"
 
 
-# Bootstrap -----------------------------------------------------------------------
-def main():
-    """Punt d'entrada executable de l'Agent Venedor Extern."""
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["venedor_extern"])
     add_directory_arguments(parser)
@@ -435,9 +426,5 @@ def main():
         app,
         hostname,
         args.port,
-        register_fn=lambda: register_with_directory(AGENT, DIRECTORY_AGENT, VENDOR_EXTERN_AGENT_TYPE, 0),
+        register_fn=lambda: register_with_directory(AGENT, DirectoryAgent, VENDOR_EXTERN_AGENT_TYPE, 0),
     )
-
-
-if __name__ == "__main__":
-    main()

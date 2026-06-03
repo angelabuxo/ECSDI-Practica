@@ -1,4 +1,10 @@
-"""Shared configuration and bootstrap helpers for AgentZon agents."""
+# -*- coding: utf-8 -*-
+"""
+filename: config
+
+Configuracio compartida i arrencada concurrent dels agents AgentZon
+(patrons SimpleInfoAgent / SimpleDirectoryService del laboratori).
+"""
 
 import multiprocessing
 import os

@@ -1,7 +1,15 @@
-"""Agent de directori: registre i resolució d'agents del sistema."""
+# -*- coding: utf-8 -*-
+"""
+filename: agent_directory
+
+Agent de directori AgentZon (registre i cerca d'agents).
+
+/Register es la entrada per rebre missatges ACL de registre o cerca
+/Info retorna el graf de directori en turtle
+/Stop para l'agent
+"""
 
 import argparse
-from threading import Lock
 
 from flask import Flask, request
 from rdflib import Graph, RDF
@@ -21,141 +29,120 @@ from config import (
     serve_agent,
 )
 
-
-app = Flask(__name__)
 logger = config_logger(level=1)
+app = Flask(__name__)
 
-# Agent attributes -----------------------------------------------------------------
+mss_cnt = 0
 AGENT = None
-DIRECTORY_GRAPH = None
-COUNTER = 0
-COUNTER_LOCK = Lock()
-
-
-# Runtime configuration ------------------------------------------------------------
-def _new_directory_graph():
-    """Crea el graf RDF intern del directori amb els namespaces necessaris."""
-    graph = Graph()
-    bind_namespaces(graph)
-    graph.bind("foaf", FOAF)
-    graph.bind("dso", DSO)
-    return graph
+dsgraph = None
 
 
 def configure_runtime(settings):
-    """Inicialitza estat global de l'agent de directori."""
-    global AGENT, DIRECTORY_GRAPH, COUNTER
+    global AGENT, dsgraph, mss_cnt
     AGENT = settings["agent"]
-    DIRECTORY_GRAPH = _new_directory_graph()
-    COUNTER = 0
+    dsgraph = Graph()
+    bind_namespaces(dsgraph)
+    dsgraph.bind("foaf", FOAF)
+    dsgraph.bind("dso", DSO)
+    mss_cnt = 0
 
 
-def next_counter():
-    """Retorna un contador incremental segur per concurrència."""
-    global COUNTER
-    with COUNTER_LOCK:
-        current = COUNTER
-        COUNTER += 1
-        return current
+def process_register():
+    logger.info("Peticio de registre")
 
+    agn_add = gm.value(subject=content, predicate=DSO.Address)
+    agn_name = gm.value(subject=content, predicate=FOAF.name)
+    agn_uri = gm.value(subject=content, predicate=DSO.Uri)
+    agn_type = gm.value(subject=content, predicate=DSO.AgentType)
 
-# Directory logic ------------------------------------------------------------------
-def process_register(message_graph, content):
-    """Processa una alta d'agent al directori."""
-    address = message_graph.value(content, DSO.Address)
-    name = message_graph.value(content, FOAF.name)
-    uri = message_graph.value(content, DSO.Uri)
-    agent_type = message_graph.value(content, DSO.AgentType)
-
-    DIRECTORY_GRAPH.add((uri, RDF.type, FOAF.Agent))
-    DIRECTORY_GRAPH.add((uri, FOAF.name, name))
-    DIRECTORY_GRAPH.add((uri, DSO.Address, address))
-    DIRECTORY_GRAPH.add((uri, DSO.AgentType, agent_type))
-    DIRECTORY_GRAPH.add((uri, DSO.Uri, uri))
-    for predicate, obj in message_graph.predicate_objects(uri):
-        DIRECTORY_GRAPH.add((uri, predicate, obj))
-    logger.info("Registrat agent %s (%s) a %s", name, agent_type, address)
+    dsgraph.add((agn_uri, RDF.type, FOAF.Agent))
+    dsgraph.add((agn_uri, FOAF.name, agn_name))
+    dsgraph.add((agn_uri, DSO.Address, agn_add))
+    dsgraph.add((agn_uri, DSO.AgentType, agn_type))
+    dsgraph.add((agn_uri, DSO.Uri, agn_uri))
+    for predicate, obj in gm.predicate_objects(agn_uri):
+        dsgraph.add((agn_uri, predicate, obj))
 
     return build_message(
         Graph(),
         ACL.confirm,
         sender=AGENT.uri,
-        receiver=uri,
-        msgcnt=next_counter(),
+        receiver=agn_uri,
+        msgcnt=mss_cnt,
     )
 
 
-def process_search(message_graph, content, requester):
-    """Processa una cerca d'agents per tipus i retorna coincidències."""
-    agent_type = message_graph.value(content, DSO.AgentType)
-    logger.info("Cerca al directori sol.licitada per al tipus d'agent %s", agent_type)
+def process_search():
+    agent_type = gm.value(subject=content, predicate=DSO.AgentType)
+    logger.info("Cerca al directori pel tipus %s", agent_type)
+
     reply = Graph()
     bind_namespaces(reply)
     reply.bind("foaf", FOAF)
     reply.bind("dso", DSO)
     payload = AGENT.uri + "#directory-response"
-    for uri, _, _ in DIRECTORY_GRAPH.triples((None, DSO.AgentType, agent_type)):
-        for predicate, obj in DIRECTORY_GRAPH.predicate_objects(uri):
+    for uri, _, _ in dsgraph.triples((None, DSO.AgentType, agent_type)):
+        for predicate, obj in dsgraph.predicate_objects(uri):
             reply.add((uri, predicate, obj))
+
     return build_message(
         reply,
         ACL.inform,
         sender=AGENT.uri,
-        receiver=requester,
+        receiver=msgdic["sender"],
         content=payload,
-        msgcnt=next_counter(),
+        msgcnt=mss_cnt,
     )
 
 
-# Communication handling -----------------------------------------------------------
 @app.route("/Register")
 def register():
-    """Endpoint ACL de registre/cerca (`/Register`)."""
-    message_graph = Graph()
-    message_graph.parse(data=request.args["content"], format="xml")
-    properties = get_message_properties(message_graph)
-    if not properties or properties.get("performative") != ACL.request:
-        logger.warning("Rebut missatge no-request o malformat a /Register")
-        return build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
+    """
+    Entry point del agente que recibe los mensajes de registro.
+    """
+    global mss_cnt, gm, content, msgdic
 
-    content = properties["content"]
-    action = message_graph.value(content, RDF.type)
-    if action == DSO.Register:
-        response = process_register(message_graph, content)
-    elif action == DSO.Search:
-        response = process_search(message_graph, content, properties.get("sender"))
+    print("INFO DirectoryAgent => Peticio rebuda\n")
+
+    message = request.args["content"]
+    gm = Graph()
+    gm.parse(data=message, format="xml")
+
+    msgdic = get_message_properties(gm)
+
+    if msgdic is None:
+        gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+        print("INFO DirectoryAgent => El missatge no era un FIPA ACL")
     else:
-        response = build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            msgcnt=next_counter(),
-        )
-    return response.serialize(format="xml")
+        perf = msgdic["performative"]
+        if perf != ACL.request:
+            gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+        else:
+            content = msgdic["content"]
+            accion = gm.value(subject=content, predicate=RDF.type)
+            if accion == DSO.Register:
+                gr = process_register()
+            elif accion == DSO.Search:
+                gr = process_search()
+            else:
+                gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+
+    mss_cnt += 1
+    return gr.serialize(format="xml")
 
 
-# Inspection endpoints -------------------------------------------------------------
 @app.route("/Info")
 def info():
-    """Endpoint d'inspecció que retorna el contingut del directori."""
-    return DIRECTORY_GRAPH.serialize(format="turtle")
+    return dsgraph.serialize(format="turtle")
 
 
 @app.route("/Stop")
 def stop():
-    """Atura el servidor Flask de l'agent."""
     shutdown_server()
-    return "Stopping"
+    return "Parando Servidor"
 
 
-# Bootstrap -----------------------------------------------------------------------
-def main():
-    """Punt d'entrada executable del Directory Agent."""
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["directory"])
     args = parser.parse_args()
@@ -166,7 +153,3 @@ def main():
     )
     logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
     serve_agent(app, hostname, args.port)
-
-
-if __name__ == "__main__":
-    main()

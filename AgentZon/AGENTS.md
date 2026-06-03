@@ -53,13 +53,14 @@ HTML van a `web/templates/`. No barregis lògica de negoci dins d'un `@app.route
 
 ### Anatomia d'un agent (tots segueixen la mateixa plantilla)
 1. Imports → `app = Flask(__name__)` + logger.
-2. Globals (`AGENT`, `DIRECTORY_AGENT`, rutes de dades, comptador de missatges).
+2. Globals (`AGENT`, `DirectoryAgent`, rutes de dades, `mss_cnt` com als exemples del professor).
 3. `configure_runtime(settings, message_sender=send_message)` — omple les globals. **Existeix
-   separat de `main()` perquè els tests puguin muntar l'agent sense xarxa real. No ho trenquis.**
+   separat de `if __name__` perquè els tests puguin muntar l'agent sense xarxa real. No ho trenquis.**
 4. Plans (`pla_...`) — la lògica, un per capacitat del diagrama Prometheus.
-5. `@app.route("/comm")` — rep ACL, tria el pla segons `RDF.type`, respon ACL.
-6. `@app.route("/iface")` (només alguns) i `@app.route("/Stop")`.
-7. `main()` → crida `serve_agent(...)` (vegeu §5, concurrència).
+5. `@app.route("/comm")` + `comunicacion()` — patró SimpleInfoAgent: `gm`/`msgdic`/`gr`, `print INFO`,
+   `mss_cnt += 1` al final; tria el pla segons `RDF.type`.
+6. `@app.route("/iface")` → `browser_iface()` (només alguns) i `@app.route("/Stop")`.
+7. `if __name__ == "__main__":` → `serve_agent(...)` (vegeu §5, concurrència).
 
 ---
 

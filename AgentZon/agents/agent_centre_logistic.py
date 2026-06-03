@@ -1,11 +1,20 @@
-"""Agent centre logístic: lots, negociació amb transportistes i cobrament intern."""
+# -*- coding: utf-8 -*-
+"""
+filename: agent_centre_logistic
+
+Agent centre logistic AgentZon (lots, transport i cobrament intern).
+
+/comm entrada ACL
+/iface estat lots en turtle
+/Stop para l'agent
+"""
 
 import argparse
-from pathlib import Path
 import threading
+from pathlib import Path
 
 from flask import Flask, request
-from rdflib import Graph
+from rdflib import Graph, RDF
 
 from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties, send_message
@@ -58,27 +67,26 @@ from services.logistics_service import (
 from services.rdf_store import load_graph
 
 
-app = Flask(__name__)
 logger = config_logger(level=1)
+app = Flask(__name__)
 
-# Agent attributes -----------------------------------------------------------------
+mss_cnt = 0
+
 AGENT = None
-DIRECTORY_AGENT = None
+DirectoryAgent = None
 MESSAGE_SENDER = send_message
 TRANSPORT_AGENTS = []
 LOTS_PATH = None
 CENTRE_ID = None
 CENTRE_CITY = None
-COUNTER = 0
 AUTO_TRIGGER_READY_LOTS = True
 
 
-# Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
-    """Inicialitza configuració de centre, paths i dependències."""
-    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, TRANSPORT_AGENTS, LOTS_PATH, CENTRE_ID, CENTRE_CITY, COUNTER, AUTO_TRIGGER_READY_LOTS
+    global AGENT, DirectoryAgent, MESSAGE_SENDER, TRANSPORT_AGENTS, LOTS_PATH
+    global CENTRE_ID, CENTRE_CITY, mss_cnt, AUTO_TRIGGER_READY_LOTS
     AGENT = settings["agent"]
-    DIRECTORY_AGENT = settings.get("directory_agent")
+    DirectoryAgent = settings.get("directory_agent")
     MESSAGE_SENDER = message_sender
     TRANSPORT_AGENTS = settings["transport_agents"]
     CENTRE_ID = settings.get("centre_id")
@@ -86,14 +94,13 @@ def configure_runtime(settings, message_sender=send_message):
     AUTO_TRIGGER_READY_LOTS = settings.get("auto_trigger_ready_lots", True)
     lots_filename = f"lots-{CENTRE_ID}.ttl" if CENTRE_ID else "lots.ttl"
     LOTS_PATH = Path(settings["data_dir"]) / lots_filename
-    COUNTER = 0
+    mss_cnt = 0
 
 
-def next_counter():
-    """Retorna un identificador incremental per a `msgcnt`."""
-    global COUNTER
-    current = COUNTER
-    COUNTER += 1
+def _msgcnt():
+    global mss_cnt
+    current = mss_cnt
+    mss_cnt += 1
     return current
 
 
@@ -114,9 +121,7 @@ def _shipment_scope_texts(shipment):
     return ("S'ha enviat un producte", "al producte enviat")
 
 
-# Plans ----------------------------------------------------------------------------
 def pla_assignar_producte_a_lot(request_data):
-    """Pla de magatzem: assigna un producte localitzat a un lot."""
     centre_id = request_data.get("centre_id") or CENTRE_ID
     product = request_data["product"]
     logger.info(
@@ -152,17 +157,16 @@ def pla_assignar_producte_a_lot(request_data):
 
 
 def resolve_transport_agents():
-    """Resol transportistes disponibles (cache local o directori)."""
     if TRANSPORT_AGENTS:
         return TRANSPORT_AGENTS
-    if DIRECTORY_AGENT is None:
+    if DirectoryAgent is None:
         return []
 
     entries = resolve_agents_via_directory(
         AGENT,
-        DIRECTORY_AGENT,
+        DirectoryAgent,
         MESSAGE_SENDER,
-        next_counter,
+        _msgcnt,
         DSO.TransportistaAgent,
     )
     return [
@@ -177,7 +181,6 @@ def resolve_transport_agents():
 
 
 def pla_cerca_de_transportista(lot):
-    """Pla de negociació: recull ofertes inicials dels transportistes."""
     transport_agents = resolve_transport_agents()
     logger.info(
         "Iniciant negociacio del lot %s (%d transportistes, pes_total=%.2f, desti=%s, entrega_estimada=%s)",
@@ -194,7 +197,7 @@ def pla_cerca_de_transportista(lot):
                 lot,
                 sender=AGENT.uri,
                 receiver=transport_agent.uri,
-                msgcnt=next_counter(),
+                msgcnt=_msgcnt(),
             )
             return extract_transport_offer(MESSAGE_SENDER(message, transport_agent.address))
         except Exception as exc:
@@ -223,7 +226,6 @@ def pla_cerca_de_transportista(lot):
 
 
 def pla_negociar_contraoferta(lot, transport_agents, offers):
-    """Pla de negociació: contraoferta només a l'oferta alta (110 % / 115 % sobre la baixa)."""
     low_offer, high_offer = split_low_and_high_offers(offers)
     negotiation = {
         "low_offer": low_offer,
@@ -262,7 +264,7 @@ def pla_negociar_contraoferta(lot, transport_agents, offers):
         new_price=counter_price,
         sender=AGENT.uri,
         receiver=transport_agent.uri,
-        msgcnt=next_counter(),
+        msgcnt=_msgcnt(),
     )
     reply = MESSAGE_SENDER(message, transport_agent.address)
     performative = get_message_properties(reply).get("performative")
@@ -295,7 +297,6 @@ def pla_negociar_contraoferta(lot, transport_agents, offers):
 
 
 def pla_de_transportista_escollit(lot, transport_agents, initial_offers, negotiation, request_content=None):
-    """Pla de selecció: tria guanyador i notifica acceptacions/rebuigs."""
     selected = select_offer_after_premium_negotiation(
         negotiation["low_offer"],
         negotiation["high_offer"],
@@ -329,7 +330,7 @@ def pla_de_transportista_escollit(lot, transport_agents, initial_offers, negotia
                 selected,
                 sender=AGENT.uri,
                 receiver=transport_agent.uri,
-                msgcnt=next_counter(),
+                msgcnt=_msgcnt(),
             )
             logger.info(
                 "Notificant acceptacio al transportista %s per al lot %s",
@@ -342,7 +343,7 @@ def pla_de_transportista_escollit(lot, transport_agents, initial_offers, negotia
                 base_offer,
                 sender=AGENT.uri,
                 receiver=transport_agent.uri,
-                msgcnt=next_counter(),
+                msgcnt=_msgcnt(),
             )
             logger.info(
                 "Notificant rebuig al transportista %s per al lot %s",
@@ -354,7 +355,6 @@ def pla_de_transportista_escollit(lot, transport_agents, initial_offers, negotia
 
 
 def pla_producte_sha_enviat(shipment):
-    """Pla post-enviament: notifica cobrament intern al Cobrador."""
     cobrador = resolve_cobrador_agent()
     if cobrador is None:
         return None
@@ -364,7 +364,7 @@ def pla_producte_sha_enviat(shipment):
         shipment,
         sender=AGENT.uri,
         receiver=cobrador.uri,
-        msgcnt=next_counter(),
+        msgcnt=_msgcnt(),
     )
     try:
         confirmation = extract_confirmacio_pagament(MESSAGE_SENDER(message, cobrador.address))
@@ -374,44 +374,30 @@ def pla_producte_sha_enviat(shipment):
     if not confirmation.get("payment_id"):
         logger.warning("El Cobrador no ha retornat una factura per %s", payment_target)
         return None
-    logger.info(
-        "Cobrament intern confirmat per %s (pagament %s, %.2f EUR)",
-        payment_target,
-        confirmation["payment_id"],
-        confirmation["amount"],
-    )
     return confirmation
 
 
 def resolve_compra_agent():
-    if DIRECTORY_AGENT is None:
+    if DirectoryAgent is None:
         return None
     try:
         return resolve_agent_via_directory(
-            AGENT,
-            DIRECTORY_AGENT,
-            MESSAGE_SENDER,
-            next_counter,
-            DSO.CompraAgent,
+            AGENT, DirectoryAgent, MESSAGE_SENDER, _msgcnt, DSO.CompraAgent,
         )
     except Exception:
-        logger.warning("No s'ha pogut resoldre l'Agent Compra per enviar actualitzacions d'enviament")
+        print("INFO AgenteCentreLogistic => No s'ha pogut resoldre Compra")
         return None
 
 
 def resolve_cobrador_agent():
-    if DIRECTORY_AGENT is None:
+    if DirectoryAgent is None:
         return None
     try:
         return resolve_agent_via_directory(
-            AGENT,
-            DIRECTORY_AGENT,
-            MESSAGE_SENDER,
-            next_counter,
-            DSO.CobradorAgent,
+            AGENT, DirectoryAgent, MESSAGE_SENDER, _msgcnt, DSO.CobradorAgent,
         )
     except Exception:
-        logger.warning("No s'ha pogut resoldre el Cobrador; s'omet el cobrament intern")
+        print("INFO AgenteCentreLogistic => No s'ha pogut resoldre Cobrador")
         return None
 
 
@@ -442,7 +428,7 @@ def _notify_compra(message_builder, item, offer, compra_agent, invoice=None):
             offer,
             sender=AGENT.uri,
             receiver=compra_agent.uri,
-            msgcnt=next_counter(),
+            msgcnt=_msgcnt(),
         )
     else:
         message = message_builder(
@@ -451,13 +437,12 @@ def _notify_compra(message_builder, item, offer, compra_agent, invoice=None):
             sender=AGENT.uri,
             receiver=compra_agent.uri,
             invoice=invoice,
-            msgcnt=next_counter(),
+            msgcnt=_msgcnt(),
         )
     MESSAGE_SENDER(message, compra_agent.address)
 
 
 def process_ready_lot(lot_id):
-    """Executa el flux complet d'un lot preparat fins a enviament."""
     lot = mark_lot_negotiating(LOTS_PATH, lot_id)
     if lot is None:
         return None
@@ -491,7 +476,6 @@ def process_ready_lot(lot_id):
 
 
 def trigger_ready_lot_negotiation(lot_id, asynchronous=True):
-    """Activa negociació de lot en segon pla o en mode síncron."""
     if asynchronous:
         thread = threading.Thread(target=process_ready_lot, args=(lot_id,), daemon=True)
         thread.start()
@@ -499,56 +483,72 @@ def trigger_ready_lot_negotiation(lot_id, asynchronous=True):
     return process_ready_lot(lot_id)
 
 
-# Communication handling -----------------------------------------------------------
+def pla_localitzacio_acl(gm, content, sender):
+    request_data = parse_productes_localitzats(gm, content)
+    lot = pla_assignar_producte_a_lot(request_data)
+    gr = build_confirmacio_localitzacio(
+        request_data,
+        lot,
+        sender=AGENT.uri,
+        receiver=sender,
+        request_content=content,
+        msgcnt=mss_cnt,
+    )
+    if lot.get("ready_for_negotiation") and AUTO_TRIGGER_READY_LOTS:
+        trigger_ready_lot_negotiation(lot["lot_id"], asynchronous=True)
+    return gr
+
+
 @app.route("/comm")
-def comm():
-    """Entrada ACL del centre: rep productes localitzats i respon confirmació."""
-    message_graph = Graph()
-    message_graph.parse(data=request.args["content"], format="xml")
-    properties = get_message_properties(message_graph)
-    if not properties or properties.get("performative") != ACL.request:
-        logger.warning("Rebut missatge no-request o malformat a /comm")
-        return build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
-    content = properties["content"]
-    request_data = parse_productes_localitzats(message_graph, content)
-    try:
-        lot = pla_assignar_producte_a_lot(request_data)
-        response = build_confirmacio_localitzacio(
-            request_data,
-            lot,
-            sender=AGENT.uri,
-            receiver=properties.get("sender"),
-            request_content=content,
-            msgcnt=next_counter(),
-        )
-        if lot.get("ready_for_negotiation") and AUTO_TRIGGER_READY_LOTS:
-            trigger_ready_lot_negotiation(lot["lot_id"], asynchronous=True)
-        return response.serialize(format="xml")
-    except Exception as exc:
-        logger.error("Error processant el producte %s: %s", request_data.get("localized_product_id"), exc)
-        return build_message(
-            Graph(),
-            ACL.failure,
-            sender=AGENT.uri,
-            receiver=properties.get("sender"),
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
+def comunicacion():
+    """
+    Entrypoint de comunicacio del centre logistic.
+    """
+    global mss_cnt
+
+    print("INFO AgenteCentreLogistic => Peticio rebuda\n")
+
+    message = request.args["content"]
+    gm = Graph()
+    gm.parse(data=message, format="xml")
+
+    msgdic = get_message_properties(gm)
+
+    if msgdic is None:
+        gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+        print("INFO AgenteCentreLogistic => El missatge no era un FIPA ACL")
+    else:
+        perf = msgdic["performative"]
+        if perf != ACL.request:
+            gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+            print("INFO AgenteCentreLogistic => No es una request FIPA ACL")
+        else:
+            content = msgdic["content"]
+            accion = gm.value(subject=content, predicate=RDF.type)
+            print("INFO AgenteCentreLogistic => Accio %s" % accion)
+            try:
+                gr = pla_localitzacio_acl(gm, content, msgdic.get("sender"))
+            except Exception as exc:
+                logger.error("Error processant localitzacio: %s", exc)
+                gr = build_message(
+                    Graph(),
+                    ACL.failure,
+                    sender=AGENT.uri,
+                    receiver=msgdic.get("sender"),
+                    msgcnt=mss_cnt,
+                )
+
+    mss_cnt += 1
+    return gr.serialize(format="xml")
 
 
 @app.route("/iface")
-def iface():
-    """Vista tècnica del centre: exporta l'estat de lots en Turtle."""
+def browser_iface():
     return load_graph(LOTS_PATH).serialize(format="turtle")
 
 
 @app.route("/cron/negotiate-ready-lots")
 def negotiate_ready_lots():
-    """Cron manual per negociar lots preparats o imminents."""
     ready_lots = list_ready_lots_for_negotiation(
         LOTS_PATH,
         delivery_window_days=READY_DELIVERY_WINDOW_DAYS,
@@ -562,14 +562,11 @@ def negotiate_ready_lots():
 
 @app.route("/Stop")
 def stop():
-    """Atura el servidor Flask de l'agent."""
     shutdown_server()
-    return "Stopping"
+    return "Parando Servidor"
 
 
-# Bootstrap -----------------------------------------------------------------------
-def main():
-    """Punt d'entrada executable de l'Agent Centre Logístic."""
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["centre_logistic"])
     add_directory_arguments(parser)
@@ -594,7 +591,6 @@ def main():
             "transport_agents": [],
         }
     )
-    directory = build_directory_agent(args.directory_host, args.directory_port)
     logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
     serve_agent(
         app,
@@ -602,7 +598,7 @@ def main():
         args.port,
         register_fn=lambda: register_with_directory(
             AGENT,
-            directory,
+            DirectoryAgent,
             DSO.CentreLogisticAgent,
             0,
             metadata={
@@ -611,7 +607,3 @@ def main():
             },
         ),
     )
-
-
-if __name__ == "__main__":
-    main()

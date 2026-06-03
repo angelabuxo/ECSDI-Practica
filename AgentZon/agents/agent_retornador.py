@@ -1,4 +1,13 @@
-"""Agent Retornador: validació de devolucions i gestió de reemborsaments."""
+# -*- coding: utf-8 -*-
+"""
+filename: agent_retornador
+
+Agent retornador AgentZon (devolucions i reemborsaments).
+
+/comm entrada ACL
+/iface formulari web
+/Stop para l'agent
+"""
 
 import argparse
 from pathlib import Path
@@ -11,7 +20,7 @@ from AgentUtil.ACLMessages import build_message, get_message_properties, send_me
 from AgentUtil.DSO import DSO
 from AgentUtil.FlaskServer import shutdown_server
 from AgentUtil.Logging import config_logger
-from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI
+from AgentUtil.OntoNamespaces import AZON
 from config import (
     DEFAULT_PORTS,
     TEMPLATE_DIR,
@@ -49,90 +58,65 @@ from services.retornador_service import (
 )
 
 
-app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 logger = config_logger(level=1)
+app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 
-# Agent attributes -----------------------------------------------------------------
+mss_cnt = 0
+
 AGENT = None
-DIRECTORY_AGENT = None
+DirectoryAgent = None
 MESSAGE_SENDER = send_message
 REFUNDS_PATH = None
 PURCHASE_HISTORY_PATH = None
 CATALOG_PATH = None
 SHIPPING_RESPONSIBILITY_PATH = None
-COUNTER = 0
 
 
-# Runtime configuration ------------------------------------------------------------
 def configure_runtime(settings, message_sender=send_message):
-    """Inicialitza estat global, paths de dades i dependències de missatgeria."""
-    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, REFUNDS_PATH, PURCHASE_HISTORY_PATH, CATALOG_PATH
-    global SHIPPING_RESPONSIBILITY_PATH, COUNTER
+    global AGENT, DirectoryAgent, MESSAGE_SENDER, REFUNDS_PATH, PURCHASE_HISTORY_PATH
+    global CATALOG_PATH, SHIPPING_RESPONSIBILITY_PATH, mss_cnt
     AGENT = settings["agent"]
-    DIRECTORY_AGENT = settings["directory_agent"]
+    DirectoryAgent = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
     data_dir = Path(settings["data_dir"])
     REFUNDS_PATH = data_dir / "devolucions.ttl"
     PURCHASE_HISTORY_PATH = data_dir / "historial_compres.ttl"
     CATALOG_PATH = data_dir / "productes.ttl"
     SHIPPING_RESPONSIBILITY_PATH = data_dir / "responsable_enviament_productes.ttl"
-    COUNTER = 0
+    mss_cnt = 0
 
 
-def next_counter():
-    """Retorna un identificador incremental per als missatges ACL."""
-    global COUNTER
-    current = COUNTER
-    COUNTER += 1
+def _msgcnt():
+    global mss_cnt
+    current = mss_cnt
+    mss_cnt += 1
     return current
 
 
-# Agent logic ----------------------------------------------------------------------
 def get_client_ip():
-    """Adreca IP del client HTTP (proxy-aware) com a identificador d'usuari."""
     return get_client_ip_from_request(request)
 
 
 def resolve_opinador_agent():
-    """Resol l'Agent Opinador via servei de directori."""
-    return resolve_agent_via_directory(
-        AGENT,
-        DIRECTORY_AGENT,
-        MESSAGE_SENDER,
-        next_counter,
-        DSO.OpinadorAgent,
-    )
+    return resolve_agent_via_directory(AGENT, DirectoryAgent, MESSAGE_SENDER, _msgcnt, DSO.OpinadorAgent)
 
 
 def resolve_cobrador_agent():
-    """Resol l'Agent Cobrador via servei de directori."""
-    return resolve_agent_via_directory(
-        AGENT,
-        DIRECTORY_AGENT,
-        MESSAGE_SENDER,
-        next_counter,
-        DSO.CobradorAgent,
-    )
+    return resolve_agent_via_directory(AGENT, DirectoryAgent, MESSAGE_SENDER, _msgcnt, DSO.CobradorAgent)
 
 
 def resolve_compra_iface_url():
-    """URL de la interfície de Compra (directori o buit si no es resol)."""
     try:
         compra_agent = resolve_agent_via_directory(
-            AGENT,
-            DIRECTORY_AGENT,
-            MESSAGE_SENDER,
-            next_counter,
-            DSO.CompraAgent,
+            AGENT, DirectoryAgent, MESSAGE_SENDER, _msgcnt, DSO.CompraAgent,
         )
         return replace_url_path(compra_agent.address, "/iface")
     except Exception:
-        logger.warning("No s'ha pogut resoldre l'agent Compra per a la interfície")
+        print("INFO AgenteRetornador => No s'ha pogut resoldre Compra per a la interficie")
         return ""
 
 
 def _normalize_return_request(return_request):
-    """Unifica peticions UI (multi-comanda) i ACL (una comanda)."""
     if return_request.get("order_groups"):
         return return_request
     return {
@@ -146,7 +130,6 @@ def _normalize_return_request(return_request):
 
 
 def _consult_opinador_per_order(return_request):
-    """Demana a l'Opinador la validació de cada comanda per separat."""
     opinador = resolve_opinador_agent()
     order_decisions = {}
     for order_id, product_ids in return_request["order_groups"].items():
@@ -167,7 +150,7 @@ def _consult_opinador_per_order(return_request):
             },
             sender=AGENT.uri,
             receiver=opinador.uri,
-            msgcnt=next_counter(),
+            msgcnt=_msgcnt(),
         )
         decision_graph = MESSAGE_SENDER(opinion_message, opinador.address)
         decision = parse_resolucio_devolucio(decision_graph)
@@ -177,17 +160,10 @@ def _consult_opinador_per_order(return_request):
         else:
             decision["accepted_product_ids"] = []
         order_decisions[order_id] = decision
-        logger.info(
-            "Comanda %s: %d producte(s) acceptat(s) de %d",
-            order_id,
-            len(decision["accepted_product_ids"]),
-            len(product_ids),
-        )
     return order_decisions
 
 
 def pla_compliment_de_devolucio(return_request):
-    """Pla: valida devolució amb Opinador (per comanda) i reemborsa productes acceptats."""
     normalized = _normalize_return_request(return_request)
     parent_return_id = normalized["return_id"]
     logger.info(
@@ -258,22 +234,10 @@ def pla_compliment_de_devolucio(return_request):
         aggregate["reason"] = (
             f"{aggregate['reason']} Reemborsament {global_status} de {total_refund_amount:.2f} EUR."
         ).strip()
-    logger.info(
-        "Devolucio %s completada (%d productes acceptats, %.2f EUR)",
-        parent_return_id,
-        len(aggregate.get("accepted_items", [])),
-        total_refund_amount,
-    )
     return aggregate, {"amount": total_refund_amount, "status": global_status}
 
 
 def pla_retorn(decision):
-    """Pla: demana al Cobrador que executi un reemborsament concret."""
-    logger.info(
-        "Iniciant retorn de diners per devolucio %s (%.2f EUR)",
-        decision.get("return_id", ""),
-        decision.get("amount", 0.0),
-    )
     cobrador = resolve_cobrador_agent()
     refund_message = build_peticio_retorn_diners(
         {
@@ -287,21 +251,13 @@ def pla_retorn(decision):
         },
         sender=AGENT.uri,
         receiver=cobrador.uri,
-        msgcnt=next_counter(),
+        msgcnt=_msgcnt(),
     )
     response_graph = MESSAGE_SENDER(refund_message, cobrador.address)
-    confirmation = extract_confirmacio_retorn_diners(response_graph)
-    logger.info(
-        "Confirmacio retorn rebuda per %s: estat=%s, import=%.2f",
-        confirmation.get("return_id", ""),
-        confirmation.get("status", ""),
-        confirmation.get("amount", 0.0),
-    )
-    return confirmation
+    return extract_confirmacio_retorn_diners(response_graph)
 
 
 def _load_purchased_products_for_iface(user_id):
-    """Carrega productes comprats visibles al formulari de devolució."""
     return build_purchased_products_for_user(
         PURCHASE_HISTORY_PATH,
         CATALOG_PATH,
@@ -320,7 +276,6 @@ def _render_retornador_iface(
     decision=None,
     error="",
 ):
-    """Construeix la resposta HTML del formulari de devolucions."""
     return render_template(
         "retornador.html",
         iface_path="/iface",
@@ -335,16 +290,28 @@ def _render_retornador_iface(
     )
 
 
-# Web interface --------------------------------------------------------------------
+def pla_devolucio_acl(gm, content, sender):
+    request_data = parse_peticio_devolucio(gm, content)
+    decision, _ = pla_compliment_de_devolucio(request_data)
+    return build_resolucio_devolucio(
+        decision,
+        sender=AGENT.uri,
+        receiver=sender,
+        request_content=content,
+        msgcnt=mss_cnt,
+    )
+
+
 @app.route("/iface", methods=["GET", "POST"])
-def iface():
-    """Interfície web del Retornador: selecció de productes i sol·licitud de devolució."""
+def browser_iface():
+    """
+    Permet la comunicacio amb l'agent via un navegador.
+    """
     compra_url = resolve_compra_iface_url()
     interface_user_id = get_client_ip()
     purchased_products = _load_purchased_products_for_iface(interface_user_id)
 
     if request.method == "GET":
-        logger.info("Retornador /iface GET per usuari %s", interface_user_id)
         return _render_retornador_iface(
             interface_user_id,
             purchased_products,
@@ -353,11 +320,6 @@ def iface():
 
     selected_products = request.form.getlist("selected_products")
     reason = request.form.get("reason", "").strip()
-    logger.info(
-        "Retornador /iface POST per usuari %s amb %d productes seleccionats",
-        interface_user_id,
-        len(selected_products),
-    )
     return_request, build_error = build_return_request_from_selection(
         selected_products,
         reason,
@@ -365,7 +327,6 @@ def iface():
         logger=logger,
     )
     if return_request is None:
-        logger.warning("Peticio de devolucio invalida per %s: %s", interface_user_id, build_error)
         return _render_retornador_iface(
             interface_user_id,
             purchased_products,
@@ -377,11 +338,6 @@ def iface():
 
     try:
         decision, _ = pla_compliment_de_devolucio(return_request)
-        logger.info(
-            "Resposta final /iface devolucio %s: %s",
-            decision.get("return_id", ""),
-            "ACCEPTADA" if decision.get("accepted") else "DENEGADA",
-        )
         return _render_retornador_iface(
             interface_user_id,
             purchased_products,
@@ -402,67 +358,56 @@ def iface():
         )
 
 
-# Communication handling -----------------------------------------------------------
 @app.route("/comm")
-def comm():
-    """Entrada ACL del Retornador (`PeticioDevolucio` -> `ResolucioDevolucio`)."""
-    message_graph = Graph()
-    message_graph.parse(data=request.args["content"], format="xml")
-    properties = get_message_properties(message_graph)
-    if not properties or properties.get("performative") != ACL.request:
-        logger.warning("Rebut missatge no-request o malformat a /comm")
-        return build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
+def comunicacion():
+    """
+    Entrypoint de comunicacio de l'agent retornador.
+    """
+    global mss_cnt
 
-    content = properties["content"]
-    content_type = message_graph.value(content, RDF.type)
-    logger.info("Retornador /comm rep accio RDF: %s", content_type)
-    if content_type != AZON.PeticioDevolucio:
-        logger.warning("Rebut accio no suportada a /comm: %s", content_type)
-        return build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            receiver=properties.get("sender"),
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
+    print("INFO AgenteRetornador => Peticio rebuda\n")
 
-    request_data = parse_peticio_devolucio(message_graph, content)
-    logger.info(
-        "Rebuda PeticioDevolucio %s (comanda %s)",
-        request_data.get("return_id", ""),
-        request_data.get("order_id", ""),
-    )
-    decision, _ = pla_compliment_de_devolucio(request_data)
-    logger.info(
-        "Resposta devolucio %s: %s",
-        decision.get("return_id", ""),
-        "ACCEPTADA" if decision.get("accepted") else "DENEGADA",
-    )
-    response = build_resolucio_devolucio(
-        decision,
-        sender=AGENT.uri,
-        receiver=properties.get("sender"),
-        request_content=content,
-        msgcnt=next_counter(),
-    )
-    return response.serialize(format="xml")
+    message = request.args["content"]
+    gm = Graph()
+    gm.parse(data=message, format="xml")
+
+    msgdic = get_message_properties(gm)
+
+    if msgdic is None:
+        gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+        print("INFO AgenteRetornador => El missatge no era un FIPA ACL")
+    else:
+        perf = msgdic["performative"]
+        if perf != ACL.request:
+            gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+            print("INFO AgenteRetornador => No es una request FIPA ACL")
+        else:
+            content = msgdic["content"]
+            accion = gm.value(subject=content, predicate=RDF.type)
+            if accion != AZON.PeticioDevolucio:
+                gr = build_message(
+                    Graph(),
+                    ACL["not-understood"],
+                    sender=AGENT.uri,
+                    receiver=msgdic.get("sender"),
+                    msgcnt=mss_cnt,
+                )
+                print("INFO AgenteRetornador => Accio no suportada: %s" % accion)
+            else:
+                print("INFO AgenteRetornador => PeticioDevolucio")
+                gr = pla_devolucio_acl(gm, content, msgdic.get("sender"))
+
+    mss_cnt += 1
+    return gr.serialize(format="xml")
 
 
 @app.route("/Stop")
 def stop():
-    """Atura el servidor Flask de l'agent."""
     shutdown_server()
-    return "Stopping"
+    return "Parando Servidor"
 
 
-# Bootstrap -----------------------------------------------------------------------
-def main():
-    """Punt d'entrada executable de l'Agent Retornador."""
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["retornador"])
     add_directory_arguments(parser)
@@ -482,9 +427,5 @@ def main():
         app,
         hostname,
         args.port,
-        register_fn=lambda: register_with_directory(AGENT, DIRECTORY_AGENT, DSO.RetornadorAgent, 0),
+        register_fn=lambda: register_with_directory(AGENT, DirectoryAgent, DSO.RetornadorAgent, 0),
     )
-
-
-if __name__ == "__main__":
-    main()

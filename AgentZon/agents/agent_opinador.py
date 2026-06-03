@@ -1,18 +1,22 @@
-"""Agent Opinador: feedback, suggeriments i validació de devolucions.
+# -*- coding: utf-8 -*-
+"""
+filename: agent_opinador
 
-Aquest fitxer orquestra la comunicació ACL i la UI de l'agent.
-La lògica de negoci principal viu als serveis (`services/`).
+Agent opinador AgentZon (feedback, suggeriments i devolucions).
+
+/comm entrada ACL
+/iface dashboard web
+/Stop para l'agent
 """
 
 import argparse
-import threading
 from pathlib import Path
 
 from flask import Flask, render_template, request
 from rdflib import Graph, RDF
 
 from AgentUtil.ACL import ACL
-from AgentUtil.ACLMessages import build_message, get_message_properties
+from AgentUtil.ACLMessages import build_message, get_message_properties, send_message
 from AgentUtil.DSO import DSO
 from AgentUtil.FlaskServer import shutdown_server
 from AgentUtil.Logging import config_logger
@@ -42,60 +46,46 @@ from services.catalog_service import get_products_by_ids
 from services.opinador_service import evaluate_return_request, generate_recommendations
 
 
-app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 logger = config_logger(level=1)
+app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 
-# Agent attributes -----------------------------------------------------------------
+mss_cnt = 0
+
 AGENT = None
-DIRECTORY_AGENT = None
-MESSAGE_SENDER = None
-DATA_DIR = None
+DirectoryAgent = None
+MESSAGE_SENDER = send_message
 CATALOG_PATH = None
 PURCHASE_HISTORY_PATH = None
 SEARCH_HISTORY_PATH = None
 FEEDBACK_PATH = None
-COUNTER = 0
-_MSGCNT_LOCK = threading.Lock()
 
 
-# Runtime configuration ------------------------------------------------------------
-def configure_runtime(settings, message_sender=None):
-    """Inicialitza rutes de dades i dependències de runtime."""
-    global AGENT, DIRECTORY_AGENT, MESSAGE_SENDER, DATA_DIR
-    global CATALOG_PATH, PURCHASE_HISTORY_PATH, SEARCH_HISTORY_PATH, FEEDBACK_PATH, COUNTER
+def configure_runtime(settings, message_sender=send_message):
+    global AGENT, DirectoryAgent, MESSAGE_SENDER, CATALOG_PATH
+    global PURCHASE_HISTORY_PATH, SEARCH_HISTORY_PATH, FEEDBACK_PATH, mss_cnt
     AGENT = settings["agent"]
-    DIRECTORY_AGENT = settings.get("directory_agent")
-    MESSAGE_SENDER = message_sender or settings.get("message_sender") or _default_message_sender
-    DATA_DIR = Path(settings["data_dir"])
-    CATALOG_PATH = DATA_DIR / "productes.ttl"
-    PURCHASE_HISTORY_PATH = DATA_DIR / "historial_compres.ttl"
-    SEARCH_HISTORY_PATH = DATA_DIR / "historial_cerques.ttl"
-    FEEDBACK_PATH = DATA_DIR / "feedback.ttl"
-    COUNTER = 0
+    DirectoryAgent = settings.get("directory_agent")
+    MESSAGE_SENDER = message_sender
+    data_dir = Path(settings["data_dir"])
+    CATALOG_PATH = data_dir / "productes.ttl"
+    PURCHASE_HISTORY_PATH = data_dir / "historial_compres.ttl"
+    SEARCH_HISTORY_PATH = data_dir / "historial_cerques.ttl"
+    FEEDBACK_PATH = data_dir / "feedback.ttl"
+    mss_cnt = 0
 
 
-def _default_message_sender(message, address):
-    from AgentUtil.ACLMessages import send_message
-
-    return send_message(message, address)
-
-
-def next_counter():
-    """Retorna un identificador incremental segur per `msgcnt`."""
-    global COUNTER
-    with _MSGCNT_LOCK:
-        current = COUNTER
-        COUNTER += 1
-        return current
+def _msgcnt():
+    global mss_cnt
+    current = mss_cnt
+    mss_cnt += 1
+    return current
 
 
 def get_client_ip():
-    """Adreca IP del client HTTP (proxy-aware) com a identificador d'usuari."""
     return get_client_ip_from_request(request)
 
 
 def _load_dashboard_stats(recommendations, user_id):
-    """Calcula mètriques bàsiques de la vista dashboard."""
     return {
         "feedback_count": len(load_feedback_records(FEEDBACK_PATH, user_id=user_id)),
         "purchase_count": len(load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id)),
@@ -104,7 +94,6 @@ def _load_dashboard_stats(recommendations, user_id):
 
 
 def _parse_recommendation_limit(raw_value):
-    """Normalitza el límit de recomanacions de la UI (1..10)."""
     try:
         parsed = int(raw_value)
     except (TypeError, ValueError):
@@ -113,32 +102,20 @@ def _parse_recommendation_limit(raw_value):
 
 
 def _get_pending_products(user_id):
-    """Retorna els productes comprats per l'usuari que encara no tenen feedback registrat."""
     purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id)
     feedbacks = load_feedback_records(FEEDBACK_PATH, user_id=user_id)
-    
-    # Conjunt de productes que ja tenen valoració
     reviewed_product_ids = {pid for fb in feedbacks for pid in fb.get("product_ids", [])}
-    
-    # Conjunt de tots els productes comprats
     purchased_product_ids = {pid for p in purchases for pid in p.get("product_ids", [])}
-    
-    # Filtrem els pendents
     pending_ids = list(purchased_product_ids - reviewed_product_ids)
     if not pending_ids:
         return []
-        
-    # Obtenim els detalls del catàleg per saber-ne el nom real
     return get_products_by_ids(CATALOG_PATH, pending_ids)
 
 
 def _build_dashboard_context(interface_user_id, recommendation_limit, confirmation):
-    """Construeix el context complet per renderitzar el dashboard."""
     recommendations = pla_de_creacio_de_suggeriments(interface_user_id, limit=recommendation_limit)
     recent_purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=interface_user_id)
     stats = _load_dashboard_stats(recommendations, interface_user_id)
-    
-    # Obtenir llista de productes sense feedback
     pending_products = _get_pending_products(interface_user_id)
     logger.info(
         "Dashboard Opinador per %s: %d recomanacions, %d compres recents, %d productes pendents",
@@ -147,7 +124,6 @@ def _build_dashboard_context(interface_user_id, recommendation_limit, confirmati
         len(recent_purchases),
         len(pending_products),
     )
-    
     return {
         "iface_path": "/iface",
         "interface_user_id": interface_user_id,
@@ -162,9 +138,7 @@ def _build_dashboard_context(interface_user_id, recommendation_limit, confirmati
     }
 
 
-# Agent logic ----------------------------------------------------------------------
 def pla_de_registre_de_compra(request_data):
-    """Pla: registra una compra a l'historial."""
     order = {
         "order_id": request_data["order_id"],
         "user_id": request_data["user_id"],
@@ -188,14 +162,12 @@ def pla_de_registre_de_compra(request_data):
 
 
 def pla_de_registre_de_feedback(feedback_data):
-    """Pla: registra una valoració (feedback) a la base de dades."""
     logger.info("Registrant feedback %s per a la comanda %s", feedback_data["feedback_id"], feedback_data["order_id"])
     record_feedback(FEEDBACK_PATH, feedback_data)
     return feedback_data
 
 
 def pla_de_creacio_de_suggeriments(user_id=None, limit=5):
-    """Pla: genera recomanacions personalitzades per usuari."""
     recommendations = generate_recommendations(
         CATALOG_PATH,
         SEARCH_HISTORY_PATH,
@@ -213,7 +185,6 @@ def pla_de_creacio_de_suggeriments(user_id=None, limit=5):
 
 
 def pla_de_consulta_de_criteris_devolucio(request_data):
-    """Pla: valida si una devolució compleix la política definida."""
     logger.info(
         "Validant devolucio %s de la comanda %s (%d productes)",
         request_data.get("return_id", ""),
@@ -230,20 +201,16 @@ def pla_de_consulta_de_criteris_devolucio(request_data):
 
 
 def _build_feedback_submission(form_data, user_id):
-    """Construeix i valida un registre de feedback des del formulari web."""
     requested_product_id = form_data.get("product_id", "").strip()
     if not requested_product_id:
         return None, "No s'ha pogut registrar el feedback: No s'ha seleccionat cap producte vàlid."
 
     purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id)
-    
-    # Cerquem de forma automatitzada quina comanda de l'usuari conté aquest producte
     matching_purchases = [p for p in purchases if requested_product_id in p.get("product_ids", [])]
-    
+
     if not matching_purchases:
         return None, "No s'ha pogut verificar la compra d'aquest producte."
 
-    # Escollim la comanda més recent que conté el producte actiu
     associated_order = matching_purchases[-1]
     order_id = associated_order["order_id"]
     logger.info(
@@ -253,16 +220,15 @@ def _build_feedback_submission(form_data, user_id):
         user_id,
     )
 
-    # Generació automàtica i oculta d'IDs estructurats de feedback
     feedback_id = f"FB-{requested_product_id}-{order_id}"
-    
+
     try:
         rating = int(form_data.get("rating", "0"))
     except ValueError:
         return None, "No s'ha pogut registrar el feedback: puntuació no vàlida."
-    
+
     rating = max(1, min(5, rating))
-    
+
     return {
         "feedback_id": feedback_id,
         "user_id": user_id,
@@ -273,96 +239,114 @@ def _build_feedback_submission(form_data, user_id):
     }, ""
 
 
-# Communication handling -----------------------------------------------------------
-@app.route("/comm")
-def comm():
-    """Entrada ACL de l'agent (`/comm`)."""
-    message_graph = Graph()
-    message_graph.parse(data=request.args["content"], format="xml")
-    properties = get_message_properties(message_graph)
-    if not properties or properties.get("performative") != ACL.request:
-        logger.warning("Rebut missatge no-request o malformat a /comm")
-        return build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
-
-    content = properties["content"]
-    content_type = message_graph.value(content, RDF.type)
-    logger.info("Opinador /comm rep accio RDF: %s", content_type)
-
-    if content_type == AZON.PeticioRegistreCompra:
-        request_data = parse_peticio_registre_compra(message_graph, content)
-        logger.info("Rebuda PeticioRegistreCompra per comanda %s", request_data.get("order_id", ""))
-        pla_de_registre_de_compra(request_data)
-        response = build_confirmacio_registre_compra(
-            request_data["order_id"],
-            sender=AGENT.uri,
-            receiver=properties.get("sender"),
-            request_content=content,
-            msgcnt=next_counter(),
-        )
-        return response.serialize(format="xml")
-
-    if content_type == AZON.PeticioDevolucio:
-        request_data = parse_peticio_devolucio(message_graph, content)
-        logger.info("Rebuda PeticioDevolucio %s", request_data.get("return_id", ""))
-        decision = pla_de_consulta_de_criteris_devolucio(request_data)
-        response = build_resolucio_devolucio(
-            decision,
-            sender=AGENT.uri,
-            receiver=properties.get("sender"),
-            request_content=content,
-            msgcnt=next_counter(),
-        )
-        return response.serialize(format="xml")
-
-    if content_type == AZON.RespostaFeedback:
-        feedback_data = parse_resposta_feedback(message_graph, content)
-        logger.info("Rebuda RespostaFeedback %s", feedback_data.get("feedback_id", ""))
-        pla_de_registre_de_feedback(feedback_data)
-        response_graph = Graph()
-        response = build_message(
-            response_graph,
-            ACL.inform,
-            sender=AGENT.uri,
-            receiver=properties.get("sender"),
-            content=content,
-            ontology=ONTOLOGY_URI,
-            msgcnt=next_counter(),
-        )
-        return response.serialize(format="xml")
-
-    logger.warning("Rebut acció no suportada a /comm: %s", content_type)
-    return build_message(
-        Graph(),
-        ACL["not-understood"],
+def pla_registre_compra_acl(gm, content, sender):
+    request_data = parse_peticio_registre_compra(gm, content)
+    pla_de_registre_de_compra(request_data)
+    return build_confirmacio_registre_compra(
+        request_data["order_id"],
         sender=AGENT.uri,
-        msgcnt=next_counter(),
-    ).serialize(format="xml")
+        receiver=sender,
+        request_content=content,
+        msgcnt=mss_cnt,
+    )
 
 
-# Web interface -------------------------------------------------------------------
+def pla_devolucio_acl(gm, content, sender):
+    request_data = parse_peticio_devolucio(gm, content)
+    decision = pla_de_consulta_de_criteris_devolucio(request_data)
+    return build_resolucio_devolucio(
+        decision,
+        sender=AGENT.uri,
+        receiver=sender,
+        request_content=content,
+        msgcnt=mss_cnt,
+    )
+
+
+def pla_feedback_acl(gm, content, sender):
+    feedback_data = parse_resposta_feedback(gm, content)
+    pla_de_registre_de_feedback(feedback_data)
+    response_graph = Graph()
+    return build_message(
+        response_graph,
+        ACL.inform,
+        sender=AGENT.uri,
+        receiver=sender,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=mss_cnt,
+    )
+
+
+PLANS = {
+    AZON.PeticioRegistreCompra: pla_registre_compra_acl,
+    AZON.PeticioDevolucio: pla_devolucio_acl,
+    AZON.RespostaFeedback: pla_feedback_acl,
+}
+
+
+@app.route("/comm")
+def comunicacion():
+    """
+    Entrypoint de comunicacio de l'agent opinador.
+    """
+    global mss_cnt
+
+    print("INFO AgenteOpinador => Peticio rebuda\n")
+
+    message = request.args["content"]
+    gm = Graph()
+    gm.parse(data=message, format="xml")
+
+    msgdic = get_message_properties(gm)
+
+    if msgdic is None:
+        gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+        print("INFO AgenteOpinador => El missatge no era un FIPA ACL")
+    else:
+        perf = msgdic["performative"]
+        if perf != ACL.request:
+            gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+            print("INFO AgenteOpinador => No es una request FIPA ACL")
+        else:
+            content = msgdic["content"]
+            accion = gm.value(subject=content, predicate=RDF.type)
+            plan = PLANS.get(accion)
+            if plan is None:
+                gr = build_message(
+                    Graph(),
+                    ACL["not-understood"],
+                    sender=AGENT.uri,
+                    receiver=msgdic.get("sender"),
+                    msgcnt=mss_cnt,
+                )
+                print("INFO AgenteOpinador => Accio no suportada: %s" % accion)
+            else:
+                print("INFO AgenteOpinador => Accio %s" % accion)
+                gr = plan(gm, content, msgdic.get("sender"))
+
+    mss_cnt += 1
+    return gr.serialize(format="xml")
+
+
 @app.route("/iface", methods=["GET", "POST"])
-def iface():
-    """Interfície web de l'Opinador (`/iface`)."""
+def browser_iface():
+    """
+    Permet la comunicacio amb l'agent via un navegador.
+    """
     view = request.values.get("view", "home").strip().lower()
     confirmation = request.args.get("confirmation", "")
     interface_user_id = get_client_ip()
     recommendation_limit = _parse_recommendation_limit(request.values.get("limit", 5))
 
     if request.method == "POST" and request.form.get("action") == "feedback":
-        logger.info("Opinador /iface POST feedback de l'usuari %s", interface_user_id)
+        print("INFO AgenteOpinador => POST feedback de %s" % interface_user_id)
         feedback_data, error = _build_feedback_submission(request.form, interface_user_id)
         if feedback_data is not None:
             pla_de_registre_de_feedback(feedback_data)
-            confirmation = f"Feedback registrat correctament per al producte seleccionat!"
-            logger.info("Feedback registrat correctament (%s)", feedback_data.get("feedback_id", ""))
+            confirmation = "Feedback registrat correctament per al producte seleccionat!"
         elif error:
             confirmation = error
-            logger.warning("Error validant feedback per %s: %s", interface_user_id, error)
         view = "dashboard"
 
     if view != "dashboard":
@@ -379,14 +363,11 @@ def iface():
 
 @app.route("/Stop")
 def stop():
-    """Atura el servidor Flask de l'agent."""
     shutdown_server()
-    return "Stopping"
+    return "Parando Servidor"
 
 
-# Bootstrap -----------------------------------------------------------------------
-def main():
-    """Punt d'entrada executable de l'agent."""
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["opinador"])
     add_directory_arguments(parser)
@@ -397,18 +378,18 @@ def main():
     configure_runtime(
         {
             "agent": build_agent("OpinadorAgent", "Opinador", args.port, host=hostname),
+            "directory_agent": build_directory_agent(args.directory_host, args.directory_port),
             "data_dir": Path(args.data_dir),
         }
     )
-    directory = build_directory_agent(args.directory_host, args.directory_port)
     logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
     serve_agent(
         app,
         hostname,
         args.port,
-        register_fn=lambda: register_with_directory(AGENT, directory, DSO.OpinadorAgent, 0),
+        register_fn=lambda: (
+            register_with_directory(AGENT, DirectoryAgent, DSO.OpinadorAgent, 0)
+            if DirectoryAgent is not None
+            else False
+        ),
     )
-
-
-if __name__ == "__main__":
-    main()

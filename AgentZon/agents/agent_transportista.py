@@ -1,4 +1,13 @@
-"""Agent transportista extern: ofertes de transport per lots (preu i data d'entrega)."""
+# -*- coding: utf-8 -*-
+"""
+filename: agent_transportista
+
+Agent transportista extern AgentZon (ofertes i negociacio de transport).
+
+/comm entrada ACL (cfp, propose, accept-proposal, reject-proposal)
+/iface vista tecnica
+/Stop para l'agent
+"""
 
 import argparse
 from datetime import date, timedelta
@@ -7,7 +16,7 @@ from flask import Flask, request
 from rdflib import Graph
 
 from AgentUtil.ACL import ACL
-from AgentUtil.ACLMessages import build_message, get_message_properties
+from AgentUtil.ACLMessages import build_message, get_message_properties, send_message
 from AgentUtil.DSO import DSO
 from AgentUtil.FlaskServer import shutdown_server
 from AgentUtil.Logging import config_logger
@@ -28,43 +37,32 @@ from protocols.centre_logistic import (
     parse_peticio_transport,
 )
 
-
-app = Flask(__name__)
 logger = config_logger(level=1)
-TRANSPORTISTA_AGENT_TYPE = DSO.TransportistaAgent
+app = Flask(__name__)
 
-# Agent attributes -----------------------------------------------------------------
+mss_cnt = 0
 AGENT = None
+DirectoryAgent = None
+MESSAGE_SENDER = send_message
 TRANSPORT_ID = "fast"
 PRICE_PER_KG = 8.0
 DELIVERY_DAYS = 1
-COUNTER = 0
 LAST_OFFERS = {}
 
 
-# Runtime configuration ------------------------------------------------------------
-def configure_runtime(settings):
-    """Inicialitza paràmetres operatius del transportista."""
-    global AGENT, TRANSPORT_ID, PRICE_PER_KG, DELIVERY_DAYS, COUNTER, LAST_OFFERS
+def configure_runtime(settings, message_sender=send_message):
+    global AGENT, DirectoryAgent, MESSAGE_SENDER, TRANSPORT_ID, PRICE_PER_KG, DELIVERY_DAYS, mss_cnt, LAST_OFFERS
     AGENT = settings["agent"]
+    DirectoryAgent = settings.get("directory_agent")
+    MESSAGE_SENDER = message_sender
     TRANSPORT_ID = settings["transport_id"]
     PRICE_PER_KG = settings["price_per_kg"]
     DELIVERY_DAYS = settings["delivery_days"]
-    COUNTER = 0
+    mss_cnt = 0
     LAST_OFFERS = {}
 
 
-def next_counter():
-    """Retorna un identificador incremental per missatges ACL."""
-    global COUNTER
-    current = COUNTER
-    COUNTER += 1
-    return current
-
-
-# Agent logic ----------------------------------------------------------------------
 def generar_oferta_transport(request_data):
-    """Calcula oferta de transport segons pes, tarifes i termini."""
     return {
         "lot_id": request_data["lot_id"],
         "order_id": request_data["order_id"],
@@ -76,121 +74,98 @@ def generar_oferta_transport(request_data):
     }
 
 
-def register_transport_agent(directory_agent, msgcnt=0):
-    """Registra el transportista al directori amb metadades pròpies."""
+def register_transport_agent(directory_agent=None, msgcnt=0):
+    target_directory = directory_agent or DirectoryAgent
+    if target_directory is None:
+        return False
     return register_with_directory(
         AGENT,
-        directory_agent,
-        TRANSPORTISTA_AGENT_TYPE,
+        target_directory,
+        DSO.TransportistaAgent,
         msgcnt=msgcnt,
         metadata={AZON.IdTransportista: TRANSPORT_ID},
     )
 
 
-def _build_inform_reply(receiver):
-    return build_message(
-        Graph(),
-        ACL.inform,
-        sender=AGENT.uri,
-        receiver=receiver,
-        msgcnt=next_counter(),
-    )
-
-
-def _build_refuse_reply(receiver):
-    return build_message(
-        Graph(),
-        ACL.refuse,
-        sender=AGENT.uri,
-        receiver=receiver,
-        msgcnt=next_counter(),
-    )
-
-
 def respondre_contraoferta(counter_offer, receiver=None):
-    """Avalua i respon una contraoferta alineada amb el corredor 110 % / 115 % del centre."""
     previous_offer = LAST_OFFERS.get(counter_offer["lot_id"])
     if previous_offer is None:
-        return _build_refuse_reply(receiver)
+        return build_message(Graph(), ACL.refuse, sender=AGENT.uri, receiver=receiver, msgcnt=mss_cnt)
 
     counter_price = counter_offer["price"]
     cap_price = round(counter_price * 1.15 / 1.10, 2)
-
     if counter_price > cap_price:
-        return _build_refuse_reply(receiver)
+        return build_message(Graph(), ACL.refuse, sender=AGENT.uri, receiver=receiver, msgcnt=mss_cnt)
 
     LAST_OFFERS[counter_offer["lot_id"]] = {**previous_offer, "price": counter_price}
-    return build_message(
-        Graph(),
-        ACL.agree,
-        sender=AGENT.uri,
-        receiver=receiver,
-        msgcnt=next_counter(),
-    )
+    return build_message(Graph(), ACL.agree, sender=AGENT.uri, receiver=receiver, msgcnt=mss_cnt)
 
 
-# Communication handling -----------------------------------------------------------
 @app.route("/comm")
-def comm():
-    """Entrada ACL del transportista: CFP, contraoferta, accept/reject."""
-    message_graph = Graph()
-    message_graph.parse(data=request.args["content"], format="xml")
-    properties = get_message_properties(message_graph)
-    if not properties:
-        logger.warning("Rebut missatge malformat a /comm")
-        return build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
+def comunicacion():
+    """
+    Entrypoint de comunicacio del transportista.
+    """
+    global mss_cnt
 
-    performative = properties.get("performative")
-    sender = properties.get("sender")
-    if performative == ACL["accept-proposal"]:
-        selected_offer = extract_transport_offer(message_graph)
-        LAST_OFFERS.pop(selected_offer["lot_id"], None)
-        return _build_inform_reply(sender).serialize(format="xml")
-    if performative == ACL["reject-proposal"]:
-        rejected_offer = extract_transport_offer(message_graph)
-        LAST_OFFERS.pop(rejected_offer["lot_id"], None)
-        return _build_inform_reply(sender).serialize(format="xml")
-    if performative == ACL.propose:
-        counter_offer = extract_transport_offer(message_graph)
-        return respondre_contraoferta(counter_offer, receiver=sender).serialize(format="xml")
-    if performative != ACL.cfp:
-        logger.warning("Rebut missatge amb performativa no suportada a /comm: %s", performative)
-        return build_message(
-            Graph(),
-            ACL["not-understood"],
-            sender=AGENT.uri,
-            receiver=sender,
-            msgcnt=next_counter(),
-        ).serialize(format="xml")
+    print("INFO AgenteTransportista => Peticio rebuda\n")
 
-    content = properties["content"]
-    request_data = parse_peticio_transport(message_graph, content)
-    offer = generar_oferta_transport(request_data)
-    LAST_OFFERS[offer["lot_id"]] = dict(offer)
-    logger.info(
-        "Generada oferta de transport %s per a la comanda %s (%.2f EUR)",
-        TRANSPORT_ID,
-        offer["order_id"],
-        offer["price"],
-    )
-    response = build_resposta_oferta_transport(
-        offer,
-        sender=AGENT.uri,
-        receiver=sender,
-        request_content=content,
-        msgcnt=next_counter(),
-    )
-    return response.serialize(format="xml")
+    message = request.args["content"]
+    gm = Graph()
+    gm.parse(data=message, format="xml")
+    msgdic = get_message_properties(gm)
+
+    if msgdic is None:
+        gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
+        print("INFO AgenteTransportista => El missatge no era un FIPA ACL")
+    else:
+        perf = msgdic["performative"]
+        sender = msgdic.get("sender")
+        if perf == ACL["accept-proposal"]:
+            selected_offer = extract_transport_offer(gm)
+            LAST_OFFERS.pop(selected_offer["lot_id"], None)
+            gr = build_message(Graph(), ACL.inform, sender=AGENT.uri, receiver=sender, msgcnt=mss_cnt)
+        elif perf == ACL["reject-proposal"]:
+            rejected_offer = extract_transport_offer(gm)
+            LAST_OFFERS.pop(rejected_offer["lot_id"], None)
+            gr = build_message(Graph(), ACL.inform, sender=AGENT.uri, receiver=sender, msgcnt=mss_cnt)
+        elif perf == ACL.propose:
+            counter_offer = extract_transport_offer(gm)
+            gr = respondre_contraoferta(counter_offer, receiver=sender)
+        elif perf != ACL.cfp:
+            gr = build_message(
+                Graph(),
+                ACL["not-understood"],
+                sender=AGENT.uri,
+                receiver=sender,
+                msgcnt=mss_cnt,
+            )
+            print("INFO AgenteTransportista => Performativa no suportada")
+        else:
+            content = msgdic["content"]
+            request_data = parse_peticio_transport(gm, content)
+            offer = generar_oferta_transport(request_data)
+            LAST_OFFERS[offer["lot_id"]] = dict(offer)
+            logger.info(
+                "Oferta transport %s comanda %s (%.2f EUR)",
+                TRANSPORT_ID,
+                offer["order_id"],
+                offer["price"],
+            )
+            gr = build_resposta_oferta_transport(
+                offer,
+                sender=AGENT.uri,
+                receiver=sender,
+                request_content=content,
+                msgcnt=mss_cnt,
+            )
+
+    mss_cnt += 1
+    return gr.serialize(format="xml")
 
 
 @app.route("/iface")
-def iface():
-    """Vista tècnica del transportista (graf buit serialitzat)."""
+def browser_iface():
     graph = Graph()
     bind_namespaces(graph)
     return graph.serialize(format="turtle")
@@ -198,14 +173,11 @@ def iface():
 
 @app.route("/Stop")
 def stop():
-    """Atura el servidor Flask de l'agent."""
     shutdown_server()
-    return "Stopping"
+    return "Parando Servidor"
 
 
-# Bootstrap -----------------------------------------------------------------------
-def main():
-    """Punt d'entrada executable de l'Agent Transportista."""
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["transport_fast"])
     add_directory_arguments(parser)
@@ -218,22 +190,21 @@ def main():
     configure_runtime(
         {
             "agent": build_agent(
-                f"Transportista-{args.transport_id}",
-                f"Transport{args.transport_id.title()}",
+                "Transportista-%s" % args.transport_id,
+                "Transport%s" % args.transport_id.title(),
                 args.port,
                 host=hostname,
             ),
+            "directory_agent": build_directory_agent(args.directory_host, args.directory_port),
             "transport_id": args.transport_id,
             "price_per_kg": args.price_per_kg,
             "delivery_days": args.delivery_days,
         }
     )
-    directory = build_directory_agent(args.directory_host, args.directory_port)
-    logger.info("Registrant %s al directori %s", AGENT.name, directory.address)
-    register_transport_agent(directory)
     logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
-    serve_agent(app, hostname, args.port)
-
-
-if __name__ == "__main__":
-    main()
+    serve_agent(
+        app,
+        hostname,
+        args.port,
+        register_fn=lambda: register_transport_agent(0),
+    )
