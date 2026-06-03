@@ -54,7 +54,16 @@
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Recomanacio"/>
     </owl:ObjectProperty>
-    
+
+
+    <!-- http://www.semanticweb.org/agentzon#EsRespostaA -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/agentzon#EsRespostaA">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#Comunicacio"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/agentzon#Comunicacio"/>
+    </owl:ObjectProperty>
+
 
 
     <!-- http://www.semanticweb.org/agentzon#MostraProducte -->
@@ -1004,7 +1013,14 @@
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#RespostaFeedback">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
     </owl:Class>
-    
+
+
+    <!-- http://www.semanticweb.org/agentzon#RespostaRecomanacio -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#RespostaRecomanacio">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    </owl:Class>
+
 
 
     <!-- http://www.semanticweb.org/agentzon#RespostaOfertaTransport -->
