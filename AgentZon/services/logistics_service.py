@@ -11,6 +11,7 @@ from rdflib.namespace import XSD
 
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
 from config import MAX_LOT_WEIGHT_KG, READY_DELIVERY_WINDOW_DAYS
+from protocols.rdf_refs import link_assignat_transportista, link_product, product_nodes_from_content, transport_id_from_node
 from services.rdf_store import load_graph, save_graph
 
 
@@ -94,8 +95,8 @@ def _find_open_lot_node(graph, city, delivery_date, centre_id=None):
 
 def _add_product_reference(graph, subject, product, centre_node=None):
     product_node = AZON[f"product-{product['product_id']}"]
-    graph.add((subject, AZON.TeProducte, product_node))
-    graph.add((product_node, RDF.type, AZON.Producte))
+    link_product(graph, subject, product_node, product_kind="intern")
+    graph.add((product_node, RDF.type, AZON.ProducteIntern))
     graph.set((product_node, AZON.IdProducte, Literal(product["product_id"])))
     if "name" in product:
         graph.set((product_node, AZON.Nom, Literal(product["name"])))
@@ -119,7 +120,7 @@ def _read_item(graph, item_node):
     centre_city = _lookup_centre_city(graph, centre_id)
 
     product = None
-    for product_node in graph.objects(item_node, AZON.TeProducte):
+    for _, product_node in product_nodes_from_content(graph, item_node):
         weight_value = graph.value(product_node, AZON.Pes)
         product = {
             "product_id": str(graph.value(product_node, AZON.IdProducte)),
@@ -157,7 +158,7 @@ def _extract_lot(graph, lot_node):
         "official_delivery_date": str(official_delivery_date) if official_delivery_date is not None else None,
         "total_weight": float(graph.value(lot_node, AZON.PesTotal) or 0.0),
         "status": _get_lot_status(graph, lot_node),
-        "transport_id": str(graph.value(lot_node, AZON.IdTransportista) or ""),
+        "transport_id": transport_id_from_node(graph, lot_node),
         "transport_name": str(graph.value(lot_node, AZON.NomTransportista) or ""),
         "price": float(price_value) if price_value is not None else 0.0,
         "centre_id": centre_id,
@@ -275,10 +276,12 @@ def assign_transport_to_lot(lots_path, lot_id, offer):
         graph = load_graph(lots_path)
         bind_namespaces(graph)
         lot_node = _find_lot_node_by_id(graph, lot_id)
-        transport_node = AZON[f"transport-{offer['transport_id']}"]
-        graph.add((transport_node, RDF.type, AZON.Transportista))
-        graph.set((lot_node, AZON.AssignatATransportista, transport_node))
-        graph.set((lot_node, AZON.IdTransportista, Literal(offer["transport_id"])))
+        link_assignat_transportista(
+            graph,
+            lot_node,
+            offer["transport_id"],
+            offer["transport_name"],
+        )
         graph.set((lot_node, AZON.NomTransportista, Literal(offer["transport_name"])))
         graph.set((lot_node, AZON.DataEntregaDefinitiva, Literal(offer["delivery_date"])))
         graph.set((lot_node, AZON.CostTransport, Literal(offer["price"], datatype=XSD.float)))

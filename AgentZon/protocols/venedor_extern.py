@@ -8,6 +8,15 @@ from rdflib.namespace import XSD
 from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
+from protocols.rdf_refs import (
+    ensure_order_node,
+    ensure_transportista_node,
+    first_product_node,
+    link_product,
+    order_id_from_node,
+    product_nodes_from_content,
+    transport_id_from_node,
+)
 
 CENTRE_RESOURCE_BY_ID = {
     "CL-BCN": "centre-BCN",
@@ -97,7 +106,7 @@ def build_alta_producte_extern(product, seller, request_id=None, sender=None, re
     product_payload = {**product, "seller_id": seller["seller_id"]}
     product_node = AZON[f"product-draft-{product_payload.get('product_id') or product_payload.get('sku_extern', 'new')}"]
     _add_external_product_node(graph, product_node, product_payload)
-    graph.add((content, AZON.TeProducte, product_node))
+    link_product(graph, content, product_node, product_kind="extern")
 
     return build_message(
         graph,
@@ -112,9 +121,9 @@ def build_alta_producte_extern(product, seller, request_id=None, sender=None, re
 
 def parse_alta_producte_extern(graph, content):
     product = None
-    for product_node in graph.objects(content, AZON.TeProducte):
+    product_node = first_product_node(graph, content)
+    if product_node is not None:
         product = _parse_external_product_node(graph, product_node)
-        break
     if product is None:
         raise ValueError("AltaProducteExtern sense producte associat")
 
@@ -148,10 +157,14 @@ def build_confirmacio_alta_producte_extern(
     graph = Graph()
     bind_namespaces(graph)
     content = AZON[f"confirmacio-alta-{product_id}"]
+    product_node = AZON[f"product-{product_id}"]
     graph.add((content, RDF.type, AZON.ConfirmacioAltaProducteExtern))
-    graph.add((content, AZON.IdProducte, Literal(product_id)))
-    graph.add((content, AZON.SkuExtern, Literal(sku_extern)))
-    graph.add((content, AZON.DataAlta, Literal(data_alta or date.today().isoformat(), datatype=XSD.date)))
+    graph.add((product_node, RDF.type, AZON.ProducteExtern))
+    graph.add((product_node, AZON.IdProducte, Literal(product_id)))
+    graph.add((product_node, AZON.SkuExtern, Literal(sku_extern)))
+    graph.add((product_node, AZON.DataAlta, Literal(data_alta or date.today().isoformat(), datatype=XSD.date)))
+    graph.add((content, AZON.SobreProducte, product_node))
+    graph.add((content, AZON.TeProducteExtern, product_node))
     return build_message(
         graph,
         perf=ACL.inform,
@@ -167,10 +180,17 @@ def parse_confirmacio_alta_producte_extern(graph, content=None):
     if content is None:
         props = get_message_properties(graph)
         content = props["content"]
+    product_node = first_product_node(graph, content)
+    if product_node is None:
+        return {
+            "product_id": "",
+            "sku_extern": "",
+            "data_alta": "",
+        }
     return {
-        "product_id": str(graph.value(content, AZON.IdProducte)),
-        "sku_extern": str(graph.value(content, AZON.SkuExtern) or ""),
-        "data_alta": str(graph.value(content, AZON.DataAlta) or ""),
+        "product_id": str(graph.value(product_node, AZON.IdProducte) or ""),
+        "sku_extern": str(graph.value(product_node, AZON.SkuExtern) or ""),
+        "data_alta": str(graph.value(product_node, AZON.DataAlta) or ""),
     }
 
 
@@ -178,23 +198,20 @@ def build_peticio_enviament_extern(order, seller_id, sender=None, receiver=None,
     graph = Graph()
     bind_namespaces(graph)
     content = AZON[f"external-shipping-request-{order['order_id']}-{seller_id}"]
-    order_node = AZON[f"order-{order['order_id']}"]
     shipping = order["shipping_data"]
+    order_node = ensure_order_node(graph, order["order_id"])
 
     graph.add((content, RDF.type, AZON.PeticioEnviamentExtern))
-    graph.add((content, AZON.IdComanda, Literal(order["order_id"])))
     graph.add((content, AZON.IdVenedorExtern, Literal(seller_id)))
     graph.add((content, AZON.Ciutat, Literal(shipping["city"])))
     graph.add((content, AZON.Carrer, Literal(shipping.get("street_address", ""))))
     graph.add((content, AZON.Prioritat, Literal(shipping["priority"])))
     graph.add((content, AZON.SobreComanda, order_node))
-    graph.add((order_node, RDF.type, AZON.Comanda))
-    graph.add((order_node, AZON.IdComanda, Literal(order["order_id"])))
 
     for product in order["products"]:
         product_node = AZON[f"product-{product['product_id']}"]
         _add_external_product_node(graph, product_node, product)
-        graph.add((content, AZON.TeProducte, product_node))
+        link_product(graph, content, product_node, product_kind="extern")
 
     return build_message(
         graph,
@@ -209,13 +226,13 @@ def build_peticio_enviament_extern(order, seller_id, sender=None, receiver=None,
 
 def parse_peticio_enviament_extern(graph, content):
     products = []
-    for product_node in graph.objects(content, AZON.TeProducte):
+    for _, product_node in product_nodes_from_content(graph, content):
         products.append(_parse_external_product_node(graph, product_node))
     seller_id = graph.value(content, AZON.IdVenedorExtern)
     if seller_id is None and products:
         seller_id = products[0].get("seller_id")
     return {
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "order_id": order_id_from_node(graph, content),
         "seller_id": str(seller_id or ""),
         "city": str(graph.value(content, AZON.Ciutat) or ""),
         "street_address": str(graph.value(content, AZON.Carrer) or ""),
@@ -239,18 +256,21 @@ def build_resposta_enviament_extern(
     graph = Graph()
     bind_namespaces(graph)
     content = AZON[f"dades-enviament-extern-{order_id}-{seller_id}"]
+    transport_name = seller_display_name or seller_id
+    order_node = ensure_order_node(graph, order_id)
+    transport_node = ensure_transportista_node(graph, seller_id, transport_name)
+
     graph.add((content, RDF.type, AZON.DadesEnviament))
-    graph.add((content, AZON.IdComanda, Literal(order_id)))
+    graph.add((content, AZON.SobreComanda, order_node))
     graph.add((content, AZON.Ciutat, Literal(city)))
     graph.add((content, AZON.DataEntrega, Literal(delivery_date)))
     graph.add((content, AZON.Estat, Literal(status)))
-    transport_name = seller_display_name or seller_id
+    graph.add((content, AZON.AssignatATransportista, transport_node))
     graph.add((content, AZON.NomTransportista, Literal(transport_name)))
-    graph.add((content, AZON.IdTransportista, Literal(seller_id)))
     for product in products:
         product_node = AZON[f"product-{product['product_id']}"]
         _add_external_product_node(graph, product_node, product)
-        graph.add((content, AZON.TeProducte, product_node))
+        link_product(graph, content, product_node, product_kind="extern")
     return build_message(
         graph,
         perf=ACL.inform,
@@ -276,16 +296,16 @@ def extract_external_shipments_from_reply(reply):
     if (content, RDF.type, AZON.DadesEnviament) not in reply_graph:
         return []
 
-    order_id = str(reply_graph.value(content, AZON.IdComanda) or "")
+    order_id = order_id_from_node(reply_graph, content)
     city = str(reply_graph.value(content, AZON.Ciutat) or "")
     delivery_date = str(reply_graph.value(content, AZON.DataEntrega) or "")
     status = str(reply_graph.value(content, AZON.Estat) or "DELEGAT")
     transport_name = str(reply_graph.value(content, AZON.NomTransportista) or "Venedor extern")
-    seller_id = str(reply_graph.value(content, AZON.IdTransportista) or "")
+    seller_id = transport_id_from_node(reply_graph, content)
     transport_id = seller_id if seller_id and seller_id != transport_name else ""
 
     shipments = []
-    for product_node in reply_graph.objects(content, AZON.TeProducte):
+    for _, product_node in product_nodes_from_content(reply_graph, content):
         product = _parse_external_product_node(reply_graph, product_node)
         shipments.append(
             {

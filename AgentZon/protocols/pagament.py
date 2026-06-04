@@ -6,6 +6,16 @@ from rdflib.namespace import XSD
 from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
+from protocols.rdf_refs import (
+    ensure_lot_node,
+    ensure_order_node,
+    link_product,
+    link_sobre_comanda,
+    link_sobre_lot,
+    lot_id_from_node,
+    order_id_from_node,
+    product_nodes_from_content,
+)
 
 
 # Sentit del moviment de diners (vegeu azon:SentitPagament a l'ontologia).
@@ -129,7 +139,7 @@ def build_peticio_pagament(payment, sender=None, receiver=None, request_content=
     content = AZON[f"payment-request-{payment['payment_id']}"]
     graph.add((content, RDF.type, AZON.PeticioPagament))
     graph.add((content, AZON.IdPagament, Literal(payment["payment_id"])))
-    graph.add((content, AZON.IdComanda, Literal(payment["order_id"])))
+    link_sobre_comanda(graph, content, payment["order_id"])
     graph.add((content, AZON.ImportPagament, Literal(payment["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MetodePagament, Literal(payment["method"])))
     if payment.get("sentit"):
@@ -168,7 +178,7 @@ def parse_peticio_pagament(graph, content):
     sentit = graph.value(content, AZON.SentitPagament)
     return {
         "payment_id": str(graph.value(content, AZON.IdPagament)),
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "order_id": order_id_from_node(graph, content),
         "amount": float(graph.value(content, AZON.ImportPagament)),
         "method": str(graph.value(content, AZON.MetodePagament)),
         "sentit": str(sentit) if sentit is not None else None,
@@ -220,7 +230,7 @@ def extract_invoice_from_content(graph, content):
     line_data = _parse_invoice_lines(graph, content)
     return {
         "payment_id": str(payment_id),
-        "order_id": str(graph.value(content, AZON.IdComanda) or ""),
+        "order_id": order_id_from_node(graph, content),
         "amount": float(amount) if amount is not None else line_data["products_subtotal"] + line_data["transport_cost"],
         "method": str(graph.value(content, AZON.MetodePagament) or ""),
         "sentit": str(graph.value(content, AZON.SentitPagament) or ""),
@@ -231,6 +241,8 @@ def extract_invoice_from_content(graph, content):
 
 
 def embed_invoice_in_content(graph, content, invoice):
+    if invoice.get("order_id"):
+        link_sobre_comanda(graph, content, invoice["order_id"])
     graph.add((content, AZON.IdPagament, Literal(invoice["payment_id"])))
     graph.add((content, AZON.ImportPagament, Literal(invoice["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MetodePagament, Literal(invoice["method"])))
@@ -249,7 +261,7 @@ def build_confirmacio_pagament(payment, sender=None, receiver=None, request_cont
     content = AZON[f"payment-confirmation-{payment['payment_id']}"]
     graph.add((content, RDF.type, AZON.ConfirmacioPagament))
     graph.add((content, AZON.IdPagament, Literal(payment["payment_id"])))
-    graph.add((content, AZON.IdComanda, Literal(payment["order_id"])))
+    link_sobre_comanda(graph, content, payment["order_id"])
     graph.add((content, AZON.ImportPagament, Literal(payment["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MetodePagament, Literal(payment["method"])))
     if payment.get("sentit"):
@@ -293,7 +305,7 @@ def build_peticio_cobrament_intern(shipment, sender=None, receiver=None, msgcnt=
     content = AZON[f"internal-charge-{localized_product_id}"]
     ploc_node = AZON[localized_product_id]
     graph.add((content, RDF.type, AZON.ConfirmacioEnviament))
-    graph.add((content, AZON.IdLot, Literal(shipment["lot_id"])))
+    link_sobre_lot(graph, content, shipment["lot_id"])
     graph.add((content, AZON.IdUsuari, Literal(shipment["user_id"])))
     graph.add((content, AZON.Ciutat, Literal(shipment["city"])))
     graph.add((content, AZON.DataEntregaDefinitiva, Literal(shipment["delivery_date"])))
@@ -301,16 +313,15 @@ def build_peticio_cobrament_intern(shipment, sender=None, receiver=None, msgcnt=
     graph.add((content, AZON.EsRespostaA, ploc_node))
     product = shipment["product"]
     product_node = AZON[f"product-{product['product_id']}"]
-    graph.add((content, AZON.TeProducte, product_node))
-    graph.add((product_node, RDF.type, AZON.Producte))
+    link_product(graph, content, product_node, product_kind="intern")
+    graph.add((product_node, RDF.type, AZON.ProducteIntern))
     graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
     if product.get("name"):
         graph.add((product_node, AZON.Nom, Literal(product["name"])))
     if product.get("weight") is not None:
         graph.add((product_node, AZON.Pes, Literal(product["weight"], datatype=XSD.float)))
     if shipment.get("order_id"):
-        graph.add((content, AZON.IdComanda, Literal(shipment["order_id"])))
-        graph.add((content, AZON.SobreComanda, AZON[f"order-{shipment['order_id']}"]))
+        link_sobre_comanda(graph, content, shipment["order_id"])
     return build_message(
         graph,
         perf=ACL.request,
@@ -324,7 +335,7 @@ def build_peticio_cobrament_intern(shipment, sender=None, receiver=None, msgcnt=
 
 def parse_peticio_cobrament_intern(graph, content):
     product = None
-    for product_node in graph.objects(content, AZON.TeProducte):
+    for _, product_node in product_nodes_from_content(graph, content):
         product_id = graph.value(product_node, AZON.IdProducte)
         if product_id is None:
             product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
@@ -338,11 +349,11 @@ def parse_peticio_cobrament_intern(graph, content):
     transport_cost = graph.value(content, AZON.CostTransport)
     ploc_node = graph.value(content, AZON.EsRespostaA)
     localized_product_id = str(ploc_node).rsplit("#", 1)[-1] if ploc_node is not None else None
-    order_id = graph.value(content, AZON.IdComanda)
+    order_id = order_id_from_node(graph, content)
     return {
         "localized_product_id": localized_product_id,
-        "order_id": str(order_id) if order_id is not None else None,
-        "lot_id": str(graph.value(content, AZON.IdLot)),
+        "order_id": order_id or None,
+        "lot_id": lot_id_from_node(graph, content),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
         "city": str(graph.value(content, AZON.Ciutat)),
         "delivery_date": str(graph.value(content, AZON.DataEntregaDefinitiva)),
@@ -358,7 +369,7 @@ def build_peticio_retorn_diners(refund, sender=None, receiver=None, msgcnt=0):
     content = AZON[f"refund-request-{refund['return_id']}"]
     graph.add((content, RDF.type, AZON.PeticioRetornDiners))
     graph.add((content, AZON.IdDevolucio, Literal(refund["return_id"])))
-    graph.add((content, AZON.IdComanda, Literal(refund["order_id"])))
+    link_sobre_comanda(graph, content, refund["order_id"])
     graph.add((content, AZON.IdUsuari, Literal(refund["user_id"])))
     graph.add((content, AZON.ImportPagament, Literal(refund["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MotiuDevolucio, Literal(refund.get("reason", ""))))
@@ -390,7 +401,7 @@ def parse_peticio_retorn_diners(graph, content):
     seller_id = graph.value(content, AZON.IdVenedorExtern)
     return {
         "return_id": str(graph.value(content, AZON.IdDevolucio)),
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "order_id": order_id_from_node(graph, content),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
         "amount": float(graph.value(content, AZON.ImportPagament)),
         "reason": str(graph.value(content, AZON.MotiuDevolucio)),
@@ -405,7 +416,7 @@ def build_confirmacio_retorn_diners(refund, sender=None, receiver=None, request_
     content = AZON[f"refund-confirmation-{refund['return_id']}"]
     graph.add((content, RDF.type, AZON.ConfirmacioRetornDiners))
     graph.add((content, AZON.IdDevolucio, Literal(refund["return_id"])))
-    graph.add((content, AZON.IdComanda, Literal(refund["order_id"])))
+    link_sobre_comanda(graph, content, refund["order_id"])
     graph.add((content, AZON.ImportPagament, Literal(refund["amount"], datatype=XSD.float)))
     graph.add((content, AZON.Estat, Literal(refund.get("status", "RETORNAT"))))
     if request_content is not None:
@@ -426,7 +437,7 @@ def extract_confirmacio_retorn_diners(graph):
     content = props["content"]
     return {
         "return_id": str(graph.value(content, AZON.IdDevolucio)),
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "order_id": order_id_from_node(graph, content),
         "amount": float(graph.value(content, AZON.ImportPagament)),
         "status": str(graph.value(content, AZON.Estat)),
     }

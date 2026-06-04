@@ -5,6 +5,7 @@ from datetime import date, datetime
 from rdflib import Graph, Literal, RDF
 
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
+from protocols.rdf_refs import ensure_order_node, link_sobre_comanda, order_id_from_node
 from services.rdf_store import load_graph, save_graph
 
 
@@ -64,12 +65,11 @@ def record_purchase(path, order):
     graph = load_graph(path)
     bind_namespaces(graph)
     record = AZON[f"purchase-{order['order_id']}"]
-    order_node = AZON[f"order-{order['order_id']}"]
-    purchase_date = order.get("purchase_date") or datetime.now().isoformat(timespec="seconds")
-    graph.add((record, AZON.IdComanda, Literal(order["order_id"])))
+    purchase_date = order.get("purchase_date") or date.today().isoformat()
+    ensure_order_node(graph, order["order_id"])
     graph.add((record, AZON.IdUsuari, Literal(order["user_id"])))
     graph.add((record, AZON.DataCompra, Literal(purchase_date)))
-    graph.add((record, AZON.SobreComanda, order_node))
+    link_sobre_comanda(graph, record, order["order_id"])
     for product in order["products"]:
         graph.add((record, AZON.SobreProducte, AZON[f"product-{product['product_id']}"]))
     save_graph(path, graph)
@@ -78,7 +78,7 @@ def record_purchase(path, order):
 def load_purchase_records(path, user_id=None):
     graph = load_graph(path)
     records = []
-    for record in set(graph.subjects(AZON.IdComanda, None)):
+    for record in set(graph.subjects(AZON.DataCompra, None)):
         record_user_id = str(graph.value(record, AZON.IdUsuari) or "")
         if user_id is not None and record_user_id != user_id:
             continue
@@ -90,7 +90,7 @@ def load_purchase_records(path, user_id=None):
             products.append({"product_id": str(product_id)})
         records.append(
             {
-                "order_id": str(graph.value(record, AZON.IdComanda) or ""),
+                "order_id": order_id_from_node(graph, record),
                 "user_id": record_user_id,
                 "purchase_date": str(graph.value(record, AZON.DataCompra) or ""),
                 "product_ids": sorted(product["product_id"] for product in products),

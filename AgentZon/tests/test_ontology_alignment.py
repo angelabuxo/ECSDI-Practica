@@ -22,6 +22,15 @@ class OntologyAlignmentTests(unittest.TestCase):
             if (prop, RDF.type, OWL.ObjectProperty) in graph
         }
 
+    def datatype_property_domains(self):
+        graph = Graph()
+        graph.parse(ONTOLOGY_PATH, format="xml")
+        return {
+            (str(prop), str(domain))
+            for prop, domain in graph.subject_objects(RDFS.domain)
+            if (prop, RDF.type, OWL.DatatypeProperty) in graph
+        }
+
     def test_sobre_lot_accepts_producte_localitzat(self):
         self.assertIn(
             (
@@ -36,6 +45,8 @@ class OntologyAlignmentTests(unittest.TestCase):
         graph.parse(ONTOLOGY_PATH, format="xml")
 
         self.assertIn((AZON.SobreProducte, RDF.type, OWL.ObjectProperty), graph)
+        self.assertIn((AZON.TeProducteExtern, RDF.type, OWL.ObjectProperty), graph)
+        self.assertIn((AZON.TeProducteIntern, RDF.type, OWL.ObjectProperty), graph)
         self.assertIn((AZON.PesTotal, RDF.type, OWL.DatatypeProperty), graph)
         self.assertNotIn((AZON.AgentIntern, None, None), graph)
         self.assertNotIn((AZON.AgentCercador, None, None), graph)
@@ -43,6 +54,16 @@ class OntologyAlignmentTests(unittest.TestCase):
         self.assertNotIn((AZON.emissor, None, None), graph)
         self.assertNotIn((AZON.receptor, None, None), graph)
         self.assertNotIn((AZON.teProducte, None, None), graph)
+
+    def test_product_relations_are_typed(self):
+        graph = Graph()
+        graph.parse(ONTOLOGY_PATH, format="xml")
+
+        self.assertIn((AZON.TeProducteExtern, RDFS.range, AZON.ProducteExtern), graph)
+        self.assertIn((AZON.TeProducteIntern, RDFS.range, AZON.ProducteIntern), graph)
+        self.assertIn((AZON.TeProducteExtern, RDFS.domain, AZON.AltaProducteExtern), graph)
+        self.assertNotIn((AZON.TeProducteExtern, RDFS.domain, AZON.Comanda), graph)
+        self.assertIn((AZON.TeProducte, RDFS.domain, AZON.Comanda), graph)
 
     def test_storage_sources_are_not_ontology_classes(self):
         graph = Graph()
@@ -77,7 +98,46 @@ class OntologyAlignmentTests(unittest.TestCase):
             self.assertIn((prop, RDF.type, OWL.DatatypeProperty), graph)
             self.assertIn((prop, RDFS.domain, AZON.Producte), graph)
 
-    def test_shared_datatype_properties_keep_all_known_domains(self):
+    def test_identifiers_live_on_entities_not_on_logistics_messages(self):
+        graph = Graph()
+        graph.parse(ONTOLOGY_PATH, format="xml")
+
+        id_comanda_domains = {
+            domain
+            for prop, domain in graph.subject_objects(RDFS.domain)
+            if prop == AZON.IdComanda
+        }
+        id_lot_domains = {
+            domain
+            for prop, domain in graph.subject_objects(RDFS.domain)
+            if prop == AZON.IdLot
+        }
+        id_transport_domains = {
+            domain
+            for prop, domain in graph.subject_objects(RDFS.domain)
+            if prop == AZON.IdTransportista
+        }
+
+        self.assertIn(AZON.Comanda, id_comanda_domains)
+        self.assertNotIn(AZON.PeticioTransport, id_comanda_domains)
+        self.assertNotIn(AZON.EleccioTransportista, id_comanda_domains)
+        self.assertNotIn(AZON.ResultatCompra, id_comanda_domains)
+        self.assertNotIn(AZON.PeticioPagament, id_comanda_domains)
+        self.assertNotIn(AZON.PeticioFeedback, id_comanda_domains)
+        self.assertNotIn(AZON.PeticioDevolucio, id_comanda_domains)
+        self.assertNotIn(AZON.PeticioRetornDiners, id_comanda_domains)
+        self.assertIn(AZON.Feedback, id_comanda_domains)
+        self.assertIn(AZON.Devolucio, id_comanda_domains)
+
+        self.assertIn(AZON.Lot, id_lot_domains)
+        self.assertNotIn(AZON.PeticioTransport, id_lot_domains)
+        self.assertNotIn(AZON.ConfirmacioEnviament, id_lot_domains)
+
+        self.assertIn(AZON.Transportista, id_transport_domains)
+        self.assertNotIn(AZON.DadesEnviament, id_transport_domains)
+        self.assertNotIn(AZON.EleccioTransportista, id_transport_domains)
+
+    def test_shared_datatype_properties_keep_known_domains(self):
         graph = Graph()
         graph.parse(ONTOLOGY_PATH, format="xml")
 
@@ -92,23 +152,6 @@ class OntologyAlignmentTests(unittest.TestCase):
                 AZON.ProducteLocalitzat,
                 AZON.RespostaOfertaTransport,
             },
-            AZON.IdComanda: {
-                AZON.Comanda,
-                AZON.DadesEnviament,
-                AZON.ConfirmacioLocalitzacio,
-                AZON.ConfirmacioRegistreCompra,
-                AZON.PeticioRegistreCompra,
-                AZON.PeticioTransport,
-                AZON.ProducteLocalitzat,
-                AZON.RespostaOfertaTransport,
-            },
-            AZON.IdLot: {
-                AZON.DadesEnviament,
-                AZON.ConfirmacioLocalitzacio,
-                AZON.Lot,
-                AZON.PeticioTransport,
-                AZON.RespostaOfertaTransport,
-            },
             AZON.Prioritat: {
                 AZON.Comanda,
                 AZON.PeticioEnviamentExtern,
@@ -120,6 +163,8 @@ class OntologyAlignmentTests(unittest.TestCase):
                 AZON.ResultatCerca,
             },
             AZON.CostTransport: {
+                AZON.ConfirmacioEnviament,
+                AZON.ConfirmacioPagament,
                 AZON.DadesEnviament,
                 AZON.RespostaOfertaTransport,
             },
@@ -163,19 +208,22 @@ class OntologyAlignmentTests(unittest.TestCase):
         self.assertIn((AZON.DadesEnviament, RDF.type, OWL.Class), graph)
         self.assertIn((AZON.DadesEnviament, RDFS.subClassOf, AZON.Resposta), graph)
 
-        for relation in (AZON.SobreComanda, AZON.SobreLot):
+        for relation in (AZON.SobreComanda, AZON.SobreLot, AZON.AssignatATransportista):
             self.assertIn((relation, RDFS.domain, AZON.DadesEnviament), graph)
 
         for prop in (
-            AZON.IdTransportista,
             AZON.NomTransportista,
             AZON.CostTransport,
             AZON.Ciutat,
+            AZON.DataEntrega,
             AZON.DataEntregaDefinitiva,
+            AZON.Estat,
         ):
             self.assertIn((prop, RDFS.domain, AZON.DadesEnviament), graph)
 
-        self.assertNotIn((AZON.Estat, RDFS.domain, AZON.DadesEnviament), graph)
+        self.assertNotIn((AZON.IdTransportista, RDFS.domain, AZON.DadesEnviament), graph)
+        self.assertNotIn((AZON.IdComanda, RDFS.domain, AZON.DadesEnviament), graph)
+        self.assertNotIn((AZON.IdLot, RDFS.domain, AZON.DadesEnviament), graph)
 
     def test_purchase_result_response_is_modeled_with_estimated_delivery_fields(self):
         graph = Graph()
@@ -185,15 +233,11 @@ class OntologyAlignmentTests(unittest.TestCase):
         self.assertIn((AZON.ResultatCompra, RDFS.subClassOf, AZON.Resposta), graph)
         self.assertIn((AZON.SobreComanda, RDFS.domain, AZON.ResultatCompra), graph)
 
-        for prop in (
-            AZON.IdComanda,
-            AZON.Estat,
-            AZON.DataEntrega,
-        ):
-            self.assertIn((prop, RDFS.domain, AZON.ResultatCompra), graph)
+        self.assertIn((AZON.DataEntrega, RDFS.domain, AZON.ResultatCompra), graph)
 
         self.assertNotIn((AZON.SobreLot, RDFS.domain, AZON.ResultatCompra), graph)
         self.assertNotIn((AZON.DataEntregaDefinitiva, RDFS.domain, AZON.ResultatCompra), graph)
+        self.assertNotIn((AZON.IdComanda, RDFS.domain, AZON.ResultatCompra), graph)
 
     def test_deferred_purchase_classes_exist_in_the_ontology(self):
         graph = Graph()
@@ -207,16 +251,47 @@ class OntologyAlignmentTests(unittest.TestCase):
             (AZON.SobreComanda, RDFS.domain, AZON.ResultatCompra),
             (AZON.SobreComanda, RDFS.domain, AZON.ConfirmacioLocalitzacio),
             (AZON.SobreLot, RDFS.domain, AZON.ConfirmacioLocalitzacio),
-            (AZON.Estat, RDFS.domain, AZON.ResultatCompra),
             (AZON.Estat, RDFS.domain, AZON.ConfirmacioLocalitzacio),
             (AZON.Estat, RDFS.domain, AZON.Lot),
-            (AZON.IdComanda, RDFS.domain, AZON.ResultatCompra),
-            (AZON.IdComanda, RDFS.domain, AZON.ConfirmacioLocalitzacio),
-            (AZON.IdLot, RDFS.domain, AZON.ConfirmacioLocalitzacio),
             (AZON.DataEntrega, RDFS.domain, AZON.ResultatCompra),
             (AZON.DataEntrega, RDFS.domain, AZON.ConfirmacioLocalitzacio),
         ]:
             self.assertIn(triple, graph)
+
+        self.assertNotIn((AZON.IdComanda, RDFS.domain, AZON.ConfirmacioLocalitzacio), graph)
+        self.assertNotIn((AZON.IdLot, RDFS.domain, AZON.ConfirmacioLocalitzacio), graph)
+
+    def test_code_aligned_domains_for_feedback_devolucio_and_pagament(self):
+        graph = Graph()
+        graph.parse(ONTOLOGY_PATH, format="xml")
+
+        for prop, domain in (
+            (AZON.DataCompra, AZON.Feedback),
+            (AZON.IdComanda, AZON.Feedback),
+            (AZON.IdUsuari, AZON.Feedback),
+            (AZON.IdComanda, AZON.Devolucio),
+            (AZON.IdComanda, AZON.Pagament),
+            (AZON.SobreComanda, AZON.PeticioFeedback),
+            (AZON.SobreComanda, AZON.PeticioDevolucio),
+            (AZON.SobreComanda, AZON.PeticioRetornDiners),
+            (AZON.IdUsuari, AZON.Devolucio),
+            (AZON.ImportPagament, AZON.Devolucio),
+            (AZON.IdVenedorExtern, AZON.ProducteExtern),
+            (AZON.IdVenedorExtern, AZON.PeticioEnviamentExtern),
+            (AZON.Carrer, AZON.PeticioEnviamentExtern),
+            (AZON.IdUsuari, AZON.Pagament),
+            (AZON.MetodePagament, AZON.Usuari),
+            (AZON.TeProducteIntern, AZON.ConfirmacioLocalitzacio),
+            (AZON.SobreComanda, AZON.PeticioPagament),
+            (AZON.SobreComanda, AZON.ConfirmacioPagament),
+            (AZON.GeneraRecomanacio, AZON.RespostaRecomanacio),
+        ):
+            self.assertIn((prop, RDFS.domain, domain), graph)
+
+        self.assertNotIn((AZON.Retorna, RDF.type, OWL.ObjectProperty), graph)
+        self.assertNotIn((AZON.CostBaseKg, RDF.type, OWL.DatatypeProperty), graph)
+        self.assertNotIn((AZON.Banc, RDF.type, OWL.Class), graph)
+        self.assertNotIn((AZON.IdBanc, RDF.type, OWL.DatatypeProperty), graph)
 
     def test_ontology_file_does_not_keep_ui_orange_annotations(self):
         ontology_text = ONTOLOGY_PATH.read_text(encoding="utf-8")

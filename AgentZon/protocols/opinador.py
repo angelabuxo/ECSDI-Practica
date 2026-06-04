@@ -6,12 +6,14 @@ from rdflib.namespace import XSD
 from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
+from protocols.rdf_refs import link_sobre_comanda, order_id_from_node
 
 
 def _add_product_reference(graph, subject, product):
     product_node = AZON[f"product-{product['product_id']}"]
     graph.add((subject, AZON.SobreProducte, product_node))
-    graph.add((product_node, RDF.type, AZON.Producte))
+    product_type = AZON.ProducteExtern if product.get("seller_id") else AZON.Producte
+    graph.add((product_node, RDF.type, product_type))
     graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
     if "name" in product:
         graph.add((product_node, AZON.Nom, Literal(product["name"])))
@@ -35,7 +37,7 @@ def build_peticio_feedback(feedback_request, sender=None, receiver=None, msgcnt=
     graph.add((content, RDF.type, AZON.PeticioFeedback))
     graph.add((content, AZON.IdFeedback, Literal(feedback_request["feedback_id"])))
     graph.add((content, AZON.IdUsuari, Literal(feedback_request["user_id"])))
-    graph.add((content, AZON.IdComanda, Literal(feedback_request["order_id"])))
+    link_sobre_comanda(graph, content, feedback_request["order_id"])
     if feedback_request.get("prompt"):
         graph.add((content, AZON.Comentari, Literal(feedback_request["prompt"])))
     for product in feedback_request.get("products", []):
@@ -61,7 +63,7 @@ def parse_peticio_feedback(graph, content):
     return {
         "feedback_id": str(graph.value(content, AZON.IdFeedback)),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "order_id": order_id_from_node(graph, content),
         "prompt": str(graph.value(content, AZON.Comentari) or ""),
         "product_ids": sorted(product["product_id"] for product in products),
         "products": products,
@@ -75,7 +77,7 @@ def build_resposta_feedback(feedback, sender=None, receiver=None, request_conten
     graph.add((content, RDF.type, AZON.RespostaFeedback))
     graph.add((content, AZON.IdFeedback, Literal(feedback["feedback_id"])))
     graph.add((content, AZON.IdUsuari, Literal(feedback["user_id"])))
-    graph.add((content, AZON.IdComanda, Literal(feedback["order_id"])))
+    link_sobre_comanda(graph, content, feedback["order_id"])
     graph.add((content, AZON.Puntuacio, Literal(feedback["rating"])))
     graph.add((content, AZON.Comentari, Literal(feedback.get("comment", ""))))
     for product_id in feedback.get("product_ids", []):
@@ -106,7 +108,7 @@ def parse_resposta_feedback(graph, content):
     return {
         "feedback_id": str(graph.value(content, AZON.IdFeedback)),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "order_id": order_id_from_node(graph, content),
         "rating": int(graph.value(content, AZON.Puntuacio)),
         "comment": str(graph.value(content, AZON.Comentari) or ""),
         "product_ids": sorted(product_ids),
@@ -155,7 +157,7 @@ def build_peticio_devolucio(return_request, sender=None, receiver=None, msgcnt=0
     content = AZON[f"return-request-{return_request['return_id']}"]
     graph.add((content, RDF.type, AZON.PeticioDevolucio))
     graph.add((content, AZON.IdDevolucio, Literal(return_request["return_id"])))
-    graph.add((content, AZON.IdComanda, Literal(return_request["order_id"])))
+    link_sobre_comanda(graph, content, return_request["order_id"])
     graph.add((content, AZON.IdUsuari, Literal(return_request["user_id"])))
     if return_request.get("amount") is not None:
         graph.add((content, AZON.ImportPagament, Literal(return_request["amount"], datatype=XSD.float)))
@@ -186,7 +188,7 @@ def parse_peticio_devolucio(graph, content):
     amount_value = graph.value(content, AZON.ImportPagament)
     return {
         "return_id": str(graph.value(content, AZON.IdDevolucio)),
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "order_id": order_id_from_node(graph, content),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
         "amount": float(amount_value) if amount_value is not None else None,
         "reason": str(graph.value(content, AZON.MotiuDevolucio) or ""),
@@ -212,7 +214,7 @@ def build_resolucio_devolucio(decision, sender=None, receiver=None, request_cont
     content = AZON[f"return-response-{decision['return_id']}"]
     graph.add((content, RDF.type, AZON.ResolucioDevolucio))
     graph.add((content, AZON.IdDevolucio, Literal(decision["return_id"])))
-    graph.add((content, AZON.IdComanda, Literal(decision["order_id"])))
+    link_sobre_comanda(graph, content, decision["order_id"])
     graph.add((content, AZON.IdUsuari, Literal(decision["user_id"])))
     graph.add((content, AZON.ImportPagament, Literal(_amount_as_float(decision.get("amount")), datatype=XSD.float)))
     graph.add((content, AZON.Acceptada, Literal(bool(decision["accepted"]), datatype=XSD.boolean)))
@@ -249,7 +251,7 @@ def parse_resolucio_devolucio(graph, content=None):
     amount_value = graph.value(content, AZON.ImportPagament)
     return {
         "return_id": str(graph.value(content, AZON.IdDevolucio)),
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "order_id": order_id_from_node(graph, content),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
         "amount": _amount_as_float(amount_value),
         "accepted": bool(graph.value(content, AZON.Acceptada).toPython()),
@@ -264,7 +266,7 @@ def parse_feedback_confirmation(graph, content=None):
     return {
         "feedback_id": str(graph.value(content, AZON.IdFeedback)),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "order_id": order_id_from_node(graph, content),
         "rating": int(graph.value(content, AZON.Puntuacio)),
         "comment": str(graph.value(content, AZON.Comentari) or ""),
     }

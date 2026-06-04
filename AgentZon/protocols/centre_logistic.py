@@ -7,6 +7,16 @@ from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AGN, AZON, ONTOLOGY_URI, bind_namespaces
 from protocols.pagament import embed_invoice_in_content, extract_invoice_from_content
+from protocols.rdf_refs import (
+    ensure_lot_node,
+    ensure_order_node,
+    ensure_transportista_node,
+    link_product,
+    lot_id_from_node,
+    order_id_from_node,
+    product_nodes_from_content,
+    transport_id_from_node,
+)
 
 
 def _build_centre_node(graph, centre):
@@ -29,8 +39,8 @@ def _lot_order_id(lot):
 
 def _add_product_to_graph(graph, subject, product, centre_node=None):
     product_node = AZON[f"product-{product['product_id']}"]
-    graph.add((subject, AZON.TeProducte, product_node))
-    graph.add((product_node, RDF.type, AZON.Producte))
+    link_product(graph, subject, product_node, product_kind="intern")
+    graph.add((product_node, RDF.type, AZON.ProducteIntern))
     graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
     if "name" in product:
         graph.add((product_node, AZON.Nom, Literal(product["name"])))
@@ -75,7 +85,7 @@ def parse_productes_localitzats(graph, content):
     product = None
     centre_id = None
     centre_city = None
-    for product_node in graph.objects(content, AZON.TeProducte):
+    for _, product_node in product_nodes_from_content(graph, content):
         weight_value = graph.value(product_node, AZON.Pes)
         centre_node = graph.value(product_node, AZON.UbicatACentre)
         if centre_node is not None and centre_id is None:
@@ -105,12 +115,18 @@ def build_confirmacio_localitzacio(request_data, lot, sender=None, receiver=None
     bind_namespaces(graph)
     localized_product_id = request_data["localized_product_id"]
     content = AZON[f"localization-confirmation-{localized_product_id}"]
-    lot_node = AZON[f"lot-{lot['lot_id']}"]
+    lot_node = ensure_lot_node(
+        graph,
+        lot["lot_id"],
+        city=lot["city"],
+        delivery_date=lot["delivery_date"],
+        status=lot["status"],
+        centre_id=lot.get("centre_id"),
+    )
     ploc_node = AZON[localized_product_id]
     centre_node = _build_centre_node(graph, lot)
 
     graph.add((content, RDF.type, AZON.ConfirmacioLocalitzacio))
-    graph.add((content, AZON.IdLot, Literal(lot["lot_id"])))
     graph.add((content, AZON.Estat, Literal(lot["status"])))
     graph.add((content, AZON.Ciutat, Literal(request_data["city"])))
     graph.add((content, AZON.DataEntrega, Literal(request_data["delivery_date"])))
@@ -120,13 +136,6 @@ def build_confirmacio_localitzacio(request_data, lot, sender=None, receiver=None
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
 
-    graph.add((lot_node, RDF.type, AZON.Lot))
-    graph.add((lot_node, AZON.IdLot, Literal(lot["lot_id"])))
-    graph.add((lot_node, AZON.Ciutat, Literal(lot["city"])))
-    graph.add((lot_node, AZON.DataEntrega, Literal(lot["delivery_date"])))
-    graph.add((lot_node, AZON.Estat, Literal(lot["status"])))
-    if lot.get("centre_id"):
-        graph.add((lot_node, AZON.IdCentreLogistic, Literal(lot["centre_id"])))
     graph.add((ploc_node, RDF.type, AZON.ProducteLocalitzat))
     graph.add((ploc_node, AZON.SobreLot, lot_node))
     _add_product_to_graph(graph, ploc_node, request_data["product"], centre_node=centre_node)
@@ -151,7 +160,7 @@ def parse_confirmacio_localitzacio(graph):
     centre_id = None
     centre_city = None
     product_source = request_content if request_content is not None else content
-    for product_node in graph.objects(product_source, AZON.TeProducte):
+    for _, product_node in product_nodes_from_content(graph, product_source):
         weight_value = graph.value(product_node, AZON.Pes)
         centre_node = graph.value(product_node, AZON.UbicatACentre)
         if centre_node is not None and centre_id is None:
@@ -168,7 +177,7 @@ def parse_confirmacio_localitzacio(graph):
     return {
         "localized_product_id": localized_product_id,
         "user_id": str(graph.value(content, AZON.IdUsuari) or ""),
-        "lot_id": str(graph.value(content, AZON.IdLot)),
+        "lot_id": lot_id_from_node(graph, content),
         "status": str(graph.value(content, AZON.Estat)),
         "city": str(graph.value(content, AZON.Ciutat)),
         "delivery_date": str(graph.value(content, AZON.DataEntrega)),
@@ -183,17 +192,21 @@ def build_peticio_transport(lot, sender=None, receiver=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
     content = AZON[f"transport-request-{lot['lot_id']}"]
-    lot_node = AZON[f"lot-{lot['lot_id']}"]
     order_id = _lot_order_id(lot)
+    lot_node = ensure_lot_node(
+        graph,
+        lot["lot_id"],
+        city=lot["city"],
+        delivery_date=lot["delivery_date"],
+    )
+    order_node = ensure_order_node(graph, order_id)
 
     graph.add((content, RDF.type, AZON.PeticioTransport))
-    graph.add((content, AZON.IdLot, Literal(lot["lot_id"])))
-    graph.add((content, AZON.IdComanda, Literal(order_id)))
     graph.add((content, AZON.Ciutat, Literal(lot["city"])))
     graph.add((content, AZON.DataEntrega, Literal(lot["delivery_date"])))
     graph.add((content, AZON.PesTotal, Literal(lot["total_weight"], datatype=XSD.float)))
     graph.add((content, AZON.SobreLot, lot_node))
-    graph.add((content, AZON.SobreComanda, AZON[f"order-{order_id}"]))
+    graph.add((content, AZON.SobreComanda, order_node))
 
     message = build_message(
         graph,
@@ -209,8 +222,8 @@ def build_peticio_transport(lot, sender=None, receiver=None, msgcnt=0):
 
 def parse_peticio_transport(graph, content):
     return {
-        "lot_id": str(graph.value(content, AZON.IdLot)),
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "lot_id": lot_id_from_node(graph, content),
+        "order_id": order_id_from_node(graph, content),
         "city": str(graph.value(content, AZON.Ciutat)),
         "delivery_date": str(graph.value(content, AZON.DataEntrega)),
         "total_weight": float(graph.value(content, AZON.PesTotal)),
@@ -219,22 +232,23 @@ def parse_peticio_transport(graph, content):
 
 # Transport responses --------------------------------------------------------------
 def _build_transport_offer_content(graph, content, offer, city=None, price=None, request_content=None):
-    lot_node = AZON[f"lot-{offer['lot_id']}"]
-    transport_node = AZON[f"transport-{offer['transport_id']}"]
     order_id = offer.get("order_id", offer["lot_id"].replace("LOT-", "ORDER-"))
+    lot_node = ensure_lot_node(graph, offer["lot_id"], city=city or offer.get("city"))
+    order_node = ensure_order_node(graph, order_id)
+    transport_node = ensure_transportista_node(
+        graph,
+        offer["transport_id"],
+        offer["transport_name"],
+    )
 
     graph.add((content, RDF.type, AZON.RespostaOfertaTransport))
-    graph.add((content, AZON.IdLot, Literal(offer["lot_id"])))
-    graph.add((content, AZON.IdComanda, Literal(order_id)))
-    graph.add((content, AZON.IdTransportista, Literal(offer["transport_id"])))
     graph.add((content, AZON.NomTransportista, Literal(offer["transport_name"])))
     graph.add((content, AZON.Ciutat, Literal(city or offer["city"])))
     graph.add((content, AZON.DataEntregaDefinitiva, Literal(offer["delivery_date"])))
     graph.add((content, AZON.CostTransport, Literal(price if price is not None else offer["price"], datatype=XSD.float)))
     graph.add((content, AZON.SobreLot, lot_node))
-    graph.add((content, AZON.SobreComanda, AZON[f"order-{order_id}"]))
+    graph.add((content, AZON.SobreComanda, order_node))
     graph.add((content, AZON.AssignatATransportista, transport_node))
-    graph.add((transport_node, RDF.type, AZON.Transportista))
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
     return content
@@ -291,9 +305,9 @@ def extract_transport_offer(graph):
     props = get_message_properties(graph)
     content = props["content"]
     return {
-        "lot_id": str(graph.value(content, AZON.IdLot)),
-        "order_id": str(graph.value(content, AZON.IdComanda)),
-        "transport_id": str(graph.value(content, AZON.IdTransportista)),
+        "lot_id": lot_id_from_node(graph, content),
+        "order_id": order_id_from_node(graph, content),
+        "transport_id": transport_id_from_node(graph, content),
         "transport_name": str(graph.value(content, AZON.NomTransportista)),
         "city": str(graph.value(content, AZON.Ciutat)),
         "delivery_date": str(graph.value(content, AZON.DataEntregaDefinitiva)),
@@ -313,21 +327,23 @@ def _build_transport_selection_message(
     graph = Graph()
     bind_namespaces(graph)
     content = AZON[f"transport-selection-{lot['lot_id']}"]
-    lot_node = AZON[f"lot-{lot['lot_id']}"]
-    transport_node = AZON[f"transport-{offer['transport_id']}"]
+    order_id = _lot_order_id(lot)
+    lot_node = ensure_lot_node(graph, lot["lot_id"], city=lot["city"])
+    order_node = ensure_order_node(graph, order_id)
+    transport_node = ensure_transportista_node(
+        graph,
+        offer["transport_id"],
+        offer["transport_name"],
+    )
 
     graph.add((content, RDF.type, AZON.EleccioTransportista))
-    graph.add((content, AZON.IdLot, Literal(lot["lot_id"])))
-    graph.add((content, AZON.IdComanda, Literal(_lot_order_id(lot))))
-    graph.add((content, AZON.IdTransportista, Literal(offer["transport_id"])))
     graph.add((content, AZON.NomTransportista, Literal(offer["transport_name"])))
     graph.add((content, AZON.Ciutat, Literal(lot["city"])))
     graph.add((content, AZON.DataEntregaDefinitiva, Literal(offer["delivery_date"])))
     graph.add((content, AZON.CostTransport, Literal(offer["price"], datatype=XSD.float)))
     graph.add((content, AZON.SobreLot, lot_node))
-    graph.add((content, AZON.SobreComanda, AZON[f"order-{_lot_order_id(lot)}"]))
+    graph.add((content, AZON.SobreComanda, order_node))
     graph.add((content, AZON.AssignatATransportista, transport_node))
-    graph.add((transport_node, RDF.type, AZON.Transportista))
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
 
@@ -390,9 +406,20 @@ def _build_shipping_update_response(
     bind_namespaces(graph)
     localized_product_id = item["localized_product_id"]
     content = AZON[f"shipping-{localized_product_id}-{offer['lot_id']}"]
-    lot_node = AZON[f"lot-{offer['lot_id']}"]
+    lot_node = ensure_lot_node(
+        graph,
+        offer["lot_id"],
+        city=item["city"],
+        delivery_date=item["delivery_date"],
+    )
     ploc_node = AZON[localized_product_id]
-    transport_node = AZON[f"transport-{offer['transport_id']}"]
+    transport_node = ensure_transportista_node(
+        graph,
+        offer["transport_id"],
+        offer["transport_name"],
+    )
+    if item.get("order_id"):
+        graph.add((content, AZON.SobreComanda, ensure_order_node(graph, item["order_id"])))
     centre_node = _build_centre_node(graph, item)
     product = item["product"]
     item_price = offer.get("price", 0.0)
@@ -403,8 +430,6 @@ def _build_shipping_update_response(
             item_price = round(float(offer["lot_transport_price"]) * item_weight / total_weight, 2)
 
     graph.add((content, RDF.type, response_type))
-    graph.add((content, AZON.IdLot, Literal(offer["lot_id"])))
-    graph.add((content, AZON.IdTransportista, Literal(offer["transport_id"])))
     graph.add((content, AZON.NomTransportista, Literal(offer["transport_name"])))
     graph.add((content, AZON.Ciutat, Literal(item["city"])))
     graph.add((content, AZON.DataEntregaDefinitiva, Literal(offer["delivery_date"])))
@@ -412,11 +437,6 @@ def _build_shipping_update_response(
     graph.add((content, AZON.SobreLot, lot_node))
     graph.add((content, AZON.EsRespostaA, ploc_node))
     graph.add((content, AZON.AssignatATransportista, transport_node))
-    graph.add((transport_node, RDF.type, AZON.Transportista))
-    graph.add((lot_node, RDF.type, AZON.Lot))
-    graph.add((lot_node, AZON.IdLot, Literal(offer["lot_id"])))
-    graph.add((lot_node, AZON.Ciutat, Literal(item["city"])))
-    graph.add((lot_node, AZON.DataEntrega, Literal(item["delivery_date"])))
     graph.add((ploc_node, RDF.type, AZON.ProducteLocalitzat))
     graph.add((ploc_node, AZON.SobreLot, lot_node))
     _add_product_to_graph(graph, ploc_node, product, centre_node=centre_node)
@@ -480,8 +500,8 @@ def extract_shipping_details_list(graph):
         graph.subjects(RDF.type, AZON.ConfirmacioEnviament)
     )
     for content in contents:
-        lot_id = graph.value(content, AZON.IdLot)
-        if lot_id is None:
+        lot_id = lot_id_from_node(graph, content)
+        if not lot_id:
             continue
 
         ploc_node = graph.value(content, AZON.EsRespostaA)
@@ -491,7 +511,7 @@ def extract_shipping_details_list(graph):
         centre_city = None
         product_source = ploc_node if ploc_node is not None else graph.value(content, AZON.SobreLot)
         if product_source is not None:
-            for product_node in graph.objects(product_source, AZON.TeProducte):
+            for _, product_node in product_nodes_from_content(graph, product_source):
                 product_id_value = graph.value(product_node, AZON.IdProducte)
                 weight_value = graph.value(product_node, AZON.Pes)
                 centre_node = graph.value(product_node, AZON.UbicatACentre)
@@ -510,9 +530,9 @@ def extract_shipping_details_list(graph):
         shipments.append(
             {
                 "localized_product_id": localized_product_id,
-                "lot_id": str(lot_id),
+                "lot_id": lot_id,
                 "status": "ENVIAT" if (content, RDF.type, AZON.ConfirmacioEnviament) in graph else "ASSIGNAT",
-                "transport_id": str(graph.value(content, AZON.IdTransportista)),
+                "transport_id": transport_id_from_node(graph, content),
                 "transport_name": str(graph.value(content, AZON.NomTransportista)),
                 "city": str(graph.value(content, AZON.Ciutat)),
                 "delivery_date": str(graph.value(content, AZON.DataEntregaDefinitiva)),

@@ -6,12 +6,22 @@ from rdflib.namespace import XSD
 from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
+from protocols.rdf_refs import (
+    ensure_lot_node,
+    link_product,
+    link_sobre_comanda,
+    lot_id_from_node,
+    order_id_from_node,
+    product_nodes_from_content,
+)
 
 
 def _add_product_reference(graph, subject, product):
     product_node = AZON[f"product-{product['product_id']}"]
-    graph.add((subject, AZON.TeProducte, product_node))
-    graph.add((product_node, RDF.type, AZON.Producte))
+    product_kind = "extern" if product.get("seller_id") else "generic"
+    product_type = AZON.ProducteExtern if product_kind == "extern" else AZON.Producte
+    link_product(graph, subject, product_node, product_kind=product_kind)
+    graph.add((product_node, RDF.type, product_type))
     graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
     if "name" in product:
         graph.add((product_node, AZON.Nom, Literal(product["name"])))
@@ -45,7 +55,7 @@ def _build_embedded_order(graph, order_node, order, include_order_id):
 def _extract_centre_metadata(graph, subject):
     centre_id = None
     centre_city = None
-    for product_node in graph.objects(subject, AZON.TeProducte):
+    for _, product_node in product_nodes_from_content(graph, subject):
         centre_node = graph.value(product_node, AZON.UbicatACentre)
         if centre_node is None:
             continue
@@ -107,7 +117,6 @@ def build_peticio_registre_compra(order, sender=None, receiver=None, msgcnt=0):
     order_node = AZON[f"order-{order['order_id']}"]
 
     graph.add((content, RDF.type, AZON.PeticioRegistreCompra))
-    graph.add((content, AZON.IdComanda, Literal(order["order_id"])))
     graph.add((content, AZON.IdUsuari, Literal(order["user_id"])))
     graph.add((content, AZON.SobreComanda, order_node))
 
@@ -132,7 +141,7 @@ def build_peticio_registre_compra(order, sender=None, receiver=None, msgcnt=0):
 def parse_peticio_compra(graph, content):
     order_node = graph.value(content, AZON.SobreComanda)
     product_ids = []
-    for product_node in graph.objects(order_node, AZON.TeProducte):
+    for _, product_node in product_nodes_from_content(graph, order_node):
         product_id = graph.value(product_node, AZON.IdProducte)
         if product_id is None:
             product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
@@ -161,7 +170,7 @@ def parse_peticio_registre_compra(graph, content):
         products.append({"product_id": str(product_id)})
     if not products:
         order_node = graph.value(content, AZON.SobreComanda)
-        for product_node in graph.objects(order_node, AZON.TeProducte):
+        for _, product_node in product_nodes_from_content(graph, order_node):
             product_id = graph.value(product_node, AZON.IdProducte)
             if product_id is None:
                 local = str(product_node).rsplit("product-", 1)[-1]
@@ -169,7 +178,7 @@ def parse_peticio_registre_compra(graph, content):
             products.append({"product_id": str(product_id)})
 
     return {
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "order_id": order_id_from_node(graph, content),
         "user_id": str(graph.value(content, AZON.IdUsuari)),
         "products": products,
     }
@@ -180,8 +189,7 @@ def build_confirmacio_registre_compra(order_id, sender=None, receiver=None, requ
     bind_namespaces(graph)
     content = AZON[f"history-confirmation-{order_id}"]
     graph.add((content, RDF.type, AZON.ConfirmacioRegistreCompra))
-    graph.add((content, AZON.IdComanda, Literal(order_id)))
-    graph.add((content, AZON.SobreComanda, AZON[f"order-{order_id}"]))
+    link_sobre_comanda(graph, content, order_id)
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
     return build_message(
@@ -202,7 +210,6 @@ def build_resultat_compra(order, reservations, sender=None, receiver=None, reque
     order_node = AZON[f"order-{order['order_id']}"]
 
     graph.add((content, RDF.type, AZON.ResultatCompra))
-    graph.add((content, AZON.IdComanda, Literal(order["order_id"])))
     graph.add((content, AZON.DataEntrega, Literal(order["delivery_date"])))
     graph.add((content, AZON.SobreComanda, order_node))
     if request_content is not None:
@@ -214,7 +221,6 @@ def build_resultat_compra(order, reservations, sender=None, receiver=None, reque
 
     for reservation in reservations:
         shipment_node = AZON[f"tracking-{reservation['localized_product_id']}"]
-        lot_node = AZON[f"lot-{reservation['lot_id']}"]
         centre_node = None
         if reservation.get("centre_id"):
             centre_node = AZON[f"centre-{reservation['centre_id']}"]
@@ -223,22 +229,21 @@ def build_resultat_compra(order, reservations, sender=None, receiver=None, reque
             if reservation.get("centre_city"):
                 graph.add((centre_node, AZON.Ciutat, Literal(reservation["centre_city"])))
 
+        lot_node = ensure_lot_node(
+            graph,
+            reservation["lot_id"],
+            city=reservation["city"],
+            delivery_date=reservation["delivery_date"],
+            status=reservation.get("status", "OBERT"),
+            centre_id=reservation.get("centre_id"),
+        )
+
         graph.add((shipment_node, RDF.type, AZON.ConfirmacioLocalitzacio))
-        graph.add((shipment_node, AZON.IdComanda, Literal(reservation["order_id"])))
-        graph.add((shipment_node, AZON.IdLot, Literal(reservation["lot_id"])))
         graph.add((shipment_node, AZON.Estat, Literal(reservation.get("status", "OBERT"))))
         graph.add((shipment_node, AZON.Ciutat, Literal(reservation["city"])))
         graph.add((shipment_node, AZON.DataEntrega, Literal(reservation["delivery_date"])))
         graph.add((shipment_node, AZON.SobreComanda, order_node))
         graph.add((shipment_node, AZON.SobreLot, lot_node))
-
-        graph.add((lot_node, RDF.type, AZON.Lot))
-        graph.add((lot_node, AZON.IdLot, Literal(reservation["lot_id"])))
-        graph.add((lot_node, AZON.Ciutat, Literal(reservation["city"])))
-        graph.add((lot_node, AZON.DataEntrega, Literal(reservation["delivery_date"])))
-        graph.add((lot_node, AZON.Estat, Literal(reservation.get("status", "OBERT"))))
-        if reservation.get("centre_id"):
-            graph.add((lot_node, AZON.IdCentreLogistic, Literal(reservation["centre_id"])))
 
         product = reservation.get("product")
         if product:
@@ -265,7 +270,7 @@ def extract_resultat_compra(graph):
     for reservation_node in sorted(set(graph.subjects(RDF.type, AZON.ConfirmacioLocalitzacio)), key=str):
         lot_node = graph.value(reservation_node, AZON.SobreLot)
         product = None
-        for product_node in graph.objects(reservation_node, AZON.TeProducte):
+        for _, product_node in product_nodes_from_content(graph, reservation_node):
             weight_value = graph.value(product_node, AZON.Pes)
             product = {
                 "product_id": str(graph.value(product_node, AZON.IdProducte)),
@@ -276,7 +281,7 @@ def extract_resultat_compra(graph):
         centre_id, centre_city = _extract_centre_metadata(graph, reservation_node)
         lots.append(
             {
-                "lot_id": str(graph.value(reservation_node, AZON.IdLot)),
+                "lot_id": lot_id_from_node(graph, reservation_node),
                 "status": str(graph.value(reservation_node, AZON.Estat)),
                 "city": str(graph.value(reservation_node, AZON.Ciutat)),
                 "delivery_date": str(graph.value(reservation_node, AZON.DataEntrega)),
@@ -289,7 +294,7 @@ def extract_resultat_compra(graph):
 
     official_delivery_date = graph.value(content, AZON.DataEntregaDefinitiva)
     return {
-        "order_id": str(graph.value(content, AZON.IdComanda)),
+        "order_id": order_id_from_node(graph, content),
         "estimated_delivery_date": str(graph.value(content, AZON.DataEntrega)),
         "official_delivery_date": str(official_delivery_date) if official_delivery_date is not None else None,
         "lots": lots,
@@ -299,4 +304,4 @@ def extract_resultat_compra(graph):
 def extract_registration_confirmation(graph):
     props = get_message_properties(graph)
     content = props["content"]
-    return str(graph.value(content, AZON.IdComanda))
+    return order_id_from_node(graph, content)

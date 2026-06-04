@@ -4,6 +4,7 @@ from rdflib import Literal, RDF
 from rdflib.namespace import XSD
 
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
+from protocols.rdf_refs import ensure_order_node, link_sobre_comanda
 from services.rdf_store import load_graph, save_graph
 
 
@@ -79,17 +80,16 @@ def record_payment(path, payment):
     graph = load_graph(path)
     bind_namespaces(graph)
     node = AZON[f"payment-{payment['payment_id']}"]
-    order_node = AZON[f"order-{payment['order_id']}"]
     graph.add((node, RDF.type, AZON.Pagament))
     graph.add((node, AZON.IdPagament, Literal(payment["payment_id"])))
     graph.add((node, AZON.IdComanda, Literal(payment["order_id"])))
+    link_sobre_comanda(graph, node, payment["order_id"])
     graph.add((node, AZON.ImportPagament, Literal(payment["amount"], datatype=XSD.float)))
     graph.add((node, AZON.MetodePagament, Literal(payment["method"])))
     if payment.get("sentit"):
         graph.add((node, AZON.SentitPagament, Literal(payment["sentit"])))
     graph.add((node, AZON.Estat, Literal(payment.get("status", "PAGAT"))))
     graph.add((node, AZON.DataPagament, Literal(payment["date"])))
-    graph.add((node, AZON.SobreComanda, order_node))
     if payment.get("user_id"):
         graph.add((node, AZON.IdUsuari, Literal(payment["user_id"])))
     if payment.get("seller_id"):
@@ -107,6 +107,7 @@ def record_refund(path, refund):
     graph.add((node, RDF.type, AZON.Devolucio))
     graph.add((node, AZON.IdDevolucio, Literal(refund["return_id"])))
     graph.add((node, AZON.IdComanda, Literal(refund["order_id"])))
+    ensure_order_node(graph, refund["order_id"])
     graph.add((node, AZON.IdUsuari, Literal(refund["user_id"])))
     graph.add((node, AZON.ImportPagament, Literal(refund["amount"], datatype=XSD.float)))
     graph.add((node, AZON.MotiuDevolucio, Literal(refund.get("reason", ""))))
