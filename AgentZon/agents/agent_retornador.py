@@ -210,7 +210,21 @@ def pla_compliment_de_devolucio(return_request):
                 "product_ids": batch["product_ids"],
                 "amount": batch["amount"],
             }
-            refund_confirmations.append(pla_retorn(batch_decision))
+            confirmation = pla_retorn(batch_decision)
+            refund_confirmations.append(confirmation)
+            record_refund(
+                REFUNDS_PATH,
+                {
+                    "return_id": batch_decision["return_id"],
+                    "order_id": batch_decision["order_id"],
+                    "user_id": batch_decision["user_id"],
+                    "amount": batch_decision["amount"],
+                    "reason": batch_decision.get("reason", ""),
+                    "seller_id": batch_decision.get("seller_id"),
+                    "product_ids": batch_decision.get("product_ids", []),
+                    "status": confirmation.get("status", "RETORNAT"),
+                },
+            )
 
     total_refund_amount = round(sum(refund["amount"] for refund in refund_confirmations), 2)
     global_status = "RETORNAT" if refund_confirmations and all(

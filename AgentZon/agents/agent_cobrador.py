@@ -49,7 +49,6 @@ from protocols.pagament import (
 from services.catalog_service import get_products_by_ids
 from services.payment_service import (
     record_payment,
-    record_refund,
     save_seller_bank_data,
     save_user_bank_data,
 )
@@ -70,12 +69,11 @@ CATALOG_PATH = None
 USER_BANK_PATH = None
 SELLER_BANK_PATH = None
 PAYMENTS_PATH = None
-REFUNDS_PATH = None
 
 
 def configure_runtime(settings, message_sender=send_message):
     global AGENT, DirectoryAgent, MESSAGE_SENDER, CATALOG_PATH
-    global USER_BANK_PATH, SELLER_BANK_PATH, PAYMENTS_PATH, REFUNDS_PATH, mss_cnt
+    global USER_BANK_PATH, SELLER_BANK_PATH, PAYMENTS_PATH, mss_cnt
     AGENT = settings["agent"]
     DirectoryAgent = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
@@ -84,7 +82,6 @@ def configure_runtime(settings, message_sender=send_message):
     USER_BANK_PATH = data_dir / "dades_bancaries_usuari.ttl"
     SELLER_BANK_PATH = data_dir / "dades_bancaries_venedors_externs.ttl"
     PAYMENTS_PATH = data_dir / "pagaments.ttl"
-    REFUNDS_PATH = data_dir / "devolucions.ttl"
     mss_cnt = 0
 
 
@@ -218,7 +215,6 @@ def pla_retornar_diners(gm, content, sender):
         "product_ids": request_data.get("product_ids", []),
         "status": OK_REFUND_STATUS,
     }
-    record_refund(REFUNDS_PATH, refund)
     logger.info(
         "Devolucio acceptada automaticament %s (%.2f EUR)",
         refund["return_id"],

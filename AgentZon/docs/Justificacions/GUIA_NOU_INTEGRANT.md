@@ -487,7 +487,7 @@ Punts a destacar (i per què eviten penalitzacions):
 - **Cobrament extern (`PAGAMENT`)**: per a productes de venedors externs, l'agent Compra demana al
   Cobrador que **pagui el venedor** → confirmació automàtica amb `SentitPagament = PAGAMENT`.
 - **Devolució (`PAGAMENT`)**: el Retornador demana `PeticioRetornDiners` → el Cobrador confirma
-  `RETORNAT` i ho registra a `devolucions.ttl`.
+  `RETORNAT` per ACL; el Retornador registra els lots i el resum a `devolucions.ttl`.
 
 ---
 
