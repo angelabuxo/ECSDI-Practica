@@ -82,12 +82,10 @@ from services.order_service import (
 from services.shipping_service import (
     build_invoice_summary,
     collect_warehouse_reservations,
-    group_shipments_for_display,
 )
 from services.shipping_tracking_service import (
     apply_shipping_update,
     load_tracking_for_order,
-    lookup_order_for_localized_product,
     save_localization_confirmations,
 )
 
@@ -105,14 +103,13 @@ SHIPPING_PATH = None
 LOCATIONS_PATH = None
 TRACKING_PATH = None
 USER_BANK_PATH = None
-SHIPPING_RESPONSIBILITY_PATH = None
 NO_PRODUCTS_ERROR = "Has de seleccionar almenys un producte abans de continuar la compra."
 VENDOR_EXTERN_AGENT_TYPE = URIRef("http://www.semanticweb.org/directory-service-ontology#VenedorExternAgent")
 
 
 def configure_runtime(settings, message_sender=send_message):
     global AGENT, DirectoryAgent, MESSAGE_SENDER, CATALOG_PATH, SHIPPING_PATH
-    global LOCATIONS_PATH, TRACKING_PATH, USER_BANK_PATH, SHIPPING_RESPONSIBILITY_PATH, mss_cnt
+    global LOCATIONS_PATH, TRACKING_PATH, USER_BANK_PATH, mss_cnt
     AGENT = settings["agent"]
     DirectoryAgent = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
@@ -122,7 +119,6 @@ def configure_runtime(settings, message_sender=send_message):
     LOCATIONS_PATH = data_dir / "ubicacions_productes.ttl"
     TRACKING_PATH = data_dir / "seguiment_enviaments.ttl"
     USER_BANK_PATH = None
-    SHIPPING_RESPONSIBILITY_PATH = data_dir / "responsable_enviament_productes.ttl"
     mss_cnt = 0
 
 
@@ -178,7 +174,7 @@ def _fetch_products_from_cercador(product_ids):
 
 
 def _enrich_products_with_compra_metadata(products):
-    responsibility = load_shipping_responsibility_by_product(SHIPPING_RESPONSIBILITY_PATH)
+    responsibility = load_shipping_responsibility_by_product(LOCATIONS_PATH)
     location_candidates = load_product_location_candidates(
         LOCATIONS_PATH,
         [product["product_id"] for product in products],
@@ -214,7 +210,7 @@ def pla_demanar_informacio_usuari(selected_product_ids, client_ip):
 
 
 def split_order_products(order):
-    responsibility = load_shipping_responsibility_by_product(SHIPPING_RESPONSIBILITY_PATH)
+    responsibility = load_shipping_responsibility_by_product(LOCATIONS_PATH)
     external_logistics_by_seller = {}
     platform_shipped = []
     internal = []
@@ -280,6 +276,7 @@ def pla_producte_als_nostres_magatzems(order):
         AGENT.uri,
         MESSAGE_SENDER,
         _msgcnt,
+        tracking_path=TRACKING_PATH,
     )
 
 
@@ -291,7 +288,6 @@ def pla_informar_usuari_sobre_l_enviament(order, shipments):
     return render_template(
         "shipping_summary.html",
         order=order,
-        shipment_groups=group_shipments_for_display(shipments),
         final_delivery_date=final_delivery_date,
         invoice=build_invoice_summary(order, shipments),
         order_status_url=f"/orders/{order['order_id']}",
@@ -374,6 +370,7 @@ def carregar_comanda(order_id):
     try:
         opinador_agent = resolve_agent(DSO.OpinadorAgent)
     except Exception:
+        logger.warning("carregar_comanda: no s'ha pogut resoldre Opinador per a %s", order_id)
         return None
     message = build_peticio_consulta_comanda(
         order_id,
@@ -384,14 +381,18 @@ def carregar_comanda(order_id):
     try:
         stored_order = parse_resultat_consulta_comanda(MESSAGE_SENDER(message, opinador_agent.address))
     except Exception:
+        logger.exception("carregar_comanda: error consultant comanda %s", order_id)
         return None
     if stored_order is None or not stored_order.get("order_id"):
+        logger.warning("carregar_comanda: comanda %s no trobada a l'opinador", order_id)
         return None
+    logger.info("carregar_comanda: order_id=%s product_ids=%s products_count=%d", stored_order.get("order_id"), stored_order.get("product_ids"), len(stored_order.get("products", [])))
     return {
         "order_id": stored_order["order_id"],
         "user_id": stored_order["user_id"],
         "user_name": stored_order["user_name"],
         "products": stored_order.get("products", []),
+        "product_ids": stored_order.get("product_ids", []),
         "shipping_data": stored_order["shipping_data"],
         "delivery_date": stored_order["delivery_date"],
         "final_delivery_date": stored_order.get("final_delivery_date"),
@@ -415,16 +416,19 @@ def process_shipping_update(gm, content, sender):
     for shipment in extract_shipping_details_list(gm):
         localized_product_id = shipment.get("localized_product_id")
         if not localized_product_id:
+            logger.warning("process_shipping_update: shipment sense localized_product_id, skipping")
             continue
-        order_id = lookup_order_for_localized_product(TRACKING_PATH, localized_product_id)
-        if order_id is None:
-            continue
-        shipment = {**shipment, "order_id": order_id}
         apply_shipping_update(
             TRACKING_PATH,
             shipment,
             shipped=shipped,
             invoice=invoice,
+        )
+        logger.info(
+            "process_shipping_update: actualitzat %s (lot %s, transportista %s)",
+            localized_product_id,
+            shipment.get("lot_id", "?"),
+            shipment.get("transport_name", "?"),
         )
 
     return _build_acknowledgement(sender)
@@ -506,7 +510,7 @@ def build_purchase_request_from_form(form_data, user_id):
 def pla_registrar_producte_extern_compra(gm, content, sender):
     payload = parse_peticio_registre_producte_extern_compra(gm, content)
     save_shipping_responsibility(
-        SHIPPING_RESPONSIBILITY_PATH,
+        LOCATIONS_PATH,
         payload["product_id"],
         payload["seller_id"],
         payload["requires_external_logistics"],
@@ -552,8 +556,19 @@ def browser_iface():
 def order_status(order_id):
     order = carregar_comanda(order_id)
     if order is None:
+        logger.warning("order_status: comanda %s no trobada", order_id)
         return ("Comanda no trobada", 404)
-    shipments = load_tracking_for_order(TRACKING_PATH, order_id)
+    product_ids = set(order.get("product_ids", []))
+    logger.info("order_status: comanda %s, product_ids=%s", order_id, product_ids)
+    if not product_ids:
+        logger.warning("order_status: product_ids buit! order keys=%s, products count=%d", list(order.keys()), len(order.get("products", [])))
+    shipments = load_tracking_for_order(TRACKING_PATH, product_ids) if product_ids else []
+    logger.info("order_status: trobats %d seguiments per a %s", len(shipments), order_id)
+    for s in shipments:
+        logger.info("  seguiment: pid=%s status=%s lot=%s transport=%s", (s.get("product") or {}).get("product_id"), s.get("status"), s.get("lot_id"), s.get("transport_name"))
+    invoice = build_invoice_summary(order, shipments)
+    for line in invoice.get("lines", []):
+        logger.info("  linia: pid=%s name=%s shipping_status=%s", line.get("product_id"), line.get("name"), line.get("shipping_status"))
     return pla_informar_usuari_sobre_l_enviament(order, shipments)
 
 
@@ -582,7 +597,17 @@ def comunicacion():
 
         if perf == ACL.inform and accion in {AZON.DadesEnviament, AZON.ConfirmacioEnviament}:
             print("INFO AgenteCompra => Actualitzacio enviament %s" % accion)
-            gr = process_shipping_update(gm, content, msgdic.get("sender"))
+            try:
+                gr = process_shipping_update(gm, content, msgdic.get("sender"))
+            except Exception:
+                logger.exception("process_shipping_update ha fallat")
+                gr = build_message(
+                    Graph(),
+                    ACL.failure,
+                    sender=AGENT.uri,
+                    receiver=msgdic.get("sender"),
+                    msgcnt=mss_cnt,
+                )
         elif perf != ACL.request:
             gr = build_message(
                 Graph(),

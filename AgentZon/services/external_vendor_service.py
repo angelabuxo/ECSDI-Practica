@@ -15,7 +15,7 @@ CENTRE_RESOURCE_BY_ID = {
 
 def save_shipping_responsibility(path, product_id, seller_id, requires_external_logistics):
     graph = load_graph(path)
-    node = AZON[f"resp-{product_id}"]
+    node = AZON[f"product-{product_id}"]
     graph.set((node, AZON.IdProducte, Literal(product_id)))
     graph.set((node, AZON.IdVenedorExtern, Literal(seller_id)))
     graph.set(
@@ -31,7 +31,7 @@ def save_shipping_responsibility(path, product_id, seller_id, requires_external_
 def load_shipping_responsibility_by_product(path):
     graph = load_graph(path)
     responsibility = {}
-    for subject in graph.subjects(predicate=AZON.IdProducte, object=None):
+    for subject in graph.subjects(predicate=AZON.IdVenedorExtern, object=None):
         product_id = str(graph.value(subject, AZON.IdProducte))
         seller_id = graph.value(subject, AZON.IdVenedorExtern)
         external_flag = graph.value(subject, AZON.RequereixLogisticaExterna)

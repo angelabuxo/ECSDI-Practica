@@ -238,7 +238,7 @@ class VenedorExternFlowTests(unittest.TestCase):
 
             catalog_hits = search_products(data_dir / "productes.ttl", {"text": "External Headphones"})
             self.assertEqual(len(catalog_hits), 1)
-            responsibility = load_shipping_responsibility_by_product(data_dir / "responsable_enviament_productes.ttl")
+            responsibility = load_shipping_responsibility_by_product(data_dir / "ubicacions_productes.ttl")
             self.assertTrue(responsibility["P1030"]["requires_external_logistics"])
 
             seller_graph = load_graph(data_dir / "dades_bancaries_venedors_externs.ttl")

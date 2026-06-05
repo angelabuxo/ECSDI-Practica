@@ -301,8 +301,6 @@ def extract_invoice_from_content(graph, content):
 
 
 def embed_invoice_in_content(graph, content, invoice):
-    if invoice.get("order_id"):
-        link_sobre_comanda(graph, content, invoice["order_id"])
     graph.add((content, AZON.IdPagament, Literal(invoice["payment_id"])))
     graph.add((content, AZON.ImportPagament, Literal(invoice["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MetodePagament, Literal(invoice["method"])))

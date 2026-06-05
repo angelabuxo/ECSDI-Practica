@@ -48,7 +48,6 @@ from protocols.opinador import (
     build_confirmacio_registre_cerca,
     build_resultat_consulta_compres_usuari,
     build_resultat_consulta_comanda,
-    build_peticio_feedback,
     build_resolucio_devolucio,
     parse_peticio_consulta_compres_usuari,
     parse_peticio_consulta_comanda,
@@ -395,24 +394,11 @@ def pla_de_demanar_feedback(user_id=None):
         user_id,
         **_feedback_eligibility_kwargs(),
     )
-    for feedback_request in feedback_requests:
-        message = build_peticio_feedback(
-            feedback_request,
-            sender=AGENT.uri if AGENT is not None else None,
-            receiver=AZON[f"usuari-{feedback_request['user_id'].replace('.', '-')}"],
-            msgcnt=_msgcnt(),
-        )
-        logger.info(
-            "Pla demanar feedback: sol·licitud %s per usuari %s (comanda %s, %d productes)",
-            feedback_request["feedback_id"],
-            feedback_request["user_id"],
-            feedback_request["order_id"],
-            len(feedback_request.get("products", [])),
-        )
-        print(
-            "INFO AgenteOpinador => PeticioFeedback proactiva %s\n%s"
-            % (feedback_request["feedback_id"], message.serialize(format="xml")[:240])
-        )
+    logger.info(
+        "Pla demanar feedback: %d sol·licituds generades per l'usuari %s",
+        len(feedback_requests),
+        user_id,
+    )
 
     return feedback_requests
 

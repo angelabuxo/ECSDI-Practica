@@ -13,7 +13,7 @@ import argparse
 import threading
 from pathlib import Path
 
-from flask import Flask, request
+from flask import Flask, render_template, request
 from rdflib import Graph, RDF
 
 from AgentUtil.ACL import ACL
@@ -26,6 +26,7 @@ from AgentUtil.OntoNamespaces import AZON
 from config import (
     DEFAULT_PORTS,
     READY_DELIVERY_WINDOW_DAYS,
+    TEMPLATE_DIR,
     add_data_dir_argument,
     add_directory_arguments,
     add_runtime_arguments,
@@ -55,6 +56,7 @@ from services.logistics_service import (
     build_premium_price_cap,
     create_lot,
     format_centre_uri_name,
+    list_all_lots,
     list_ready_lots_for_negotiation,
     load_lot_by_id,
     mark_lot_negotiating,
@@ -64,11 +66,10 @@ from services.logistics_service import (
     select_offer_after_premium_negotiation,
     split_low_and_high_offers,
 )
-from services.rdf_store import load_graph
 
 
 logger = config_logger(level=1)
-app = Flask(__name__)
+app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
 
 mss_cnt = 0
 
@@ -544,7 +545,13 @@ def comunicacion():
 
 @app.route("/iface")
 def browser_iface():
-    return load_graph(LOTS_PATH).serialize(format="turtle")
+    lots = list_all_lots(LOTS_PATH)
+    return render_template(
+        "centre_logistic.html",
+        centre_id=CENTRE_ID,
+        centre_city=CENTRE_CITY,
+        lots=lots,
+    )
 
 
 @app.route("/cron/negotiate-ready-lots")

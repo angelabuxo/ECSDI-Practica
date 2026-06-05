@@ -1,5 +1,6 @@
 """Persistencia del seguiment d'enviaments al costat de Compra."""
 
+import logging
 from rdflib import Literal, RDF
 from rdflib.namespace import XSD
 
@@ -8,10 +9,8 @@ from protocols.pagament import embed_invoice_in_content, extract_invoice_from_co
 from protocols.rdf_refs import (
     link_assignat_transportista,
     link_product,
-    link_sobre_comanda,
     link_sobre_lot,
     lot_id_from_node,
-    order_id_from_node,
     product_nodes_from_content,
     transport_id_from_node,
 )
@@ -65,7 +64,6 @@ def save_localization_confirmations(tracking_path, items):
         graph.set((node, AZON.Estat, Literal(item.get("status", "OBERT"))))
         graph.set((node, AZON.Ciutat, Literal(item["city"])))
         graph.set((node, AZON.DataEntrega, Literal(item["delivery_date"])))
-        link_sobre_comanda(graph, node, item["order_id"])
         link_sobre_lot(
             graph,
             node,
@@ -81,23 +79,12 @@ def save_localization_confirmations(tracking_path, items):
     save_graph(tracking_path, graph)
 
 
-def lookup_order_for_localized_product(tracking_path, localized_product_id):
-    graph = load_graph(tracking_path)
-    bind_namespaces(graph)
-    node = _tracking_node(localized_product_id)
-    order_id = order_id_from_node(graph, node)
-    return order_id or None
-
-
 def apply_shipping_update(tracking_path, shipment, shipped=False, invoice=None):
     graph = load_graph(tracking_path)
     bind_namespaces(graph)
 
     localized_product_id = shipment["localized_product_id"]
     node = _tracking_node(localized_product_id)
-    order_id = shipment.get("order_id") or order_id_from_node(graph, node)
-    if order_id is None:
-        raise KeyError(f"No order mapping for localized product {localized_product_id}")
     centre_node = _ensure_centre_node(
         graph,
         centre_id=shipment.get("centre_id"),
@@ -105,7 +92,6 @@ def apply_shipping_update(tracking_path, shipment, shipped=False, invoice=None):
     )
 
     graph.set((node, AZON.Ciutat, Literal(shipment["city"])))
-    link_sobre_comanda(graph, node, order_id)
     link_sobre_lot(graph, node, shipment["lot_id"], city=shipment["city"])
     if shipment.get("transport_id"):
         link_assignat_transportista(
@@ -117,7 +103,7 @@ def apply_shipping_update(tracking_path, shipment, shipped=False, invoice=None):
     graph.set((node, AZON.NomTransportista, Literal(shipment["transport_name"])))
     graph.set((node, AZON.DataEntregaDefinitiva, Literal(shipment["delivery_date"])))
     graph.set((node, AZON.CostTransport, Literal(shipment.get("price", 0.0), datatype=XSD.float)))
-    graph.set((node, AZON.Estat, Literal("ENVIAT" if shipped else "ASSIGNAT")))
+    graph.set((node, AZON.Estat, Literal("ENVIAT")))
 
     graph.add((node, RDF.type, AZON.DadesEnviament))
     if shipped:
@@ -131,6 +117,12 @@ def apply_shipping_update(tracking_path, shipment, shipped=False, invoice=None):
         embed_invoice_in_content(graph, node, invoice)
 
     save_graph(tracking_path, graph)
+
+
+def _tracking_product_id(graph, node):
+    for _, product_node in product_nodes_from_content(graph, node):
+        return str(graph.value(product_node, AZON.IdProducte))
+    return None
 
 
 def _load_tracking_entry(graph, node):
@@ -153,10 +145,8 @@ def _load_tracking_entry(graph, node):
         break
 
     explicit_status = graph.value(node, AZON.Estat)
-    if (node, RDF.type, AZON.ConfirmacioEnviament) in graph:
+    if (node, RDF.type, AZON.ConfirmacioEnviament) in graph or (node, RDF.type, AZON.DadesEnviament) in graph:
         status = "ENVIAT"
-    elif (node, RDF.type, AZON.DadesEnviament) in graph:
-        status = "ASSIGNAT"
     else:
         status = str(explicit_status or "OBERT")
 
@@ -166,7 +156,7 @@ def _load_tracking_entry(graph, node):
     localized_product_id = str(node).rsplit("tracking-", 1)[-1]
     return {
         "localized_product_id": localized_product_id,
-        "order_id": order_id_from_node(graph, node),
+        "order_id": "",
         "lot_id": lot_id_from_node(graph, node),
         "status": status,
         "city": str(graph.value(node, AZON.Ciutat)),
@@ -183,19 +173,24 @@ def _load_tracking_entry(graph, node):
     }
 
 
-def load_tracking_for_order(tracking_path, order_id):
+def load_tracking_for_order(tracking_path, product_ids):
     graph = load_graph(tracking_path)
     bind_namespaces(graph)
     entries = []
-    for node in set(graph.subjects(RDF.type, AZON.ConfirmacioLocalitzacio)) | set(
+    all_nodes = set(graph.subjects(RDF.type, AZON.ConfirmacioLocalitzacio)) | set(
         graph.subjects(RDF.type, AZON.DadesEnviament)
-    ) | set(graph.subjects(RDF.type, AZON.ConfirmacioEnviament)):
-        node_order_id = order_id_from_node(graph, node)
-        if node_order_id != order_id:
+    ) | set(graph.subjects(RDF.type, AZON.ConfirmacioEnviament))
+    logging.info("load_tracking_for_order: product_ids=%s, nodes_al_tot=%d", product_ids, len(all_nodes))
+    for node in all_nodes:
+        tracking_pid = _tracking_product_id(graph, node)
+        if tracking_pid not in product_ids:
+            logging.debug("  descartat node %s: pid=%s no en product_ids", node, tracking_pid)
             continue
         if not lot_id_from_node(graph, node):
+            logging.debug("  descartat node %s: sense lot_id", node)
             continue
         entries.append(_load_tracking_entry(graph, node))
+    logging.info("load_tracking_for_order: entrades trobades=%d", len(entries))
     return sorted(entries, key=lambda entry: (entry["lot_id"], entry["localized_product_id"]))
 
 

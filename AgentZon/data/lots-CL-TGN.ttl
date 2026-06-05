@@ -1,86 +1,150 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-azon:ploc-8b8302 a azon:ProducteLocalitzat ;
+azon:ploc-475aab a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
     azon:IdUsuari "127.0.0.1" ;
-    azon:SobreLot azon:lot-LOT-AFBEB3 ;
-    azon:TeProducteIntern azon:product-P1018 .
+    azon:SobreLot azon:lot-LOT-91EBCB ;
+    azon:TeProducteIntern azon:product-P1015 .
 
-azon:ploc-932655 a azon:ProducteLocalitzat ;
-    azon:Ciutat "Bcn" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
-    azon:SobreLot azon:lot-LOT-16E88D ;
-    azon:TeProducteIntern azon:product-P1009 .
-
-azon:ploc-9e994b a azon:ProducteLocalitzat ;
+azon:ploc-4a4044 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
     azon:IdUsuari "127.0.0.1" ;
-    azon:SobreLot azon:lot-LOT-AFBEB3 ;
+    azon:SobreLot azon:lot-LOT-91EBCB ;
     azon:TeProducteIntern azon:product-P1021 .
 
-azon:ploc-a1c880 a azon:ProducteLocalitzat ;
+azon:ploc-4dbc32 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
     azon:IdUsuari "127.0.0.1" ;
-    azon:SobreLot azon:lot-LOT-AFBEB3 ;
+    azon:SobreLot azon:lot-LOT-91EBCB ;
+    azon:TeProducteIntern azon:product-P1003 .
+
+azon:ploc-4ffbb7 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-91EBCB ;
+    azon:TeProducteIntern azon:product-P1006 .
+
+azon:ploc-6b09f0 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-E4603A ;
+    azon:TeProducteIntern azon:product-P1015 .
+
+azon:ploc-7b8295 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-91EBCB ;
     azon:TeProducteIntern azon:product-P1009 .
 
-azon:ploc-bb6b47 a azon:ProducteLocalitzat ;
+azon:ploc-80080c a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
     azon:IdUsuari "127.0.0.1" ;
-    azon:SobreLot azon:lot-LOT-AFBEB3 ;
-    azon:TeProducteIntern azon:product-P1012 .
+    azon:SobreLot azon:lot-LOT-91EBCB ;
+    azon:TeProducteIntern azon:product-P1018 .
 
-azon:lot-LOT-16E88D a azon:Lot ;
-    azon:Ciutat "Bcn" ;
+azon:ploc-ab77c6 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-91EBCB ;
+    azon:TeProducteIntern azon:product-P1003 .
+
+azon:ploc-b688ad a azon:ProducteLocalitzat ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-91EBCB ;
+    azon:TeProducteIntern azon:product-P1015 .
+
+azon:ploc-c687d7 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-91EBCB ;
+    azon:TeProducteIntern azon:product-P1009 .
+
+azon:ploc-c873f2 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-91EBCB ;
+    azon:TeProducteIntern azon:product-P1009 .
+
+azon:lot-LOT-E4603A a azon:Lot ;
+    azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
     azon:Estat "OBERT" ;
     azon:IdCentreLogistic "CL-TGN" ;
-    azon:IdLot "LOT-16E88D" ;
-    azon:PesTotal "1.85"^^xsd:float .
+    azon:IdLot "LOT-E4603A" ;
+    azon:PesTotal "0.39"^^xsd:float .
 
-azon:product-P1012 a azon:ProducteIntern ;
-    azon:IdProducte "P1012" ;
-    azon:Nom "Insulated Coffee Mug" ;
-    azon:Pes "0.44"^^xsd:float ;
-    azon:Preu "29.85"^^xsd:float ;
+azon:product-P1006 a azon:ProducteIntern ;
+    azon:IdProducte "P1006" ;
+    azon:Nom "Wireless Mouse" ;
+    azon:Pes "0.38"^^xsd:float ;
+    azon:Preu "25.95"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-TGN .
 
 azon:product-P1018 a azon:ProducteIntern ;
     azon:IdProducte "P1018" ;
-    azon:Nom "Ambient Desk Lamp" ;
-    azon:Pes "1.47"^^xsd:float ;
-    azon:Preu "72.64"^^xsd:float ;
+    azon:Nom "Wireless Headphones" ;
+    azon:Pes "0.2"^^xsd:float ;
+    azon:Preu "151.98"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-TGN .
 
 azon:product-P1021 a azon:ProducteIntern ;
     azon:IdProducte "P1021" ;
-    azon:Nom "Ceramic Coffee Mug" ;
-    azon:Pes "0.68"^^xsd:float ;
-    azon:Preu "8.23"^^xsd:float ;
+    azon:Nom "Compact Speaker" ;
+    azon:Pes "1.95"^^xsd:float ;
+    azon:Preu "98.23"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:transport-fast a azon:Transportista ;
+    azon:IdTransportista "fast" ;
+    azon:NomTransportista "Transportista-fast" .
+
+azon:product-P1003 a azon:ProducteIntern ;
+    azon:IdProducte "P1003" ;
+    azon:Nom "Precision Mouse" ;
+    azon:Pes "0.38"^^xsd:float ;
+    azon:Preu "30.38"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-TGN .
 
 azon:product-P1009 a azon:ProducteIntern ;
     azon:IdProducte "P1009" ;
-    azon:Nom "Adjustable Desk Lamp" ;
-    azon:Pes "1.85"^^xsd:float ;
-    azon:Preu "25.54"^^xsd:float ;
+    azon:Nom "Insulated Coffee Mug" ;
+    azon:Pes "0.33"^^xsd:float ;
+    azon:Preu "12.79"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:product-P1015 a azon:ProducteIntern ;
+    azon:IdProducte "P1015" ;
+    azon:Nom "Stoneware Coffee Mug" ;
+    azon:Pes "0.39"^^xsd:float ;
+    azon:Preu "25.83"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-TGN .
 
 azon:centre-CL-TGN a azon:CentreLogistic ;
     azon:Ciutat "Tarragona" ;
     azon:IdCentreLogistic "CL-TGN" .
 
-azon:lot-LOT-AFBEB3 a azon:Lot ;
+azon:lot-LOT-91EBCB a azon:Lot ;
+    azon:AssignatATransportista azon:transport-fast ;
     azon:Ciutat "Barcelona" ;
+    azon:CostTransport "22.26"^^xsd:float ;
     azon:DataEntrega "2026-06-10" ;
-    azon:Estat "OBERT" ;
+    azon:DataEntregaDefinitiva "2026-06-06" ;
+    azon:Estat "ENVIAT" ;
     azon:IdCentreLogistic "CL-TGN" ;
-    azon:IdLot "LOT-AFBEB3" ;
-    azon:PesTotal "4.44"^^xsd:float .
+    azon:IdLot "LOT-91EBCB" ;
+    azon:NomTransportista "Transportista-fast" ;
+    azon:PesTotal "5.06"^^xsd:float .
 

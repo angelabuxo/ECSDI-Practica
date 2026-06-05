@@ -12,71 +12,15 @@
     .totals td { border-top: 2px solid #222; font-weight: bold; }
     .meta { color: #555; margin: 0.2rem 0; }
     .status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; background: #eef7ee; }
-    .shipments-intro { color: #555; margin: 0.5rem 0 1rem; }
-    .shipment-group {
-      border: 1px solid #c8d4e0;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      overflow: hidden;
-      background: #fafbfc;
-    }
-    .shipment-group-header {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.5rem 1rem;
-      padding: 0.75rem 1rem;
-      background: #e8f0f8;
-      border-bottom: 1px solid #c8d4e0;
-    }
-    .shipment-group-header h3 {
-      margin: 0;
-      font-size: 1rem;
-      flex: 1 1 auto;
-    }
-    .badge {
-      display: inline-block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 0.15rem 0.55rem;
-      border-radius: 999px;
-      white-space: nowrap;
-    }
-    .badge-shared { background: #d4edda; color: #155724; }
-    .badge-separate { background: #fff3cd; color: #856404; }
-    .shipment-group-body { padding: 0.75rem 1rem 1rem; }
-    .shipment-group-body dl {
-      margin: 0 0 0.75rem;
-      display: grid;
-      grid-template-columns: 9rem 1fr;
-      gap: 0.2rem 0.75rem;
-      font-size: 0.92rem;
-    }
-    .shipment-group-body dt { color: #555; margin: 0; }
-    .shipment-group-body dd { margin: 0; }
-    .product-list {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      border-top: 1px solid #e2e8f0;
-      padding-top: 0.6rem;
-    }
-    .product-list li {
-      padding: 0.35rem 0;
-      border-bottom: 1px dashed #e2e8f0;
-    }
-    .product-list li:last-child { border-bottom: none; }
-    .product-list .product-id { color: #666; font-size: 0.85rem; }
-    .transport-cost { font-weight: 600; margin-top: 0.5rem; }
+    .status-shipped { background: #d4edda; color: #155724; }
+    .status-assigned { background: #fff3cd; color: #856404; }
+    .status-pending { background: #f8f9fa; color: #6c757d; }
   </style>
 </head>
 <body>
   <h1>Resum de la comanda</h1>
   <p class="meta">Comanda: <strong>{{ order.order_id }}</strong></p>
-  <p class="meta">Pagament(s): <strong>{{ invoice.payment_id }}</strong></p>
-  <p class="meta">Data del pagament: <strong>{{ invoice.date or "—" }}</strong></p>
   <p class="meta">Mètode de pagament: <strong>{{ invoice.method }}</strong></p>
-  <p class="meta">Estat del pagament: <span class="status">{{ invoice.payment_status }}</span></p>
   <p class="meta">Client: <strong>{{ order.shipping_data.user_name }}</strong> — IP: <strong>{{ order.user_id }}</strong></p>
   <p class="meta">Adreça: <strong>{{ order.shipping_data.street_address }}, {{ order.shipping_data.city }}</strong></p>
   <p class="meta">Data d'entrega actual: <strong>{{ final_delivery_date }}</strong></p>
@@ -91,6 +35,8 @@
         <th>Producte</th>
         <th>ID</th>
         <th class="amount">Preu</th>
+        <th>Estat enviament</th>
+        <th>Transportista</th>
       </tr>
     </thead>
     <tbody>
@@ -99,78 +45,33 @@
         <td>{{ line.name }}</td>
         <td>{{ line.product_id }}</td>
         <td class="amount">{{ "%.2f"|format(line.price) }} €</td>
+        <td>
+          {% if line.shipping_status == "ENVIAT" %}
+          <span class="status status-shipped">ENVIAT</span>
+          {% elif line.shipping_status == "ASSIGNAT" %}
+          <span class="status status-assigned">ASSIGNAT</span>
+          {% else %}
+          <span class="status status-pending">PENDENT</span>
+          {% endif %}
+        </td>
+        <td>{% if line.transport_name %}{{ line.transport_name }}{% else %}—{% endif %}</td>
       </tr>
       {% endfor %}
     </tbody>
     <tfoot>
       <tr>
-        <td colspan="2">Subtotal productes</td>
-        <td class="amount">{{ "%.2f"|format(invoice.products_subtotal) }} €</td>
+        <td colspan="4">Subtotal productes enviats</td>
+        <td class="amount">{{ "%.2f"|format(invoice.charged_products_subtotal) }} €</td>
       </tr>
       <tr>
-        <td colspan="2">Transport total</td>
+        <td colspan="4">Transport total</td>
         <td class="amount">{{ "%.2f"|format(invoice.transport_cost) }} €</td>
       </tr>
       <tr class="totals">
-        <td colspan="2">Total</td>
-        <td class="amount">{{ "%.2f"|format(invoice.amount) }} €</td>
+        <td colspan="4">Total cobrat</td>
+        <td class="amount">{{ "%.2f"|format(invoice.charged_amount) }} €</td>
       </tr>
     </tfoot>
   </table>
-
-  <h2>Enviaments</h2>
-  <p class="shipments-intro">
-    La comanda es divideix en <strong>{{ shipment_groups|length }}</strong>
-    {% if shipment_groups|length == 1 %}enviament{% else %}enviaments{% endif %}.
-    Els productes dins del mateix bloc surten junts amb el mateix transportista.
-  </p>
-
-  {% for group in shipment_groups %}
-  <article class="shipment-group">
-    <header class="shipment-group-header">
-      <h3>Enviament {{ group.index }}{% if group.lot_id %} · Lot {{ group.lot_id }}{% endif %}</h3>
-      {% if group.shared_shipment %}
-      <span class="badge badge-shared">{{ group.products|length }} productes junts</span>
-      {% else %}
-      <span class="badge badge-separate">Enviament individual</span>
-      {% endif %}
-    </header>
-    <div class="shipment-group-body">
-      <dl>
-        <dt>Centre logístic</dt>
-        <dd>{{ group.centre_id }}{% if group.centre_city %} ({{ group.centre_city }}){% endif %}</dd>
-        <dt>Transportista</dt>
-        <dd>
-          {% if group.transport_name %}
-          {{ group.transport_name }}{% if group.transport_id %} ({{ group.transport_id }}){% endif %}
-          {% else %}
-          Pendent d'assignacio
-          {% endif %}
-        </dd>
-        <dt>Lliurament</dt>
-        <dd>
-          {{ group.city }} · {{ group.delivery_date }}
-          {% if group.delivery_is_official %}
-          (definitiva)
-          {% else %}
-          (estimada)
-          {% endif %}
-        </dd>
-        <dt>Estat</dt>
-        <dd>{{ group.status }}</dd>
-      </dl>
-      <p><strong>Productes d'aquest enviament</strong></p>
-      <ul class="product-list">
-        {% for product in group.products %}
-        <li>
-          {{ product.product_name }}
-          <span class="product-id">({{ product.product_id }})</span>
-        </li>
-        {% endfor %}
-      </ul>
-      <p class="transport-cost">Cost del transport d'aquest enviament: {{ "%.2f"|format(group.transport_cost) }} €</p>
-    </div>
-  </article>
-  {% endfor %}
 </body>
 </html>

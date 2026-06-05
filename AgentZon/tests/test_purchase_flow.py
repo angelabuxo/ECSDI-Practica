@@ -382,7 +382,7 @@ class PurchaseFlowTests(unittest.TestCase):
 
             order_page = agent_compra.app.test_client().get(f"/orders/{order_id}")
             self.assertEqual(order_page.status_code, 200)
-            self.assertIn("economy", order_page.get_data(as_text=True))
+            self.assertIn("TransportEconomy", order_page.get_data(as_text=True))
             self.assertIn("ENVIAT", order_page.get_data(as_text=True))
 
     def test_purchase_flow_routes_products_per_centre_and_returns_multiple_lot_reservations(self):
@@ -692,9 +692,9 @@ class PurchaseFlowTests(unittest.TestCase):
             )
             content = message.value(predicate=RDF.type, object=AZON.DadesEnviament)
             agent_compra.process_shipping_update(message, content, compra.uri)
-            tracking_entries = load_tracking_for_order(data_dir / "seguiment_enviaments.ttl", "ORDER-1234")
+            tracking_entries = load_tracking_for_order(data_dir / "seguiment_enviaments.ttl", {"P1011"})
             self.assertEqual(tracking_entries[0]["official_delivery_date"], "2026-06-04")
-            self.assertEqual(tracking_entries[0]["status"], "ASSIGNAT")
+            self.assertEqual(tracking_entries[0]["status"], "ENVIAT")
 
     def test_bank_registration_is_delegated_without_local_lookup(self):
         from AgentUtil.Agent import Agent
@@ -819,7 +819,7 @@ class PurchaseFlowTests(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn("ORDER-REMOTE-1", html)
             self.assertIn("Carrer Major 1, Girona", html)
-            self.assertIn("LOT-REMOTE-1", html)
+            self.assertIn("PENDENT", html)
 
 
 if __name__ == "__main__":

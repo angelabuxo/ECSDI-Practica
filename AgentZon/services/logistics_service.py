@@ -232,6 +232,15 @@ def load_lot_by_id(lots_path, lot_id):
     return _extract_lot(graph, _find_lot_node_by_id(graph, lot_id))
 
 
+def list_all_lots(lots_path):
+    graph = load_graph(lots_path)
+    bind_namespaces(graph)
+    lots = []
+    for lot_node in graph.subjects(RDF.type, AZON.Lot):
+        lots.append(_extract_lot(graph, lot_node))
+    return sorted(lots, key=lambda lot: (lot["delivery_date"], lot["lot_id"]))
+
+
 def list_ready_lots_for_negotiation(
     lots_path,
     today=None,

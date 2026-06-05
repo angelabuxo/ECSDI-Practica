@@ -39,10 +39,6 @@ class AgentDataOwnershipTests(unittest.TestCase):
             self.assertIsNone(getattr(agent_compra, "USER_BANK_PATH", None))
             self.assertEqual(agent_compra.SHIPPING_PATH.name, "dades_enviament_usuari.ttl")
             self.assertEqual(agent_compra.LOCATIONS_PATH.name, "ubicacions_productes.ttl")
-            self.assertEqual(
-                agent_compra.SHIPPING_RESPONSIBILITY_PATH.name,
-                "responsable_enviament_productes.ttl",
-            )
 
             agent_opinador.configure_runtime(
                 {

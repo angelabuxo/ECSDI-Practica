@@ -1,30 +1,3 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-azon:feedback-FB-P1001-ORDER-8B0B0369 a azon:Feedback ;
-    azon:Comentari "" ;
-    azon:DataCompra "2026-06-02" ;
-    azon:IdComanda "ORDER-8B0B0369" ;
-    azon:IdFeedback "FB-P1001-ORDER-8B0B0369" ;
-    azon:IdUsuari "127.0.0.1" ;
-    azon:Puntuacio 3 ;
-    azon:SobreProducte azon:product-P1001 .
-
-azon:feedback-FB-P1003-ORDER-E1DB0A83 a azon:Feedback ;
-    azon:Comentari "ccccc" ;
-    azon:DataCompra "2026-06-02" ;
-    azon:IdComanda "ORDER-E1DB0A83" ;
-    azon:IdFeedback "FB-P1003-ORDER-E1DB0A83" ;
-    azon:IdUsuari "127.0.0.1" ;
-    azon:Puntuacio 5 ;
-    azon:SobreProducte azon:product-P1003 .
-
-azon:feedback-FB-P1028-ORDER-D8B1D572 a azon:Feedback ;
-    azon:Comentari "Apple és la millor marca tecnològica del món" ;
-    azon:DataCompra "2026-06-03" ;
-    azon:IdComanda "ORDER-D8B1D572" ;
-    azon:IdFeedback "FB-P1028-ORDER-D8B1D572" ;
-    azon:IdUsuari "127.0.0.1" ;
-    azon:Puntuacio 5 ;
-    azon:SobreProducte azon:product-P1028 .
-

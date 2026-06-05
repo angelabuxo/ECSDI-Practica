@@ -1,5 +1,6 @@
 """Resums d'enviament, facturacio agregada i coordinacio amb centres logistics."""
 
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 
@@ -13,6 +14,7 @@ from protocols.centre_logistic import (
     parse_confirmacio_localitzacio,
 )
 from protocols.pagament import extract_invoice_from_content
+from services.shipping_tracking_service import save_localization_confirmations
 
 
 def extract_centre_reservations_from_reply(reply):
@@ -82,6 +84,24 @@ def sum_unique_lot_transport_cost(shipments):
     return round(total, 2)
 
 
+def _enrich_lines_with_shipment_status(lines, shipments):
+    logging.info("_enrich_lines: %d linies, %d seguiments", len(lines), len(shipments))
+    for line in lines:
+        matching = [
+            s for s in shipments
+            if (s.get("product") or {}).get("product_id") == line["product_id"]
+        ]
+        if matching:
+            best = max(matching, key=lambda s: _status_rank(s.get("status", "OBERT")))
+            line["shipping_status"] = best.get("status", "PENDENT")
+            line["transport_name"] = best.get("transport_name", "")
+            logging.info("  linia %s -> status=%s (matching=%d)", line["product_id"], line["shipping_status"], len(matching))
+        else:
+            line["shipping_status"] = "PENDENT"
+            line["transport_name"] = ""
+            logging.info("  linia %s -> PENDENT (sense seguiment coincident)")
+
+
 def build_invoice_summary(order, shipments):
     lines = sorted(
         [
@@ -90,9 +110,15 @@ def build_invoice_summary(order, shipments):
         ],
         key=lambda line: line["product_id"],
     )
+    _enrich_lines_with_shipment_status(lines, shipments)
+
     shipment_invoices = [shipment["invoice"] for shipment in shipments if shipment.get("invoice")]
     fallback_products_subtotal = round(sum(line["price"] for line in lines), 2)
     fallback_transport_cost = sum_unique_lot_transport_cost(shipments)
+
+    charged_products_subtotal = round(
+        sum(line["price"] for line in lines if line["shipping_status"] == "ENVIAT"), 2
+    )
 
     if not shipment_invoices:
         return {
@@ -105,6 +131,8 @@ def build_invoice_summary(order, shipments):
             "lines": lines,
             "transport_cost": fallback_transport_cost,
             "products_subtotal": fallback_products_subtotal,
+            "charged_products_subtotal": charged_products_subtotal,
+            "charged_amount": round(charged_products_subtotal + fallback_transport_cost, 2),
         }
 
     payment_ids = sorted({invoice["payment_id"] for invoice in shipment_invoices if invoice.get("payment_id")})
@@ -132,6 +160,8 @@ def build_invoice_summary(order, shipments):
         "lines": lines,
         "transport_cost": transport_cost,
         "products_subtotal": products_subtotal,
+        "charged_products_subtotal": charged_products_subtotal,
+        "charged_amount": round(charged_products_subtotal + transport_cost, 2),
     }
 
 
@@ -229,7 +259,7 @@ def fulfill_centre_group(order, group, sender_uri, message_sender, next_msgcnt):
     return confirmations
 
 
-def collect_warehouse_reservations(order, centre_groups, sender_uri, message_sender, next_msgcnt):
+def collect_warehouse_reservations(order, centre_groups, sender_uri, message_sender, next_msgcnt, tracking_path=None):
     if not centre_groups:
         return []
 
@@ -238,11 +268,15 @@ def collect_warehouse_reservations(order, centre_groups, sender_uri, message_sen
 
     if len(centre_groups) == 1:
         reservations = dispatch_group(centre_groups[0])
+        if tracking_path is not None:
+            save_localization_confirmations(tracking_path, reservations)
     else:
         reservations = []
         with ThreadPoolExecutor(max_workers=len(centre_groups)) as executor:
             for group_reservations in executor.map(dispatch_group, centre_groups):
                 reservations.extend(group_reservations)
+                if tracking_path is not None:
+                    save_localization_confirmations(tracking_path, group_reservations)
     return reservations
 
 

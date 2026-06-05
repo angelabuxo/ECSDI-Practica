@@ -276,7 +276,7 @@ def load_external_seller_by_product(shipping_responsibility_path, catalog_path):
     """Mapeja `product_id -> seller_id` per als productes externs."""
     graph = load_graph(shipping_responsibility_path)
     seller_by_product = {}
-    for subject in graph.subjects(predicate=AZON.IdProducte, object=None):
+    for subject in graph.subjects(predicate=AZON.IdVenedorExtern, object=None):
         product_id = str(graph.value(subject, AZON.IdProducte))
         seller_id = graph.value(subject, AZON.IdVenedorExtern)
         external_flag = graph.value(subject, AZON.RequereixLogisticaExterna)

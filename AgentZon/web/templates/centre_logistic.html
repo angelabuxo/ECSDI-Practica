@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <title>{{ centre_id }} — Lots</title>
+  <style>
+    body { font-family: sans-serif; max-width: 860px; margin: 2rem auto; color: #222; line-height: 1.45; }
+    h1, h2 { margin-bottom: 0.4rem; }
+    .meta { color: #555; margin: 0.2rem 0; }
+    .lot {
+      border: 1px solid #c8d4e0;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      background: #fafbfc;
+    }
+    .lot-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 1rem;
+      padding: 0.75rem 1rem;
+      background: #e8f0f8;
+      border-bottom: 1px solid #c8d4e0;
+    }
+    .lot-header h3 { margin: 0; font-size: 1rem; flex: 1 1 auto; }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .badge-obert { background: #f8f9fa; color: #6c757d; }
+    .badge-preparat { background: #cce5ff; color: #004085; }
+    .badge-negociant { background: #fff3cd; color: #856404; }
+    .badge-assignat { background: #d4edda; color: #155724; }
+    .badge-enviat { background: #d1ecf1; color: #0c5460; }
+    .lot-body { padding: 0.75rem 1rem 1rem; }
+    .lot-body dl {
+      margin: 0 0 0.75rem;
+      display: grid;
+      grid-template-columns: 10rem 1fr;
+      gap: 0.2rem 0.75rem;
+      font-size: 0.92rem;
+    }
+    .lot-body dt { color: #555; margin: 0; }
+    .lot-body dd { margin: 0; }
+    .product-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 0.6rem;
+    }
+    .product-list li {
+      padding: 0.35rem 0;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+    .product-list li:last-child { border-bottom: none; }
+    .product-list .item-id { color: #888; font-size: 0.85rem; }
+    .transport-cost { font-weight: 600; margin-top: 0.5rem; }
+    .empty { color: #999; font-style: italic; margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>Centre logístic: {{ centre_id }}</h1>
+  <p class="meta">Ciutat: <strong>{{ centre_city or "—" }}</strong></p>
+  <p class="meta">Total de lots: <strong>{{ lots|length }}</strong></p>
+
+  {% if lots %}
+  <h2>Lots</h2>
+  {% for lot in lots %}
+  <article class="lot">
+    <header class="lot-header">
+      <h3>Lot {{ lot.lot_id }}</h3>
+      {% if lot.status == "OBERT" %}
+      <span class="badge badge-obert">OBERT</span>
+      {% elif lot.status == "PREPARAT" %}
+      <span class="badge badge-preparat">PREPARAT</span>
+      {% elif lot.status == "NEGOCIANT" %}
+      <span class="badge badge-negociant">NEGOCIANT</span>
+      {% elif lot.status == "ASSIGNAT" %}
+      <span class="badge badge-assignat">ASSIGNAT</span>
+      {% elif lot.status == "ENVIAT" %}
+      <span class="badge badge-enviat">ENVIAT</span>
+      {% else %}
+      <span class="badge badge-obert">{{ lot.status }}</span>
+      {% endif %}
+    </header>
+    <div class="lot-body">
+      <dl>
+        <dt>Destí</dt>
+        <dd>{{ lot.city }}</dd>
+        <dt>Data d'entrega</dt>
+        <dd>
+          {{ lot.delivery_date }}
+          {% if lot.status in ("ASSIGNAT", "ENVIAT") and lot.official_delivery_date %}
+          (definitiva: {{ lot.official_delivery_date }})
+          {% else %}
+          (estimada)
+          {% endif %}
+        </dd>
+        <dt>Pes total</dt>
+        <dd>{{ "%.2f"|format(lot.total_weight) }} kg</dd>
+        {% if lot.status in ("ASSIGNAT", "ENVIAT") %}
+        <dt>Transportista</dt>
+        <dd>
+          {% if lot.transport_name %}
+          {{ lot.transport_name }}{% if lot.transport_id %} ({{ lot.transport_id }}){% endif %}
+          {% else %}
+          —
+          {% endif %}
+        </dd>
+        <dt>Cost transport</dt>
+        <dd>{{ "%.2f"|format(lot.price) }} €</dd>
+        {% endif %}
+      </dl>
+      <p><strong>Productes d'aquest lot</strong> ({{ lot.products|length }})</p>
+      <ul class="product-list">
+        {% for product in lot.products %}
+        <li>
+          {{ product.name }}
+          <span class="item-id">({{ product.product_id }})</span>
+          — {{ "%.2f"|format(product.price) }} € · {{ "%.2f"|format(product.weight) }} kg
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </article>
+  {% endfor %}
+  {% else %}
+  <p class="empty">No hi ha lots en aquest centre.</p>
+  {% endif %}
+</body>
+</html>

@@ -222,7 +222,7 @@ class DistributedSmokeTests(unittest.TestCase):
                     },
                     timeout=10,
                 )
-                self.assertIn("Pendent d'assignacio", confirmation.text)
+                self.assertIn("Subtotal productes enviats", confirmation.text)
                 self.assertIn("ORDER-", confirmation.text)
 
                 order_match = re.search(r"ORDER-[A-Z0-9]+", confirmation.text)
@@ -236,12 +236,11 @@ class DistributedSmokeTests(unittest.TestCase):
                 order_page = requests.get(f"http://{host}:{ports['compra']}/orders/{order_id}", timeout=10)
                 self.assertEqual(order_page.status_code, 200)
                 self.assertTrue(
-                    "fast" in order_page.text or "economy" in order_page.text,
+                    "Transportista-fast" in order_page.text or "Transportista-economy" in order_page.text,
                     "S'esperava un transportista assignat (fast o economy)",
                 )
                 self.assertIn("ENVIAT", order_page.text)
-                self.assertIn("CL-BCN", order_page.text)
-                self.assertIn("CL-GI", order_page.text)
+                self.assertIn("Total cobrat", order_page.text)
             finally:
                 for port in [
                     ports["cercador"],
