@@ -1,9 +1,1 @@
-@prefix azon: <http://www.semanticweb.org/agentzon#> .
-
-azon:shipping-ORDER-9666466F azon:Carrer "bcn" ;
-    azon:Ciutat "Barcelona" ;
-    azon:MetodePagament "a" ;
-    azon:Nom "pol" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:Prioritat "5 dies" .
 
