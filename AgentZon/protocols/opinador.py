@@ -7,7 +7,7 @@ from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
 from protocols.compra import extract_order_snapshot
-from protocols.rdf_refs import link_sobre_comanda, order_id_from_node, _user_id_from_iri
+from protocols.rdf_refs import link_sobre_comanda, order_id_from_node, _user_id_from_iri, _seller_id_from_iri
 
 
 def _add_product_reference(graph, subject, product):
@@ -45,7 +45,7 @@ def _add_snapshot_product(graph, subject, product, relation):
     graph.add((product_node, AZON.Preu, Literal(product.get("price", 0.0), datatype=XSD.float)))
     graph.add((product_node, AZON.Pes, Literal(product.get("weight", 0.0), datatype=XSD.float)))
     if product.get("seller_id"):
-        graph.add((product_node, AZON.IdVenedorExtern, Literal(product["seller_id"])))
+        graph.add((product_node, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(product["seller_id"])]))
     graph.add(
         (
             product_node,
@@ -60,7 +60,8 @@ def _parse_snapshot_product(graph, product_node):
     price_value = graph.value(product_node, AZON.Preu)
     weight_value = graph.value(product_node, AZON.Pes)
     requires_external = graph.value(product_node, AZON.RequereixLogisticaExterna)
-    seller_id = graph.value(product_node, AZON.IdVenedorExtern)
+    seller_id_iri = graph.value(product_node, AZON.PertanyAVenedorExtern)
+    seller_id = _seller_id_from_iri(seller_id_iri)
     description = graph.value(product_node, AZON.Descripcio)
     return {
         "product_id": str(graph.value(product_node, AZON.IdProducte)),
@@ -446,7 +447,7 @@ def build_peticio_devolucio(return_request, sender=None, receiver=None, msgcnt=0
         graph.add((content, AZON.ImportPagament, Literal(return_request["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MotiuDevolucio, Literal(return_request.get("reason", ""))))
     if return_request.get("seller_id"):
-        graph.add((content, AZON.IdVenedorExtern, Literal(return_request["seller_id"])))
+        graph.add((content, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(return_request["seller_id"])]))
     for product in return_request.get("products", []):
         _add_product_reference(graph, content, product)
     return build_message(
@@ -467,7 +468,8 @@ def parse_peticio_devolucio(graph, content):
         if product_id is None:
             product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
         products.append({"product_id": str(product_id)})
-    seller_id = graph.value(content, AZON.IdVenedorExtern)
+    seller_id_iri = graph.value(content, AZON.PertanyAVenedorExtern)
+    seller_id = _seller_id_from_iri(seller_id_iri)
     amount_value = graph.value(content, AZON.ImportPagament)
     return {
         "return_id": str(graph.value(content, AZON.IdDevolucio)),
@@ -512,7 +514,7 @@ def build_resolucio_devolucio(decision, sender=None, receiver=None, request_cont
             graph.add((product_node, RDF.type, AZON.Producte))
             graph.add((product_node, AZON.IdProducte, Literal(product_id)))
     if decision.get("seller_id"):
-        graph.add((content, AZON.IdVenedorExtern, Literal(decision["seller_id"])))
+        graph.add((content, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(decision["seller_id"])]))
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
     return build_message(

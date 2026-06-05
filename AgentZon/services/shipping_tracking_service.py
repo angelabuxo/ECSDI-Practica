@@ -1,6 +1,7 @@
 """Persistencia del seguiment d'enviaments al costat de Compra."""
 
 import logging
+from threading import Lock
 from rdflib import Literal, RDF
 from rdflib.namespace import XSD
 
@@ -15,6 +16,9 @@ from protocols.rdf_refs import (
     transport_id_from_node,
 )
 from services.rdf_store import load_graph, save_graph
+
+
+TRACKING_WRITE_LOCK = Lock()
 
 
 def _tracking_node(localized_product_id):
@@ -47,76 +51,78 @@ def _ensure_centre_node(graph, centre_id=None, centre_city=None):
 
 
 def save_localization_confirmations(tracking_path, items):
-    graph = load_graph(tracking_path)
-    bind_namespaces(graph)
+    with TRACKING_WRITE_LOCK:
+        graph = load_graph(tracking_path)
+        bind_namespaces(graph)
 
-    for item in items:
-        localized_product_id = item["localized_product_id"]
-        node = _tracking_node(localized_product_id)
-        centre_node = _ensure_centre_node(
-            graph,
-            centre_id=item.get("centre_id"),
-            centre_city=item.get("centre_city"),
-        )
-        product = item["product"]
+        for item in items:
+            localized_product_id = item["localized_product_id"]
+            node = _tracking_node(localized_product_id)
+            centre_node = _ensure_centre_node(
+                graph,
+                centre_id=item.get("centre_id"),
+                centre_city=item.get("centre_city"),
+            )
+            product = item["product"]
 
-        graph.add((node, RDF.type, AZON.ConfirmacioLocalitzacio))
-        graph.set((node, AZON.Estat, Literal(item.get("status", "OBERT"))))
-        graph.set((node, AZON.Ciutat, Literal(item["city"])))
-        graph.set((node, AZON.DataEntrega, Literal(item["delivery_date"])))
-        link_sobre_lot(
-            graph,
-            node,
-            item["lot_id"],
-            city=item["city"],
-            delivery_date=item["delivery_date"],
-            status=item.get("status", "OBERT"),
-            centre_id=item.get("centre_id"),
-        )
-        if product.get("product_id"):
-            _add_product_reference(graph, node, product, centre_node=centre_node)
+            graph.add((node, RDF.type, AZON.ConfirmacioLocalitzacio))
+            graph.set((node, AZON.Estat, Literal(item.get("status", "OBERT"))))
+            graph.set((node, AZON.Ciutat, Literal(item["city"])))
+            graph.set((node, AZON.DataEntrega, Literal(item["delivery_date"])))
+            link_sobre_lot(
+                graph,
+                node,
+                item["lot_id"],
+                city=item["city"],
+                delivery_date=item["delivery_date"],
+                status=item.get("status", "OBERT"),
+                centre_id=item.get("centre_id"),
+            )
+            if product.get("product_id"):
+                _add_product_reference(graph, node, product, centre_node=centre_node)
 
-    save_graph(tracking_path, graph)
+        save_graph(tracking_path, graph)
 
 
 def apply_shipping_update(tracking_path, shipment, shipped=False, invoice=None):
-    graph = load_graph(tracking_path)
-    bind_namespaces(graph)
+    with TRACKING_WRITE_LOCK:
+        graph = load_graph(tracking_path)
+        bind_namespaces(graph)
 
-    localized_product_id = shipment["localized_product_id"]
-    node = _tracking_node(localized_product_id)
-    centre_node = _ensure_centre_node(
-        graph,
-        centre_id=shipment.get("centre_id"),
-        centre_city=shipment.get("centre_city"),
-    )
-
-    graph.set((node, AZON.Ciutat, Literal(shipment["city"])))
-    link_sobre_lot(graph, node, shipment["lot_id"], city=shipment["city"])
-    if shipment.get("transport_id"):
-        link_assignat_transportista(
+        localized_product_id = shipment["localized_product_id"]
+        node = _tracking_node(localized_product_id)
+        centre_node = _ensure_centre_node(
             graph,
-            node,
-            shipment["transport_id"],
-            shipment.get("transport_name"),
+            centre_id=shipment.get("centre_id"),
+            centre_city=shipment.get("centre_city"),
         )
-    graph.set((node, AZON.NomTransportista, Literal(shipment["transport_name"])))
-    graph.set((node, AZON.DataEntregaDefinitiva, Literal(shipment["delivery_date"])))
-    graph.set((node, AZON.CostTransport, Literal(shipment.get("price", 0.0), datatype=XSD.float)))
-    graph.set((node, AZON.Estat, Literal("ENVIAT")))
 
-    graph.add((node, RDF.type, AZON.DadesEnviament))
-    if shipped:
-        graph.add((node, RDF.type, AZON.ConfirmacioEnviament))
+        graph.set((node, AZON.Ciutat, Literal(shipment["city"])))
+        link_sobre_lot(graph, node, shipment["lot_id"], city=shipment["city"])
+        if shipment.get("transport_id"):
+            link_assignat_transportista(
+                graph,
+                node,
+                shipment["transport_id"],
+                shipment.get("transport_name"),
+            )
+        graph.set((node, AZON.NomTransportista, Literal(shipment["transport_name"])))
+        graph.set((node, AZON.DataEntregaDefinitiva, Literal(shipment["delivery_date"])))
+        graph.set((node, AZON.CostTransport, Literal(shipment.get("price", 0.0), datatype=XSD.float)))
+        graph.set((node, AZON.Estat, Literal("ENVIAT")))
 
-    product = shipment.get("product")
-    if product and product.get("product_id"):
-        _add_product_reference(graph, node, product, centre_node=centre_node)
+        graph.add((node, RDF.type, AZON.DadesEnviament))
+        if shipped:
+            graph.add((node, RDF.type, AZON.ConfirmacioEnviament))
 
-    if invoice is not None:
-        embed_invoice_in_content(graph, node, invoice)
+        product = shipment.get("product")
+        if product and product.get("product_id"):
+            _add_product_reference(graph, node, product, centre_node=centre_node)
 
-    save_graph(tracking_path, graph)
+        if invoice is not None:
+            embed_invoice_in_content(graph, node, invoice)
+
+        save_graph(tracking_path, graph)
 
 
 def _tracking_product_id(graph, node):

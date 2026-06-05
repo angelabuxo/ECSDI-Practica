@@ -1,147 +1,40 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-azon:order-ORDER-14C829B8 a azon:Comanda ;
-    azon:Carrer "a" ;
+azon:order-ORDER-9666466F a azon:Comanda ;
+    azon:Carrer "bcn" ;
     azon:Ciutat "Barcelona" ;
     azon:DataCompra "2026-06-05" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdComanda "ORDER-14C829B8" ;
+    azon:IdComanda "ORDER-9666466F" ;
+    azon:MetodePagament "a" ;
+    azon:Nom "pol" ;
     azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:MetodePagament "aaa" ;
-    azon:Nom "holamon" ;
     azon:Prioritat "5 dies" ;
     azon:TeProducte azon:product-P1001,
         azon:product-P1002,
         azon:product-P1003,
-        azon:product-P1004,
-        azon:product-P1005,
-        azon:product-P1009,
-        azon:product-P1013,
-        azon:product-P1015,
-        azon:product-P1016,
-        azon:product-P1019,
-        azon:product-P1022 .
-
-azon:order-ORDER-6080FD31 a azon:Comanda ;
-    azon:Carrer "Balmes" ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataCompra "2026-06-05" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:IdComanda "ORDER-6080FD31" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:MetodePagament "aaaa" ;
-    azon:Nom "adeu" ;
-    azon:Prioritat "5 dies" ;
-    azon:TeProducte azon:product-P1001,
         azon:product-P1004,
         azon:product-P1005,
         azon:product-P1006,
+        azon:product-P1007,
         azon:product-P1008,
         azon:product-P1009,
-        azon:product-P1010,
-        azon:product-P1011,
         azon:product-P1013,
         azon:product-P1015,
         azon:product-P1016,
-        azon:product-P1017,
-        azon:product-P1018,
         azon:product-P1019,
-        azon:product-P1020,
         azon:product-P1021,
-        azon:product-P1022 .
+        azon:product-P1022,
+        azon:product-P1023 .
 
-azon:order-ORDER-777E72B3 a azon:Comanda ;
-    azon:Carrer "a" ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataCompra "2026-06-05" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:IdComanda "ORDER-777E72B3" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:MetodePagament "a" ;
-    azon:Nom "a" ;
-    azon:Prioritat "5 dies" ;
-    azon:TeProducte azon:product-P1001,
-        azon:product-P1002,
-        azon:product-P1003,
-        azon:product-P1005,
-        azon:product-P1009,
-        azon:product-P1013,
-        azon:product-P1015,
-        azon:product-P1016,
-        azon:product-P1019,
-        azon:product-P1022 .
-
-azon:product-P1006 azon:Categoria "peripherals" ;
-    azon:Descripcio "Wireless Mouse with programmable buttons and fast tracking" ;
-    azon:IdProducte "P1006" ;
-    azon:Marca "InputWorks" ;
-    azon:Nom "Wireless Mouse" ;
-    azon:Pes "0.38"^^xsd:float ;
-    azon:Preu "25.95"^^xsd:float ;
-    azon:RequereixLogisticaExterna false .
-
-azon:product-P1008 azon:Categoria "peripherals" ;
-    azon:Descripcio "Compact Keyboard with responsive tactile switches" ;
-    azon:IdProducte "P1008" ;
-    azon:Marca "KeyForge" ;
-    azon:Nom "Compact Keyboard" ;
-    azon:Pes "1.57"^^xsd:float ;
-    azon:Preu "127.97"^^xsd:float ;
-    azon:RequereixLogisticaExterna false .
-
-azon:product-P1010 azon:Categoria "peripherals" ;
-    azon:Descripcio "Ultra-Light Mouse with programmable buttons and fast tracking" ;
-    azon:IdProducte "P1010" ;
-    azon:Marca "InputWorks" ;
-    azon:Nom "Ultra-Light Mouse" ;
-    azon:Pes "0.3"^^xsd:float ;
-    azon:Preu "53.54"^^xsd:float ;
-    azon:RequereixLogisticaExterna false .
-
-azon:product-P1011 azon:Categoria "peripherals" ;
-    azon:Descripcio "Precision Mouse designed for all-day comfort" ;
-    azon:IdProducte "P1011" ;
-    azon:Marca "PointerPro" ;
-    azon:Nom "Precision Mouse" ;
-    azon:Pes "0.42"^^xsd:float ;
-    azon:Preu "27.59"^^xsd:float ;
-    azon:RequereixLogisticaExterna false .
-
-azon:product-P1017 azon:Categoria "audio" ;
-    azon:Descripcio "Wireless Headphones with immersive stereo sound" ;
-    azon:IdProducte "P1017" ;
-    azon:Marca "AuralMax" ;
-    azon:Nom "Wireless Headphones" ;
-    azon:Pes "0.35"^^xsd:float ;
-    azon:Preu "190.43"^^xsd:float ;
-    azon:RequereixLogisticaExterna false .
-
-azon:product-P1018 azon:Categoria "audio" ;
-    azon:Descripcio "Wireless Headphones for long listening sessions" ;
-    azon:IdProducte "P1018" ;
-    azon:Marca "AuralMax" ;
-    azon:Nom "Wireless Headphones" ;
-    azon:Pes "0.2"^^xsd:float ;
-    azon:Preu "151.98"^^xsd:float ;
-    azon:RequereixLogisticaExterna false .
-
-azon:product-P1020 azon:Categoria "audio" ;
-    azon:Descripcio "Noise-Cancelling Headphones with immersive stereo sound" ;
-    azon:IdProducte "P1020" ;
-    azon:Marca "AuralMax" ;
-    azon:Nom "Noise-Cancelling Headphones" ;
-    azon:Pes "1.31"^^xsd:float ;
-    azon:Preu "98.91"^^xsd:float ;
-    azon:RequereixLogisticaExterna false .
-
-azon:product-P1021 azon:Categoria "audio" ;
-    azon:Descripcio "Compact Speaker with punchy bass response" ;
-    azon:IdProducte "P1021" ;
-    azon:Marca "AuralMax" ;
-    azon:Nom "Compact Speaker" ;
-    azon:Pes "1.95"^^xsd:float ;
-    azon:Preu "98.23"^^xsd:float ;
+azon:product-P1001 azon:Categoria "home" ;
+    azon:Descripcio "Minimalist Coffee Mug with a comfortable easy-grip handle" ;
+    azon:IdProducte "P1001" ;
+    azon:Marca "CasaNova" ;
+    azon:Nom "Minimalist Coffee Mug" ;
+    azon:Pes "0.75"^^xsd:float ;
+    azon:Preu "27.01"^^xsd:float ;
     azon:RequereixLogisticaExterna false .
 
 azon:product-P1002 azon:Categoria "peripherals" ;
@@ -171,15 +64,6 @@ azon:product-P1004 azon:Categoria "peripherals" ;
     azon:Preu "122.31"^^xsd:float ;
     azon:RequereixLogisticaExterna false .
 
-azon:product-P1001 azon:Categoria "home" ;
-    azon:Descripcio "Minimalist Coffee Mug with a comfortable easy-grip handle" ;
-    azon:IdProducte "P1001" ;
-    azon:Marca "CasaNova" ;
-    azon:Nom "Minimalist Coffee Mug" ;
-    azon:Pes "0.75"^^xsd:float ;
-    azon:Preu "27.01"^^xsd:float ;
-    azon:RequereixLogisticaExterna false .
-
 azon:product-P1005 azon:Categoria "home" ;
     azon:Descripcio "Adjustable Desk Lamp with soft warm illumination" ;
     azon:IdProducte "P1005" ;
@@ -187,6 +71,33 @@ azon:product-P1005 azon:Categoria "home" ;
     azon:Nom "Adjustable Desk Lamp" ;
     azon:Pes "1.97"^^xsd:float ;
     azon:Preu "82.66"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
+azon:product-P1006 azon:Categoria "peripherals" ;
+    azon:Descripcio "Wireless Mouse with programmable buttons and fast tracking" ;
+    azon:IdProducte "P1006" ;
+    azon:Marca "InputWorks" ;
+    azon:Nom "Wireless Mouse" ;
+    azon:Pes "0.38"^^xsd:float ;
+    azon:Preu "25.95"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
+azon:product-P1007 azon:Categoria "peripherals" ;
+    azon:Descripcio "Wireless Mouse for precise cursor control" ;
+    azon:IdProducte "P1007" ;
+    azon:Marca "InputWorks" ;
+    azon:Nom "Wireless Mouse" ;
+    azon:Pes "0.45"^^xsd:float ;
+    azon:Preu "133.41"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
+azon:product-P1008 azon:Categoria "peripherals" ;
+    azon:Descripcio "Compact Keyboard with responsive tactile switches" ;
+    azon:IdProducte "P1008" ;
+    azon:Marca "KeyForge" ;
+    azon:Nom "Compact Keyboard" ;
+    azon:Pes "1.57"^^xsd:float ;
+    azon:Preu "127.97"^^xsd:float ;
     azon:RequereixLogisticaExterna false .
 
 azon:product-P1009 azon:Categoria "home" ;
@@ -234,6 +145,15 @@ azon:product-P1019 azon:Categoria "home" ;
     azon:Preu "24.49"^^xsd:float ;
     azon:RequereixLogisticaExterna false .
 
+azon:product-P1021 azon:Categoria "audio" ;
+    azon:Descripcio "Compact Speaker with punchy bass response" ;
+    azon:IdProducte "P1021" ;
+    azon:Marca "AuralMax" ;
+    azon:Nom "Compact Speaker" ;
+    azon:Pes "1.95"^^xsd:float ;
+    azon:Preu "98.23"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
 azon:product-P1022 azon:Categoria "home" ;
     azon:Descripcio "Slim Desk Lamp that blends into modern study spaces" ;
     azon:IdProducte "P1022" ;
@@ -241,5 +161,14 @@ azon:product-P1022 azon:Categoria "home" ;
     azon:Nom "Slim Desk Lamp" ;
     azon:Pes "1.84"^^xsd:float ;
     azon:Preu "52.29"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
+azon:product-P1023 azon:Categoria "audio" ;
+    azon:Descripcio "Noise-Cancelling Headphones with low-latency bluetooth connectivity" ;
+    azon:IdProducte "P1023" ;
+    azon:Marca "SonicNest" ;
+    azon:Nom "Noise-Cancelling Headphones" ;
+    azon:Pes "0.56"^^xsd:float ;
+    azon:Preu "113.31"^^xsd:float ;
     azon:RequereixLogisticaExterna false .
 

@@ -2,10 +2,9 @@
 """
 filename: agent_cobrador
 
-Agent cobrador AgentZon (pagaments, dades bancaries i devolucions).
+Agent cobrador AgentZon (calcul d'imports, dades bancaries i devolucions).
 
 /comm entrada ACL
-/iface mostra pagaments en turtle
 /Stop para l'agent
 """
 
@@ -36,54 +35,43 @@ from config import (
 )
 from protocols.pagament import (
     SENTIT_COBRAMENT,
-    SENTIT_PAGAMENT,
     build_confirmacio_pagament,
     build_confirmacio_registre_dades,
     build_resultat_consulta_dades_venedor,
-    build_confirmacio_retorn_diners,
+    parse_peticio_cobrament,
     parse_peticio_consulta_dades_venedor,
-    parse_peticio_cobrament_intern,
-    parse_peticio_pagament,
     parse_peticio_registre_dades_usuari,
     parse_peticio_registre_dades_venedor,
-    parse_peticio_retorn_diners,
 )
 from services.payment_service import (
-    record_payment,
     read_seller_bank_data,
     save_seller_bank_data,
     save_user_bank_data,
 )
-from services.rdf_store import load_graph
 
 
 logger = config_logger(level=1)
 app = Flask(__name__)
 
 OK_PAYMENT_STATUS = "PAGAT"
-OK_REFUND_STATUS = "RETORNAT"
 mss_cnt = 0
 
 AGENT = None
 DirectoryAgent = None
 MESSAGE_SENDER = send_message
-CATALOG_PATH = None
 USER_BANK_PATH = None
 SELLER_BANK_PATH = None
-PAYMENTS_PATH = None
 
 
 def configure_runtime(settings, message_sender=send_message):
-    global AGENT, DirectoryAgent, MESSAGE_SENDER, CATALOG_PATH
-    global USER_BANK_PATH, SELLER_BANK_PATH, PAYMENTS_PATH, mss_cnt
+    global AGENT, DirectoryAgent, MESSAGE_SENDER
+    global USER_BANK_PATH, SELLER_BANK_PATH, mss_cnt
     AGENT = settings["agent"]
     DirectoryAgent = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
     data_dir = Path(settings["data_dir"])
-    CATALOG_PATH = None
     USER_BANK_PATH = data_dir / "dades_bancaries_usuari.ttl"
     SELLER_BANK_PATH = data_dir / "dades_bancaries_venedors_externs.ttl"
-    PAYMENTS_PATH = data_dir / "pagaments.ttl"
     mss_cnt = 0
 
 
@@ -91,19 +79,35 @@ def _payment_date():
     return date.today().isoformat()
 
 
-def _confirm_payment(payment, sender, request_content):
-    record_payment(PAYMENTS_PATH, payment)
+def pla_calcular_import(gm, content, sender):
+    charge = parse_peticio_cobrament(gm, content)
+    preu_producte = charge["preu_producte"]
+    cost_transport = charge["cost_transport"]
+    amount = round(preu_producte + cost_transport, 2)
+    user_id = charge["user_id"]
     logger.info(
-        "Pagament acceptat automaticament %s (comanda %s, %.2f EUR)",
-        payment["payment_id"],
-        payment["order_id"],
-        payment["amount"],
+        "Calculant cobrament per a l'usuari %s: %.2f (productes) + %.2f (transport) = %.2f",
+        user_id,
+        preu_producte,
+        cost_transport,
+        amount,
     )
+    payment = {
+        "payment_id": f"PAY-{uuid4().hex[:8].upper()}",
+        "amount": amount,
+        "method": "targeta",
+        "sentit": SENTIT_COBRAMENT,
+        "user_id": user_id,
+        "transport_cost": cost_transport,
+        "products_subtotal": preu_producte,
+        "status": OK_PAYMENT_STATUS,
+        "date": _payment_date(),
+    }
     return build_confirmacio_pagament(
         payment,
         sender=AGENT.uri,
         receiver=sender,
-        request_content=request_content,
+        request_content=content,
         msgcnt=mss_cnt,
     )
 
@@ -162,91 +166,14 @@ def pla_consulta_dades_venedor(gm, content, sender):
     )
 
 
-def pla_cobrament_intern(gm, content, sender):
-    shipment = parse_peticio_cobrament_intern(gm, content)
-    products = [shipment["product"]] if shipment.get("product") else []
-    product_ids = sorted(product["product_id"] for product in products if product.get("product_id"))
-    logger.info(
-        "Processant cobrament intern comanda %s lot %s ploc %s (%d producte(s))",
-        shipment.get("order_id"),
-        shipment["lot_id"],
-        shipment.get("localized_product_id"),
-        len(product_ids),
-    )
-    products_subtotal = round(sum(float(product.get("price", 0.0)) for product in products), 2)
-    amount = round(products_subtotal + shipment["transport_cost"], 2)
-    payment = {
-        "payment_id": f"PAY-{uuid4().hex[:8].upper()}",
-        "order_id": shipment.get("order_id") or shipment.get("localized_product_id") or shipment["lot_id"],
-        "amount": amount,
-        "method": "targeta",
-        "sentit": SENTIT_COBRAMENT,
-        "user_id": shipment["user_id"],
-        "product_ids": product_ids,
-        "products": products,
-        "transport_cost": shipment["transport_cost"],
-        "products_subtotal": products_subtotal,
-        "status": OK_PAYMENT_STATUS,
-        "date": _payment_date(),
-    }
-    return _confirm_payment(payment, sender, content)
-
-
-def pla_cobrament_extern(gm, content, sender):
-    request_data = parse_peticio_pagament(gm, content)
-    payment = {
-        "payment_id": request_data["payment_id"] or f"PAY-{uuid4().hex[:8].upper()}",
-        "order_id": request_data["order_id"],
-        "amount": request_data["amount"],
-        "method": request_data["method"] or "transferencia",
-        "sentit": request_data.get("sentit") or SENTIT_PAGAMENT,
-        "user_id": request_data.get("user_id"),
-        "seller_id": request_data.get("seller_id"),
-        "product_ids": request_data.get("product_ids", []),
-        "status": OK_PAYMENT_STATUS,
-        "date": _payment_date(),
-    }
-    logger.info(
-        "Cobrament extern acceptat automaticament (comanda %s, %.2f EUR)",
-        payment["order_id"],
-        payment["amount"],
-    )
-    return _confirm_payment(payment, sender, content)
-
-
-def pla_retornar_diners(gm, content, sender):
-    request_data = parse_peticio_retorn_diners(gm, content)
-    refund = {
-        "return_id": request_data["return_id"],
-        "order_id": request_data["order_id"],
-        "user_id": request_data["user_id"],
-        "amount": request_data["amount"],
-        "reason": request_data.get("reason", ""),
-        "seller_id": request_data.get("seller_id"),
-        "product_ids": request_data.get("product_ids", []),
-        "status": OK_REFUND_STATUS,
-    }
-    logger.info(
-        "Devolucio acceptada automaticament %s (%.2f EUR)",
-        refund["return_id"],
-        refund["amount"],
-    )
-    return build_confirmacio_retorn_diners(
-        refund,
-        sender=AGENT.uri,
-        receiver=sender,
-        request_content=content,
-        msgcnt=mss_cnt,
-    )
+# TODO: implementar devolucio de diners (PeticioRetornDiners)
 
 
 PLANS = {
+    AZON.PeticioCobrament: pla_calcular_import,
     AZON.PeticioRegistreDadesBancariesUsuari: pla_registrar_dades_usuari,
     AZON.PeticioRegistreDadesBancariesVenedor: pla_registrar_dades_venedor,
     AZON.PeticioConsultaDadesBancariesVenedor: pla_consulta_dades_venedor,
-    AZON.ConfirmacioEnviament: pla_cobrament_intern,
-    AZON.PeticioPagament: pla_cobrament_extern,
-    AZON.PeticioRetornDiners: pla_retornar_diners,
 }
 
 
@@ -290,11 +217,6 @@ def comunicacion():
 
     mss_cnt += 1
     return gr.serialize(format="xml")
-
-
-@app.route("/iface")
-def browser_iface():
-    return load_graph(PAYMENTS_PATH).serialize(format="turtle")
 
 
 @app.route("/Stop")

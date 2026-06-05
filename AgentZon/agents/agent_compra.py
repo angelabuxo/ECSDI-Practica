@@ -13,7 +13,6 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.parse import urlencode
-from uuid import uuid4
 
 from flask import Flask, redirect, render_template, request
 from rdflib import Graph, RDF, URIRef
@@ -53,8 +52,7 @@ from protocols.venedor_extern import (
     extract_external_shipments_from_reply,
 )
 from protocols.pagament import (
-    SENTIT_PAGAMENT,
-    build_peticio_pagament,
+    build_peticio_cobrament,
     build_peticio_registre_dades_usuari,
     extract_invoice_from_content,
     extract_confirmacio_pagament,
@@ -336,19 +334,13 @@ def pla_cobrament_extern(order, seller_id):
     except Exception:
         print("INFO AgenteCompra => No s'ha pogut resoldre Cobrador per cobrament extern")
         return None
-    amount = round(sum(product.get("price", 0.0) for product in order["products"]), 2)
-    payment = {
-        "payment_id": f"PAY-{uuid4().hex[:8].upper()}",
-        "order_id": order["order_id"],
-        "amount": amount,
-        "method": "transferencia",
-        "sentit": SENTIT_PAGAMENT,
+    charge = {
         "user_id": order["user_id"],
-        "seller_id": seller_id,
-        "product_ids": [product["product_id"] for product in order["products"]],
+        "preu_producte": round(sum(product.get("price", 0.0) for product in order["products"]), 2),
+        "cost_transport": 0.0,
     }
-    message = build_peticio_pagament(
-        payment,
+    message = build_peticio_cobrament(
+        charge,
         sender=AGENT.uri,
         receiver=cobrador.uri,
         msgcnt=_msgcnt(),

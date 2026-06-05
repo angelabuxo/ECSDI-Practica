@@ -68,8 +68,16 @@
         <td class="amount">{{ "%.2f"|format(invoice.transport_cost) }} €</td>
       </tr>
       <tr class="totals">
+        <td colspan="4">Total comanda</td>
+        <td class="amount">{{ "%.2f"|format(invoice.amount) }} €</td>
+      </tr>
+      <tr class="totals">
         <td colspan="4">Total cobrat</td>
         <td class="amount">{{ "%.2f"|format(invoice.charged_amount) }} €</td>
+      </tr>
+      <tr class="totals">
+        <td colspan="4">Pendent</td>
+        <td class="amount">{{ "%.2f"|format(invoice.amount - invoice.charged_amount) }} €</td>
       </tr>
     </tfoot>
   </table>

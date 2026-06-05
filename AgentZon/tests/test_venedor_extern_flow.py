@@ -339,10 +339,6 @@ class VenedorExternFlowTests(unittest.TestCase):
             self.assertEqual(len(parsed["lots"]), 1)
             self.assertEqual(parsed["lots"][0]["lot_id"], "EXTERN")
 
-            payments = load_ttl(data_dir / "pagaments.ttl")
-            sentit_values = {str(value) for value in payments.objects(None, AZON.SentitPagament)}
-            self.assertIn("PAGAMENT", sentit_values)
-
     def test_platform_shipped_external_purchase(self):
         from AgentUtil.Agent import Agent
         from AgentUtil.DSO import DSO

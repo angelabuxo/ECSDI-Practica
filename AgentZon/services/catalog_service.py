@@ -6,7 +6,7 @@ from rdflib import Literal, RDF, XSD
 from rdflib.plugins.sparql import prepareQuery
 
 from AgentUtil.OntoNamespaces import AZON
-from services.rdf_store import load_graph, save_graph
+from services.rdf_store import load_graph, save_graph, _seller_id_from_iri
 
 
 # La gramàtica SPARQL de rdflib (pyparsing) NO és thread-safe en temps de
@@ -116,7 +116,7 @@ def add_external_product(catalog_path, product):
         )
     )
     if product.get("seller_id"):
-        graph.add((node, AZON.IdVenedorExtern, Literal(product["seller_id"])))
+        graph.add((node, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(product["seller_id"])]))
 
     save_graph(catalog_path, graph)
     return product_id

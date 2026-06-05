@@ -47,7 +47,7 @@ from protocols.centre_logistic import (
     extract_transport_offer,
     parse_productes_localitzats,
 )
-from protocols.pagament import build_peticio_cobrament_intern, extract_confirmacio_pagament
+from protocols.pagament import build_peticio_cobrament, extract_confirmacio_pagament
 from services.agent_common_service import resolve_agent_via_directory, resolve_agents_via_directory
 from services.logistics_service import (
     assign_transport_to_lot,
@@ -360,9 +360,15 @@ def pla_producte_sha_enviat(shipment):
     if cobrador is None:
         return None
     sent_text, payment_target = _shipment_scope_texts(shipment)
-    logger.info("%s; demanant cobrament intern al Cobrador", sent_text)
-    message = build_peticio_cobrament_intern(
-        shipment,
+    product = shipment.get("product") or {}
+    charge = {
+        "user_id": shipment["user_id"],
+        "preu_producte": float(product.get("price") or 0.0),
+        "cost_transport": float(shipment.get("transport_cost") or 0.0),
+    }
+    logger.info("%s; demanant cobrament al Cobrador", sent_text)
+    message = build_peticio_cobrament(
+        charge,
         sender=AGENT.uri,
         receiver=cobrador.uri,
         msgcnt=_msgcnt(),

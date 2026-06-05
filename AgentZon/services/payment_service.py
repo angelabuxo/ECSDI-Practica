@@ -5,7 +5,7 @@ from rdflib.namespace import XSD
 
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
 from protocols.rdf_refs import ensure_order_node, link_sobre_comanda
-from services.rdf_store import load_graph, save_graph
+from services.rdf_store import load_graph, save_graph, _seller_id_from_iri
 
 
 # Bank data ------------------------------------------------------------------------
@@ -93,7 +93,7 @@ def record_payment(path, payment):
     if payment.get("user_id"):
         graph.add((node, AZON.PertanyAUsuari, AZON["usuari-" + str(payment["user_id"])]))
     if payment.get("seller_id"):
-        graph.add((node, AZON.IdVenedorExtern, Literal(payment["seller_id"])))
+        graph.add((node, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(payment["seller_id"])]))
     for product_id in payment.get("product_ids", []):
         graph.add((node, AZON.SobreProducte, AZON[f"product-{product_id}"]))
     save_graph(path, graph)
@@ -113,7 +113,7 @@ def record_refund(path, refund):
     graph.add((node, AZON.MotiuDevolucio, Literal(refund.get("reason", ""))))
     graph.add((node, AZON.Estat, Literal(refund.get("status", "RETORNAT"))))
     if refund.get("seller_id"):
-        graph.add((node, AZON.IdVenedorExtern, Literal(refund["seller_id"])))
+        graph.add((node, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(refund["seller_id"])]))
     for product_id in refund.get("product_ids", []):
         graph.add((node, AZON.SobreProducte, AZON[f"product-{product_id}"]))
     save_graph(path, graph)

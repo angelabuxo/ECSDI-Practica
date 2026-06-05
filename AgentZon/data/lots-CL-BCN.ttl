@@ -1,137 +1,60 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-azon:ploc-2b8645 a azon:ProducteLocalitzat ;
+azon:ploc-049bc6 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
     azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-9EA31F ;
-    azon:TeProducteIntern azon:product-P1022 .
+    azon:SobreLot azon:lot-LOT-CDF6EE ;
+    azon:TeProducteIntern azon:product-P1007 .
 
-azon:ploc-544e51 a azon:ProducteLocalitzat ;
+azon:ploc-224a18 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
     azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-67CA36 ;
-    azon:TeProducteIntern azon:product-P1022 .
-
-azon:ploc-6905f8 a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-67CA36 ;
-    azon:TeProducteIntern azon:product-P1016 .
-
-azon:ploc-6b45a8 a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-A18425 ;
-    azon:TeProducteIntern azon:product-P1022 .
-
-azon:ploc-70c911 a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-67CA36 ;
-    azon:TeProducteIntern azon:product-P1001 .
-
-azon:ploc-7796c0 a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-9EA31F ;
-    azon:TeProducteIntern azon:product-P1016 .
-
-azon:ploc-78611c a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-A18425 ;
+    azon:SobreLot azon:lot-LOT-CDF6EE ;
     azon:TeProducteIntern azon:product-P1019 .
 
-azon:ploc-8ba039 a azon:ProducteLocalitzat ;
+azon:ploc-2f2188 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
     azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-A18425 ;
+    azon:SobreLot azon:lot-LOT-CDF6EE ;
+    azon:TeProducteIntern azon:product-P1013 .
+
+azon:ploc-377303 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
+    azon:SobreLot azon:lot-LOT-CDF6EE ;
+    azon:TeProducteIntern azon:product-P1001 .
+
+azon:ploc-556aea a azon:ProducteLocalitzat ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
+    azon:SobreLot azon:lot-LOT-CDF6EE ;
+    azon:TeProducteIntern azon:product-P1016 .
+
+azon:ploc-8ac950 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
+    azon:SobreLot azon:lot-LOT-CDF6EE ;
     azon:TeProducteIntern azon:product-P1004 .
 
-azon:ploc-97c4d4 a azon:ProducteLocalitzat ;
+azon:ploc-a8ba80 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
     azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-A18425 ;
-    azon:TeProducteIntern azon:product-P1013 .
+    azon:SobreLot azon:lot-LOT-CDF6EE ;
+    azon:TeProducteIntern azon:product-P1022 .
 
-azon:ploc-a3c42b a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-9EA31F ;
-    azon:TeProducteIntern azon:product-P1001 .
-
-azon:ploc-a4827d a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-67CA36 ;
-    azon:TeProducteIntern azon:product-P1001 .
-
-azon:ploc-a4a818 a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-67CA36 ;
-    azon:TeProducteIntern azon:product-P1019 .
-
-azon:ploc-a6d6be a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-A18425 ;
-    azon:TeProducteIntern azon:product-P1016 .
-
-azon:ploc-b99da3 a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-67CA36 ;
-    azon:TeProducteIntern azon:product-P1013 .
-
-azon:ploc-c87345 a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-9EA31F ;
-    azon:TeProducteIntern azon:product-P1019 .
-
-azon:ploc-cc4db6 a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-9EA31F ;
-    azon:TeProducteIntern azon:product-P1013 .
-
-azon:ploc-cf1a42 a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-9EA31F ;
-    azon:TeProducteIntern azon:product-P1004 .
-
-azon:ploc-e4cdbd a azon:ProducteLocalitzat ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
-    azon:SobreLot azon:lot-LOT-9EA31F ;
-    azon:TeProducteIntern azon:product-P1010 .
-
-azon:product-P1010 a azon:ProducteIntern ;
-    azon:IdProducte "P1010" ;
-    azon:Nom "Ultra-Light Mouse" ;
-    azon:Pes "0.3"^^xsd:float ;
-    azon:Preu "53.54"^^xsd:float ;
+azon:product-P1001 a azon:ProducteIntern ;
+    azon:IdProducte "P1001" ;
+    azon:Nom "Minimalist Coffee Mug" ;
+    azon:Pes "0.75"^^xsd:float ;
+    azon:Preu "27.01"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-BCN .
 
 azon:product-P1004 a azon:ProducteIntern ;
@@ -141,15 +64,11 @@ azon:product-P1004 a azon:ProducteIntern ;
     azon:Preu "122.31"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-BCN .
 
-azon:transport-fast a azon:Transportista ;
-    azon:IdTransportista "fast" ;
-    azon:NomTransportista "Transportista-fast" .
-
-azon:product-P1001 a azon:ProducteIntern ;
-    azon:IdProducte "P1001" ;
-    azon:Nom "Minimalist Coffee Mug" ;
-    azon:Pes "0.75"^^xsd:float ;
-    azon:Preu "27.01"^^xsd:float ;
+azon:product-P1007 a azon:ProducteIntern ;
+    azon:IdProducte "P1007" ;
+    azon:Nom "Wireless Mouse" ;
+    azon:Pes "0.45"^^xsd:float ;
+    azon:Preu "133.41"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-BCN .
 
 azon:product-P1013 a azon:ProducteIntern ;
@@ -180,39 +99,23 @@ azon:product-P1022 a azon:ProducteIntern ;
     azon:Preu "52.29"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-BCN .
 
-azon:lot-LOT-A18425 a azon:Lot ;
-    azon:Ciutat "Barcelona" ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:Estat "OBERT" ;
-    azon:IdCentreLogistic "CL-BCN" ;
-    azon:IdLot "LOT-A18425" ;
-    azon:PesTotal "4.42"^^xsd:float .
+azon:transport-economy a azon:Transportista ;
+    azon:IdTransportista "economy" ;
+    azon:NomTransportista "Transportista-economy" .
 
-azon:lot-LOT-67CA36 a azon:Lot ;
-    azon:AssignatATransportista azon:transport-fast ;
+azon:lot-LOT-CDF6EE a azon:Lot ;
+    azon:AssignatATransportista azon:transport-economy ;
     azon:Ciutat "Barcelona" ;
-    azon:CostTransport "24.51"^^xsd:float ;
+    azon:CostTransport "22.48"^^xsd:float ;
     azon:DataEntrega "2026-06-10" ;
-    azon:DataEntregaDefinitiva "2026-06-06" ;
+    azon:DataEntregaDefinitiva "2026-06-08" ;
     azon:Estat "ENVIAT" ;
-    azon:IdCentreLogistic "CL-BCN" ;
-    azon:IdLot "LOT-67CA36" ;
-    azon:NomTransportista "Transportista-fast" ;
-    azon:PesTotal "5.57"^^xsd:float .
+    azon:IdLot "LOT-CDF6EE" ;
+    azon:NomTransportista "Transportista-economy" ;
+    azon:PesTotal "5.62"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN .
 
 azon:centre-CL-BCN a azon:CentreLogistic ;
     azon:Ciutat "Barcelona" ;
     azon:IdCentreLogistic "CL-BCN" .
-
-azon:lot-LOT-9EA31F a azon:Lot ;
-    azon:AssignatATransportista azon:transport-fast ;
-    azon:Ciutat "Barcelona" ;
-    azon:CostTransport "24.07"^^xsd:float ;
-    azon:DataEntrega "2026-06-10" ;
-    azon:DataEntregaDefinitiva "2026-06-06" ;
-    azon:Estat "ENVIAT" ;
-    azon:IdCentreLogistic "CL-BCN" ;
-    azon:IdLot "LOT-9EA31F" ;
-    azon:NomTransportista "Transportista-fast" ;
-    azon:PesTotal "5.47"^^xsd:float .
 

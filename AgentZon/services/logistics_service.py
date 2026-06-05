@@ -12,7 +12,7 @@ from rdflib.namespace import XSD
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
 from config import MAX_LOT_WEIGHT_KG, READY_DELIVERY_WINDOW_DAYS
 from protocols.rdf_refs import link_assignat_transportista, link_product, product_nodes_from_content, transport_id_from_node, _user_id_from_iri
-from services.rdf_store import load_graph, save_graph
+from services.rdf_store import load_graph, save_graph, _centre_id_from_iri
 
 
 LOT_LOCK = Lock()
@@ -86,8 +86,8 @@ def _find_open_lot_node(graph, city, delivery_date, centre_id=None):
         if str(graph.value(lot_node, AZON.DataEntrega)) != delivery_date:
             continue
         if centre_id:
-            lot_centre_id = graph.value(lot_node, AZON.IdCentreLogistic)
-            if lot_centre_id is not None and str(lot_centre_id) != centre_id:
+            lot_centre_iri = graph.value(lot_node, AZON.UbicatACentre)
+            if lot_centre_iri is not None and _centre_id_from_iri(lot_centre_iri) != centre_id:
                 continue
         return lot_node
     return None
@@ -117,8 +117,8 @@ def _read_item(graph, item_node):
     lot_node = graph.value(item_node, AZON.SobreLot)
     lot_id = graph.value(lot_node, AZON.IdLot) if lot_node is not None else None
     user_id = _user_id_from_iri(graph.value(item_node, AZON.PertanyAUsuari))
-    centre_id_value = graph.value(lot_node, AZON.IdCentreLogistic) if lot_node is not None else None
-    centre_id = str(centre_id_value) if centre_id_value is not None else None
+    centre_iri = graph.value(lot_node, AZON.UbicatACentre) if lot_node is not None else None
+    centre_id = _centre_id_from_iri(centre_iri)
     centre_city = _lookup_centre_city(graph, centre_id)
 
     product = None
@@ -149,8 +149,8 @@ def _read_item(graph, item_node):
 
 def _extract_lot(graph, lot_node):
     lot_id = str(graph.value(lot_node, AZON.IdLot))
-    centre_id_value = graph.value(lot_node, AZON.IdCentreLogistic)
-    centre_id = str(centre_id_value) if centre_id_value is not None else None
+    centre_iri = graph.value(lot_node, AZON.UbicatACentre)
+    centre_id = _centre_id_from_iri(centre_iri)
     items = [_read_item(graph, item_node) for item_node in _item_nodes_for_lot(graph, lot_node)]
     official_delivery_date = graph.value(lot_node, AZON.DataEntregaDefinitiva)
     price_value = graph.value(lot_node, AZON.CostTransport)
@@ -197,7 +197,7 @@ def create_lot(lots_path, item):
             graph.add((lot_node, AZON.Ciutat, Literal(city)))
             graph.add((lot_node, AZON.DataEntrega, Literal(delivery_date)))
             if centre_id:
-                graph.set((lot_node, AZON.IdCentreLogistic, Literal(centre_id)))
+                graph.set((lot_node, AZON.UbicatACentre, AZON["centre-" + str(centre_id)]))
             total_weight = 0.0
         else:
             lot_id = str(graph.value(lot_node, AZON.IdLot))

@@ -216,17 +216,3 @@ azon:product-P1024 a azon:Producte ;
     azon:Nom "Compact Speaker" ;
     azon:Pes "1.73"^^xsd:float ;
     azon:Preu "86.11"^^xsd:float .
-
-azon:product-P1025 a azon:ProducteExtern ;
-    azon:Categoria "audio" ;
-    azon:DataAlta "2026-06-05"^^xsd:date ;
-    azon:Descripcio "Adeumon" ;
-    azon:IdProducte "P1025" ;
-    azon:IdVenedorExtern "127.0.0.1" ;
-    azon:Marca "apple" ;
-    azon:Nom "Holamon" ;
-    azon:Pes "12.0"^^xsd:float ;
-    azon:Preu "1234.0"^^xsd:float ;
-    azon:RequereixLogisticaExterna true ;
-    azon:SkuExtern "19031023890" .
-

@@ -3,7 +3,7 @@
 from rdflib import Literal, RDF, XSD
 
 from AgentUtil.OntoNamespaces import AZON
-from services.rdf_store import load_graph, save_graph
+from services.rdf_store import load_graph, save_graph, _seller_id_from_iri
 
 
 CENTRE_RESOURCE_BY_ID = {
@@ -17,7 +17,7 @@ def save_shipping_responsibility(path, product_id, seller_id, requires_external_
     graph = load_graph(path)
     node = AZON[f"product-{product_id}"]
     graph.set((node, AZON.IdProducte, Literal(product_id)))
-    graph.set((node, AZON.IdVenedorExtern, Literal(seller_id)))
+    graph.set((node, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(seller_id)]))
     graph.set(
         (
             node,
@@ -31,9 +31,10 @@ def save_shipping_responsibility(path, product_id, seller_id, requires_external_
 def load_shipping_responsibility_by_product(path):
     graph = load_graph(path)
     responsibility = {}
-    for subject in graph.subjects(predicate=AZON.IdVenedorExtern, object=None):
+    for subject in graph.subjects(predicate=AZON.PertanyAVenedorExtern, object=None):
         product_id = str(graph.value(subject, AZON.IdProducte))
-        seller_id = graph.value(subject, AZON.IdVenedorExtern)
+        seller_id_iri = graph.value(subject, AZON.PertanyAVenedorExtern)
+        seller_id = _seller_id_from_iri(seller_id_iri)
         external_flag = graph.value(subject, AZON.RequereixLogisticaExterna)
         responsibility[product_id] = {
             "seller_id": str(seller_id) if seller_id is not None else "",

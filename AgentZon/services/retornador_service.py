@@ -15,7 +15,7 @@ from rdflib import Literal
 from AgentUtil.OntoNamespaces import AZON
 from services.catalog_service import get_products_by_ids
 from services.history_service import load_purchase_records
-from services.rdf_store import load_graph
+from services.rdf_store import load_graph, _seller_id_from_iri
 
 # Motius de devolució (UI) i política d'acceptació (Opinador)
 RETURN_REASON_DEFECTUOUS = "Producte defectuós"
@@ -276,9 +276,10 @@ def load_external_seller_by_product(shipping_responsibility_path, catalog_path):
     """Mapeja `product_id -> seller_id` per als productes externs."""
     graph = load_graph(shipping_responsibility_path)
     seller_by_product = {}
-    for subject in graph.subjects(predicate=AZON.IdVenedorExtern, object=None):
+    for subject in graph.subjects(predicate=AZON.PertanyAVenedorExtern, object=None):
         product_id = str(graph.value(subject, AZON.IdProducte))
-        seller_id = graph.value(subject, AZON.IdVenedorExtern)
+        seller_id_iri = graph.value(subject, AZON.PertanyAVenedorExtern)
+        seller_id = _seller_id_from_iri(seller_id_iri)
         external_flag = graph.value(subject, AZON.RequereixLogisticaExterna)
         is_external = str(external_flag).lower() == "true" if external_flag is not None else False
         if seller_id is not None and is_external:
@@ -288,7 +289,7 @@ def load_external_seller_by_product(shipping_responsibility_path, catalog_path):
     catalog_graph = load_graph(catalog_path)
     for product_node in catalog_graph.subjects(RDF.type, AZON.ProducteExtern):
         product_id = _extract_product_id_from_node(catalog_graph, product_node)
-        seller_id = catalog_graph.value(product_node, AZON.IdVenedorExtern)
+        seller_id = catalog_graph.value(product_node, AZON.PertanyAVenedorExtern)
         if seller_id is not None:
             seller_by_product[product_id] = str(seller_id)
     return seller_by_product

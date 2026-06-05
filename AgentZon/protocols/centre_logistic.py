@@ -8,6 +8,7 @@ from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AGN, AZON, ONTOLOGY_URI, bind_namespaces
 from protocols.pagament import embed_invoice_in_content, extract_invoice_from_content
 from protocols.rdf_refs import (
+    _centre_id_from_iri,
     _user_id_from_iri,
     ensure_lot_node,
     ensure_order_node,

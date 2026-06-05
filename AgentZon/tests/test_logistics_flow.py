@@ -110,36 +110,32 @@ class LogisticsFlowTests(unittest.TestCase):
         self.assertEqual(shipment["localized_product_id"], "ploc-9a13e6")
         self.assertEqual(shipment["transport_cost"], 4.5)
 
-    def test_internal_charge_request_roundtrips_lot_and_product_scope(self):
+    def test_charge_request_roundtrips_user_and_price_scope(self):
         from AgentUtil.Agent import Agent
-        from protocols.pagament import build_peticio_cobrament_intern, parse_peticio_cobrament_intern
+        from AgentUtil.OntoNamespaces import AZON
+        from protocols.pagament import build_peticio_cobrament, parse_peticio_cobrament
 
         agn = Namespace("http://www.agentes.org#")
         centre = Agent("CentreLogisticAgent", agn.CentreLogistic, "http://centre.test/comm", "http://centre.test/Stop")
         cobrador = Agent("CobradorAgent", agn.Cobrador, "http://cobrador.test/comm", "http://cobrador.test/Stop")
 
-        message = build_peticio_cobrament_intern(
+        message = build_peticio_cobrament(
             {
-                "localized_product_id": "ploc-9a13e6",
-                "lot_id": "LOT-1",
                 "user_id": "USER-1",
-                "city": "Barcelona",
-                "delivery_date": "2026-06-02",
-                "transport_cost": 4.5,
-                "product": {"product_id": "P1", "name": "A", "weight": 1.5, "price": 50.0},
+                "preu_producte": 50.0,
+                "cost_transport": 4.5,
             },
             sender=centre.uri,
             receiver=cobrador.uri,
             msgcnt=7,
         )
-        content = next(message.subjects(RDF.type, Namespace("http://www.semanticweb.org/agentzon#").ConfirmacioEnviament))
+        content = next(message.subjects(RDF.type, AZON.PeticioCobrament))
 
-        parsed = parse_peticio_cobrament_intern(message, content)
+        parsed = parse_peticio_cobrament(message, content)
 
-        self.assertEqual(parsed["lot_id"], "LOT-1")
-        self.assertEqual(parsed["localized_product_id"], "ploc-9a13e6")
-        self.assertEqual(parsed["product"]["product_id"], "P1")
-        self.assertEqual(parsed["product"]["price"], 50.0)
+        self.assertEqual(parsed["user_id"], "USER-1")
+        self.assertEqual(parsed["preu_producte"], 50.0)
+        self.assertEqual(parsed["cost_transport"], 4.5)
 
     def test_centre_runtime_uses_a_centre_specific_lots_file(self):
         from AgentUtil.Agent import Agent

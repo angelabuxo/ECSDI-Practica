@@ -7,7 +7,7 @@ from rdflib import Literal, RDF
 from rdflib.namespace import XSD
 
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
-from services.rdf_store import load_graph, save_graph, _user_id_from_iri
+from services.rdf_store import load_graph, save_graph, _user_id_from_iri, _seller_id_from_iri
 
 
 # Order construction ---------------------------------------------------------------
@@ -80,7 +80,7 @@ def save_order(orders_path, order):
         if product.get("description") is not None:
             graph.set((product_node, AZON.Descripcio, Literal(product.get("description", ""))))
         if product.get("seller_id"):
-            graph.set((product_node, AZON.IdVenedorExtern, Literal(product["seller_id"])))
+            graph.set((product_node, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(product["seller_id"])]))
         graph.set(
             (
                 product_node,
@@ -123,7 +123,7 @@ def load_order_from_graph(graph, node):
             "brand": str(graph.value(product_node, AZON.Marca) or ""),
             "price": float(price_value) if price_value is not None else 0.0,
             "weight": float(weight_value) if weight_value is not None else 0.0,
-            "seller_id": str(graph.value(product_node, AZON.IdVenedorExtern) or ""),
+            "seller_id": _seller_id_from_iri(graph.value(product_node, AZON.PertanyAVenedorExtern) or ""),
             "requires_external_logistics": bool(requires_external.toPython()) if requires_external is not None else False,
         }
         description = graph.value(product_node, AZON.Descripcio)

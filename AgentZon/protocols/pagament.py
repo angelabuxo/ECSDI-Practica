@@ -1,4 +1,6 @@
-"""Missatges de pagament, cobrament intern, registre bancari i devolucions."""
+"""Missatges de pagament, cobrament, registre bancari i devolucions."""
+
+from uuid import uuid4
 
 from rdflib import Graph, Literal, RDF
 from rdflib.namespace import XSD
@@ -7,15 +9,11 @@ from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
 from protocols.rdf_refs import (
+    _seller_id_from_iri,
     _user_id_from_iri,
-    ensure_lot_node,
     ensure_order_node,
-    link_product,
     link_sobre_comanda,
-    link_sobre_lot,
-    lot_id_from_node,
     order_id_from_node,
-    product_nodes_from_content,
 )
 
 
@@ -73,7 +71,7 @@ def build_peticio_registre_dades_venedor(
     bind_namespaces(graph)
     content = AZON[f"bank-seller-request-{seller_id}"]
     graph.add((content, RDF.type, AZON.PeticioRegistreDadesBancariesVenedor))
-    graph.add((content, AZON.IdVenedorExtern, Literal(seller_id)))
+    graph.add((content, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(seller_id)]))
     graph.add((content, AZON.DadesBancariesVenedorExtern, Literal(bank_data)))
     if seller_name:
         graph.add((content, AZON.Nom, Literal(seller_name)))
@@ -91,7 +89,7 @@ def build_peticio_registre_dades_venedor(
 def parse_peticio_registre_dades_venedor(graph, content):
     seller_name = graph.value(content, AZON.Nom)
     return {
-        "seller_id": str(graph.value(content, AZON.IdVenedorExtern)),
+        "seller_id": _seller_id_from_iri(graph.value(content, AZON.PertanyAVenedorExtern)),
         "bank_data": str(graph.value(content, AZON.DadesBancariesVenedorExtern)),
         "seller_name": str(seller_name) if seller_name is not None else "",
     }
@@ -102,7 +100,7 @@ def build_peticio_consulta_dades_venedor(seller_id, sender=None, receiver=None, 
     bind_namespaces(graph)
     content = AZON[f"seller-profile-request-{seller_id}-{msgcnt}"]
     graph.add((content, RDF.type, AZON.PeticioConsultaDadesBancariesVenedor))
-    graph.add((content, AZON.IdVenedorExtern, Literal(seller_id)))
+    graph.add((content, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(seller_id)]))
     return build_message(
         graph,
         perf=ACL.request,
@@ -117,7 +115,7 @@ def build_peticio_consulta_dades_venedor(seller_id, sender=None, receiver=None, 
 def parse_peticio_consulta_dades_venedor(graph):
     props = get_message_properties(graph)
     content = props["content"]
-    return str(graph.value(content, AZON.IdVenedorExtern))
+    return _seller_id_from_iri(graph.value(content, AZON.PertanyAVenedorExtern))
 
 
 def build_resultat_consulta_dades_venedor(
@@ -131,7 +129,7 @@ def build_resultat_consulta_dades_venedor(
     bind_namespaces(graph)
     content = AZON[f"seller-profile-response-{profile['seller_id']}-{msgcnt}"]
     graph.add((content, RDF.type, AZON.ResultatConsultaDadesBancariesVenedor))
-    graph.add((content, AZON.IdVenedorExtern, Literal(profile["seller_id"])))
+    graph.add((content, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(profile["seller_id"])]))
     graph.add((content, AZON.DadesBancariesVenedorExtern, Literal(profile.get("bank_data", ""))))
     graph.add((content, AZON.Nom, Literal(profile.get("seller_name", ""))))
     if request_content is not None:
@@ -151,7 +149,7 @@ def parse_resultat_consulta_dades_venedor(graph):
     props = get_message_properties(graph)
     content = props["content"]
     return {
-        "seller_id": str(graph.value(content, AZON.IdVenedorExtern)),
+        "seller_id": _seller_id_from_iri(graph.value(content, AZON.PertanyAVenedorExtern)),
         "bank_data": str(graph.value(content, AZON.DadesBancariesVenedorExtern) or ""),
         "seller_name": str(graph.value(content, AZON.Nom) or ""),
     }
@@ -170,7 +168,7 @@ def build_confirmacio_registre_dades(
     content = AZON[f"bank-confirmation-{subject_id}"]
     graph.add((content, RDF.type, AZON.ConfirmacioRegistreDadesBancaries))
     if is_external:
-        graph.add((content, AZON.IdVenedorExtern, Literal(subject_id)))
+        graph.add((content, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(subject_id)]))
     else:
         graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(subject_id)]))
     graph.add((content, AZON.Estat, Literal("REGISTRAT")))
@@ -208,7 +206,7 @@ def build_peticio_pagament(payment, sender=None, receiver=None, request_content=
     if payment.get("user_id"):
         graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(payment["user_id"])]))
     if payment.get("seller_id"):
-        graph.add((content, AZON.IdVenedorExtern, Literal(payment["seller_id"])))
+        graph.add((content, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(payment["seller_id"])]))
     for product_id in payment.get("product_ids", []):
         product_node = AZON[f"product-{product_id}"]
         graph.add((content, AZON.SobreProducte, product_node))
@@ -235,7 +233,8 @@ def parse_peticio_pagament(graph, content):
             product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
         product_ids.append(str(product_id))
     user_id = _user_id_from_iri(graph.value(content, AZON.PertanyAUsuari))
-    seller_id = graph.value(content, AZON.IdVenedorExtern)
+    seller_id_iri = graph.value(content, AZON.PertanyAVenedorExtern)
+    seller_id = _seller_id_from_iri(seller_id_iri)
     sentit = graph.value(content, AZON.SentitPagament)
     return {
         "payment_id": str(graph.value(content, AZON.IdPagament)),
@@ -289,10 +288,13 @@ def extract_invoice_from_content(graph, content):
         return None
     amount = graph.value(content, AZON.ImportPagament)
     line_data = _parse_invoice_lines(graph, content)
+    amount_value = float(amount) if amount is not None else line_data["products_subtotal"] + line_data["transport_cost"]
+    if not line_data["products_subtotal"] and amount_value:
+        line_data["products_subtotal"] = round(max(amount_value - line_data["transport_cost"], 0.0), 2)
     return {
         "payment_id": str(payment_id),
         "order_id": order_id_from_node(graph, content),
-        "amount": float(amount) if amount is not None else line_data["products_subtotal"] + line_data["transport_cost"],
+        "amount": amount_value,
         "method": str(graph.value(content, AZON.MetodePagament) or ""),
         "sentit": str(graph.value(content, AZON.SentitPagament) or ""),
         "status": str(graph.value(content, AZON.Estat) or ""),
@@ -320,7 +322,8 @@ def build_confirmacio_pagament(payment, sender=None, receiver=None, request_cont
     content = AZON[f"payment-confirmation-{payment['payment_id']}"]
     graph.add((content, RDF.type, AZON.ConfirmacioPagament))
     graph.add((content, AZON.IdPagament, Literal(payment["payment_id"])))
-    link_sobre_comanda(graph, content, payment["order_id"])
+    if payment.get("order_id"):
+        link_sobre_comanda(graph, content, payment["order_id"])
     graph.add((content, AZON.ImportPagament, Literal(payment["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MetodePagament, Literal(payment["method"])))
     if payment.get("sentit"):
@@ -356,33 +359,16 @@ def extract_confirmacio_pagament(graph):
     return invoice
 
 
-# Internal collection trigger (Centre Logistic -> Cobrador) -------------------------
-def build_peticio_cobrament_intern(shipment, sender=None, receiver=None, msgcnt=0):
+# Charge request (Centre Logistic / Compra -> Cobrador) ----------------------------
+def build_peticio_cobrament(charge, sender=None, receiver=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
-    localized_product_id = shipment["localized_product_id"]
-    content = AZON[f"internal-charge-{localized_product_id}"]
-    ploc_node = AZON[localized_product_id]
-    graph.add((content, RDF.type, AZON.ConfirmacioEnviament))
-    link_sobre_lot(graph, content, shipment["lot_id"])
-    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(shipment["user_id"])]))
-    graph.add((content, AZON.Ciutat, Literal(shipment["city"])))
-    graph.add((content, AZON.DataEntregaDefinitiva, Literal(shipment["delivery_date"])))
-    graph.add((content, AZON.CostTransport, Literal(shipment["transport_cost"], datatype=XSD.float)))
-    graph.add((content, AZON.EsRespostaA, ploc_node))
-    product = shipment["product"]
-    product_node = AZON[f"product-{product['product_id']}"]
-    link_product(graph, content, product_node, product_kind="intern")
-    graph.add((product_node, RDF.type, AZON.ProducteIntern))
-    graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
-    if product.get("name"):
-        graph.add((product_node, AZON.Nom, Literal(product["name"])))
-    if product.get("weight") is not None:
-        graph.add((product_node, AZON.Pes, Literal(product["weight"], datatype=XSD.float)))
-    if product.get("price") is not None:
-        graph.add((product_node, AZON.Preu, Literal(product["price"], datatype=XSD.float)))
-    if shipment.get("order_id"):
-        link_sobre_comanda(graph, content, shipment["order_id"])
+    content = AZON[f"charge-request-{charge.get('user_id', uuid4().hex[:8])}-{msgcnt}"]
+    graph.add((content, RDF.type, AZON.PeticioCobrament))
+    graph.add((content, AZON.PreuProducte, Literal(charge["preu_producte"], datatype=XSD.float)))
+    # CostTransport=0 quan l'enviament el fa el venedor extern, no per l'AgentZon
+    graph.add((content, AZON.CostTransport, Literal(charge["cost_transport"], datatype=XSD.float)))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(charge["user_id"])]))
     return build_message(
         graph,
         perf=ACL.request,
@@ -394,34 +380,13 @@ def build_peticio_cobrament_intern(shipment, sender=None, receiver=None, msgcnt=
     )
 
 
-def parse_peticio_cobrament_intern(graph, content):
-    product = None
-    for _, product_node in product_nodes_from_content(graph, content):
-        product_id = graph.value(product_node, AZON.IdProducte)
-        if product_id is None:
-            product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
-        weight_value = graph.value(product_node, AZON.Pes)
-        price_value = graph.value(product_node, AZON.Preu)
-        product = {
-            "product_id": str(product_id),
-            "name": str(graph.value(product_node, AZON.Nom) or product_id),
-            "weight": float(weight_value) if weight_value is not None else 0.0,
-            "price": float(price_value) if price_value is not None else 0.0,
-        }
-        break
-    transport_cost = graph.value(content, AZON.CostTransport)
-    ploc_node = graph.value(content, AZON.EsRespostaA)
-    localized_product_id = str(ploc_node).rsplit("#", 1)[-1] if ploc_node is not None else None
-    order_id = order_id_from_node(graph, content)
+def parse_peticio_cobrament(graph, content):
+    preu_producte_value = graph.value(content, AZON.PreuProducte)
+    cost_transport_value = graph.value(content, AZON.CostTransport)
     return {
-        "localized_product_id": localized_product_id,
-        "order_id": order_id or None,
-        "lot_id": lot_id_from_node(graph, content),
         "user_id": _user_id_from_iri(graph.value(content, AZON.PertanyAUsuari)),
-        "city": str(graph.value(content, AZON.Ciutat)),
-        "delivery_date": str(graph.value(content, AZON.DataEntregaDefinitiva)),
-        "transport_cost": float(transport_cost) if transport_cost is not None else 0.0,
-        "product": product,
+        "preu_producte": float(preu_producte_value) if preu_producte_value is not None else 0.0,
+        "cost_transport": float(cost_transport_value) if cost_transport_value is not None else 0.0,
     }
 
 
@@ -437,7 +402,7 @@ def build_peticio_retorn_diners(refund, sender=None, receiver=None, msgcnt=0):
     graph.add((content, AZON.ImportPagament, Literal(refund["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MotiuDevolucio, Literal(refund.get("reason", ""))))
     if refund.get("seller_id"):
-        graph.add((content, AZON.IdVenedorExtern, Literal(refund["seller_id"])))
+        graph.add((content, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(refund["seller_id"])]))
     for product_id in refund.get("product_ids", []):
         product_node = AZON[f"product-{product_id}"]
         graph.add((content, AZON.SobreProducte, product_node))
@@ -461,7 +426,8 @@ def parse_peticio_retorn_diners(graph, content):
         if product_id is None:
             product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
         product_ids.append(str(product_id))
-    seller_id = graph.value(content, AZON.IdVenedorExtern)
+    seller_id_iri = graph.value(content, AZON.PertanyAVenedorExtern)
+    seller_id = _seller_id_from_iri(seller_id_iri)
     return {
         "return_id": str(graph.value(content, AZON.IdDevolucio)),
         "order_id": order_id_from_node(graph, content),

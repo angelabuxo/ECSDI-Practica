@@ -10,6 +10,36 @@ from tests.support import LocalMessageRouter, load_catalog_products
 
 
 class PurchaseFlowTests(unittest.TestCase):
+    def test_purchase_iface_hides_total_amount(self):
+        from AgentUtil.Agent import Agent
+        from agents import agent_compra
+
+        agn = Namespace("http://www.agentes.org#")
+        compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            agent_compra.configure_runtime({"agent": compra, "directory_agent": None, "data_dir": data_dir})
+            original_fetch = agent_compra._fetch_products_from_cercador
+            agent_compra._fetch_products_from_cercador = lambda product_ids: [
+                {"product_id": "P1001", "name": "Teclat", "price": 50.0},
+                {"product_id": "P1002", "name": "Ratoli", "price": 20.0},
+            ]
+
+            try:
+                response = agent_compra.app.test_client().post(
+                    "/iface",
+                    data={"selected_product_ids": ["P1001", "P1002"]},
+                    environ_base={"REMOTE_ADDR": "127.0.0.1"},
+                )
+            finally:
+                agent_compra._fetch_products_from_cercador = original_fetch
+
+            html = response.get_data(as_text=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("Confirm purchase", html)
+            self.assertNotIn("Total:", html)
+
     def test_compra_fetches_selected_products_via_cercador_protocol(self):
         from AgentUtil.Agent import Agent
         from AgentUtil.DSO import DSO

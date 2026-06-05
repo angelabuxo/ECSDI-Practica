@@ -3,5 +3,5 @@
 azon:bank-user-127.0.0.1 a azon:Usuari ;
     azon:DadesBancariesUsuari "card-****-127.0.0.1" ;
     azon:IdUsuari "127.0.0.1" ;
-    azon:MetodePagament "aaa" .
+    azon:MetodePagament "a" .
 

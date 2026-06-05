@@ -9,6 +9,7 @@ from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
 from protocols.rdf_refs import (
+    _seller_id_from_iri,
     ensure_order_node,
     ensure_transportista_node,
     first_product_node,
@@ -54,7 +55,7 @@ def _add_external_product_node(graph, product_node, product):
             )
         )
     if product.get("seller_id"):
-        graph.add((product_node, AZON.IdVenedorExtern, Literal(product["seller_id"])))
+        graph.add((product_node, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(product["seller_id"])]))
     if product.get("centre_id") and not product.get("requires_external_logistics"):
         centre_resource = CENTRE_RESOURCE_BY_ID.get(product["centre_id"])
         if centre_resource:
@@ -84,7 +85,7 @@ def _parse_external_product_node(graph, product_node):
         "sku_extern": str(graph.value(product_node, AZON.SkuExtern) or ""),
         "data_alta": str(graph.value(product_node, AZON.DataAlta) or ""),
         "requires_external_logistics": str(external_flag).lower() == "true" if external_flag is not None else False,
-        "seller_id": str(graph.value(product_node, AZON.IdVenedorExtern) or ""),
+        "seller_id": _seller_id_from_iri(graph.value(product_node, AZON.PertanyAVenedorExtern) or ""),
         "centre_id": centre_id,
     }
 
@@ -202,7 +203,7 @@ def build_peticio_enviament_extern(order, seller_id, sender=None, receiver=None,
     order_node = ensure_order_node(graph, order["order_id"])
 
     graph.add((content, RDF.type, AZON.PeticioEnviamentExtern))
-    graph.add((content, AZON.IdVenedorExtern, Literal(seller_id)))
+    graph.add((content, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(seller_id)]))
     graph.add((content, AZON.Ciutat, Literal(shipping["city"])))
     graph.add((content, AZON.Carrer, Literal(shipping.get("street_address", ""))))
     graph.add((content, AZON.Prioritat, Literal(shipping["priority"])))
@@ -228,7 +229,8 @@ def parse_peticio_enviament_extern(graph, content):
     products = []
     for _, product_node in product_nodes_from_content(graph, content):
         products.append(_parse_external_product_node(graph, product_node))
-    seller_id = graph.value(content, AZON.IdVenedorExtern)
+    seller_id_iri = graph.value(content, AZON.PertanyAVenedorExtern)
+    seller_id = _seller_id_from_iri(seller_id_iri)
     if seller_id is None and products:
         seller_id = products[0].get("seller_id")
     return {

@@ -85,7 +85,7 @@ def ensure_lot_node(graph, lot_id, city=None, delivery_date=None, status=None, c
     if status is not None:
         graph.add((lot_node, AZON.Estat, Literal(status)))
     if centre_id is not None:
-        graph.add((lot_node, AZON.IdCentreLogistic, Literal(centre_id)))
+        graph.add((lot_node, AZON.UbicatACentre, AZON["centre-" + str(centre_id)]))
     return lot_node
 
 
@@ -123,3 +123,16 @@ def _user_id_from_iri(user_iri):
 def user_id_from_node(graph, node):
     """Llegeix l'id d'usuari des d'un node via PertanyAUsuari."""
     return _user_id_from_iri(graph.value(node, AZON.PertanyAUsuari))
+
+
+def _seller_id_from_iri(seller_iri):
+    """Extreu l'identificador de venedor a partir de l'IRI de PertanyAVenedorExtern."""
+    if seller_iri is None:
+        return ""
+    return str(seller_iri).split("#")[-1].replace("venedor-", "")
+
+def _centre_id_from_iri(centre_iri):
+    """Extreu l'identificador de centre a partir de l'IRI de UbicatACentre."""
+    if centre_iri is None:
+        return ""
+    return str(centre_iri).split("#")[-1].replace("centre-", "")

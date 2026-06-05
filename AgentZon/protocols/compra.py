@@ -7,6 +7,7 @@ from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
 from protocols.rdf_refs import (
+    _seller_id_from_iri,
     _user_id_from_iri,
     ensure_lot_node,
     link_product,
@@ -37,7 +38,7 @@ def _add_product_reference(graph, subject, product):
     if "weight" in product:
         graph.add((product_node, AZON.Pes, Literal(product["weight"], datatype=XSD.float)))
     if product.get("seller_id"):
-        graph.add((product_node, AZON.IdVenedorExtern, Literal(product["seller_id"])))
+        graph.add((product_node, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(product["seller_id"])]))
     if "requires_external_logistics" in product:
         graph.add(
             (
@@ -106,7 +107,8 @@ def extract_order_snapshot(graph, order_node):
             product["price"] = float(price)
         if weight is not None:
             product["weight"] = float(weight)
-        seller_id = graph.value(product_node, AZON.IdVenedorExtern)
+        seller_id_iri = graph.value(product_node, AZON.PertanyAVenedorExtern)
+        seller_id = _seller_id_from_iri(seller_id_iri)
         if seller_id is not None:
             product["seller_id"] = str(seller_id)
         requires_external = graph.value(product_node, AZON.RequereixLogisticaExterna)
@@ -278,7 +280,7 @@ def build_peticio_registre_producte_extern_compra(payload, sender=None, receiver
     content = AZON[f"external-product-compra-{payload['product_id']}-{msgcnt}"]
     graph.add((content, RDF.type, AZON.PeticioRegistreProducteExternCompra))
     graph.add((content, AZON.IdProducte, Literal(payload["product_id"])))
-    graph.add((content, AZON.IdVenedorExtern, Literal(payload["seller_id"])))
+    graph.add((content, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(payload["seller_id"])]))
     graph.add(
         (
             content,
@@ -307,7 +309,7 @@ def parse_peticio_registre_producte_extern_compra(graph, content=None):
     centre_id = graph.value(content, AZON.IdCentreLogistic)
     return {
         "product_id": str(graph.value(content, AZON.IdProducte)),
-        "seller_id": str(graph.value(content, AZON.IdVenedorExtern)),
+        "seller_id": _seller_id_from_iri(graph.value(content, AZON.PertanyAVenedorExtern)),
         "requires_external_logistics": bool(requires_external.toPython()) if requires_external is not None else False,
         "centre_id": str(centre_id) if centre_id is not None else "",
     }
