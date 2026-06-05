@@ -2,7 +2,6 @@
 
 AgentZon és un prototip de sistema multiagent per a l'assignatura ECSDI. Implementa una botiga distribuïda amb cerca de productes, compra i gestió logística basada en ontologia RDF/OWL.
 
-Per una explicació detallada de l'arquitectura i els fluxos, consulta [`GUIA_NOU_INTEGRANT.md`](GUIA_NOU_INTEGRANT.md).
 
 ## Flux híbrid de lots i enviament
 
@@ -13,7 +12,7 @@ El flux de compra i logística és ara híbrid:
 - Un lot passa a `PREPARAT` quan el seu pes total arriba o supera el límit (`MAX_LOT_WEIGHT_KG`) després d'afegir-hi un producte, encara que el desbordi.
 - Els productes següents (amb mateixa ciutat i data) obren un lot nou `OBERT` un cop l'anterior ja és `PREPARAT`.
 - Els lots oberts però imminents també es poden promoure amb l'escombrat diari `GET /cron/negotiate-ready-lots`.
-- Quan la negociació acaba, `Compra` rep `DadesEnviament` (`ASSIGNAT`) amb la data definitiva i el transportista. Política de negociació: [`docs/AgentZon/NegociacioTransport.md`](docs/AgentZon/NegociacioTransport.md).
+- Quan la negociació acaba, `Compra` rep `DadesEnviament` (`ASSIGNAT`) amb la data definitiva i el transportista. 
 - Quan el lot s'envia, `Compra` rep `ConfirmacioEnviament` (`ENVIAT`) i la comanda queda actualitzada a `/orders/<order_id>`.
 
 ## 1) Generar documentació i graf de l'ontologia
@@ -163,7 +162,6 @@ Per a la demo: el sistema ha de funcionar **realment distribuït**. Pots executa
 
 ### Opció C (11+ PCs a la xarxa local)
 
-Guia completa: [`docs/GUIA_DISTRIBUIT.md`](docs/GUIA_DISTRIBUIT.md).
 
 Hi ha scripts per automatitzar el desplegament. El fitxer `distributed.env` només necessita la IP del **Directory**; cada PC detecta la seva IP local sol:
 
