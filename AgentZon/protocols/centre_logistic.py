@@ -8,6 +8,7 @@ from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AGN, AZON, ONTOLOGY_URI, bind_namespaces
 from protocols.pagament import embed_invoice_in_content, extract_invoice_from_content
 from protocols.rdf_refs import (
+    _user_id_from_iri,
     ensure_lot_node,
     ensure_order_node,
     ensure_transportista_node,
@@ -66,7 +67,7 @@ def build_productes_localitzats(localized_item, sender=None, receiver=None, msgc
     product = localized_item["product"]
 
     graph.add((content, RDF.type, AZON.ProducteLocalitzat))
-    graph.add((content, AZON.IdUsuari, Literal(localized_item["user_id"])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(localized_item["user_id"])])))
     graph.add((content, AZON.Ciutat, Literal(localized_item["city"])))
     graph.add((content, AZON.DataEntrega, Literal(localized_item["delivery_date"])))
     _add_product_to_graph(graph, content, product, centre_node=centre_node)
@@ -105,7 +106,7 @@ def parse_productes_localitzats(graph, content):
         break
     return {
         "localized_product_id": str(content).rsplit("#", 1)[-1],
-        "user_id": str(graph.value(content, AZON.IdUsuari)),
+        "user_id": _user_id_from_iri(graph.value(content, AZON.PertanyAUsuari)),
         "city": str(graph.value(content, AZON.Ciutat)),
         "delivery_date": str(graph.value(content, AZON.DataEntrega)),
         "product": product or {"product_id": "", "name": "", "weight": 0.0, "price": 0.0},
@@ -136,7 +137,7 @@ def build_confirmacio_localitzacio(request_data, lot, sender=None, receiver=None
     graph.add((content, AZON.DataEntrega, Literal(request_data["delivery_date"])))
     graph.add((content, AZON.SobreLot, lot_node))
     if request_data.get("user_id"):
-        graph.add((content, AZON.IdUsuari, Literal(request_data["user_id"])))
+        graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(request_data["user_id"])])))
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
 
@@ -182,7 +183,7 @@ def parse_confirmacio_localitzacio(graph):
         break
     return {
         "localized_product_id": localized_product_id,
-        "user_id": str(graph.value(content, AZON.IdUsuari) or ""),
+        "user_id": _user_id_from_iri(graph.value(content, AZON.PertanyAUsuari) or ""),
         "lot_id": lot_id_from_node(graph, content),
         "status": str(graph.value(content, AZON.Estat)),
         "city": str(graph.value(content, AZON.Ciutat)),

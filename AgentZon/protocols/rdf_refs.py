@@ -112,3 +112,14 @@ def link_assignat_transportista(graph, subject, transport_id, transport_name=Non
     transport_node = ensure_transportista_node(graph, transport_id, transport_name)
     graph.add((subject, AZON.AssignatATransportista, transport_node))
     return transport_node
+
+
+def _user_id_from_iri(user_iri):
+    """Extreu l'identificador d'usuari a partir de l'IRI de PertanyAUsuari."""
+    if user_iri is None:
+        return ""
+    return str(user_iri).split("#")[-1].replace("usuari-", "")
+
+def user_id_from_node(graph, node):
+    """Llegeix l'id d'usuari des d'un node via PertanyAUsuari."""
+    return _user_id_from_iri(graph.value(node, AZON.PertanyAUsuari))

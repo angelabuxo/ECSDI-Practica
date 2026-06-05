@@ -4,126 +4,126 @@
 azon:ploc-2b8645 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-9EA31F ;
     azon:TeProducteIntern azon:product-P1022 .
 
 azon:ploc-544e51 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-67CA36 ;
     azon:TeProducteIntern azon:product-P1022 .
 
 azon:ploc-6905f8 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-67CA36 ;
     azon:TeProducteIntern azon:product-P1016 .
 
 azon:ploc-6b45a8 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-A18425 ;
     azon:TeProducteIntern azon:product-P1022 .
 
 azon:ploc-70c911 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-67CA36 ;
     azon:TeProducteIntern azon:product-P1001 .
 
 azon:ploc-7796c0 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-9EA31F ;
     azon:TeProducteIntern azon:product-P1016 .
 
 azon:ploc-78611c a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-A18425 ;
     azon:TeProducteIntern azon:product-P1019 .
 
 azon:ploc-8ba039 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-A18425 ;
     azon:TeProducteIntern azon:product-P1004 .
 
 azon:ploc-97c4d4 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-A18425 ;
     azon:TeProducteIntern azon:product-P1013 .
 
 azon:ploc-a3c42b a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-9EA31F ;
     azon:TeProducteIntern azon:product-P1001 .
 
 azon:ploc-a4827d a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-67CA36 ;
     azon:TeProducteIntern azon:product-P1001 .
 
 azon:ploc-a4a818 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-67CA36 ;
     azon:TeProducteIntern azon:product-P1019 .
 
 azon:ploc-a6d6be a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-A18425 ;
     azon:TeProducteIntern azon:product-P1016 .
 
 azon:ploc-b99da3 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-67CA36 ;
     azon:TeProducteIntern azon:product-P1013 .
 
 azon:ploc-c87345 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-9EA31F ;
     azon:TeProducteIntern azon:product-P1019 .
 
 azon:ploc-cc4db6 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-9EA31F ;
     azon:TeProducteIntern azon:product-P1013 .
 
 azon:ploc-cf1a42 a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-9EA31F ;
     azon:TeProducteIntern azon:product-P1004 .
 
 azon:ploc-e4cdbd a azon:ProducteLocalitzat ;
     azon:Ciutat "Barcelona" ;
     azon:DataEntrega "2026-06-10" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:SobreLot azon:lot-LOT-9EA31F ;
     azon:TeProducteIntern azon:product-P1010 .
 

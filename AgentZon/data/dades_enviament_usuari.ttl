@@ -2,21 +2,21 @@
 
 azon:shipping-ORDER-14C829B8 azon:Carrer "a" ;
     azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:MetodePagament "aaa" ;
     azon:Nom "holamon" ;
     azon:Prioritat "5 dies" .
 
 azon:shipping-ORDER-6080FD31 azon:Carrer "Balmes" ;
     azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:MetodePagament "aaaa" ;
     azon:Nom "adeu" ;
     azon:Prioritat "5 dies" .
 
 azon:shipping-ORDER-777E72B3 azon:Carrer "a" ;
     azon:Ciutat "Barcelona" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:MetodePagament "a" ;
     azon:Nom "a" ;
     azon:Prioritat "5 dies" .

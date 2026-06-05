@@ -7,7 +7,7 @@ from rdflib import Literal, RDF
 from rdflib.namespace import XSD
 
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
-from services.rdf_store import load_graph, save_graph
+from services.rdf_store import load_graph, save_graph, _user_id_from_iri
 
 
 # Order construction ---------------------------------------------------------------
@@ -40,7 +40,7 @@ def save_user_shipping_data(shipping_path, order):
     bind_namespaces(graph)
     shipping = order["shipping_data"]
     node = AZON[f"shipping-{order['order_id']}"]
-    graph.add((node, AZON.IdUsuari, Literal(shipping["user_id"])))
+    graph.add((node, AZON.PertanyAUsuari, AZON["usuari-" + str(shipping["user_id"])])))
     graph.add((node, AZON.Nom, Literal(shipping["user_name"])))
     graph.add((node, AZON.Carrer, Literal(shipping["street_address"])))
     graph.add((node, AZON.Ciutat, Literal(shipping["city"])))
@@ -56,7 +56,7 @@ def save_order(orders_path, order):
     node = AZON[f"order-{order['order_id']}"]
     graph.add((node, RDF.type, AZON.Comanda))
     graph.set((node, AZON.IdComanda, Literal(order["order_id"])))
-    graph.set((node, AZON.IdUsuari, Literal(order["user_id"])))
+    graph.set((node, AZON.PertanyAUsuari, AZON["usuari-" + str(order["user_id"])])))
     graph.set((node, AZON.Nom, Literal(order["user_name"])))
     graph.set((node, AZON.Carrer, Literal(order["shipping_data"]["street_address"])))
     graph.set((node, AZON.Ciutat, Literal(order["shipping_data"]["city"])))
@@ -135,7 +135,7 @@ def load_order_from_graph(graph, node):
     final_delivery_date = graph.value(node, AZON.DataEntregaDefinitiva)
     return {
         "order_id": order_id,
-        "user_id": str(graph.value(node, AZON.IdUsuari)),
+        "user_id": _user_id_from_iri(graph.value(node, AZON.PertanyAUsuari)),
         "user_name": str(graph.value(node, AZON.Nom)),
         "products": products,
         "product_ids": product_ids,
@@ -149,7 +149,7 @@ def load_order_from_graph(graph, node):
             "city": str(graph.value(node, AZON.Ciutat)),
             "priority": str(graph.value(node, AZON.Prioritat)),
             "payment_method": str(graph.value(node, AZON.MetodePagament)),
-            "user_id": str(graph.value(node, AZON.IdUsuari)),
+            "user_id": _user_id_from_iri(graph.value(node, AZON.PertanyAUsuari)),
         },
     }
 

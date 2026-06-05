@@ -21,3 +21,9 @@ def save_graph(path, graph, rdf_format="turtle"):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(graph.serialize(format=rdf_format), encoding="utf-8")
+
+def _user_id_from_iri(user_iri):
+    """Extreu l'identificador d'usuari a partir de l'IRI de PertanyAUsuari."""
+    if user_iri is None:
+        return ""
+    return str(user_iri).split("#")[-1].replace("usuari-", "")

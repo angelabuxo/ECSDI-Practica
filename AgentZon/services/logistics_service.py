@@ -11,7 +11,7 @@ from rdflib.namespace import XSD
 
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
 from config import MAX_LOT_WEIGHT_KG, READY_DELIVERY_WINDOW_DAYS
-from protocols.rdf_refs import link_assignat_transportista, link_product, product_nodes_from_content, transport_id_from_node
+from protocols.rdf_refs import link_assignat_transportista, link_product, product_nodes_from_content, transport_id_from_node, _user_id_from_iri
 from services.rdf_store import load_graph, save_graph
 
 
@@ -116,7 +116,7 @@ def _localized_product_id_from_node(item_node):
 def _read_item(graph, item_node):
     lot_node = graph.value(item_node, AZON.SobreLot)
     lot_id = graph.value(lot_node, AZON.IdLot) if lot_node is not None else None
-    user_id = graph.value(item_node, AZON.IdUsuari)
+    user_id = _user_id_from_iri(graph.value(item_node, AZON.PertanyAUsuari))
     centre_id_value = graph.value(lot_node, AZON.IdCentreLogistic) if lot_node is not None else None
     centre_id = str(centre_id_value) if centre_id_value is not None else None
     centre_city = _lookup_centre_city(graph, centre_id)
@@ -207,7 +207,7 @@ def create_lot(lots_path, item):
         graph.add((item_node, RDF.type, AZON.ProducteLocalitzat))
         graph.set((item_node, AZON.SobreLot, lot_node))
         if item.get("user_id"):
-            graph.set((item_node, AZON.IdUsuari, Literal(item["user_id"])))
+            graph.set((item_node, AZON.PertanyAUsuari, AZON["usuari-" + str(item["user_id"])])))
         graph.set((item_node, AZON.Ciutat, Literal(city)))
         graph.set((item_node, AZON.DataEntrega, Literal(delivery_date)))
         _add_product_reference(graph, item_node, product, centre_node=centre_node)

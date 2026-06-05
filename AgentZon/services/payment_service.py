@@ -14,7 +14,7 @@ def save_user_bank_data(path, user_id, bank_data, payment_method):
     bind_namespaces(graph)
     node = AZON[f"bank-user-{user_id}"]
     graph.add((node, RDF.type, AZON.Usuari))
-    graph.set((node, AZON.IdUsuari, Literal(user_id)))
+    graph.set((node, AZON.IdUsuari, Literal(user_id))))
     graph.set((node, AZON.DadesBancariesUsuari, Literal(bank_data)))
     graph.set((node, AZON.MetodePagament, Literal(payment_method)))
     save_graph(path, graph)
@@ -91,7 +91,7 @@ def record_payment(path, payment):
     graph.add((node, AZON.Estat, Literal(payment.get("status", "PAGAT"))))
     graph.add((node, AZON.DataPagament, Literal(payment["date"])))
     if payment.get("user_id"):
-        graph.add((node, AZON.IdUsuari, Literal(payment["user_id"])))
+        graph.add((node, AZON.PertanyAUsuari, AZON["usuari-" + str(payment["user_id"])])))
     if payment.get("seller_id"):
         graph.add((node, AZON.IdVenedorExtern, Literal(payment["seller_id"])))
     for product_id in payment.get("product_ids", []):
@@ -108,7 +108,7 @@ def record_refund(path, refund):
     graph.add((node, AZON.IdDevolucio, Literal(refund["return_id"])))
     graph.add((node, AZON.IdComanda, Literal(refund["order_id"])))
     ensure_order_node(graph, refund["order_id"])
-    graph.add((node, AZON.IdUsuari, Literal(refund["user_id"])))
+    graph.add((node, AZON.PertanyAUsuari, AZON["usuari-" + str(refund["user_id"])])))
     graph.add((node, AZON.ImportPagament, Literal(refund["amount"], datatype=XSD.float)))
     graph.add((node, AZON.MotiuDevolucio, Literal(refund.get("reason", ""))))
     graph.add((node, AZON.Estat, Literal(refund.get("status", "RETORNAT"))))

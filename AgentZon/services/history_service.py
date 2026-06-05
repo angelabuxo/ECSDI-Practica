@@ -6,7 +6,7 @@ from rdflib import Graph, Literal, RDF
 
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
 from services.order_service import load_order_from_graph, save_order
-from services.rdf_store import load_graph, save_graph
+from services.rdf_store import load_graph, save_graph, _user_id_from_iri
 
 
 # Search history -------------------------------------------------------------------
@@ -18,7 +18,7 @@ def record_search(path, criteria, products, user_id=None):
     graph.add((record, AZON.CategoriaConsulta, Literal(criteria.get("category", ""))))
     graph.add((record, AZON.MarcaConsulta, Literal(criteria.get("brand", ""))))
     if user_id:
-        graph.add((record, AZON.IdUsuari, Literal(user_id)))
+        graph.add((record, AZON.PertanyAUsuari, AZON["usuari-" + str(user_id)])))
     if criteria.get("min_price") is not None:
         graph.add((record, AZON.PreuMinim, Literal(criteria["min_price"])))
     if criteria.get("max_price") is not None:
@@ -33,7 +33,7 @@ def load_search_records(path, user_id=None):
     graph = load_graph(path)
     records = []
     for record in set(graph.subjects(AZON.TextConsulta, None)) | set(graph.subjects(AZON.TotalResultats, None)):
-        record_user_id = str(graph.value(record, AZON.IdUsuari) or "")
+        record_user_id = _user_id_from_iri(graph.value(record, AZON.PertanyAUsuari) or "")
         if user_id is not None and record_user_id != user_id:
             continue
         product_ids = []
@@ -111,7 +111,7 @@ def record_feedback(path, feedback):
     node = AZON[f"feedback-{feedback['feedback_id']}"]
     graph.add((node, RDF.type, AZON.Feedback))
     graph.add((node, AZON.IdFeedback, Literal(feedback["feedback_id"])))
-    graph.add((node, AZON.IdUsuari, Literal(feedback["user_id"])))
+    graph.add((node, AZON.PertanyAUsuari, AZON["usuari-" + str(feedback["user_id"])])))
     graph.add((node, AZON.IdComanda, Literal(feedback["order_id"])))
     graph.add((node, AZON.Puntuacio, Literal(feedback["rating"])))
     graph.add((node, AZON.Comentari, Literal(feedback.get("comment", ""))))
@@ -125,7 +125,7 @@ def load_feedback_records(path, user_id=None):
     graph = load_graph(path)
     records = []
     for node in set(graph.subjects(RDF.type, AZON.Feedback)):
-        record_user_id = str(graph.value(node, AZON.IdUsuari) or "")
+        record_user_id = _user_id_from_iri(graph.value(node, AZON.PertanyAUsuari) or "")
         if user_id is not None and record_user_id != user_id:
             continue
         product_ids = []

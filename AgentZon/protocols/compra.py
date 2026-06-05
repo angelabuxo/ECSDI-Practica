@@ -7,6 +7,7 @@ from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
 from protocols.rdf_refs import (
+    _user_id_from_iri,
     ensure_lot_node,
     link_product,
     link_sobre_comanda,
@@ -53,7 +54,7 @@ def _build_embedded_order(graph, order_node, order, include_order_id):
     graph.add((order_node, RDF.type, AZON.Comanda))
     if include_order_id:
         graph.add((order_node, AZON.IdComanda, Literal(order["order_id"])))
-    graph.add((order_node, AZON.IdUsuari, Literal(order["user_id"])))
+    graph.add((order_node, AZON.PertanyAUsuari, AZON["usuari-" + str(order["user_id"])])))
     graph.add((order_node, AZON.Nom, Literal(shipping["user_name"])))
     graph.add((order_node, AZON.Carrer, Literal(shipping["street_address"])))
     graph.add((order_node, AZON.Ciutat, Literal(shipping["city"])))
@@ -128,7 +129,7 @@ def extract_order_snapshot(graph, order_node):
     status = graph.value(order_node, AZON.Estat)
     return {
         "order_id": order_id_from_node(graph, order_node),
-        "user_id": str(graph.value(order_node, AZON.IdUsuari)),
+        "user_id": _user_id_from_iri(graph.value(order_node, AZON.PertanyAUsuari)),
         "user_name": str(graph.value(order_node, AZON.Nom)),
         "purchase_date": str(purchase_date) if purchase_date is not None else None,
         "delivery_date": str(graph.value(order_node, AZON.DataEntrega) or ""),
@@ -142,7 +143,7 @@ def extract_order_snapshot(graph, order_node):
             "city": str(graph.value(order_node, AZON.Ciutat) or ""),
             "priority": str(graph.value(order_node, AZON.Prioritat) or ""),
             "payment_method": str(graph.value(order_node, AZON.MetodePagament) or ""),
-            "user_id": str(graph.value(order_node, AZON.IdUsuari)),
+            "user_id": _user_id_from_iri(graph.value(order_node, AZON.PertanyAUsuari)),
         },
     }
 
@@ -178,7 +179,7 @@ def build_peticio_compra(
     order_node = AZON[f"{request_id}-order"]
 
     graph.add((content, RDF.type, AZON.PeticioCompra))
-    graph.add((content, AZON.IdUsuari, Literal(user_id)))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(user_id)])))
     graph.add((content, AZON.MetodePagament, Literal(payment_method)))
     graph.add((content, AZON.SobreComanda, order_node))
 
@@ -212,7 +213,7 @@ def build_peticio_registre_compra(order, sender=None, receiver=None, msgcnt=0):
     order_node = AZON[f"order-{order['order_id']}"]
 
     graph.add((content, RDF.type, AZON.PeticioRegistreCompra))
-    graph.add((content, AZON.IdUsuari, Literal(order["user_id"])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(order["user_id"])])))
     graph.add((content, AZON.SobreComanda, order_node))
 
     _build_embedded_order(graph, order_node, order, include_order_id=True)
@@ -243,7 +244,7 @@ def parse_peticio_compra(graph, content):
         product_ids.append(str(product_id))
 
     return {
-        "user_id": str(graph.value(content, AZON.IdUsuari)),
+        "user_id": _user_id_from_iri(graph.value(content, AZON.PertanyAUsuari)),
         "payment_method": str(graph.value(content, AZON.MetodePagament)),
         "shipping_data": {
             "user_name": str(graph.value(order_node, AZON.Nom)),

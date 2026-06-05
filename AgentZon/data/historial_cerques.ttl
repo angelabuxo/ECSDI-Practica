@@ -2,7 +2,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 azon:search-0 azon:CategoriaConsulta "" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:MarcaConsulta "" ;
     azon:MostraProducte azon:product-P1001,
         azon:product-P1002,
@@ -33,7 +33,7 @@ azon:search-0 azon:CategoriaConsulta "" ;
     azon:TotalResultats 25 .
 
 azon:search-30 azon:CategoriaConsulta "" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:MarcaConsulta "" ;
     azon:MostraProducte azon:product-P1001,
         azon:product-P1004,
@@ -61,7 +61,7 @@ azon:search-30 azon:CategoriaConsulta "" ;
     azon:TotalResultats 22 .
 
 azon:search-57 azon:CategoriaConsulta "" ;
-    azon:IdUsuari "127.0.0.1" ;
+    azon:PertanyAUsuari azon:usuari-127.0.0.1 ;
     azon:MarcaConsulta "" ;
     azon:MostraProducte azon:product-P1001,
         azon:product-P1002,
