@@ -520,8 +520,9 @@ Opinador i Transportistes, i finalment Centres Logístics, Compra i Cercador.
 Quan tot estigui en marxa, obre: `http://127.0.0.1:9001/iface` (cerca/compra) o
 `http://127.0.0.1:9012/iface` (registre de productes externs per venedors).
 
-> Per a la demo del professor: ha de funcionar **realment distribuït**. Pots executar agents en
-> diferents màquines passant `--host` i `--directory-host` amb les IPs reals.
+> Per a la demo del professor: ha de funcionar **realment distribuït**. Segueix la
+> [`GUIA_DISTRIBUIT.md`](../GUIA_DISTRIBUIT.md): `distributed.env` + `./run_distributed_agent.sh <agent>`
+> a cada PC (només cal configurar la IP del Directory).
 
 ### 10.3 Regenerar dades de prova
 

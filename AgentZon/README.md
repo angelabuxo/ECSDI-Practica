@@ -163,6 +163,8 @@ Per a la demo: el sistema ha de funcionar **realment distribuït**. Pots executa
 
 ### Opció C (11+ PCs a la xarxa local)
 
+Guia completa: [`docs/GUIA_DISTRIBUIT.md`](docs/GUIA_DISTRIBUIT.md).
+
 Hi ha scripts per automatitzar el desplegament. El fitxer `distributed.env` només necessita la IP del **Directory**; cada PC detecta la seva IP local sol:
 
 ```bash
