@@ -40,7 +40,7 @@ def save_user_shipping_data(shipping_path, order):
     bind_namespaces(graph)
     shipping = order["shipping_data"]
     node = AZON[f"shipping-{order['order_id']}"]
-    graph.add((node, AZON.PertanyAUsuari, AZON["usuari-" + str(shipping["user_id"])])))
+    graph.add((node, AZON.PertanyAUsuari, AZON["usuari-" + str(shipping["user_id"])]))
     graph.add((node, AZON.Nom, Literal(shipping["user_name"])))
     graph.add((node, AZON.Carrer, Literal(shipping["street_address"])))
     graph.add((node, AZON.Ciutat, Literal(shipping["city"])))
@@ -56,7 +56,7 @@ def save_order(orders_path, order):
     node = AZON[f"order-{order['order_id']}"]
     graph.add((node, RDF.type, AZON.Comanda))
     graph.set((node, AZON.IdComanda, Literal(order["order_id"])))
-    graph.set((node, AZON.PertanyAUsuari, AZON["usuari-" + str(order["user_id"])])))
+    graph.set((node, AZON.PertanyAUsuari, AZON["usuari-" + str(order["user_id"])]))
     graph.set((node, AZON.Nom, Literal(order["user_name"])))
     graph.set((node, AZON.Carrer, Literal(order["shipping_data"]["street_address"])))
     graph.set((node, AZON.Ciutat, Literal(order["shipping_data"]["city"])))

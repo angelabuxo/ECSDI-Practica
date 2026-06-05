@@ -81,7 +81,7 @@ def build_peticio_feedback(feedback_request, sender=None, receiver=None, msgcnt=
     content = AZON[f"feedback-request-{feedback_request['feedback_id']}"]
     graph.add((content, RDF.type, AZON.PeticioFeedback))
     graph.add((content, AZON.IdFeedback, Literal(feedback_request["feedback_id"])))
-    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(feedback_request["user_id"])])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(feedback_request["user_id"])]))
     link_sobre_comanda(graph, content, feedback_request["order_id"])
     if feedback_request.get("prompt"):
         graph.add((content, AZON.Comentari, Literal(feedback_request["prompt"])))
@@ -125,7 +125,7 @@ def build_resultat_consulta_comanda(order, sender=None, receiver=None, msgcnt=0)
     order_node = AZON[f"order-{order['order_id']}"]
     graph.add((order_node, RDF.type, AZON.Comanda))
     graph.add((order_node, AZON.IdComanda, Literal(order["order_id"])))
-    graph.add((order_node, AZON.PertanyAUsuari, AZON["usuari-" + str(order["user_id"])])))
+    graph.add((order_node, AZON.PertanyAUsuari, AZON["usuari-" + str(order["user_id"])]))
     graph.add((order_node, AZON.Nom, Literal(order["user_name"])))
     graph.add((order_node, AZON.Carrer, Literal(order["shipping_data"]["street_address"])))
     graph.add((order_node, AZON.Ciutat, Literal(order["shipping_data"]["city"])))
@@ -196,7 +196,7 @@ def build_resposta_feedback(feedback, sender=None, receiver=None, request_conten
     content = AZON[f"feedback-response-{feedback['feedback_id']}"]
     graph.add((content, RDF.type, AZON.RespostaFeedback))
     graph.add((content, AZON.IdFeedback, Literal(feedback["feedback_id"])))
-    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(feedback["user_id"])])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(feedback["user_id"])]))
     link_sobre_comanda(graph, content, feedback["order_id"])
     graph.add((content, AZON.Puntuacio, Literal(feedback["rating"])))
     graph.add((content, AZON.Comentari, Literal(feedback.get("comment", ""))))
@@ -240,7 +240,7 @@ def build_peticio_registre_cerca(search_record, sender=None, receiver=None, msgc
     bind_namespaces(graph)
     content = AZON[f"search-history-{search_record['user_id']}-{msgcnt}"]
     graph.add((content, RDF.type, AZON.PeticioRegistreCerca))
-    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(search_record["user_id"])])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(search_record["user_id"])]))
     graph.add((content, AZON.TextConsulta, Literal(search_record["criteria"].get("text", ""))))
     graph.add((content, AZON.CategoriaConsulta, Literal(search_record["criteria"].get("category", ""))))
     graph.add((content, AZON.MarcaConsulta, Literal(search_record["criteria"].get("brand", ""))))
@@ -282,7 +282,7 @@ def build_confirmacio_registre_cerca(user_id, sender=None, receiver=None, reques
     bind_namespaces(graph)
     content = AZON[f"search-history-confirmation-{user_id}-{msgcnt}"]
     graph.add((content, RDF.type, AZON.ConfirmacioRegistreCerca))
-    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(user_id)])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(user_id)]))
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
     return build_message(
@@ -307,7 +307,7 @@ def build_peticio_consulta_compres_usuari(user_id, sender=None, receiver=None, m
     bind_namespaces(graph)
     content = AZON[f"user-purchases-{user_id}-{msgcnt}"]
     graph.add((content, RDF.type, AZON.PeticioConsultaCompresUsuari))
-    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(user_id)])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(user_id)]))
     return build_message(
         graph,
         perf=ACL.request,
@@ -337,13 +337,13 @@ def build_resultat_consulta_compres_usuari(
     bind_namespaces(graph)
     content = AZON[f"user-purchases-result-{user_id}-{msgcnt}"]
     graph.add((content, RDF.type, AZON.ResultatConsultaCompresUsuari))
-    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(user_id)])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(user_id)]))
     for purchase in purchases:
         order_node = AZON[f"order-{purchase['order_id']}"]
         graph.add((content, AZON.SobreComanda, order_node))
         graph.add((order_node, RDF.type, AZON.Comanda))
         graph.add((order_node, AZON.IdComanda, Literal(purchase["order_id"])))
-        graph.add((order_node, AZON.PertanyAUsuari, AZON["usuari-" + str(purchase.get('user_id', user_id))])))
+        graph.add((order_node, AZON.PertanyAUsuari, AZON["usuari-" + str(purchase.get('user_id', user_id))]))
         shipping_data = purchase.get("shipping_data", {})
         graph.add((order_node, AZON.Nom, Literal(shipping_data.get("user_name", purchase.get("user_name", "")))))
         graph.add((order_node, AZON.Carrer, Literal(shipping_data.get("street_address", ""))))
@@ -441,7 +441,7 @@ def build_peticio_devolucio(return_request, sender=None, receiver=None, msgcnt=0
     graph.add((content, RDF.type, AZON.PeticioDevolucio))
     graph.add((content, AZON.IdDevolucio, Literal(return_request["return_id"])))
     link_sobre_comanda(graph, content, return_request["order_id"])
-    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(return_request["user_id"])])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(return_request["user_id"])]))
     if return_request.get("amount") is not None:
         graph.add((content, AZON.ImportPagament, Literal(return_request["amount"], datatype=XSD.float)))
     graph.add((content, AZON.MotiuDevolucio, Literal(return_request.get("reason", ""))))
@@ -498,7 +498,7 @@ def build_resolucio_devolucio(decision, sender=None, receiver=None, request_cont
     graph.add((content, RDF.type, AZON.ResolucioDevolucio))
     graph.add((content, AZON.IdDevolucio, Literal(decision["return_id"])))
     link_sobre_comanda(graph, content, decision["order_id"])
-    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(decision["user_id"])])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(decision["user_id"])]))
     graph.add((content, AZON.ImportPagament, Literal(_amount_as_float(decision.get("amount")), datatype=XSD.float)))
     graph.add((content, AZON.Acceptada, Literal(bool(decision["accepted"]), datatype=XSD.boolean)))
     graph.add((content, AZON.MotiuDevolucio, Literal(decision.get("reason", ""))))

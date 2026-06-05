@@ -207,7 +207,7 @@ def create_lot(lots_path, item):
         graph.add((item_node, RDF.type, AZON.ProducteLocalitzat))
         graph.set((item_node, AZON.SobreLot, lot_node))
         if item.get("user_id"):
-            graph.set((item_node, AZON.PertanyAUsuari, AZON["usuari-" + str(item["user_id"])])))
+            graph.set((item_node, AZON.PertanyAUsuari, AZON["usuari-" + str(item["user_id"])]))
         graph.set((item_node, AZON.Ciutat, Literal(city)))
         graph.set((item_node, AZON.DataEntrega, Literal(delivery_date)))
         _add_product_reference(graph, item_node, product, centre_node=centre_node)

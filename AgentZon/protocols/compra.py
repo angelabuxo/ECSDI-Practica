@@ -54,7 +54,7 @@ def _build_embedded_order(graph, order_node, order, include_order_id):
     graph.add((order_node, RDF.type, AZON.Comanda))
     if include_order_id:
         graph.add((order_node, AZON.IdComanda, Literal(order["order_id"])))
-    graph.add((order_node, AZON.PertanyAUsuari, AZON["usuari-" + str(order["user_id"])])))
+    graph.add((order_node, AZON.PertanyAUsuari, AZON["usuari-" + str(order["user_id"])]))
     graph.add((order_node, AZON.Nom, Literal(shipping["user_name"])))
     graph.add((order_node, AZON.Carrer, Literal(shipping["street_address"])))
     graph.add((order_node, AZON.Ciutat, Literal(shipping["city"])))
@@ -179,7 +179,7 @@ def build_peticio_compra(
     order_node = AZON[f"{request_id}-order"]
 
     graph.add((content, RDF.type, AZON.PeticioCompra))
-    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(user_id)])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(user_id)]))
     graph.add((content, AZON.MetodePagament, Literal(payment_method)))
     graph.add((content, AZON.SobreComanda, order_node))
 
@@ -213,7 +213,7 @@ def build_peticio_registre_compra(order, sender=None, receiver=None, msgcnt=0):
     order_node = AZON[f"order-{order['order_id']}"]
 
     graph.add((content, RDF.type, AZON.PeticioRegistreCompra))
-    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(order["user_id"])])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(order["user_id"])]))
     graph.add((content, AZON.SobreComanda, order_node))
 
     _build_embedded_order(graph, order_node, order, include_order_id=True)

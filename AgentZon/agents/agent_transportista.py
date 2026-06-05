@@ -10,6 +10,7 @@ Agent transportista extern AgentZon (ofertes i negociacio de transport).
 """
 
 import argparse
+import random as _random_module
 from datetime import date, timedelta
 
 from flask import Flask, request
@@ -48,10 +49,13 @@ TRANSPORT_ID = "fast"
 PRICE_PER_KG = 8.0
 DELIVERY_DAYS = 1
 LAST_OFFERS = {}
+MIN_ACCEPTABLE_RATIO = 0.85
+ACCEPT_PROBABILITY_BELOW_THRESHOLD = 0.15
+_random_fn = _random_module.random
 
 
 def configure_runtime(settings, message_sender=send_message):
-    global AGENT, DirectoryAgent, MESSAGE_SENDER, TRANSPORT_ID, PRICE_PER_KG, DELIVERY_DAYS, mss_cnt, LAST_OFFERS
+    global AGENT, DirectoryAgent, MESSAGE_SENDER, TRANSPORT_ID, PRICE_PER_KG, DELIVERY_DAYS, mss_cnt, LAST_OFFERS, _random_fn
     AGENT = settings["agent"]
     DirectoryAgent = settings.get("directory_agent")
     MESSAGE_SENDER = message_sender
@@ -60,6 +64,7 @@ def configure_runtime(settings, message_sender=send_message):
     DELIVERY_DAYS = settings["delivery_days"]
     mss_cnt = 0
     LAST_OFFERS = {}
+    _random_fn = _random_module.random
 
 
 def generar_oferta_transport(request_data):
@@ -93,12 +98,14 @@ def respondre_contraoferta(counter_offer, receiver=None):
         return build_message(Graph(), ACL.refuse, sender=AGENT.uri, receiver=receiver, msgcnt=mss_cnt)
 
     counter_price = counter_offer["price"]
-    cap_price = round(counter_price * 1.15 / 1.10, 2)
-    if counter_price > cap_price:
-        return build_message(Graph(), ACL.refuse, sender=AGENT.uri, receiver=receiver, msgcnt=mss_cnt)
+    original_price = previous_offer["price"]
+    min_acceptable = round(original_price * MIN_ACCEPTABLE_RATIO, 2)
 
-    LAST_OFFERS[counter_offer["lot_id"]] = {**previous_offer, "price": counter_price}
-    return build_message(Graph(), ACL.agree, sender=AGENT.uri, receiver=receiver, msgcnt=mss_cnt)
+    if counter_price >= min_acceptable or _random_fn() < ACCEPT_PROBABILITY_BELOW_THRESHOLD:
+        LAST_OFFERS[counter_offer["lot_id"]] = {**previous_offer, "price": counter_price}
+        return build_message(Graph(), ACL.agree, sender=AGENT.uri, receiver=receiver, msgcnt=mss_cnt)
+
+    return build_message(Graph(), ACL.refuse, sender=AGENT.uri, receiver=receiver, msgcnt=mss_cnt)
 
 
 @app.route("/comm")

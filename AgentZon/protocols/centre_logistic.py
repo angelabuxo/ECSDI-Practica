@@ -67,7 +67,7 @@ def build_productes_localitzats(localized_item, sender=None, receiver=None, msgc
     product = localized_item["product"]
 
     graph.add((content, RDF.type, AZON.ProducteLocalitzat))
-    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(localized_item["user_id"])])))
+    graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(localized_item["user_id"])]))
     graph.add((content, AZON.Ciutat, Literal(localized_item["city"])))
     graph.add((content, AZON.DataEntrega, Literal(localized_item["delivery_date"])))
     _add_product_to_graph(graph, content, product, centre_node=centre_node)
@@ -137,7 +137,7 @@ def build_confirmacio_localitzacio(request_data, lot, sender=None, receiver=None
     graph.add((content, AZON.DataEntrega, Literal(request_data["delivery_date"])))
     graph.add((content, AZON.SobreLot, lot_node))
     if request_data.get("user_id"):
-        graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(request_data["user_id"])])))
+        graph.add((content, AZON.PertanyAUsuari, AZON["usuari-" + str(request_data["user_id"])]))
     if request_content is not None:
         graph.add((content, AZON.EsRespostaA, request_content))
 

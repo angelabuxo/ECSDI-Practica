@@ -18,7 +18,7 @@ def record_search(path, criteria, products, user_id=None):
     graph.add((record, AZON.CategoriaConsulta, Literal(criteria.get("category", ""))))
     graph.add((record, AZON.MarcaConsulta, Literal(criteria.get("brand", ""))))
     if user_id:
-        graph.add((record, AZON.PertanyAUsuari, AZON["usuari-" + str(user_id)])))
+        graph.add((record, AZON.PertanyAUsuari, AZON["usuari-" + str(user_id)]))
     if criteria.get("min_price") is not None:
         graph.add((record, AZON.PreuMinim, Literal(criteria["min_price"])))
     if criteria.get("max_price") is not None:
@@ -111,7 +111,7 @@ def record_feedback(path, feedback):
     node = AZON[f"feedback-{feedback['feedback_id']}"]
     graph.add((node, RDF.type, AZON.Feedback))
     graph.add((node, AZON.IdFeedback, Literal(feedback["feedback_id"])))
-    graph.add((node, AZON.PertanyAUsuari, AZON["usuari-" + str(feedback["user_id"])])))
+    graph.add((node, AZON.PertanyAUsuari, AZON["usuari-" + str(feedback["user_id"])]))
     graph.add((node, AZON.IdComanda, Literal(feedback["order_id"])))
     graph.add((node, AZON.Puntuacio, Literal(feedback["rating"])))
     graph.add((node, AZON.Comentari, Literal(feedback.get("comment", ""))))
