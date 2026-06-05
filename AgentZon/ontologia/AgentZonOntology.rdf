@@ -951,6 +951,22 @@
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioConsultaComanda">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
     </owl:Class>
+
+
+
+    <!-- http://www.semanticweb.org/agentzon#PeticioConsultaCompresUsuari -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioConsultaCompresUsuari">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    </owl:Class>
+
+
+
+    <!-- http://www.semanticweb.org/agentzon#PeticioConsultaProductes -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioConsultaProductes">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    </owl:Class>
     
 
 
@@ -967,6 +983,14 @@
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioFeedback">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
     </owl:Class>
+
+
+
+    <!-- http://www.semanticweb.org/agentzon#PeticioConsultaDadesBancariesVenedor -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioConsultaDadesBancariesVenedor">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    </owl:Class>
     
 
 
@@ -981,6 +1005,22 @@
     <!-- http://www.semanticweb.org/agentzon#PeticioRegistreCompra -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioRegistreCompra">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    </owl:Class>
+
+
+
+    <!-- http://www.semanticweb.org/agentzon#PeticioRegistreCerca -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioRegistreCerca">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    </owl:Class>
+
+
+
+    <!-- http://www.semanticweb.org/agentzon#PeticioRegistreProducteExternCompra -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioRegistreProducteExternCompra">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
     </owl:Class>
     
@@ -1053,6 +1093,22 @@
     </owl:Class>
 
 
+
+    <!-- http://www.semanticweb.org/agentzon#ConfirmacioRegistreCerca -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ConfirmacioRegistreCerca">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    </owl:Class>
+
+
+
+    <!-- http://www.semanticweb.org/agentzon#ConfirmacioRegistreProducteExternCompra -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ConfirmacioRegistreProducteExternCompra">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    </owl:Class>
+
+
     <!-- http://www.semanticweb.org/agentzon#RespostaRecomanacio -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#RespostaRecomanacio">
@@ -1072,6 +1128,30 @@
     <!-- http://www.semanticweb.org/agentzon#ResultatCerca -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ResultatCerca">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    </owl:Class>
+
+
+
+    <!-- http://www.semanticweb.org/agentzon#ResultatConsultaCompresUsuari -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ResultatConsultaCompresUsuari">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    </owl:Class>
+
+
+
+    <!-- http://www.semanticweb.org/agentzon#ResultatConsultaDadesBancariesVenedor -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ResultatConsultaDadesBancariesVenedor">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
+    </owl:Class>
+
+
+
+    <!-- http://www.semanticweb.org/agentzon#ResultatConsultaProductes -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#ResultatConsultaProductes">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Resposta"/>
     </owl:Class>
     

@@ -126,7 +126,7 @@ class LogisticsFlowTests(unittest.TestCase):
                 "city": "Barcelona",
                 "delivery_date": "2026-06-02",
                 "transport_cost": 4.5,
-                "product": {"product_id": "P1", "name": "A", "weight": 1.5},
+                "product": {"product_id": "P1", "name": "A", "weight": 1.5, "price": 50.0},
             },
             sender=centre.uri,
             receiver=cobrador.uri,
@@ -139,6 +139,7 @@ class LogisticsFlowTests(unittest.TestCase):
         self.assertEqual(parsed["lot_id"], "LOT-1")
         self.assertEqual(parsed["localized_product_id"], "ploc-9a13e6")
         self.assertEqual(parsed["product"]["product_id"], "P1")
+        self.assertEqual(parsed["product"]["price"], 50.0)
 
     def test_centre_runtime_uses_a_centre_specific_lots_file(self):
         from AgentUtil.Agent import Agent

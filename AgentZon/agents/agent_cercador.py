@@ -33,7 +33,14 @@ from config import (
     resolve_agent_hosts,
     serve_agent,
 )
-from protocols.cerca import build_peticio_cerca, build_resultat_cerca, parse_peticio_cerca
+from protocols.cerca import (
+    build_peticio_cerca,
+    build_resultat_cerca,
+    build_resultat_consulta_productes,
+    parse_peticio_cerca,
+    parse_peticio_consulta_productes,
+)
+from protocols.opinador import build_peticio_registre_cerca, parse_confirmacio_registre_cerca
 from protocols.venedor_extern import (
     build_confirmacio_alta_producte_extern,
     parse_alta_producte_extern,
@@ -43,8 +50,7 @@ from services.agent_common_service import (
     replace_url_path,
     resolve_agent_via_directory,
 )
-from services.catalog_service import add_external_product, search_products
-from services.history_service import record_search
+from services.catalog_service import add_external_product, get_products_by_ids, search_products
 
 logger = config_logger(level=1)
 app = Flask(__name__, template_folder=str(TEMPLATE_DIR))
@@ -66,7 +72,7 @@ def configure_runtime(settings, message_sender=send_message):
     MESSAGE_SENDER = message_sender
     data_dir = Path(settings["data_dir"])
     CATALOG_PATH = data_dir / "productes.ttl"
-    SEARCH_HISTORY_PATH = data_dir / "historial_cerques.ttl"
+    SEARCH_HISTORY_PATH = None
     mss_cnt = 0
 
 
@@ -121,6 +127,40 @@ def pla_de_cerca(criteria):
     products = search_products(CATALOG_PATH, criteria)
     logger.info("La cerca ha retornat %d productes", len(products))
     return products
+
+
+def pla_consulta_productes_acl(gm, content, sender):
+    product_ids = parse_peticio_consulta_productes(gm, content)
+    products = get_products_by_ids(CATALOG_PATH, product_ids)
+    return build_resultat_consulta_productes(
+        products,
+        sender=AGENT.uri,
+        receiver=sender,
+        request_content=content,
+        msgcnt=mss_cnt,
+    )
+
+
+def pla_registrar_cerca_a_opinador(criteria, products, user_id):
+    if not user_id:
+        return None
+    try:
+        opinador = resolve_opinador_agent()
+    except Exception as exc:
+        logger.warning("No s'ha pogut resoldre Opinador per registrar la cerca: %s", exc)
+        return None
+    message = build_peticio_registre_cerca(
+        {"user_id": user_id, "criteria": criteria, "products": products},
+        sender=AGENT.uri,
+        receiver=opinador.uri,
+        msgcnt=_msgcnt(),
+    )
+    try:
+        reply = MESSAGE_SENDER(message, opinador.address)
+    except Exception as exc:
+        logger.warning("No s'ha pogut registrar la cerca a Opinador: %s", exc)
+        return None
+    return parse_confirmacio_registre_cerca(reply)
 
 
 def pla_de_presentacio(criteria, products, purchase_error=""):
@@ -180,12 +220,7 @@ def browser_iface():
     )
     criteria = parse_peticio_cerca(request_graph, content)
     products = pla_de_cerca(criteria)
-    record_search(
-        SEARCH_HISTORY_PATH,
-        criteria,
-        products,
-        user_id=get_client_ip_from_request(request),
-    )
+    pla_registrar_cerca_a_opinador(criteria, products, get_client_ip_from_request(request))
     return pla_de_presentacio(criteria, products)
 
 
@@ -218,6 +253,9 @@ def comunicacion():
             if accion == AZON.AltaProducteExtern:
                 print("INFO AgenteCercador => Alta producte extern")
                 gr = pla_afegir_info_producte_extern_a_la_bd(gm, content, msgdic.get("sender"))
+            elif accion == AZON.PeticioConsultaProductes:
+                print("INFO AgenteCercador => Consulta de productes")
+                gr = pla_consulta_productes_acl(gm, content, msgdic.get("sender"))
             elif accion != AZON.PeticioCerca:
                 gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
                 print("INFO AgenteCercador => Accio no suportada")

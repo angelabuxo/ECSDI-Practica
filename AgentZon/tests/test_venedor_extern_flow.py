@@ -36,6 +36,103 @@ def _sample_seller():
 
 
 class VenedorExternFlowTests(unittest.TestCase):
+    def test_vendor_registration_writes_shipping_metadata_via_compra(self):
+        from AgentUtil.Agent import Agent
+        from AgentUtil.DSO import DSO
+        from agents import agent_cercador, agent_cobrador, agent_compra, agent_directory, agent_venedor_extern
+        from protocols.compra import parse_peticio_registre_producte_extern_compra
+        from protocols.directory import build_register_message
+        from protocols.venedor_extern import build_alta_producte_extern
+        from services.bootstrap import bootstrap_phase2_data
+
+        agn = Namespace("http://www.agentes.org#")
+        directory = Agent("DirectoryAgent", agn.Directory, "http://directory.test/Register", "http://directory.test/Stop")
+        compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
+        cercador = Agent("CercadorAgent", agn.Cercador, "http://cercador.test/comm", "http://cercador.test/Stop")
+        cobrador = Agent("CobradorAgent", agn.Cobrador, "http://cobrador.test/comm", "http://cobrador.test/Stop")
+        venedor = Agent("VenedorExternAgent", agn.VenedorExtern, "http://venedor.test/comm", "http://venedor.test/Stop")
+        router = LocalMessageRouter()
+        compra_messages = []
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            bootstrap_phase2_data(data_dir, product_count=10, seed=21)
+
+            agent_directory.configure_runtime({"agent": directory})
+            router.register_app(directory.address, agent_directory.app)
+            agent_cercador.configure_runtime({"agent": cercador, "directory_agent": directory, "data_dir": data_dir})
+            router.register_app(cercador.address, agent_cercador.app)
+            agent_cobrador.configure_runtime({"agent": cobrador, "directory_agent": directory, "data_dir": data_dir})
+            router.register_app(cobrador.address, agent_cobrador.app)
+            agent_compra.configure_runtime({"agent": compra, "directory_agent": directory, "data_dir": data_dir})
+            router.register_app(compra.address, agent_compra.app)
+
+            def venedor_sender(message, address):
+                if address == compra.address:
+                    compra_messages.append(parse_peticio_registre_producte_extern_compra(message))
+                if address in {directory.address, compra.address, cercador.address, cobrador.address}:
+                    return router.send_message(message, address)
+                raise AssertionError(f"Unexpected address {address}")
+
+            agent_venedor_extern.configure_runtime(
+                {"agent": venedor, "directory_agent": directory, "data_dir": data_dir},
+                message_sender=venedor_sender,
+            )
+            router.register_app(venedor.address, agent_venedor_extern.app)
+
+            for msgcnt, agent, agent_type in [
+                (1, compra, DSO.CompraAgent),
+                (2, cercador, DSO.CercadorAgent),
+                (3, cobrador, DSO.CobradorAgent),
+                (4, venedor, VENDOR_EXTERN_AGENT_TYPE),
+            ]:
+                register_graph = build_register_message(agent, agent_type, directory, msgcnt=msgcnt)
+                router.send_message(register_graph, directory.address)
+
+            alta = build_alta_producte_extern(_sample_product(product_id="P1030"), _sample_seller(), request_id="alta-compra", msgcnt=10)
+            router.send_message(alta, venedor.address)
+
+            self.assertEqual(compra_messages[0]["product_id"], "P1030")
+            self.assertTrue(compra_messages[0]["requires_external_logistics"])
+
+    def test_vendor_iface_reads_profile_via_cobrador_query(self):
+        from AgentUtil.Agent import Agent
+        from agents import agent_venedor_extern
+        from protocols.pagament import build_resultat_consulta_dades_venedor
+
+        agn = Namespace("http://www.agentes.org#")
+        directory = Agent("DirectoryAgent", agn.Directory, "http://directory.test/Register", "http://directory.test/Stop")
+        cobrador = Agent("CobradorAgent", agn.Cobrador, "http://cobrador.test/comm", "http://cobrador.test/Stop")
+        venedor = Agent("VenedorExternAgent", agn.VenedorExtern, "http://venedor.test/comm", "http://venedor.test/Stop")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            agent_venedor_extern.configure_runtime(
+                {"agent": venedor, "directory_agent": directory, "data_dir": data_dir}
+            )
+
+            previous_sender = agent_venedor_extern.MESSAGE_SENDER
+            previous_resolver = agent_venedor_extern.resolve_cobrador_agent
+            try:
+                agent_venedor_extern.MESSAGE_SENDER = lambda message, address: build_resultat_consulta_dades_venedor(
+                    {
+                        "seller_id": "10.0.0.1",
+                        "bank_data": "ES12 2100 1234 5678 9012",
+                        "seller_name": "Vendor",
+                    },
+                    sender=cobrador.uri,
+                    receiver=venedor.uri,
+                    msgcnt=2,
+                )
+                agent_venedor_extern.resolve_cobrador_agent = lambda: cobrador
+                with agent_venedor_extern.app.test_request_context("/iface"):
+                    html = agent_venedor_extern.render_iface_page("10.0.0.1")
+            finally:
+                agent_venedor_extern.MESSAGE_SENDER = previous_sender
+                agent_venedor_extern.resolve_cobrador_agent = previous_resolver
+
+            self.assertIn("Vendor", html)
+
     def test_protocol_roundtrip(self):
         from protocols.venedor_extern import (
             build_alta_producte_extern,
@@ -77,7 +174,7 @@ class VenedorExternFlowTests(unittest.TestCase):
     def test_registration_integration(self):
         from AgentUtil.Agent import Agent
         from AgentUtil.DSO import DSO
-        from agents import agent_cercador, agent_cobrador, agent_directory, agent_venedor_extern
+        from agents import agent_cercador, agent_cobrador, agent_compra, agent_directory, agent_venedor_extern
         from protocols.directory import build_register_message
         from protocols.venedor_extern import build_alta_producte_extern, parse_confirmacio_alta_producte_extern
         from services.bootstrap import bootstrap_phase2_data
@@ -88,6 +185,7 @@ class VenedorExternFlowTests(unittest.TestCase):
         directory = Agent("DirectoryAgent", agn.Directory, "http://directory.test/Register", "http://directory.test/Stop")
         cercador = Agent("CercadorAgent", agn.Cercador, "http://cercador.test/comm", "http://cercador.test/Stop")
         cobrador = Agent("CobradorAgent", agn.Cobrador, "http://cobrador.test/comm", "http://cobrador.test/Stop")
+        compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
         venedor = Agent("VenedorExternAgent", agn.VenedorExtern, "http://venedor.test/comm", "http://venedor.test/Stop")
 
         router = LocalMessageRouter()
@@ -107,9 +205,13 @@ class VenedorExternFlowTests(unittest.TestCase):
                 {"agent": cobrador, "directory_agent": directory, "data_dir": data_dir}
             )
             router.register_app(cobrador.address, agent_cobrador.app)
+            agent_compra.configure_runtime(
+                {"agent": compra, "directory_agent": directory, "data_dir": data_dir}
+            )
+            router.register_app(compra.address, agent_compra.app)
 
             def venedor_sender(message, address):
-                if address in {directory.address, cercador.address, cobrador.address}:
+                if address in {directory.address, compra.address, cercador.address, cobrador.address}:
                     return router.send_message(message, address)
                 raise AssertionError(f"Unexpected address {address}")
 
@@ -120,9 +222,10 @@ class VenedorExternFlowTests(unittest.TestCase):
             router.register_app(venedor.address, agent_venedor_extern.app)
 
             for msgcnt, agent, agent_type in [
-                (1, cercador, DSO.CercadorAgent),
-                (2, cobrador, DSO.CobradorAgent),
-                (3, venedor, VENDOR_EXTERN_AGENT_TYPE),
+                (1, compra, DSO.CompraAgent),
+                (2, cercador, DSO.CercadorAgent),
+                (3, cobrador, DSO.CobradorAgent),
+                (4, venedor, VENDOR_EXTERN_AGENT_TYPE),
             ]:
                 register_graph = build_register_message(agent, agent_type, directory, msgcnt=msgcnt)
                 router.send_message(register_graph, directory.address)
@@ -177,7 +280,7 @@ class VenedorExternFlowTests(unittest.TestCase):
             router.register_app(opinador.address, agent_opinador.app)
 
             def venedor_sender(message, address):
-                if address in {directory.address, cercador.address, cobrador.address}:
+                if address in {directory.address, compra.address, cercador.address, cobrador.address}:
                     return router.send_message(message, address)
                 raise AssertionError(f"Unexpected address {address}")
 
@@ -190,7 +293,7 @@ class VenedorExternFlowTests(unittest.TestCase):
             def compra_sender(message, address):
                 if address == venedor.address:
                     external_requests.append(address)
-                if address in {directory.address, opinador.address, cobrador.address, venedor.address}:
+                if address in {directory.address, cercador.address, opinador.address, cobrador.address, venedor.address}:
                     return router.send_message(message, address)
                 raise AssertionError(f"Unexpected address {address}")
 
@@ -275,7 +378,7 @@ class VenedorExternFlowTests(unittest.TestCase):
             router.register_app(opinador.address, agent_opinador.app)
 
             def venedor_sender(message, address):
-                if address in {directory.address, cercador.address, cobrador.address}:
+                if address in {directory.address, compra.address, cercador.address, cobrador.address}:
                     return router.send_message(message, address)
                 raise AssertionError(f"Unexpected address {address}")
 
@@ -306,7 +409,7 @@ class VenedorExternFlowTests(unittest.TestCase):
             def compra_sender(message, address):
                 if address == venedor.address:
                     external_requests.append(address)
-                if address in {directory.address, opinador.address, centre.address, cobrador.address, venedor.address}:
+                if address in {directory.address, cercador.address, opinador.address, centre.address, cobrador.address, venedor.address}:
                     return router.send_message(message, address)
                 raise AssertionError(f"Unexpected address {address}")
 
@@ -390,7 +493,7 @@ class VenedorExternFlowTests(unittest.TestCase):
             router.register_app(opinador.address, agent_opinador.app)
 
             def venedor_sender(message, address):
-                if address in {directory.address, cercador.address, cobrador.address}:
+                if address in {directory.address, compra.address, cercador.address, cobrador.address}:
                     return router.send_message(message, address)
                 raise AssertionError(f"Unexpected address {address}")
 
@@ -421,7 +524,7 @@ class VenedorExternFlowTests(unittest.TestCase):
             def compra_sender(message, address):
                 if address == venedor.address:
                     external_requests.append(address)
-                if address in {directory.address, opinador.address, centre.address, cobrador.address, venedor.address}:
+                if address in {directory.address, cercador.address, opinador.address, centre.address, cobrador.address, venedor.address}:
                     return router.send_message(message, address)
                 raise AssertionError(f"Unexpected address {address}")
 

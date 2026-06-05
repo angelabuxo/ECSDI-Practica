@@ -89,6 +89,35 @@ azon:product-P1001 a azon:Producte ;
     self.assertGreater(confirmation["amount"], 0.0)
     self.assertTrue(confirmation["payment_id"])
 
+  def test_internal_charge_uses_price_from_transport_message(self):
+    centre = Agent(
+      "CentreLogisticAgent",
+      AGN.CentreLogistic,
+      "http://centre.test/comm",
+      "http://centre.test/Stop",
+    )
+    message = build_peticio_cobrament_intern(
+      {
+        "localized_product_id": "ploc-test-2",
+        "lot_id": "LOT-2",
+        "order_id": "ORDER-2",
+        "user_id": "USER-2",
+        "city": "Barcelona",
+        "delivery_date": "2026-06-06",
+        "transport_cost": 4.5,
+        "product": {"product_id": "P1001", "name": "Teclat", "weight": 0.8, "price": 50.0},
+      },
+      sender=centre.uri,
+      receiver=agent_cobrador.AGENT.uri,
+      msgcnt=2,
+    )
+    response = self._post_comm(message)
+    response_graph = Graph()
+    response_graph.parse(data=response.data, format="xml")
+    confirmation = extract_confirmacio_pagament(response_graph)
+    self.assertEqual(confirmation["products_subtotal"], 50.0)
+    self.assertEqual(confirmation["amount"], 54.5)
+
   def test_external_payment_and_refund_return_ok(self):
     compra = Agent("CompraAgent", AGN.Compra, "http://compra.test/comm", "http://compra.test/Stop")
     retornador = Agent(

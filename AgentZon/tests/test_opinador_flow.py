@@ -12,9 +12,11 @@ from AgentUtil.OntoNamespaces import AZON
 from protocols.compra import build_peticio_registre_compra
 from protocols.opinador import (
     build_peticio_consulta_comanda,
+    build_peticio_consulta_compres_usuari,
     build_peticio_devolucio,
     parse_resolucio_devolucio,
     parse_resultat_consulta_comanda,
+    parse_resultat_consulta_compres_usuari,
 )
 from services.bootstrap import bootstrap_phase2_data
 from services.history_service import load_feedback_records, load_purchase_records, record_purchase
@@ -38,6 +40,215 @@ def _test_runtime_settings(agent, data_dir):
 
 
 class OpinadorFlowTests(unittest.TestCase):
+    def test_search_history_registration_persists_in_opinador(self):
+        from agents import agent_opinador
+        from protocols.opinador import build_peticio_registre_cerca
+        from services.history_service import load_search_records
+
+        agn = Namespace("http://www.agentes.org#")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            opinador = Agent(
+                "OpinadorAgent",
+                agn.Opinador,
+                "http://opinador.test/comm",
+                "http://opinador.test/Stop",
+            )
+            agent_opinador.configure_runtime(
+                {
+                    "agent": opinador,
+                    "directory_agent": None,
+                    "data_dir": data_dir,
+                    "proactive_enabled": False,
+                }
+            )
+            client = agent_opinador.app.test_client()
+
+            message = build_peticio_registre_cerca(
+                {
+                    "user_id": "USER-1",
+                    "criteria": {
+                        "text": "",
+                        "category": "periferics",
+                        "brand": "KeyCo",
+                        "min_price": None,
+                        "max_price": None,
+                    },
+                    "products": [
+                        {
+                            "product_id": "P1002",
+                            "name": "Ratoli",
+                            "category": "periferics",
+                            "brand": "KeyCo",
+                            "price": 20.0,
+                            "weight": 0.2,
+                        }
+                    ],
+                },
+                sender=agn.Cercador,
+                receiver=opinador.uri,
+                msgcnt=1,
+            )
+            client.get("/comm", query_string={"content": message.serialize(format="xml")})
+
+            stored = load_search_records(data_dir / "historial_cerques.ttl", user_id="USER-1")
+            self.assertEqual(stored[0]["criteria"]["brand"], "KeyCo")
+            self.assertEqual(stored[0]["product_ids"], ["P1002"])
+
+    def test_opinador_recommendations_use_owned_histories_and_remote_catalog(self):
+        from AgentUtil.ACL import ACL
+        from AgentUtil.ACLMessages import build_message
+        from AgentUtil.OntoNamespaces import ONTOLOGY_URI
+        from agents import agent_opinador
+        from protocols.cerca import build_resultat_cerca
+        from services.history_service import record_search
+
+        agn = Namespace("http://www.agentes.org#")
+        cercador = Agent(
+            "CercadorAgent",
+            agn.Cercador,
+            "http://cercador.test/comm",
+            "http://cercador.test/Stop",
+        )
+        opinador = Agent(
+            "OpinadorAgent",
+            agn.Opinador,
+            "http://opinador.test/comm",
+            "http://opinador.test/Stop",
+        )
+        calls = []
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            agent_opinador.configure_runtime(
+                {
+                    "agent": opinador,
+                    "data_dir": data_dir,
+                    "feedback_min_seconds": 0,
+                    "proactive_enabled": False,
+                }
+            )
+
+            record_search(
+                data_dir / "historial_cerques.ttl",
+                {
+                    "text": "",
+                    "category": "periferics",
+                    "brand": "KeyCo",
+                    "min_price": None,
+                    "max_price": None,
+                },
+                [{"product_id": "P1002"}],
+                user_id="USER-1",
+            )
+            record_purchase(
+                data_dir / "historial_compres.ttl",
+                {
+                    "order_id": "ORDER-1",
+                    "user_id": "USER-1",
+                    "user_name": "User",
+                    "purchase_date": "2026-06-01",
+                    "delivery_date": "2026-06-03",
+                    "shipping_data": {
+                        "user_id": "USER-1",
+                        "user_name": "User",
+                        "street_address": "Gran Via 1",
+                        "city": "Barcelona",
+                        "priority": "48h",
+                        "payment_method": "visa",
+                    },
+                    "products": [
+                        {
+                            "product_id": "P1001",
+                            "name": "Teclat",
+                            "category": "periferics",
+                            "brand": "KeyCo",
+                            "price": 50.0,
+                            "weight": 0.8,
+                        }
+                    ],
+                },
+            )
+
+            def fake_sender(message, address):
+                calls.append(address)
+                request_content = message.value(predicate=RDF.type, object=AZON.PeticioCerca)
+                payload, response_content = build_resultat_cerca(
+                    "catalog-result-1",
+                    [
+                        {
+                            "product_id": "P1001",
+                            "name": "Teclat",
+                            "description": "",
+                            "category": "periferics",
+                            "brand": "KeyCo",
+                            "price": 50.0,
+                            "weight": 0.8,
+                        },
+                        {
+                            "product_id": "P1002",
+                            "name": "Ratoli",
+                            "description": "",
+                            "category": "periferics",
+                            "brand": "KeyCo",
+                            "price": 20.0,
+                            "weight": 0.2,
+                        },
+                    ],
+                    request_content=request_content,
+                )
+                return build_message(
+                    payload,
+                    ACL.inform,
+                    sender=cercador.uri,
+                    receiver=opinador.uri,
+                    content=response_content,
+                    ontology=ONTOLOGY_URI,
+                    msgcnt=3,
+                )
+
+            previous_sender = agent_opinador.MESSAGE_SENDER
+            previous_resolver = agent_opinador.resolve_cercador_agent
+            try:
+                agent_opinador.MESSAGE_SENDER = fake_sender
+                agent_opinador.resolve_cercador_agent = lambda: cercador
+                recommendations = agent_opinador.pla_de_creacio_de_suggeriments("USER-1", limit=5)
+            finally:
+                agent_opinador.MESSAGE_SENDER = previous_sender
+                agent_opinador.resolve_cercador_agent = previous_resolver
+
+            self.assertEqual(calls, [cercador.address])
+            self.assertEqual(recommendations[0]["product_id"], "P1002")
+
+    def test_return_resolution_roundtrip_keeps_accepted_product_details(self):
+        from protocols.opinador import build_resolucio_devolucio, parse_resolucio_devolucio
+
+        message = build_resolucio_devolucio(
+            {
+                "return_id": "RET-1",
+                "order_id": "ORDER-1",
+                "user_id": "USER-1",
+                "amount": 50.0,
+                "accepted": True,
+                "reason": "OK",
+                "product_ids": ["P1001"],
+                "products": [
+                    {
+                        "product_id": "P1001",
+                        "name": "Teclat",
+                        "price": 50.0,
+                        "seller_id": "SELLER-1",
+                        "requires_external_logistics": True,
+                    }
+                ],
+            },
+            msgcnt=1,
+        )
+        parsed = parse_resolucio_devolucio(message)
+        self.assertEqual(parsed["products"][0]["price"], 50.0)
+        self.assertEqual(parsed["products"][0]["seller_id"], "SELLER-1")
+
     def test_generate_recommendations_excludes_already_purchased_products(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             data_dir = Path(tmpdir)
@@ -259,6 +470,72 @@ class OpinadorFlowTests(unittest.TestCase):
             self.assertEqual(parsed["purchase_date"], "2026-06-05")
             self.assertEqual(parsed["product_ids"], ["P1001"])
 
+    def test_opinador_returns_user_purchases_for_retornador_queries(self):
+        from agents import agent_opinador
+
+        agn = Namespace("http://www.agentes.org#")
+        opinador = Agent(
+            "OpinadorAgent",
+            agn.Opinador,
+            "http://opinador.test/comm",
+            "http://opinador.test/Stop",
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            bootstrap_phase2_data(data_dir, product_count=8, seed=21)
+
+            agent_opinador.configure_runtime(_test_runtime_settings(opinador, data_dir))
+            client = agent_opinador.app.test_client()
+
+            purchase_message = build_peticio_registre_compra(
+                {
+                    "order_id": "ORDER-R1",
+                    "user_id": "10.0.0.25",
+                    "user_name": "Retorns",
+                    "purchase_date": "2026-06-05",
+                    "delivery_date": "2026-06-08",
+                    "products": [
+                        {
+                            "product_id": "P1001",
+                            "name": "Teclat",
+                            "brand": "KeyCo",
+                            "price": 50.0,
+                            "seller_id": "SELLER-1",
+                            "requires_external_logistics": True,
+                        }
+                    ],
+                    "shipping_data": {
+                        "user_id": "10.0.0.25",
+                        "user_name": "Retorns",
+                        "street_address": "Gran Via 1",
+                        "city": "Barcelona",
+                        "priority": "48h",
+                        "payment_method": "visa",
+                    },
+                },
+                sender=agn.Compra,
+                receiver=opinador.uri,
+                msgcnt=1,
+            )
+            client.get("/comm", query_string={"content": purchase_message.serialize(format="xml")})
+
+            query_message = build_peticio_consulta_compres_usuari(
+                "10.0.0.25",
+                sender=agn.Retornador,
+                receiver=opinador.uri,
+                msgcnt=2,
+            )
+            query_response = client.get("/comm", query_string={"content": query_message.serialize(format="xml")})
+            response_graph = Graph()
+            response_graph.parse(data=query_response.get_data(as_text=True), format="xml")
+            purchases = parse_resultat_consulta_compres_usuari(response_graph)
+
+            self.assertEqual(len(purchases), 1)
+            self.assertEqual(purchases[0]["order_id"], "ORDER-R1")
+            self.assertEqual(purchases[0]["products"][0]["seller_id"], "SELLER-1")
+            self.assertTrue(purchases[0]["products"][0]["requires_external_logistics"])
+
     def test_opinador_dashboard_and_feedback_are_scoped_by_client_ip(self):
         from agents import agent_opinador
 
@@ -416,9 +693,19 @@ class OpinadorFlowTests(unittest.TestCase):
             self.assertTrue(is_feedback_eligible(old_date))
 
     def test_proactive_cycles_cache_recommendations_and_feedback_requests(self):
+        from AgentUtil.ACL import ACL
+        from AgentUtil.ACLMessages import build_message
+        from AgentUtil.OntoNamespaces import ONTOLOGY_URI
         from agents import agent_opinador
+        from protocols.cerca import build_resultat_cerca
 
         agn = Namespace("http://www.agentes.org#")
+        cercador = Agent(
+            "CercadorAgent",
+            agn.Cercador,
+            "http://cercador.test/comm",
+            "http://cercador.test/Stop",
+        )
         opinador = Agent(
             "OpinadorAgent",
             agn.Opinador,
@@ -466,10 +753,56 @@ class OpinadorFlowTests(unittest.TestCase):
                     "proactive_enabled": False,
                 }
             )
-            agent_opinador._run_proactive_recommendation_cycle()
-            agent_opinador._run_proactive_feedback_cycle()
+            catalog_products = [
+                {
+                    "product_id": products[0]["product_id"],
+                    "name": products[0]["name"],
+                    "description": products[0].get("description", ""),
+                    "category": products[0].get("category", ""),
+                    "brand": products[0].get("brand", ""),
+                    "price": products[0].get("price", 0.0),
+                    "weight": products[0].get("weight", 0.0),
+                },
+                {
+                    "product_id": products[1]["product_id"],
+                    "name": products[1]["name"],
+                    "description": products[1].get("description", ""),
+                    "category": products[1].get("category", ""),
+                    "brand": products[1].get("brand", ""),
+                    "price": products[1].get("price", 0.0),
+                    "weight": products[1].get("weight", 0.0),
+                },
+            ]
 
-            recommendations = agent_opinador._get_proactive_recommendations(user_id, limit=5)
+            def fake_sender(message, address):
+                request_content = message.value(predicate=RDF.type, object=AZON.PeticioCerca)
+                payload, response_content = build_resultat_cerca(
+                    "catalog-result-proactive",
+                    catalog_products,
+                    request_content=request_content,
+                )
+                return build_message(
+                    payload,
+                    ACL.inform,
+                    sender=cercador.uri,
+                    receiver=opinador.uri,
+                    content=response_content,
+                    ontology=ONTOLOGY_URI,
+                    msgcnt=3,
+                )
+
+            previous_sender = agent_opinador.MESSAGE_SENDER
+            previous_resolver = agent_opinador.resolve_cercador_agent
+            try:
+                agent_opinador.MESSAGE_SENDER = fake_sender
+                agent_opinador.resolve_cercador_agent = lambda: cercador
+                agent_opinador._run_proactive_recommendation_cycle()
+                agent_opinador._run_proactive_feedback_cycle()
+                recommendations = agent_opinador._get_proactive_recommendations(user_id, limit=5)
+            finally:
+                agent_opinador.MESSAGE_SENDER = previous_sender
+                agent_opinador.resolve_cercador_agent = previous_resolver
+
             self.assertTrue(recommendations)
 
             feedback_requests = agent_opinador._get_proactive_feedback_requests(user_id)

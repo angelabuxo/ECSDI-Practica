@@ -39,16 +39,18 @@ from protocols.pagament import (
     SENTIT_PAGAMENT,
     build_confirmacio_pagament,
     build_confirmacio_registre_dades,
+    build_resultat_consulta_dades_venedor,
     build_confirmacio_retorn_diners,
+    parse_peticio_consulta_dades_venedor,
     parse_peticio_cobrament_intern,
     parse_peticio_pagament,
     parse_peticio_registre_dades_usuari,
     parse_peticio_registre_dades_venedor,
     parse_peticio_retorn_diners,
 )
-from services.catalog_service import get_products_by_ids
 from services.payment_service import (
     record_payment,
+    read_seller_bank_data,
     save_seller_bank_data,
     save_user_bank_data,
 )
@@ -78,7 +80,7 @@ def configure_runtime(settings, message_sender=send_message):
     DirectoryAgent = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
     data_dir = Path(settings["data_dir"])
-    CATALOG_PATH = data_dir / "productes.ttl"
+    CATALOG_PATH = None
     USER_BANK_PATH = data_dir / "dades_bancaries_usuari.ttl"
     SELLER_BANK_PATH = data_dir / "dades_bancaries_venedors_externs.ttl"
     PAYMENTS_PATH = data_dir / "pagaments.ttl"
@@ -87,11 +89,6 @@ def configure_runtime(settings, message_sender=send_message):
 
 def _payment_date():
     return date.today().isoformat()
-
-
-def calcular_import(product_ids):
-    products = get_products_by_ids(CATALOG_PATH, product_ids)
-    return round(sum(product.get("price", 0.0) for product in products), 2)
 
 
 def _confirm_payment(payment, sender, request_content):
@@ -149,11 +146,26 @@ def pla_registrar_dades_venedor(gm, content, sender):
     )
 
 
+def pla_consulta_dades_venedor(gm, content, sender):
+    seller_id = parse_peticio_consulta_dades_venedor(gm)
+    profile = read_seller_bank_data(SELLER_BANK_PATH, seller_id) or {
+        "seller_id": seller_id,
+        "bank_data": "",
+        "seller_name": "",
+    }
+    return build_resultat_consulta_dades_venedor(
+        profile,
+        sender=AGENT.uri,
+        receiver=sender,
+        request_content=content,
+        msgcnt=mss_cnt,
+    )
+
+
 def pla_cobrament_intern(gm, content, sender):
     shipment = parse_peticio_cobrament_intern(gm, content)
-    product = shipment.get("product") or {}
-    product_id = product.get("product_id")
-    product_ids = [product_id] if product_id else []
+    products = [shipment["product"]] if shipment.get("product") else []
+    product_ids = sorted(product["product_id"] for product in products if product.get("product_id"))
     logger.info(
         "Processant cobrament intern comanda %s lot %s ploc %s (%d producte(s))",
         shipment.get("order_id"),
@@ -161,8 +173,7 @@ def pla_cobrament_intern(gm, content, sender):
         shipment.get("localized_product_id"),
         len(product_ids),
     )
-    products = get_products_by_ids(CATALOG_PATH, product_ids)
-    products_subtotal = calcular_import(product_ids)
+    products_subtotal = round(sum(float(product.get("price", 0.0)) for product in products), 2)
     amount = round(products_subtotal + shipment["transport_cost"], 2)
     payment = {
         "payment_id": f"PAY-{uuid4().hex[:8].upper()}",
@@ -232,6 +243,7 @@ def pla_retornar_diners(gm, content, sender):
 PLANS = {
     AZON.PeticioRegistreDadesBancariesUsuari: pla_registrar_dades_usuari,
     AZON.PeticioRegistreDadesBancariesVenedor: pla_registrar_dades_venedor,
+    AZON.PeticioConsultaDadesBancariesVenedor: pla_consulta_dades_venedor,
     AZON.ConfirmacioEnviament: pla_cobrament_intern,
     AZON.PeticioPagament: pla_cobrament_extern,
     AZON.PeticioRetornDiners: pla_retornar_diners,

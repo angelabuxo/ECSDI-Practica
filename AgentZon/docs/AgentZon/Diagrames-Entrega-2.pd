@@ -234,7 +234,7 @@ Aquesta plataforma no només gestiona la interacció directa amb l'usuari, sinó
 																	    <field name="name">Cp. Afegir producte exter</field>
 																	    <field name="description">L’agent Venedor extern té una capacitat.
 Afegir producte extern es basa en quatre plans.
-Pla afegir producte extern a la BD. S’activa quan rep la percepció nou producte extern. Aleshores, amb les dades rebudes, per una banda emmagatzema la informació pertinent a les dues bases de dades, Responsable enviament productes i Ubicacions productes. Un cop acabat, envia un missatge de confirmació al Pla comunicar nou producte afegit.
+Pla afegir producte extern a la BD. S’activa quan rep la percepció nou producte extern. Aleshores, amb les dades rebudes, delega a l’Agent Compra l’emmagatzematge de la informació pertinent a Responsable enviament productes i Ubicacions productes. Un cop acabat, envia un missatge de confirmació al Pla comunicar nou producte afegit.
 Pla afegir info producte extern. S’activa quan rep la percepció nou producte extern. Envia les dades rebudes a l’Agent Cercador per emmagatzemar-les i en rep confirmació. Un cop acabat, envia un missatge de confirmació al Pla comunicar nou producte afegit.
 Pla delegar afegir dades bancaries del venedor extern. S’activa quan rep la percepció nou producte extern. Aleshores envia les dades bancàries a l’Agent Cobrador per que les emmagatzem, i rep confirmació d’aquest. Un cop acabat això, envia un missatge de confirmació al Pla comunicar nou producte afegit.
 Pla comunicar nou producte afegit. S’activa al rebre els tres missatges de confirmació. Envia la confirmació del producte registrat correctament al Venedor extern.
@@ -1485,8 +1485,8 @@ Pla registrar feedback. S’activa en rebre la resposta de l’usuari i emmagatz
 																																<base type="Entity">
 																																    <field name="name">Cp. Gestionar consultes BD</field>
 																																    <field name="description">Per últim, la capacitat Gestionar consultes BD es basa en dos plans.
-Pla Registre de compra. S’activa quan l’Agent Cobrador informa d'una compra realitzada per tal d'incorporar-la a l’historial de compres. S’emmagatzema a la BD d’Historial de compres i s’envia confirmació.
-Pla Consulta de criteris de devolució. S’activa quan l’Agent Retornador fa una petició. L’agent llegeix l’historial de compres per verificar si es compleixen els criteris i envia la resposta corresponent.
+Pla Registre de compra. S’activa quan l’Agent Compra informa d'una compra realitzada per tal d'incorporar-la a l’historial de compres. S’emmagatzema a la BD d’Historial de compres i s’envia confirmació.
+Pla Consulta de criteris de devolució. S’activa quan l’Agent Retornador fa una petició. L’agent consulta el seu historial de compres propi per verificar si es compleixen els criteris i envia la resposta corresponent. Aquesta mateixa capacitat també respon consultes de compres d’usuari i registres de cerca provinents d’altres agents.
 </field>
 																																    <field name="uniqueId">971</field>
 																																</base>
@@ -1638,7 +1638,7 @@ Pla demanar informació usuari. S’inicia amb la recepció de la petició de co
 																																						<base type="Entity">
 																																						    <field name="name">Cp. Localitzar productes</field>
 																																						    <field name="description">En tercer lloc, la capacitat Localitzar productes es basa en 4 plans.
-Pla enviament extern. S’inicia amb el missatge per part de la capacitat Gestionar compra. Consulta la base de dades de Responsable enviament productes i, en cas de ser extern, es comunica al Venedor extern i a l’Agent Cobrador per a que cobri aquell producte extern a l’usuari.
+Pla enviament extern. S’inicia amb el missatge per part de la capacitat Gestionar compra. Consulta la base de dades pròpia de Responsable enviament productes i, en cas de ser extern, es comunica al Venedor extern i a l’Agent Cobrador per a que cobri aquell producte extern a l’usuari.
 Pla producte als nostres magatzems. S’inicia amb el missatge per part de la capacitat Gestionar compra. Consult les bases de dades de Ubicacions productes i Dades d’enviament usuari i envia un missatge a cada Agent Centre Logístic que pertoca per que gestionin l’enviament.
 Pla informar usuari sobre l’enviament. S’inicia al rebre els missatges per part dels Agents Centre Logístics de la Data d’entrega definitiva i el transportista escollit. Aleshores, informa a l’Usuari.</field>
 																																						    <field name="uniqueId">932</field>
@@ -2557,7 +2557,7 @@ finish</field>
 																																																																			<base type="Entity">
 																																																																			    <field name="name">Cp. Retornar diners devolució</field>
 																																																																			    <field name="description">En tercer cas, la capacitat Gestionar Devolucions es basa en un sol pla.
-Pla retornar diners. S’activa en rebre un missatge de l’Agent Retornador amb les instruccions per fer el cobrament d’una devolució. L’agent llegeix les dades de l’usuari per procedir al retorn dels diners i envia un missatge de confirmació de devolució realitzada a l’Agent Retornador. En cas de ser un producte extern, llegeix les dades dels Venedors externs per a gestionar-ho.</field>
+Pla retornar diners. S’activa en rebre un missatge de l’Agent Retornador amb les instruccions per fer el cobrament d’una devolució. L’agent consulta exclusivament les seves pròpies dades bancàries d’usuaris i venedors per procedir al retorn dels diners i envia un missatge de confirmació de devolució realitzada a l’Agent Retornador.</field>
 																																																																			    <field name="uniqueId">831</field>
 																																																																			</base>
 
@@ -2619,7 +2619,7 @@ Pla retornar diners. S’activa en rebre un missatge de l’Agent Retornador amb
 																																																																									<base type="Entity">
 																																																																									    <field name="name">Cp. Validar devolució</field>
 																																																																									    <field name="description">En primer cas, Validar devolució. Aquesta capacitat es basa en un sol pla.
-Pla de compliment de devolució. S'inicia amb la petició de devolució de l'usuari. Es comunica amb l’Agent Opinador per verificar si la comanda compleix els requisits de devolució. Amb la resposta rebuda, l'agent executa la resposta final enviant a l’usuari l’acceptació o denegació de la seva sol·licitud. A més, si ha sigut acceptada, ho comunica a la capacitat Gestionar retorn de diners.
+Pla de compliment de devolució. S'inicia amb la petició de devolució de l'usuari. Es comunica amb l’Agent Opinador per verificar si la comanda compleix els requisits de devolució i per recuperar els snapshots dels productes comprats. Amb la resposta rebuda, l'agent executa la resposta final enviant a l’usuari l’acceptació o denegació de la seva sol·licitud. A més, si ha sigut acceptada, ho comunica a la capacitat Gestionar retorn de diners.
 </field>
 																																																																									    <field name="uniqueId">861</field>
 																																																																									</base>

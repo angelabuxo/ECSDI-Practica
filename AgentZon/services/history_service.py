@@ -81,7 +81,6 @@ def load_purchase_records(path, user_id=None):
         record_user_id = order["user_id"]
         if user_id is not None and record_user_id != user_id:
             continue
-        products = [{"product_id": product_id} for product_id in order["product_ids"]]
         records.append(
             {
                 "order_id": order["order_id"],
@@ -91,8 +90,8 @@ def load_purchase_records(path, user_id=None):
                 "delivery_date": order["delivery_date"],
                 "final_delivery_date": order.get("final_delivery_date"),
                 "shipping_data": order["shipping_data"],
-                "product_ids": sorted(product["product_id"] for product in products),
-                "products": products,
+                "product_ids": sorted(order["product_ids"]),
+                "products": list(order.get("products", [])),
             }
         )
     records.sort(key=lambda record: (record.get("purchase_date") or "", record["order_id"]))

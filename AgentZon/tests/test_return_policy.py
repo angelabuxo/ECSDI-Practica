@@ -5,9 +5,11 @@ import unittest
 from datetime import date, timedelta
 from pathlib import Path
 
+from AgentUtil.Agent import Agent
+from rdflib import Graph, Namespace
+
 from services.history_service import record_purchase
 from protocols.opinador import build_resolucio_devolucio, parse_resolucio_devolucio
-from rdflib import Graph
 
 from services.opinador_service import evaluate_multi_order_return, evaluate_return_request
 from services.retornador_service import (
@@ -57,6 +59,100 @@ azon:product-P1 a azon:Producte ;
 
     def tearDown(self):
         self.tmpdir.cleanup()
+
+    def test_retornador_fetches_user_purchases_via_opinador_protocol(self):
+        from agents import agent_retornador
+        from protocols.opinador import build_resultat_consulta_compres_usuari
+
+        agn = Namespace("http://www.agentes.org#")
+        retornador = Agent(
+            "RetornadorAgent",
+            agn.Retornador,
+            "http://retornador.test/comm",
+            "http://retornador.test/Stop",
+        )
+        opinador = Agent(
+            "OpinadorAgent",
+            agn.Opinador,
+            "http://opinador.test/comm",
+            "http://opinador.test/Stop",
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            agent_retornador.configure_runtime(
+                {
+                    "agent": retornador,
+                    "directory_agent": Agent(
+                        "DirectoryAgent",
+                        agn.Directory,
+                        "http://directory.test/Register",
+                        "http://directory.test/Stop",
+                    ),
+                    "data_dir": data_dir,
+                }
+            )
+
+            def fake_sender(message, address):
+                self.assertEqual(address, opinador.address)
+                return build_resultat_consulta_compres_usuari(
+                    "10.0.0.1",
+                    [
+                        {
+                            "order_id": "ORDER-1",
+                            "products": [
+                                {
+                                    "product_id": "P1001",
+                                    "name": "Teclat",
+                                    "brand": "KeyCo",
+                                    "price": 50.0,
+                                    "seller_id": "SELLER-1",
+                                    "requires_external_logistics": True,
+                                }
+                            ],
+                            "shipping_data": {"city": "Barcelona"},
+                        }
+                    ],
+                    sender=opinador.uri,
+                    receiver=retornador.uri,
+                    msgcnt=1,
+                )
+
+            previous_sender = agent_retornador.MESSAGE_SENDER
+            previous_resolver = agent_retornador.resolve_opinador_agent
+            try:
+                agent_retornador.MESSAGE_SENDER = fake_sender
+                agent_retornador.resolve_opinador_agent = lambda: opinador
+                purchased = agent_retornador._load_purchased_products_for_iface("10.0.0.1")
+            finally:
+                agent_retornador.MESSAGE_SENDER = previous_sender
+                agent_retornador.resolve_opinador_agent = previous_resolver
+
+            self.assertEqual(purchased[0]["name"], "Teclat")
+            self.assertEqual(purchased[0]["brand"], "KeyCo")
+
+    def test_build_refund_batches_uses_snapshot_metadata_without_foreign_paths(self):
+        from services.retornador_service import build_refund_batches_from_products
+
+        batches = build_refund_batches_from_products(
+            [
+                {
+                    "product_id": "P1001",
+                    "price": 50.0,
+                    "seller_id": "",
+                    "requires_external_logistics": False,
+                },
+                {
+                    "product_id": "P1030",
+                    "price": 79.99,
+                    "seller_id": "SELLER-1",
+                    "requires_external_logistics": True,
+                },
+            ]
+        )
+        self.assertEqual(len(batches), 2)
+        self.assertEqual(batches[0]["amount"], 50.0)
+        self.assertEqual(batches[1]["seller_id"], "SELLER-1")
 
     def test_accepted_when_within_15_days_and_valid_reason(self):
         decision = evaluate_return_request(

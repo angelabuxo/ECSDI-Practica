@@ -10,6 +10,114 @@ from tests.support import LocalMessageRouter, load_catalog_products
 
 
 class PurchaseFlowTests(unittest.TestCase):
+    def test_compra_fetches_selected_products_via_cercador_protocol(self):
+        from AgentUtil.Agent import Agent
+        from AgentUtil.DSO import DSO
+        from agents import agent_cercador, agent_compra, agent_directory, agent_opinador
+        from protocols.directory import build_register_message
+        from services.bootstrap import bootstrap_phase2_data
+
+        agn = Namespace("http://www.agentes.org#")
+        directory = Agent("DirectoryAgent", agn.Directory, "http://directory.test/Register", "http://directory.test/Stop")
+        compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
+        cercador = Agent("CercadorAgent", agn.Cercador, "http://cercador.test/comm", "http://cercador.test/Stop")
+        opinador = Agent("OpinadorAgent", agn.Opinador, "http://opinador.test/comm", "http://opinador.test/Stop")
+        router = LocalMessageRouter()
+        lookup_calls = []
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            bootstrap_phase2_data(data_dir, product_count=4, seed=21)
+            sample_product = load_catalog_products(data_dir / "productes.ttl")[0]
+
+            agent_directory.configure_runtime({"agent": directory})
+            router.register_app(directory.address, agent_directory.app)
+            agent_opinador.configure_runtime({"agent": opinador, "data_dir": data_dir, "proactive_enabled": False})
+            router.register_app(opinador.address, agent_opinador.app)
+
+            def compra_sender(message, address):
+                if address == cercador.address:
+                    lookup_calls.append(address)
+                return router.send_message(message, address)
+
+            agent_cercador.configure_runtime({"agent": cercador, "directory_agent": directory, "data_dir": data_dir})
+            router.register_app(cercador.address, agent_cercador.app)
+            agent_compra.configure_runtime(
+                {"agent": compra, "directory_agent": directory, "data_dir": data_dir},
+                message_sender=compra_sender,
+            )
+            router.register_app(compra.address, agent_compra.app)
+
+            for msgcnt, agent, agent_type in [
+                (1, compra, DSO.CompraAgent),
+                (2, cercador, DSO.CercadorAgent),
+                (3, opinador, DSO.OpinadorAgent),
+            ]:
+                router.send_message(build_register_message(agent, agent_type, directory, msgcnt=msgcnt), directory.address)
+
+            original_warehouse_plan = agent_compra.pla_producte_als_nostres_magatzems
+            agent_compra.pla_producte_als_nostres_magatzems = lambda order: []
+            try:
+                _, order, _ = agent_compra.process_purchase_request(
+                    {
+                        "user_id": "USER-1",
+                        "payment_method": "visa",
+                        "shipping_data": {
+                            "user_name": "Pol",
+                            "street_address": "Gran Via 1",
+                            "city": "Barcelona",
+                            "priority": "48h",
+                        },
+                        "product_ids": [sample_product["product_id"]],
+                    },
+                    acl_sender=compra.uri,
+                )
+            finally:
+                agent_compra.pla_producte_als_nostres_magatzems = original_warehouse_plan
+
+            self.assertEqual(lookup_calls, [cercador.address])
+            self.assertEqual(order["products"][0]["name"], sample_product["name"])
+            self.assertIn("price", order["products"][0])
+
+    def test_order_service_persists_full_product_snapshot(self):
+        from services.order_service import load_order, save_order
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            orders_path = Path(tmpdir) / "historial_compres.ttl"
+            save_order(
+                orders_path,
+                {
+                    "order_id": "ORDER-1",
+                    "user_id": "USER-1",
+                    "user_name": "Pol",
+                    "products": [
+                        {
+                            "product_id": "P1001",
+                            "name": "Teclat",
+                            "category": "periferics",
+                            "brand": "KeyCo",
+                            "price": 50.0,
+                            "weight": 0.8,
+                            "seller_id": "SELLER-1",
+                            "requires_external_logistics": True,
+                        }
+                    ],
+                    "shipping_data": {
+                        "user_id": "USER-1",
+                        "user_name": "Pol",
+                        "street_address": "Gran Via 1",
+                        "city": "Barcelona",
+                        "priority": "48h",
+                        "payment_method": "visa",
+                    },
+                    "delivery_date": "2026-06-07",
+                },
+            )
+            stored = load_order(orders_path, "ORDER-1")
+            self.assertEqual(stored["products"][0]["name"], "Teclat")
+            self.assertEqual(stored["products"][0]["seller_id"], "SELLER-1")
+            self.assertTrue(stored["products"][0]["requires_external_logistics"])
+
     def test_choose_logistics_centre_prefers_exact_match_then_centre_id_tiebreak(self):
         from services.logistics_routing_service import choose_logistics_centre_for_product
 
@@ -47,7 +155,7 @@ class PurchaseFlowTests(unittest.TestCase):
         from AgentUtil.Agent import Agent
         from AgentUtil.DSO import DSO
         from AgentUtil.OntoNamespaces import AZON
-        from agents import agent_compra, agent_directory, agent_opinador
+        from agents import agent_cercador, agent_compra, agent_directory, agent_opinador
         from protocols.centre_logistic import build_confirmacio_localitzacio, parse_productes_localitzats
         from protocols.compra import build_peticio_compra, extract_resultat_compra
         from protocols.directory import build_register_message
@@ -56,6 +164,7 @@ class PurchaseFlowTests(unittest.TestCase):
         agn = Namespace("http://www.agentes.org#")
         directory = Agent("DirectoryAgent", agn.Directory, "http://directory.test/Register", "http://directory.test/Stop")
         compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
+        cercador = Agent("CercadorAgent", agn.Cercador, "http://cercador.test/comm", "http://cercador.test/Stop")
         opinador = Agent("OpinadorAgent", agn.Opinador, "http://opinador.test/comm", "http://opinador.test/Stop")
         centre_bcn = Agent(
             "CentreLogisticAgent-CL-BCN",
@@ -76,6 +185,8 @@ class PurchaseFlowTests(unittest.TestCase):
             router.register_app(directory.address, agent_directory.app)
             agent_opinador.configure_runtime({"agent": opinador, "data_dir": data_dir})
             router.register_app(opinador.address, agent_opinador.app)
+            agent_cercador.configure_runtime({"agent": cercador, "directory_agent": directory, "data_dir": data_dir})
+            router.register_app(cercador.address, agent_cercador.app)
 
             def fake_send_message(message, address):
                 if address == centre_bcn.address:
@@ -98,7 +209,7 @@ class PurchaseFlowTests(unittest.TestCase):
                         request_content=content,
                         msgcnt=40,
                     )
-                if address in {directory.address, opinador.address}:
+                if address in {directory.address, opinador.address, cercador.address}:
                     return router.send_message(message, address)
                 raise AssertionError(f"Unexpected address {address}")
 
@@ -111,6 +222,7 @@ class PurchaseFlowTests(unittest.TestCase):
             for msgcnt, agent, agent_type, metadata in [
                 (1, centre_bcn, DSO.CentreLogisticAgent, {AZON.IdCentreLogistic: "CL-BCN", AZON.Ciutat: "Barcelona"}),
                 (2, opinador, DSO.OpinadorAgent, None),
+                (3, cercador, DSO.CercadorAgent, None),
             ]:
                 register_graph = build_register_message(agent, agent_type, directory, msgcnt=msgcnt, metadata=metadata)
                 router.send_message(register_graph, directory.address)
@@ -143,7 +255,7 @@ class PurchaseFlowTests(unittest.TestCase):
         from AgentUtil.ACLMessages import build_message, get_message_properties
         from AgentUtil.DSO import DSO
         from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI
-        from agents import agent_centre_logistic, agent_compra, agent_directory, agent_opinador
+        from agents import agent_centre_logistic, agent_cercador, agent_compra, agent_directory, agent_opinador
         from protocols.centre_logistic import build_resposta_oferta_transport
         from protocols.compra import build_peticio_compra, extract_resultat_compra
         from protocols.directory import build_register_message
@@ -152,6 +264,7 @@ class PurchaseFlowTests(unittest.TestCase):
         agn = Namespace("http://www.agentes.org#")
         directory = Agent("DirectoryAgent", agn.Directory, "http://directory.test/Register", "http://directory.test/Stop")
         compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
+        cercador = Agent("CercadorAgent", agn.Cercador, "http://cercador.test/comm", "http://cercador.test/Stop")
         centre = Agent("CentreLogisticAgent", agn.CentreLogistic, "http://centre.test/comm", "http://centre.test/Stop")
         opinador = Agent("OpinadorAgent", agn.Opinador, "http://opinador.test/comm", "http://opinador.test/Stop")
         transport_fast = Agent("TransportFast", agn.TransportFast, "http://transport-fast.test/comm", "http://transport-fast.test/Stop")
@@ -168,6 +281,8 @@ class PurchaseFlowTests(unittest.TestCase):
             router.register_app(directory.address, agent_directory.app)
             agent_opinador.configure_runtime({"agent": opinador, "data_dir": data_dir})
             router.register_app(opinador.address, agent_opinador.app)
+            agent_cercador.configure_runtime({"agent": cercador, "directory_agent": directory, "data_dir": data_dir})
+            router.register_app(cercador.address, agent_cercador.app)
 
             def centre_sender(message, address):
                 if address == directory.address:
@@ -220,7 +335,7 @@ class PurchaseFlowTests(unittest.TestCase):
             router.register_app(centre.address, agent_centre_logistic.app)
 
             def compra_sender(message, address):
-                if address in {directory.address, opinador.address, centre.address}:
+                if address in {directory.address, opinador.address, centre.address, cercador.address}:
                     return router.send_message(message, address)
                 raise AssertionError(f"Unexpected address {address}")
 
@@ -234,6 +349,7 @@ class PurchaseFlowTests(unittest.TestCase):
                 (1, compra, DSO.CompraAgent, None),
                 (2, centre, DSO.CentreLogisticAgent, {AZON.IdCentreLogistic: "CL-BCN", AZON.Ciutat: "Barcelona"}),
                 (3, opinador, DSO.OpinadorAgent, None),
+                (4, cercador, DSO.CercadorAgent, None),
             ]:
                 register_graph = build_register_message(agent, agent_type, directory, msgcnt=msgcnt, metadata=metadata)
                 router.send_message(register_graph, directory.address)
@@ -273,7 +389,7 @@ class PurchaseFlowTests(unittest.TestCase):
         from AgentUtil.Agent import Agent
         from AgentUtil.DSO import DSO
         from AgentUtil.OntoNamespaces import AZON, bind_namespaces
-        from agents import agent_compra, agent_directory, agent_opinador
+        from agents import agent_cercador, agent_compra, agent_directory, agent_opinador
         from protocols.centre_logistic import build_confirmacio_localitzacio, parse_productes_localitzats
         from protocols.compra import build_peticio_compra, extract_resultat_compra
         from protocols.directory import build_register_message
@@ -283,6 +399,7 @@ class PurchaseFlowTests(unittest.TestCase):
         agn = Namespace("http://www.agentes.org#")
         directory = Agent("DirectoryAgent", agn.Directory, "http://directory.test/Register", "http://directory.test/Stop")
         compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
+        cercador = Agent("CercadorAgent", agn.Cercador, "http://cercador.test/comm", "http://cercador.test/Stop")
         opinador = Agent("OpinadorAgent", agn.Opinador, "http://opinador.test/comm", "http://opinador.test/Stop")
         centre_bcn = Agent(
             "CentreLogisticAgent-CL-BCN",
@@ -322,6 +439,8 @@ class PurchaseFlowTests(unittest.TestCase):
             router.register_app(directory.address, agent_directory.app)
             agent_opinador.configure_runtime({"agent": opinador, "data_dir": data_dir})
             router.register_app(opinador.address, agent_opinador.app)
+            agent_cercador.configure_runtime({"agent": cercador, "directory_agent": directory, "data_dir": data_dir})
+            router.register_app(cercador.address, agent_cercador.app)
 
             def fake_send_message(message, address):
                 if address in {centre_bcn.address, centre_gi.address}:
@@ -343,7 +462,7 @@ class PurchaseFlowTests(unittest.TestCase):
                         request_content=content,
                         msgcnt=60,
                     )
-                if address in {directory.address, opinador.address}:
+                if address in {directory.address, opinador.address, cercador.address}:
                     return router.send_message(message, address)
                 raise AssertionError(f"Unexpected address {address}")
 
@@ -367,6 +486,8 @@ class PurchaseFlowTests(unittest.TestCase):
                 router.send_message(register_graph, directory.address)
 
             register_graph = build_register_message(opinador, DSO.OpinadorAgent, directory, msgcnt=50)
+            router.send_message(register_graph, directory.address)
+            register_graph = build_register_message(cercador, DSO.CercadorAgent, directory, msgcnt=51)
             router.send_message(register_graph, directory.address)
 
             purchase_message = build_peticio_compra(
@@ -399,7 +520,7 @@ class PurchaseFlowTests(unittest.TestCase):
         from AgentUtil.Agent import Agent
         from AgentUtil.DSO import DSO
         from AgentUtil.OntoNamespaces import AZON, bind_namespaces
-        from agents import agent_compra, agent_directory, agent_opinador
+        from agents import agent_cercador, agent_compra, agent_directory, agent_opinador
         from protocols.centre_logistic import build_confirmacio_localitzacio, parse_productes_localitzats
         from protocols.compra import build_peticio_compra, extract_resultat_compra
         from protocols.directory import build_register_message
@@ -409,6 +530,7 @@ class PurchaseFlowTests(unittest.TestCase):
         agn = Namespace("http://www.agentes.org#")
         directory = Agent("DirectoryAgent", agn.Directory, "http://directory.test/Register", "http://directory.test/Stop")
         compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
+        cercador = Agent("CercadorAgent", agn.Cercador, "http://cercador.test/comm", "http://cercador.test/Stop")
         opinador = Agent("OpinadorAgent", agn.Opinador, "http://opinador.test/comm", "http://opinador.test/Stop")
         centre_bcn = Agent(
             "CentreLogisticAgent-CL-BCN",
@@ -439,6 +561,8 @@ class PurchaseFlowTests(unittest.TestCase):
             router.register_app(directory.address, agent_directory.app)
             agent_opinador.configure_runtime({"agent": opinador, "data_dir": data_dir})
             router.register_app(opinador.address, agent_opinador.app)
+            agent_cercador.configure_runtime({"agent": cercador, "directory_agent": directory, "data_dir": data_dir})
+            router.register_app(cercador.address, agent_cercador.app)
 
             def fake_send_message(message, address):
                 if address == centre_bcn.address:
@@ -460,7 +584,7 @@ class PurchaseFlowTests(unittest.TestCase):
                         request_content=content,
                         msgcnt=60,
                     )
-                if address in {directory.address, opinador.address}:
+                if address in {directory.address, opinador.address, cercador.address}:
                     return router.send_message(message, address)
                 raise AssertionError(f"Unexpected address {address}")
 
@@ -473,6 +597,7 @@ class PurchaseFlowTests(unittest.TestCase):
             for msgcnt, agent, agent_type, metadata in [
                 (1, centre_bcn, DSO.CentreLogisticAgent, {AZON.IdCentreLogistic: "CL-BCN", AZON.Ciutat: "Barcelona"}),
                 (2, opinador, DSO.OpinadorAgent, None),
+                (3, cercador, DSO.CercadorAgent, None),
             ]:
                 register_graph = build_register_message(agent, agent_type, directory, msgcnt=msgcnt, metadata=metadata)
                 router.send_message(register_graph, directory.address)
@@ -571,42 +696,48 @@ class PurchaseFlowTests(unittest.TestCase):
             self.assertEqual(tracking_entries[0]["official_delivery_date"], "2026-06-04")
             self.assertEqual(tracking_entries[0]["status"], "ASSIGNAT")
 
-    def test_bank_registration_skipped_when_user_already_in_database(self):
+    def test_bank_registration_is_delegated_without_local_lookup(self):
         from AgentUtil.Agent import Agent
-        from agents import agent_compra, agent_directory
-        from services.payment_service import save_user_bank_data
+        from agents import agent_compra
+        from protocols.pagament import build_confirmacio_registre_dades
 
         with tempfile.TemporaryDirectory() as tmp:
             data_dir = Path(tmp)
-            save_user_bank_data(
-                data_dir / "dades_bancaries_usuari.ttl",
-                "192.168.1.10",
-                "card-****-existing",
-                "visa",
-            )
 
             agn = Namespace("http://www.agentes.org#")
             directory = Agent("DirectoryAgent", agn.Directory, "http://directory.test/Register", "http://directory.test/Stop")
             compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
+            cobrador = Agent("CobradorAgent", agn.Cobrador, "http://cobrador.test/comm", "http://cobrador.test/Stop")
             sent_messages = []
 
             def fake_send_message(message, address):
                 sent_messages.append((message, address))
-                return Graph()
+                return build_confirmacio_registre_dades(
+                    "192.168.1.10",
+                    sender=cobrador.uri,
+                    receiver=compra.uri,
+                    msgcnt=1,
+                )
 
             agent_compra.configure_runtime(
                 {"agent": compra, "directory_agent": directory, "data_dir": data_dir},
                 message_sender=fake_send_message,
             )
+            original_resolve_agent = agent_compra.resolve_agent
+            agent_compra.resolve_agent = lambda agent_type: cobrador
             order = {
                 "user_id": "192.168.1.10",
                 "shipping_data": {"payment_method": "visa"},
             }
 
-            result = agent_compra.pla_registrar_dades_d_usuari_al_cobrador(order)
+            try:
+                result = agent_compra.pla_registrar_dades_d_usuari_al_cobrador(order)
+            finally:
+                agent_compra.resolve_agent = original_resolve_agent
 
-            self.assertIsNone(result)
-            self.assertEqual(sent_messages, [])
+            self.assertEqual(result, "REGISTRAT")
+            self.assertEqual(len(sent_messages), 1)
+            self.assertEqual(sent_messages[0][1], cobrador.address)
 
     def test_order_status_page_reads_base_order_from_opinador(self):
         from AgentUtil.Agent import Agent

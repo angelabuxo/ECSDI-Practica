@@ -36,13 +36,25 @@ Els agents que tenim ara mateix:
 | Agent | Port | Rol (què fa) |
 |-------|------|--------------|
 | **Directory** | 9000 | Pàgines grogues: tots els altres s'hi registren i s'hi busquen entre ells |
-| **Cercador** | 9001 | Cerca productes al catàleg segons restriccions; mostra la interfície web |
+| **Cercador** | 9001 | Cerca productes al catàleg, resol snapshots per ID i deriva el registre de cerques cap a l'Opinador |
 | **Compra** | 9002 | Orquestra una comanda de principi a fi (l'agent "director d'orquestra") |
 | **Centre Logístic** | 9003 / 9007 / 9008 | Agrupa productes en lots, negocia amb transportistes, demana el cobrament |
-| **Opinador** | 9004 | Registra compres, gestiona feedback, genera suggeriments i avalua devolucions |
-| **Cobrador** | 9005 | Confirma automàticament cobraments, pagaments a venedors i devolucions (protocol ACL mantingut) |
+| **Opinador** | 9004 | És el propietari de l'historial de cerques, compres i feedback; també genera suggeriments i avalua devolucions |
+| **Cobrador** | 9005 | És el propietari de les dades bancàries i dels pagaments; calcula cobraments interns des del missatge ACL, sense llegir el catàleg |
 | **Transportista** | 9010 (ràpid) / 9011 (econòmic) | Agents **externs** que ofereixen preu i data d'entrega |
-| **Venedor Extern** | 9012 | Gateway intern per registrar productes externs i rebre peticions d'enviament delegat. A `/iface` identifica el venedor per IP; la primera vegada demana nom i dades bancàries, i després permet afegir diversos productes d'un sol cop. |
+| **Venedor Extern** | 9012 | Gateway intern que dona d'alta productes externs delegant el catàleg a Cercador, les metadades logístiques a Compra i el perfil bancari a Cobrador |
+
+Des del refactor d'ownership, cada base `.ttl` té **un únic agent propietari**:
+- `Cercador` és l'únic propietari de `productes.ttl`.
+- `Compra` és l'únic propietari de `dades_enviament_usuari.ttl`, `responsable_enviament_productes.ttl`, `ubicacions_productes.ttl` i `seguiment_enviaments.ttl`.
+- `Opinador` és l'únic propietari de `historial_cerques.ttl`, `historial_compres.ttl` i `feedback.ttl`.
+- `Retornador` és l'únic propietari de `devolucions.ttl`.
+- `Cobrador` és l'únic propietari de `dades_bancaries_usuari.ttl`, `dades_bancaries_venedors_externs.ttl` i `pagaments.ttl`.
+
+Quan un altre agent necessita aquestes dades, no llegeix el fitxer directament: envia un missatge
+ACL a l'agent propietari (`PeticioConsultaProductes`, `PeticioRegistreCerca`,
+`PeticioConsultaCompresUsuari`, `PeticioConsultaDadesBancariesVenedor`,
+`PeticioRegistreProducteExternCompra`, etc.).
 
 **Idea clau:** la gràcia de la pràctica és que això funcioni de manera **realment distribuïda**
 (processos separats que es parlen amb missatges), i que els missatges utilitzin els **conceptes
@@ -375,13 +387,13 @@ confirmació (`PAGAT` o `RETORNAT`) i registra el moviment als `.ttl` correspone
 | Fitxer | Endpoints | Plans / capacitats principals |
 |--------|-----------|-------------------------------|
 | `agent_directory.py` | `/Register`, `/Info`, `/Stop` | `process_register`, `process_search` |
-| `agent_cercador.py` | `/comm`, `/iface`, `/Stop` | `pla_de_cerca`, `pla_de_presentacio`, `pla_afegir_info_producte_extern_a_la_bd` |
-| `agent_compra.py` | `/comm`, `/iface`, `/Stop` | `pla_demanar_informacio_usuari`, `pla_registrar_dades_d_usuari`, `pla_enviament_extern`, `pla_producte_als_nostres_magatzems`, `pla_informar_usuari_sobre_l_enviament`, `pla_delegar_registre_compra`, `pla_cobrament_extern`… |
+| `agent_cercador.py` | `/comm`, `/iface`, `/Stop` | `pla_de_cerca`, `pla_de_presentacio`, `pla_afegir_info_producte_extern_a_la_bd`, `pla_consulta_productes_acl`, `pla_registrar_cerca_a_opinador` |
+| `agent_compra.py` | `/comm`, `/iface`, `/Stop` | `pla_demanar_informacio_usuari`, `pla_registrar_dades_d_usuari`, `pla_enviament_extern`, `pla_producte_als_nostres_magatzems`, `pla_informar_usuari_sobre_l_enviament`, `pla_delegar_registre_compra`, `pla_cobrament_extern`, `pla_registrar_producte_extern_compra`… |
 | `agent_centre_logistic.py` | `/comm`, `/iface`, `/Stop` | `pla_assignar_producte_a_lot`, `pla_cerca_de_transportista`, `pla_de_transportista_escollit`, `pla_producte_sha_enviat` |
 | `agent_transportista.py` | `/comm`, `/iface`, `/Stop` | `generar_oferta_transport` (agent **extern**) |
-| `agent_cobrador.py` | `/comm`, `/iface`, `/Stop` | `pla_cobrament_intern`, `pla_cobrament_extern`, `pla_registrar_dades_usuari/venedor`, `pla_retornar_diners` (confirmació automàtica) |
-| `agent_opinador.py` | `/comm`, `/iface`, `/Stop` | `pla_de_registre_de_compra`, `pla_de_registre_de_feedback`, `pla_de_creacio_de_suggeriments`, `pla_de_consulta_de_criteris_devolucio` |
-| `agent_venedor_extern.py` | `/comm`, `/iface`, `/Stop` | `pla_afegir_producte_extern_a_la_bd`, `pla_delegar_afegir_info_producte_extern`, `pla_delegar_afegir_dades_bancaries_del_venedor_extern`, `pla_comunicar_nou_producte_afegit` |
+| `agent_cobrador.py` | `/comm`, `/iface`, `/Stop` | `pla_cobrament_intern`, `pla_cobrament_extern`, `pla_registrar_dades_usuari/venedor`, `pla_consulta_dades_venedor`, `pla_retornar_diners` (confirmació automàtica) |
+| `agent_opinador.py` | `/comm`, `/iface`, `/Stop` | `pla_de_registre_de_compra`, `pla_registre_cerca_acl`, `pla_consulta_compres_usuari_acl`, `pla_de_registre_de_feedback`, `pla_de_creacio_de_suggeriments`, `pla_de_consulta_de_criteris_devolucio` |
+| `agent_venedor_extern.py` | `/comm`, `/iface`, `/Stop` | `pla_afegir_producte_extern_a_la_bd` (delegat a Compra), `pla_delegar_afegir_info_producte_extern`, `pla_delegar_afegir_dades_bancaries_del_venedor_extern`, `pla_comunicar_nou_producte_afegit` |
 
 ### `protocols/` — com es construeix/parseja cada missatge (la capa de missatge)
 
@@ -391,11 +403,11 @@ funcions `build_*` (construir el graf RDF d'un missatge) i `parse_*`/`extract_*`
 | Fitxer | Missatges que cobreix |
 |--------|------------------------|
 | `directory.py` | Registre i cerca al Directory (`Register`, `Search`) i lectura de respostes. |
-| `cerca.py` | `PeticioCerca` ↔ `ResultatCerca`. |
-| `compra.py` | `PeticioCompra`, `PeticioRegistreCompra`, `ConfirmacioEnviament`. |
+| `cerca.py` | `PeticioCerca` ↔ `ResultatCerca`, `PeticioConsultaProductes` ↔ `ResultatConsultaProductes`. |
+| `compra.py` | `PeticioCompra`, `PeticioRegistreCompra`, `ConfirmacioEnviament`, `PeticioRegistreProducteExternCompra`. |
 | `venedor_extern.py` | `AltaProducteExtern`, `ConfirmacioAltaProducteExtern`, `PeticioEnviamentExtern`, resposta `DadesEnviament` per enviaments externs. |
 | `centre_logistic.py` | `ProducteLocalitzat`, `PeticioTransport`, `RespostaOfertaTransport`, `EleccioTransportista`, `ConfirmacioEnviament` (detalls d'enviament). |
-| `pagament.py` | `PeticioRegistreDadesBancaries*`, `PeticioPagament`, `ConfirmacioPagament`, cobrament intern, `PeticioRetornDiners`. Conté `SENTIT_COBRAMENT`/`SENTIT_PAGAMENT`. |
+| `pagament.py` | `PeticioRegistreDadesBancaries*`, `PeticioConsultaDadesBancariesVenedor`, `PeticioPagament`, `ConfirmacioPagament`, cobrament intern, `PeticioRetornDiners`. Conté `SENTIT_COBRAMENT`/`SENTIT_PAGAMENT`. |
 
 ### `services/` — lògica i persistència (la capa de "negoci pur", sense xarxa)
 
@@ -403,7 +415,7 @@ funcions `build_*` (construir el graf RDF d'un missatge) i `parse_*`/`extract_*`
 |--------|--------|
 | `rdf_store.py` | `load_graph` / `save_graph`: llegir i escriure fitxers Turtle (`.ttl`). |
 | `catalog_service.py` | Cerca de productes amb **SPARQL** + filtres per criteris i per ID; alta de `ProducteExtern`. |
-| `external_vendor_service.py` | Persistència de `responsable_enviament_productes.ttl` i ubicacions de productes externs. |
+| `external_vendor_service.py` | Persistència de `responsable_enviament_productes.ttl` i ubicacions de productes externs; després del refactor l'usa sobretot l'agent Compra, que n'és el propietari. |
 | `order_service.py` | Construeix la `Comanda`, calcula la data d'entrega per prioritat, persisteix. |
 | `logistics_routing_service.py` | Tria el Centre Logístic més proper per a cada producte (heurística de ciutat). |
 | `logistics_service.py` | Crea lots, demana ofertes als transportistes **en paral·lel**, aplica la política de negociació (oferta alta / baixa, sostre 115 %). Veure [NegociacioTransport.md](../AgentZon/NegociacioTransport.md). |
@@ -464,7 +476,9 @@ flowchart TD
 
 A la interfície `compra.html`, l'**identificador d'usuari** (`IdUsuari` a comandes, enviaments, banc i historial) és l'**adreça IP del client** (`request.remote_addr`, o la primera IP de `X-Forwarded-For` si hi ha proxy). L'usuari només omple nom, adreça, prioritat i mètode de pagament.
 
-Abans d'enviar `PeticioRegistreDadesBancariesUsuari` al Cobrador, l'Agent Compra comprova `dades_bancaries_usuari.ttl` (mateix `--data-dir` compartit): si l'usuari ja hi consta, **no** es fa la petició ACL.
+Quan l'usuari confirma la compra, `Compra` no llegeix `dades_bancaries_usuari.ttl`: envia sempre
+`PeticioRegistreDadesBancariesUsuari` al `Cobrador`, que és l'únic propietari d'aquest fitxer i
+respon amb la confirmació corresponent.
 
 Punts a destacar (i per què eviten penalitzacions):
 
@@ -481,7 +495,8 @@ Punts a destacar (i per què eviten penalitzacions):
 ### 9.3 Pagament (les dues direccions)
 
 - **Cobrament intern (`COBRAMENT`)**: quan el Centre Logístic ha enviat un producte concret, dispara
-  **un cobrament per `ProducteLocalitzat`** al Cobrador (transport repartit per pes dins del lot) →
+  **un cobrament per `ProducteLocalitzat`** al Cobrador (transport repartit per pes dins del lot) i
+  dins del missatge hi envia també la línia de factura del producte (`IdProducte`, nom, pes i preu) →
   el Cobrador respon `ConfirmacioPagament` amb estat `PAGAT` i registra a
   `pagaments.ttl` amb `SentitPagament = COBRAMENT`.
 - **Cobrament extern (`PAGAMENT`)**: per a productes de venedors externs, l'agent Compra demana al

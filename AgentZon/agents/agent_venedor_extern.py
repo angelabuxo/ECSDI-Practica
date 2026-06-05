@@ -35,7 +35,16 @@ from config import (
     resolve_agent_hosts,
     serve_agent,
 )
-from protocols.pagament import build_peticio_registre_dades_venedor, extract_confirmacio_registre_dades
+from protocols.compra import (
+    build_peticio_registre_producte_extern_compra,
+    parse_confirmacio_registre_producte_extern_compra,
+)
+from protocols.pagament import (
+    build_peticio_consulta_dades_venedor,
+    build_peticio_registre_dades_venedor,
+    extract_confirmacio_registre_dades,
+    parse_resultat_consulta_dades_venedor,
+)
 from protocols.venedor_extern import (
     build_alta_producte_extern,
     build_confirmacio_alta_producte_extern,
@@ -45,9 +54,6 @@ from protocols.venedor_extern import (
     parse_peticio_enviament_extern,
 )
 from services.agent_common_service import get_client_ip_from_request, resolve_agent_via_directory
-from services.catalog_service import allocate_external_product_id
-from services.external_vendor_service import save_external_product_location, save_shipping_responsibility
-from services.payment_service import has_seller_bank_data, read_seller_bank_data, resolve_seller_display_name
 
 
 logger = config_logger(level=1)
@@ -72,11 +78,11 @@ def configure_runtime(settings, message_sender=send_message):
     AGENT = settings["agent"]
     DirectoryAgent = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
+    CATALOG_PATH = None
     data_dir = Path(settings["data_dir"])
-    CATALOG_PATH = data_dir / "productes.ttl"
-    SHIPPING_RESPONSIBILITY_PATH = data_dir / "responsable_enviament_productes.ttl"
-    LOCATIONS_PATH = data_dir / "ubicacions_productes.ttl"
-    SELLER_BANK_PATH = data_dir / "dades_bancaries_venedors_externs.ttl"
+    SHIPPING_RESPONSIBILITY_PATH = None
+    LOCATIONS_PATH = None
+    SELLER_BANK_PATH = None
     mss_cnt = 0
 
 
@@ -95,23 +101,32 @@ def resolve_cobrador_agent():
     return resolve_agent_via_directory(AGENT, DirectoryAgent, MESSAGE_SENDER, _msgcnt, DSO.CobradorAgent)
 
 
+def resolve_compra_agent():
+    return resolve_agent_via_directory(AGENT, DirectoryAgent, MESSAGE_SENDER, _msgcnt, DSO.CompraAgent)
+
+
 def pla_afegir_producte_extern_a_la_bd(request_data):
     product = request_data["product"]
-    seller = request_data["seller"]
-    save_shipping_responsibility(
-        SHIPPING_RESPONSIBILITY_PATH,
-        product["product_id"],
-        seller["seller_id"],
-        product["requires_external_logistics"],
+    compra = resolve_compra_agent()
+    message = build_peticio_registre_producte_extern_compra(
+        {
+            "product_id": product["product_id"],
+            "seller_id": product["seller_id"],
+            "requires_external_logistics": product["requires_external_logistics"],
+            "centre_id": product.get("centre_id", ""),
+        },
+        sender=AGENT.uri,
+        receiver=compra.uri,
+        msgcnt=_msgcnt(),
     )
-    if not product["requires_external_logistics"] and product.get("centre_id"):
-        save_external_product_location(LOCATIONS_PATH, product["product_id"], product["centre_id"])
+    reply = MESSAGE_SENDER(message, compra.address)
+    confirmation = parse_confirmacio_registre_producte_extern_compra(reply)
     logger.info(
-        "Producte extern %s registrat a responsable enviament (logistica externa=%s)",
-        product["product_id"],
+        "Producte extern %s registrat a Compra (logistica externa=%s)",
+        confirmation["product_id"],
         product["requires_external_logistics"],
     )
-    return product["product_id"]
+    return confirmation["product_id"]
 
 
 def pla_delegar_afegir_info_producte_extern(gm, content):
@@ -144,8 +159,24 @@ def pla_delegar_afegir_dades_bancaries_del_venedor_extern(seller):
     return extract_confirmacio_registre_dades(reply)
 
 
+def _fetch_seller_profile(seller_id):
+    cobrador = resolve_cobrador_agent()
+    message = build_peticio_consulta_dades_venedor(
+        seller_id,
+        sender=AGENT.uri,
+        receiver=cobrador.uri,
+        msgcnt=_msgcnt(),
+    )
+    reply = MESSAGE_SENDER(message, cobrador.address)
+    return parse_resultat_consulta_dades_venedor(reply)
+
+
 def ensure_seller_bank_registered(seller):
-    if has_seller_bank_data(SELLER_BANK_PATH, seller["seller_id"]):
+    try:
+        profile = _fetch_seller_profile(seller["seller_id"])
+    except Exception:
+        profile = None
+    if profile and profile.get("bank_data"):
         return None
     if not seller.get("bank_data"):
         return None
@@ -174,11 +205,16 @@ def pla_comunicar_nou_producte_afegit(product_id, sku_extern, receiver=None):
 def process_alta_producte_extern(gm, content, receiver=None):
     request_data = parse_alta_producte_extern(gm, content)
     ensure_seller_bank_registered(request_data["seller"])
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        local_future = executor.submit(pla_afegir_producte_extern_a_la_bd, request_data)
-        catalog_future = executor.submit(pla_delegar_afegir_info_producte_extern, gm, content)
-        local_future.result()
-        catalog_confirmation = catalog_future.result()
+    catalog_confirmation = pla_delegar_afegir_info_producte_extern(gm, content)
+    pla_afegir_producte_extern_a_la_bd(
+        {
+            **request_data,
+            "product": {
+                **request_data["product"],
+                "product_id": catalog_confirmation["product_id"],
+            },
+        }
+    )
     return pla_comunicar_nou_producte_afegit(
         catalog_confirmation["product_id"],
         catalog_confirmation.get("sku_extern") or request_data["product"].get("sku_extern", ""),
@@ -189,16 +225,14 @@ def process_alta_producte_extern(gm, content, receiver=None):
 def pla_enviament_extern_acl(gm, content, sender):
     request_data = parse_peticio_enviament_extern(gm, content)
     delivery_date = (date.today() + timedelta(days=5)).isoformat()
+    seller_profile = build_seller_payload(request_data["seller_id"])
     return build_resposta_enviament_extern(
         request_data["order_id"],
         request_data["products"],
         request_data["seller_id"],
         delivery_date,
         request_data["city"],
-        seller_display_name=resolve_seller_display_name(
-            SELLER_BANK_PATH,
-            request_data["seller_id"],
-        ),
+        seller_display_name=seller_profile.get("seller_name") or request_data["seller_id"],
         sender=AGENT.uri,
         receiver=sender,
         msgcnt=mss_cnt,
@@ -249,9 +283,7 @@ def parse_products_from_form(form_data):
 
 
 def build_product_payload(product_fields, seller_id):
-    product_id = allocate_external_product_id(CATALOG_PATH)
     return {
-        "product_id": product_id,
         "name": product_fields["name"],
         "description": product_fields["description"],
         "category": product_fields["category"],
@@ -267,7 +299,11 @@ def build_product_payload(product_fields, seller_id):
 
 
 def build_seller_payload(seller_id):
-    profile = read_seller_bank_data(SELLER_BANK_PATH, seller_id) or {}
+    try:
+        profile = _fetch_seller_profile(seller_id)
+    except Exception:
+        profile = None
+    profile = profile or {}
     return {
         "seller_id": seller_id,
         "bank_data": profile.get("bank_data", ""),
@@ -276,12 +312,12 @@ def build_seller_payload(seller_id):
 
 
 def render_iface_page(client_ip, **context):
-    seller_profile = read_seller_bank_data(SELLER_BANK_PATH, client_ip)
+    seller_profile = build_seller_payload(client_ip)
     defaults = {
         "iface_path": "/iface",
         "centres": ["CL-BCN", "CL-GI", "CL-TGN"],
         "client_ip": client_ip,
-        "needs_vendor_setup": seller_profile is None,
+        "needs_vendor_setup": not seller_profile.get("bank_data"),
         "seller_profile": seller_profile,
     }
     defaults.update(context)
@@ -306,7 +342,7 @@ def browser_iface():
                 client_ip,
                 error="Cal indicar el nom del venedor i les dades bancàries.",
             )
-        if has_seller_bank_data(SELLER_BANK_PATH, client_ip):
+        if build_seller_payload(client_ip).get("bank_data"):
             return render_iface_page(
                 client_ip,
                 setup_complete=True,
@@ -319,7 +355,7 @@ def browser_iface():
             message=f"Perfil registrat correctament com a {seller_name}.",
         )
 
-    if not has_seller_bank_data(SELLER_BANK_PATH, client_ip):
+    if not build_seller_payload(client_ip).get("bank_data"):
         return render_iface_page(
             client_ip,
             error="Primer cal completar el perfil del venedor (nom i dades bancàries).",

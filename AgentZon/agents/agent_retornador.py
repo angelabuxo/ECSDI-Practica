@@ -34,8 +34,10 @@ from config import (
     serve_agent,
 )
 from protocols.opinador import (
+    build_peticio_consulta_compres_usuari,
     build_peticio_devolucio,
     build_resolucio_devolucio,
+    parse_resultat_consulta_compres_usuari,
     parse_peticio_devolucio,
     parse_resolucio_devolucio,
 )
@@ -52,8 +54,8 @@ from services.payment_service import record_refund
 from services.retornador_service import (
     RETURN_REASON_OPTIONS,
     build_aggregate_return_decision,
-    build_purchased_products_for_user,
-    build_refund_batches,
+    build_purchased_products_from_orders,
+    build_refund_batches_from_products,
     build_return_request_from_selection,
 )
 
@@ -80,9 +82,9 @@ def configure_runtime(settings, message_sender=send_message):
     MESSAGE_SENDER = message_sender
     data_dir = Path(settings["data_dir"])
     REFUNDS_PATH = data_dir / "devolucions.ttl"
-    PURCHASE_HISTORY_PATH = data_dir / "historial_compres.ttl"
-    CATALOG_PATH = data_dir / "productes.ttl"
-    SHIPPING_RESPONSIBILITY_PATH = data_dir / "responsable_enviament_productes.ttl"
+    PURCHASE_HISTORY_PATH = None
+    CATALOG_PATH = None
+    SHIPPING_RESPONSIBILITY_PATH = None
     mss_cnt = 0
 
 
@@ -163,6 +165,18 @@ def _consult_opinador_per_order(return_request):
     return order_decisions
 
 
+def _fetch_user_purchases_from_opinador(user_id):
+    opinador = resolve_opinador_agent()
+    purchase_message = build_peticio_consulta_compres_usuari(
+        user_id,
+        sender=AGENT.uri,
+        receiver=opinador.uri,
+        msgcnt=_msgcnt(),
+    )
+    response_graph = MESSAGE_SENDER(purchase_message, opinador.address)
+    return parse_resultat_consulta_compres_usuari(response_graph)
+
+
 def pla_compliment_de_devolucio(return_request):
     normalized = _normalize_return_request(return_request)
     parent_return_id = normalized["return_id"]
@@ -189,16 +203,19 @@ def pla_compliment_de_devolucio(return_request):
         accepted_ids = order_decisions[order_id].get("accepted_product_ids", [])
         if not accepted_ids:
             continue
+        accepted_products = list(order_decisions[order_id].get("products", []))
         sub_decision = {
             "return_id": parent_return_id,
             "order_id": order_id,
             "user_id": normalized["user_id"],
             "reason": normalized.get("reason", ""),
             "product_ids": accepted_ids,
+            "products": accepted_products,
             "seller_id": None,
         }
-        for batch in build_refund_batches(sub_decision, SHIPPING_RESPONSIBILITY_PATH, CATALOG_PATH):
+        for batch in build_refund_batches_from_products(accepted_products):
             batch_index += 1
+            batch_product_ids = set(batch["product_ids"])
             batch_decision = {
                 **sub_decision,
                 "return_id": (
@@ -208,6 +225,7 @@ def pla_compliment_de_devolucio(return_request):
                 ),
                 "seller_id": batch["seller_id"],
                 "product_ids": batch["product_ids"],
+                "products": [product for product in accepted_products if product.get("product_id") in batch_product_ids],
                 "amount": batch["amount"],
             }
             confirmation = pla_retorn(batch_decision)
@@ -272,11 +290,10 @@ def pla_retorn(decision):
 
 
 def _load_purchased_products_for_iface(user_id):
-    return build_purchased_products_for_user(
-        PURCHASE_HISTORY_PATH,
-        CATALOG_PATH,
-        user_id,
+    return build_purchased_products_from_orders(
+        _fetch_user_purchases_from_opinador(user_id),
         logger=logger,
+        user_id=user_id,
     )
 
 

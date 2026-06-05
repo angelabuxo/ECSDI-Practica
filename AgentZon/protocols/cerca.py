@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-Missatges RDF de cerca (PeticioCerca, ResultatCerca).
-"""
+"""Missatges RDF de cerca i consultes de catàleg propietari."""
 
 from rdflib import Graph, Literal, RDF, XSD
 
-from AgentUtil.OntoNamespaces import AZON, bind_namespaces
+from AgentUtil.ACL import ACL
+from AgentUtil.ACLMessages import build_message, get_message_properties
+from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
 
 
 def build_peticio_cerca(request_id, text="", category="", brand="", min_price=None, max_price=None):
@@ -76,3 +76,88 @@ def extract_result_products(graph, content=None):
 
 def _literal_to_float(value):
     return None if value is None else float(value)
+
+
+def build_peticio_consulta_productes(product_ids, sender=None, receiver=None, msgcnt=0):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"product-lookup-{msgcnt}"]
+    graph.add((content, RDF.type, AZON.PeticioConsultaProductes))
+    for product_id in sorted(set(product_ids)):
+        product_node = AZON[f"product-{product_id}"]
+        graph.add((content, AZON.SobreProducte, product_node))
+        graph.add((product_node, AZON.IdProducte, Literal(product_id)))
+    return build_message(
+        graph,
+        ACL.request,
+        sender=sender,
+        receiver=receiver,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
+def parse_peticio_consulta_productes(graph, content=None):
+    if content is None:
+        props = get_message_properties(graph)
+        content = props.get("content") or graph.value(predicate=RDF.type, object=AZON.PeticioConsultaProductes)
+    product_ids = []
+    for product_node in graph.objects(content, AZON.SobreProducte):
+        product_id = graph.value(product_node, AZON.IdProducte)
+        if product_id is not None:
+            product_ids.append(str(product_id))
+    return sorted(product_ids)
+
+
+def build_resultat_consulta_productes(products, sender=None, receiver=None, request_content=None, msgcnt=0):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"product-lookup-result-{msgcnt}"]
+    graph.add((content, RDF.type, AZON.ResultatConsultaProductes))
+    for product in products:
+        product_node = AZON[f"product-{product['product_id']}"]
+        graph.add((content, AZON.SobreProducte, product_node))
+        graph.add((product_node, RDF.type, AZON.Producte))
+        graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
+        graph.add((product_node, AZON.Nom, Literal(product.get("name", ""))))
+        graph.add((product_node, AZON.Categoria, Literal(product.get("category", ""))))
+        graph.add((product_node, AZON.Marca, Literal(product.get("brand", ""))))
+        graph.add((product_node, AZON.Preu, Literal(product.get("price", 0.0), datatype=XSD.float)))
+        graph.add((product_node, AZON.Pes, Literal(product.get("weight", 0.0), datatype=XSD.float)))
+        if "description" in product:
+            graph.add((product_node, AZON.Descripcio, Literal(product.get("description", ""))))
+    if request_content is not None:
+        graph.add((content, AZON.EsRespostaA, request_content))
+    return build_message(
+        graph,
+        ACL.inform,
+        sender=sender,
+        receiver=receiver,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
+def extract_product_snapshots(graph, content=None):
+    if content is None:
+        props = get_message_properties(graph)
+        content = props.get("content") or graph.value(predicate=RDF.type, object=AZON.ResultatConsultaProductes)
+    products = []
+    for product_node in graph.objects(content, AZON.SobreProducte):
+        price_value = graph.value(product_node, AZON.Preu)
+        weight_value = graph.value(product_node, AZON.Pes)
+        product = {
+            "product_id": str(graph.value(product_node, AZON.IdProducte)),
+            "name": str(graph.value(product_node, AZON.Nom) or ""),
+            "category": str(graph.value(product_node, AZON.Categoria) or ""),
+            "brand": str(graph.value(product_node, AZON.Marca) or ""),
+            "price": float(price_value) if price_value is not None else 0.0,
+            "weight": float(weight_value) if weight_value is not None else 0.0,
+        }
+        description = graph.value(product_node, AZON.Descripcio)
+        if description is not None:
+            product["description"] = str(description)
+        products.append(product)
+    return products

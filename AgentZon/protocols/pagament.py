@@ -96,6 +96,66 @@ def parse_peticio_registre_dades_venedor(graph, content):
     }
 
 
+def build_peticio_consulta_dades_venedor(seller_id, sender=None, receiver=None, msgcnt=0):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"seller-profile-request-{seller_id}-{msgcnt}"]
+    graph.add((content, RDF.type, AZON.PeticioConsultaDadesBancariesVenedor))
+    graph.add((content, AZON.IdVenedorExtern, Literal(seller_id)))
+    return build_message(
+        graph,
+        perf=ACL.request,
+        sender=sender,
+        receiver=receiver,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
+def parse_peticio_consulta_dades_venedor(graph):
+    props = get_message_properties(graph)
+    content = props["content"]
+    return str(graph.value(content, AZON.IdVenedorExtern))
+
+
+def build_resultat_consulta_dades_venedor(
+    profile,
+    sender=None,
+    receiver=None,
+    request_content=None,
+    msgcnt=0,
+):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"seller-profile-response-{profile['seller_id']}-{msgcnt}"]
+    graph.add((content, RDF.type, AZON.ResultatConsultaDadesBancariesVenedor))
+    graph.add((content, AZON.IdVenedorExtern, Literal(profile["seller_id"])))
+    graph.add((content, AZON.DadesBancariesVenedorExtern, Literal(profile.get("bank_data", ""))))
+    graph.add((content, AZON.Nom, Literal(profile.get("seller_name", ""))))
+    if request_content is not None:
+        graph.add((content, AZON.EsRespostaA, request_content))
+    return build_message(
+        graph,
+        perf=ACL.inform,
+        sender=sender,
+        receiver=receiver,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
+def parse_resultat_consulta_dades_venedor(graph):
+    props = get_message_properties(graph)
+    content = props["content"]
+    return {
+        "seller_id": str(graph.value(content, AZON.IdVenedorExtern)),
+        "bank_data": str(graph.value(content, AZON.DadesBancariesVenedorExtern) or ""),
+        "seller_name": str(graph.value(content, AZON.Nom) or ""),
+    }
+
+
 def build_confirmacio_registre_dades(
     subject_id,
     is_external=False,
@@ -320,6 +380,8 @@ def build_peticio_cobrament_intern(shipment, sender=None, receiver=None, msgcnt=
         graph.add((product_node, AZON.Nom, Literal(product["name"])))
     if product.get("weight") is not None:
         graph.add((product_node, AZON.Pes, Literal(product["weight"], datatype=XSD.float)))
+    if product.get("price") is not None:
+        graph.add((product_node, AZON.Preu, Literal(product["price"], datatype=XSD.float)))
     if shipment.get("order_id"):
         link_sobre_comanda(graph, content, shipment["order_id"])
     return build_message(
@@ -340,10 +402,12 @@ def parse_peticio_cobrament_intern(graph, content):
         if product_id is None:
             product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
         weight_value = graph.value(product_node, AZON.Pes)
+        price_value = graph.value(product_node, AZON.Preu)
         product = {
             "product_id": str(product_id),
             "name": str(graph.value(product_node, AZON.Nom) or product_id),
             "weight": float(weight_value) if weight_value is not None else 0.0,
+            "price": float(price_value) if price_value is not None else 0.0,
         }
         break
     transport_cost = graph.value(content, AZON.CostTransport)

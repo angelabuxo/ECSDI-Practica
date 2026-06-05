@@ -7,3 +7,10 @@ azon:shipping-ORDER-9B50E957 azon:Carrer "afj" ;
     azon:Nom "hola" ;
     azon:Prioritat "5 dies" .
 
+azon:shipping-ORDER-B1B64F1F azon:Carrer "fkafsjkjfs" ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "sdjjsd" ;
+    azon:Nom "rocha" ;
+    azon:Prioritat "5 dies" .
+

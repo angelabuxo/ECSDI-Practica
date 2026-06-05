@@ -35,6 +35,16 @@ def _add_product_reference(graph, subject, product):
         graph.add((product_node, AZON.Preu, Literal(product["price"], datatype=XSD.float)))
     if "weight" in product:
         graph.add((product_node, AZON.Pes, Literal(product["weight"], datatype=XSD.float)))
+    if product.get("seller_id"):
+        graph.add((product_node, AZON.IdVenedorExtern, Literal(product["seller_id"])))
+    if "requires_external_logistics" in product:
+        graph.add(
+            (
+                product_node,
+                AZON.RequereixLogisticaExterna,
+                Literal(bool(product["requires_external_logistics"]), datatype=XSD.boolean),
+            )
+        )
     return product_node
 
 
@@ -95,6 +105,12 @@ def extract_order_snapshot(graph, order_node):
             product["price"] = float(price)
         if weight is not None:
             product["weight"] = float(weight)
+        seller_id = graph.value(product_node, AZON.IdVenedorExtern)
+        if seller_id is not None:
+            product["seller_id"] = str(seller_id)
+        requires_external = graph.value(product_node, AZON.RequereixLogisticaExterna)
+        if requires_external is not None:
+            product["requires_external_logistics"] = bool(requires_external.toPython())
         products.append(product)
 
     for product_node in graph.objects(order_node, AZON.TeProducte):
@@ -253,6 +269,78 @@ def parse_peticio_registre_compra(graph, content):
             product_id = Literal(local)
         products.append({"product_id": str(product_id)})
     return {**parsed, "products": products, "product_ids": sorted(product["product_id"] for product in products)}
+
+
+def build_peticio_registre_producte_extern_compra(payload, sender=None, receiver=None, msgcnt=0):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"external-product-compra-{payload['product_id']}-{msgcnt}"]
+    graph.add((content, RDF.type, AZON.PeticioRegistreProducteExternCompra))
+    graph.add((content, AZON.IdProducte, Literal(payload["product_id"])))
+    graph.add((content, AZON.IdVenedorExtern, Literal(payload["seller_id"])))
+    graph.add(
+        (
+            content,
+            AZON.RequereixLogisticaExterna,
+            Literal(bool(payload["requires_external_logistics"]), datatype=XSD.boolean),
+        )
+    )
+    if payload.get("centre_id"):
+        graph.add((content, AZON.IdCentreLogistic, Literal(payload["centre_id"])))
+    return build_message(
+        graph,
+        perf=ACL.request,
+        sender=sender,
+        receiver=receiver,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
+def parse_peticio_registre_producte_extern_compra(graph, content=None):
+    if content is None:
+        props = get_message_properties(graph)
+        content = props["content"]
+    requires_external = graph.value(content, AZON.RequereixLogisticaExterna)
+    centre_id = graph.value(content, AZON.IdCentreLogistic)
+    return {
+        "product_id": str(graph.value(content, AZON.IdProducte)),
+        "seller_id": str(graph.value(content, AZON.IdVenedorExtern)),
+        "requires_external_logistics": bool(requires_external.toPython()) if requires_external is not None else False,
+        "centre_id": str(centre_id) if centre_id is not None else "",
+    }
+
+
+def build_confirmacio_registre_producte_extern_compra(
+    product_id,
+    sender=None,
+    receiver=None,
+    request_content=None,
+    msgcnt=0,
+):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"external-product-compra-confirmation-{product_id}-{msgcnt}"]
+    graph.add((content, RDF.type, AZON.ConfirmacioRegistreProducteExternCompra))
+    graph.add((content, AZON.IdProducte, Literal(product_id)))
+    if request_content is not None:
+        graph.add((content, AZON.EsRespostaA, request_content))
+    return build_message(
+        graph,
+        perf=ACL.inform,
+        sender=sender,
+        receiver=receiver,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
+def parse_confirmacio_registre_producte_extern_compra(graph):
+    props = get_message_properties(graph)
+    content = props["content"]
+    return {"product_id": str(graph.value(content, AZON.IdProducte))}
 
 
 def build_confirmacio_registre_compra(order_id, sender=None, receiver=None, request_content=None, msgcnt=0):

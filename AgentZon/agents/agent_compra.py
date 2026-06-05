@@ -37,12 +37,15 @@ from config import (
     serve_agent,
 )
 from protocols.compra import (
+    build_confirmacio_registre_producte_extern_compra,
     build_peticio_compra,
     build_peticio_registre_compra,
     build_resultat_compra,
     extract_registration_confirmation,
+    parse_peticio_registre_producte_extern_compra,
     parse_peticio_compra,
 )
+from protocols.cerca import build_peticio_consulta_productes, extract_product_snapshots
 from protocols.centre_logistic import extract_shipping_details_list
 from protocols.opinador import build_peticio_consulta_comanda, parse_resultat_consulta_comanda
 from protocols.venedor_extern import (
@@ -63,9 +66,11 @@ from services.agent_common_service import (
     resolve_agent_via_directory,
     resolve_agents_via_directory,
 )
-from services.catalog_service import get_products_by_ids
-from services.external_vendor_service import load_shipping_responsibility_by_product
-from services.payment_service import has_user_bank_data
+from services.external_vendor_service import (
+    load_shipping_responsibility_by_product,
+    save_external_product_location,
+    save_shipping_responsibility,
+)
 from services.logistics_routing_service import (
     group_order_products_by_logistics_centre,
     load_product_location_candidates,
@@ -112,11 +117,11 @@ def configure_runtime(settings, message_sender=send_message):
     DirectoryAgent = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
     data_dir = Path(settings["data_dir"])
-    CATALOG_PATH = data_dir / "productes.ttl"
+    CATALOG_PATH = None
     SHIPPING_PATH = data_dir / "dades_enviament_usuari.ttl"
     LOCATIONS_PATH = data_dir / "ubicacions_productes.ttl"
     TRACKING_PATH = data_dir / "seguiment_enviaments.ttl"
-    USER_BANK_PATH = data_dir / "dades_bancaries_usuari.ttl"
+    USER_BANK_PATH = None
     SHIPPING_RESPONSIBILITY_PATH = data_dir / "responsable_enviament_productes.ttl"
     mss_cnt = 0
 
@@ -154,11 +159,50 @@ def get_client_ip():
     return get_client_ip_from_request(request)
 
 
+def _fetch_products_from_cercador(product_ids):
+    cercador_agent = resolve_agent(DSO.CercadorAgent)
+    message = build_peticio_consulta_productes(
+        product_ids,
+        sender=AGENT.uri,
+        receiver=cercador_agent.uri,
+        msgcnt=_msgcnt(),
+    )
+    reply = MESSAGE_SENDER(message, cercador_agent.address)
+    products = extract_product_snapshots(reply)
+    products_by_id = {product["product_id"]: product for product in products}
+    ordered_product_ids = []
+    for product_id in product_ids:
+        if product_id not in ordered_product_ids:
+            ordered_product_ids.append(product_id)
+    return [products_by_id[product_id] for product_id in ordered_product_ids if product_id in products_by_id]
+
+
+def _enrich_products_with_compra_metadata(products):
+    responsibility = load_shipping_responsibility_by_product(SHIPPING_RESPONSIBILITY_PATH)
+    location_candidates = load_product_location_candidates(
+        LOCATIONS_PATH,
+        [product["product_id"] for product in products],
+    )
+    enriched = []
+    for product in products:
+        metadata = responsibility.get(product["product_id"], {})
+        candidate_centres = location_candidates.get(product["product_id"], [])
+        enriched.append(
+            {
+                **product,
+                "seller_id": metadata.get("seller_id", ""),
+                "requires_external_logistics": metadata.get("requires_external_logistics", False),
+                "centre_id": candidate_centres[0]["centre_id"] if candidate_centres else "",
+            }
+        )
+    return enriched
+
+
 def pla_demanar_informacio_usuari(selected_product_ids, client_ip):
     product_ids = normalize_selected_product_ids(selected_product_ids)
     if not product_ids:
         return redirect_to_cercador_with_error()
-    products = get_products_by_ids(CATALOG_PATH, product_ids)
+    products = _fetch_products_from_cercador(product_ids)
     if not products:
         return redirect_to_cercador_with_error()
     return render_template(
@@ -267,8 +311,6 @@ def pla_delegar_registre_compra(order):
 
 
 def pla_registrar_dades_d_usuari_al_cobrador(order):
-    if has_user_bank_data(USER_BANK_PATH, order["user_id"]):
-        return None
     try:
         cobrador = resolve_agent(DSO.CobradorAgent)
     except Exception:
@@ -345,12 +387,11 @@ def carregar_comanda(order_id):
         return None
     if stored_order is None or not stored_order.get("order_id"):
         return None
-    products = get_products_by_ids(CATALOG_PATH, stored_order["product_ids"])
     return {
         "order_id": stored_order["order_id"],
         "user_id": stored_order["user_id"],
         "user_name": stored_order["user_name"],
-        "products": products,
+        "products": stored_order.get("products", []),
         "shipping_data": stored_order["shipping_data"],
         "delivery_date": stored_order["delivery_date"],
         "final_delivery_date": stored_order.get("final_delivery_date"),
@@ -400,7 +441,11 @@ def process_purchase_request(request_data, acl_sender=None, request_content=None
         "priority": request_data["shipping_data"]["priority"],
         "payment_method": request_data["payment_method"],
     }
-    products = get_products_by_ids(CATALOG_PATH, request_data["product_ids"])
+    products = _enrich_products_with_compra_metadata(
+        _fetch_products_from_cercador(request_data["product_ids"])
+    )
+    if not products:
+        raise ValueError(NO_PRODUCTS_ERROR)
     order = build_order(shipping, products)
     save_user_shipping_data(SHIPPING_PATH, order)
     external_groups, platform_shipped, internal_products = split_order_products(order)
@@ -456,6 +501,25 @@ def build_purchase_request_from_form(form_data, user_id):
     )
     content = request_graph.value(predicate=RDF.type, object=AZON.PeticioCompra)
     return request_graph, content
+
+
+def pla_registrar_producte_extern_compra(gm, content, sender):
+    payload = parse_peticio_registre_producte_extern_compra(gm, content)
+    save_shipping_responsibility(
+        SHIPPING_RESPONSIBILITY_PATH,
+        payload["product_id"],
+        payload["seller_id"],
+        payload["requires_external_logistics"],
+    )
+    if not payload["requires_external_logistics"] and payload.get("centre_id"):
+        save_external_product_location(LOCATIONS_PATH, payload["product_id"], payload["centre_id"])
+    return build_confirmacio_registre_producte_extern_compra(
+        payload["product_id"],
+        sender=AGENT.uri,
+        receiver=sender,
+        request_content=content,
+        msgcnt=mss_cnt,
+    )
 
 
 @app.route("/iface", methods=["GET", "POST"])
@@ -519,7 +583,19 @@ def comunicacion():
         if perf == ACL.inform and accion in {AZON.DadesEnviament, AZON.ConfirmacioEnviament}:
             print("INFO AgenteCompra => Actualitzacio enviament %s" % accion)
             gr = process_shipping_update(gm, content, msgdic.get("sender"))
-        elif perf != ACL.request or accion != AZON.PeticioCompra:
+        elif perf != ACL.request:
+            gr = build_message(
+                Graph(),
+                ACL["not-understood"],
+                sender=AGENT.uri,
+                receiver=msgdic.get("sender"),
+                msgcnt=mss_cnt,
+            )
+            print("INFO AgenteCompra => Accio no suportada: %s" % accion)
+        elif accion == AZON.PeticioRegistreProducteExternCompra:
+            print("INFO AgenteCompra => PeticioRegistreProducteExternCompra")
+            gr = pla_registrar_producte_extern_compra(gm, content, msgdic.get("sender"))
+        elif accion != AZON.PeticioCompra:
             gr = build_message(
                 Graph(),
                 ACL["not-understood"],

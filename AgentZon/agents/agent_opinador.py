@@ -43,11 +43,16 @@ from config import (
     _wait_for_shutdown_signal,
 )
 from protocols.compra import build_confirmacio_registre_compra, parse_peticio_registre_compra
+from protocols.cerca import build_peticio_cerca, extract_result_products
 from protocols.opinador import (
+    build_confirmacio_registre_cerca,
+    build_resultat_consulta_compres_usuari,
     build_resultat_consulta_comanda,
     build_peticio_feedback,
     build_resolucio_devolucio,
+    parse_peticio_consulta_compres_usuari,
     parse_peticio_consulta_comanda,
+    parse_peticio_registre_cerca,
     parse_peticio_devolucio,
     parse_resposta_feedback,
 )
@@ -59,14 +64,16 @@ from services.agent_common_service import (
 from services.history_service import (
     load_feedback_records,
     load_purchase_records,
+    load_search_records,
     record_feedback,
     record_purchase,
+    record_search,
 )
 from services.order_service import load_order
 from services.opinador_service import (
     build_feedback_requests_for_user,
     evaluate_return_request,
-    generate_recommendations,
+    generate_recommendations_from_records,
     get_purchases_pending_feedback,
     is_feedback_eligible,
     list_known_user_ids,
@@ -103,7 +110,7 @@ def configure_runtime(settings, message_sender=send_message):
     DirectoryAgent = settings.get("directory_agent")
     MESSAGE_SENDER = message_sender
     data_dir = Path(settings["data_dir"])
-    CATALOG_PATH = data_dir / "productes.ttl"
+    CATALOG_PATH = None
     PURCHASE_HISTORY_PATH = data_dir / "historial_compres.ttl"
     SEARCH_HISTORY_PATH = data_dir / "historial_cerques.ttl"
     FEEDBACK_PATH = data_dir / "feedback.ttl"
@@ -151,17 +158,21 @@ def _parse_recommendation_limit(raw_value):
 
 def resolve_cercador_iface_url():
     try:
-        cercador_agent = resolve_agent_via_directory(
-            AGENT,
-            DirectoryAgent,
-            MESSAGE_SENDER,
-            _msgcnt,
-            DSO.CercadorAgent,
-        )
+        cercador_agent = resolve_cercador_agent()
         return replace_url_path(cercador_agent.address, "/iface")
     except Exception as exc:
         logger.warning("No s'ha pogut resoldre Cercador per a la interficie: %s", exc)
         return ""
+
+
+def resolve_cercador_agent():
+    return resolve_agent_via_directory(
+        AGENT,
+        DirectoryAgent,
+        MESSAGE_SENDER,
+        _msgcnt,
+        DSO.CercadorAgent,
+    )
 
 
 def _empty_proactive_state():
@@ -302,11 +313,65 @@ def pla_de_registre_de_feedback(feedback_data):
     return feedback_data
 
 
-def pla_de_creacio_de_suggeriments(user_id=None, limit=5):
-    recommendations = generate_recommendations(
-        CATALOG_PATH,
+def pla_registre_cerca_acl(gm, content, sender):
+    request_data = parse_peticio_registre_cerca(gm)
+    record_search(
         SEARCH_HISTORY_PATH,
-        PURCHASE_HISTORY_PATH,
+        request_data["criteria"],
+        request_data["products"],
+        user_id=request_data["user_id"],
+    )
+    return build_confirmacio_registre_cerca(
+        request_data["user_id"],
+        sender=AGENT.uri,
+        receiver=sender,
+        request_content=content,
+        msgcnt=mss_cnt,
+    )
+
+
+def pla_consulta_compres_usuari_acl(gm, content, sender):
+    user_id = parse_peticio_consulta_compres_usuari(gm)
+    purchases = load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id)
+    return build_resultat_consulta_compres_usuari(
+        user_id,
+        purchases,
+        sender=AGENT.uri,
+        receiver=sender,
+        request_content=content,
+        msgcnt=mss_cnt,
+    )
+
+
+def _fetch_catalog_products():
+    try:
+        cercador = resolve_cercador_agent()
+    except Exception as exc:
+        logger.warning("No s'ha pogut resoldre Cercador per obtenir el cataleg: %s", exc)
+        return []
+    request_graph, request_content = build_peticio_cerca(f"opinador-catalog-{_msgcnt()}")
+    message = build_message(
+        request_graph,
+        ACL.request,
+        sender=AGENT.uri,
+        receiver=cercador.uri,
+        content=request_content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=_msgcnt(),
+    )
+    try:
+        reply = MESSAGE_SENDER(message, cercador.address)
+    except Exception as exc:
+        logger.warning("No s'ha pogut recuperar el cataleg remot: %s", exc)
+        return []
+    return extract_result_products(reply)
+
+
+def pla_de_creacio_de_suggeriments(user_id=None, limit=5):
+    recommendations = generate_recommendations_from_records(
+        _fetch_catalog_products(),
+        load_search_records(SEARCH_HISTORY_PATH, user_id=user_id),
+        load_purchase_records(PURCHASE_HISTORY_PATH, user_id=user_id),
         user_id=user_id,
         limit=limit,
     )
@@ -579,7 +644,9 @@ def pla_consulta_comanda_acl(gm, content, sender):
 
 
 PLANS = {
+    AZON.PeticioRegistreCerca: pla_registre_cerca_acl,
     AZON.PeticioRegistreCompra: pla_registre_compra_acl,
+    AZON.PeticioConsultaCompresUsuari: pla_consulta_compres_usuari_acl,
     AZON.PeticioConsultaComanda: pla_consulta_comanda_acl,
     AZON.PeticioDevolucio: pla_devolucio_acl,
     AZON.RespostaFeedback: pla_feedback_acl,

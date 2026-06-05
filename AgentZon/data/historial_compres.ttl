@@ -1,4 +1,25 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:order-ORDER-B1B64F1F a azon:Comanda ;
+    azon:Carrer "fkafsjkjfs" ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataCompra "2026-06-05" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdComanda "ORDER-B1B64F1F" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "sdjjsd" ;
+    azon:Nom "rocha" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1004,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1021 .
 
 azon:purchase-ORDER-9B50E957 azon:DataCompra "2026-06-05" ;
     azon:IdUsuari "127.0.0.1" ;
@@ -11,4 +32,85 @@ azon:purchase-ORDER-9B50E957 azon:DataCompra "2026-06-05" ;
 
 azon:order-ORDER-9B50E957 a azon:Comanda ;
     azon:IdComanda "ORDER-9B50E957" .
+
+azon:product-P1012 azon:Categoria "home" ;
+    azon:Descripcio "Insulated Coffee Mug with a comfortable easy-grip handle" ;
+    azon:IdProducte "P1012" ;
+    azon:Marca "NordClay" ;
+    azon:Nom "Insulated Coffee Mug" ;
+    azon:Pes "0.44"^^xsd:float ;
+    azon:Preu "29.85"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
+azon:product-P1017 azon:Categoria "home" ;
+    azon:Descripcio "Adjustable Desk Lamp with soft warm illumination" ;
+    azon:IdProducte "P1017" ;
+    azon:Marca "BrightNest" ;
+    azon:Nom "Adjustable Desk Lamp" ;
+    azon:Pes "1.53"^^xsd:float ;
+    azon:Preu "48.17"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
+azon:product-P1018 azon:Categoria "home" ;
+    azon:Descripcio "Ambient Desk Lamp for focused lighting on work surfaces" ;
+    azon:IdProducte "P1018" ;
+    azon:Marca "LumaHome" ;
+    azon:Nom "Ambient Desk Lamp" ;
+    azon:Pes "1.47"^^xsd:float ;
+    azon:Preu "72.64"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
+azon:product-P1021 azon:Categoria "home" ;
+    azon:Descripcio "Ceramic Coffee Mug for hot drinks throughout the day" ;
+    azon:IdProducte "P1021" ;
+    azon:Marca "Homely" ;
+    azon:Nom "Ceramic Coffee Mug" ;
+    azon:Pes "0.68"^^xsd:float ;
+    azon:Preu "8.23"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
+azon:product-P1001 azon:Categoria "home" ;
+    azon:Descripcio "Slim Desk Lamp that blends into modern study spaces" ;
+    azon:IdProducte "P1001" ;
+    azon:Marca "CasaNova" ;
+    azon:Nom "Slim Desk Lamp" ;
+    azon:Pes "1.47"^^xsd:float ;
+    azon:Preu "68.49"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
+azon:product-P1004 azon:Categoria "home" ;
+    azon:Descripcio "Minimalist Coffee Mug with a comfortable easy-grip handle" ;
+    azon:IdProducte "P1004" ;
+    azon:Marca "CasaNova" ;
+    azon:Nom "Minimalist Coffee Mug" ;
+    azon:Pes "0.3"^^xsd:float ;
+    azon:Preu "11.25"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
+azon:product-P1009 azon:Categoria "home" ;
+    azon:Descripcio "Adjustable Desk Lamp with soft warm illumination" ;
+    azon:IdProducte "P1009" ;
+    azon:Marca "BrightNest" ;
+    azon:Nom "Adjustable Desk Lamp" ;
+    azon:Pes "1.85"^^xsd:float ;
+    azon:Preu "25.54"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
+azon:product-P1010 azon:Categoria "home" ;
+    azon:Descripcio "Slim Desk Lamp for focused lighting on work surfaces" ;
+    azon:IdProducte "P1010" ;
+    azon:Marca "LumaHome" ;
+    azon:Nom "Slim Desk Lamp" ;
+    azon:Pes "1.93"^^xsd:float ;
+    azon:Preu "72.97"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
+
+azon:product-P1011 azon:Categoria "home" ;
+    azon:Descripcio "Slim Desk Lamp for focused lighting on work surfaces" ;
+    azon:IdProducte "P1011" ;
+    azon:Marca "BrightNest" ;
+    azon:Nom "Slim Desk Lamp" ;
+    azon:Pes "1.78"^^xsd:float ;
+    azon:Preu "42.48"^^xsd:float ;
+    azon:RequereixLogisticaExterna false .
 

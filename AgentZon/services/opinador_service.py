@@ -21,18 +21,25 @@ MIN_DAYS_BEFORE_FEEDBACK = 14
 
 
 def generate_recommendations(catalog_path, search_history_path, purchase_history_path, user_id=None, limit=5):
-    catalog_products = search_products(catalog_path, _empty_criteria())
-    purchase_records = load_purchase_records(purchase_history_path, user_id=user_id)
-    purchased_ids = {product_id for record in purchase_records for product_id in record["product_ids"]}
-
-    purchased_products = get_products_by_ids(catalog_path, list(purchased_ids)) if purchased_ids else []
-    category_counter = Counter(product["category"] for product in purchased_products if product.get("category"))
-    brand_counter = Counter(product["brand"] for product in purchased_products if product.get("brand"))
-
-    search_records = load_search_records(search_history_path, user_id=user_id)
-    searched_categories = Counter(
-        record["criteria"]["category"] for record in search_records if record["criteria"]["category"]
+    return generate_recommendations_from_records(
+        search_products(catalog_path, _empty_criteria()),
+        load_search_records(search_history_path, user_id=user_id),
+        load_purchase_records(purchase_history_path, user_id=user_id),
+        user_id=user_id,
+        limit=limit,
     )
+
+
+def generate_recommendations_from_records(catalog_products, search_records, purchase_records, user_id=None, limit=5):
+    purchased_by_id = {}
+    for record in purchase_records:
+        for product in record.get("products", []):
+            purchased_by_id[product["product_id"]] = product
+    purchased_ids = set(purchased_by_id)
+
+    category_counter = Counter(product.get("category", "") for product in purchased_by_id.values() if product.get("category"))
+    brand_counter = Counter(product.get("brand", "") for product in purchased_by_id.values() if product.get("brand"))
+    searched_categories = Counter(record["criteria"]["category"] for record in search_records if record["criteria"]["category"])
     searched_brands = Counter(record["criteria"]["brand"] for record in search_records if record["criteria"]["brand"])
     searched_products = Counter(product_id for record in search_records for product_id in record["product_ids"])
 
@@ -41,19 +48,19 @@ def generate_recommendations(catalog_path, search_history_path, purchase_history
         if product["product_id"] in purchased_ids:
             continue
         score = (
-            category_counter[product["category"]] * 3
-            + brand_counter[product["brand"]] * 2
-            + searched_categories[product["category"]]
-            + searched_brands[product["brand"]]
+            category_counter[product.get("category", "")] * 3
+            + brand_counter[product.get("brand", "")] * 2
+            + searched_categories[product.get("category", "")]
+            + searched_brands[product.get("brand", "")]
             + searched_products[product["product_id"]]
         )
         if score == 0:
             continue
-        ranked_products.append((score, product["price"], product["name"], product))
+        ranked_products.append((score, product.get("price", 0.0), product.get("name", product["product_id"]), product))
 
     if not ranked_products:
         ranked_products = [
-            (0, product["price"], product["name"], product)
+            (0, product.get("price", 0.0), product.get("name", product["product_id"]), product)
             for product in catalog_products
             if product["product_id"] not in purchased_ids
         ]
@@ -116,6 +123,7 @@ def evaluate_return_request(catalog_path, purchase_history_path, request_data):
         )
 
     purchase_record = matching_records[-1]
+    products_by_id = {product["product_id"]: product for product in purchase_record.get("products", [])}
     purchased_product_ids = sorted(set(purchase_record.get("product_ids", [])))
     if not requested_product_ids:
         requested_product_ids = purchased_product_ids
@@ -123,6 +131,7 @@ def evaluate_return_request(catalog_path, purchase_history_path, request_data):
     accepted_product_ids = [
         product_id
         for product_id in requested_product_ids
+        if product_id in products_by_id or catalog_path is not None
         if _is_product_return_eligible(
             purchase_history_path,
             user_id,
@@ -141,10 +150,14 @@ def evaluate_return_request(catalog_path, purchase_history_path, request_data):
             requested_product_ids=requested_product_ids,
         )
 
-    target_products = get_products_by_ids(catalog_path, accepted_product_ids)
     amount = request_data.get("amount")
     if amount is None:
-        amount = round(sum(product.get("price", 0.0) for product in target_products), 2)
+        if products_by_id:
+            amount = round(sum(products_by_id[product_id].get("price", 0.0) for product_id in accepted_product_ids), 2)
+        else:
+            target_products = get_products_by_ids(catalog_path, accepted_product_ids) if catalog_path is not None else []
+            amount = round(sum(product.get("price", 0.0) for product in target_products), 2)
+    accepted_products = [products_by_id[product_id] for product_id in accepted_product_ids if product_id in products_by_id]
 
     partial = len(accepted_product_ids) < len(requested_product_ids)
     if partial:
@@ -160,6 +173,7 @@ def evaluate_return_request(catalog_path, purchase_history_path, request_data):
             **request_data,
             "amount": amount,
             "product_ids": sorted(accepted_product_ids),
+            "products": accepted_products,
         },
         accepted=True,
         reason=resolution_reason,
@@ -303,29 +317,33 @@ def get_purchases_pending_feedback(
             else:
                 waiting_entries.append(entry)
 
-    eligible_ids = [entry["product_id"] for entry in eligible_entries]
-    products_by_id = {
-        product["product_id"]: product
-        for product in get_products_by_ids(catalog_path, eligible_ids)
-    }
+    product_by_id = {}
+    for purchase in purchases:
+        for product in purchase.get("products", []):
+            product_by_id[product["product_id"]] = product
 
     eligible_products = []
     for entry in eligible_entries:
-        product = products_by_id.get(entry["product_id"])
+        product = product_by_id.get(entry["product_id"])
         if product is None:
-            continue
+            if catalog_path is None:
+                continue
+            fallback = get_products_by_ids(catalog_path, [entry["product_id"]])
+            product = fallback[0] if fallback else None
+            if product is None:
+                continue
         eligible_products.append({**product, **entry})
 
     waiting_products = []
-    waiting_ids = [entry["product_id"] for entry in waiting_entries]
-    waiting_by_id = {
-        product["product_id"]: product
-        for product in get_products_by_ids(catalog_path, waiting_ids)
-    }
     for entry in waiting_entries:
-        product = waiting_by_id.get(entry["product_id"])
+        product = product_by_id.get(entry["product_id"])
         if product is None:
-            continue
+            if catalog_path is None:
+                continue
+            fallback = get_products_by_ids(catalog_path, [entry["product_id"]])
+            product = fallback[0] if fallback else None
+            if product is None:
+                continue
         waiting_products.append({**product, **entry})
 
     return {
@@ -394,6 +412,7 @@ def _build_return_decision(
         "reason": reason,
         "accepted": accepted,
         "product_ids": product_ids,
+        "products": list(request_data.get("products", [])),
         "accepted_product_ids": product_ids,
         "requested_product_ids": sorted(
             requested_product_ids if requested_product_ids is not None else request_data.get("product_ids", [])

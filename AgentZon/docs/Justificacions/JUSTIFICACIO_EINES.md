@@ -26,6 +26,7 @@ Cada apartat indica:
 | **FIPA-ACL com a `ClosedNamespace`** | Cap. 6.1 | `AgentUtil/ACL.py`, `AgentUtil/ACLMessages.py` | ✅ `build_message` / `get_message_properties` |
 | **Directory Service Ontology (DSO)** | Cap. 6.1 | `AgentUtil/DSO.py`, `agents/agent_directory.py` | ✅ `DSO.Register`, `DSO.Search`, `FOAF.Agent`/`FOAF.name` |
 | **Protocol request → not-understood/confirm/inform** | Cap. 6.1–6.2 | tots els `/comm` | ✅ Mateix protocol |
+| **Protocols d'ownership entre agents** | Cap. 6.1–6.2 | `protocols/cerca.py`, `protocols/compra.py`, `protocols/opinador.py`, `protocols/pagament.py` | ✅ Mateix patró ACL/RDF, sense accessos directes a BDs alienes |
 | **Generació aleatòria de dades** | Cap. 5.2 (`RandomInfo.py`) | `services/bootstrap.py` | ✅ Mateixa idea |
 | **Concurrència amb `multiprocessing`** | Cap. 2 + Cap. 6 | `config.py` (`serve_agent`) + tots els `main()` | ✅ `Process` + `Queue` + `join` |
 | **SPARQLWrapper** | Cap. 4.3 | *(no usat — justificat)* | ✅ No aplica al nostre domini |
@@ -99,6 +100,13 @@ def send_message(gmess, address, timeout=10):
 
 **Per què:** és el patró de comunicació documentat (`requests.get` amb `params`). No fem servir
 cap altra llibreria HTTP ni cap protocol alternatiu.
+
+Després del refactor d'ownership hem afegit missatges com `PeticioConsultaProductes`,
+`PeticioRegistreCerca`, `PeticioConsultaCompresUsuari`, `PeticioConsultaDadesBancariesVenedor` o
+`PeticioRegistreProducteExternCompra`, però **tots** continuen passant exactament pel mateix camí:
+`Graph` RDF → `build_message(...)` → `requests.get(..., params={"content": ...})` → resposta
+`inform`/`confirm` parsejada amb `rdflib`. Per tant, la tècnica no canvia; només augmenta el nombre
+de casos d'ús coberts per l'arquitectura del laboratori.
 
 ---
 
@@ -217,6 +225,12 @@ def get_message_properties(msg):
 
 **Per què:** el laboratori imposa FIPA-ACL com a protocol de comunicació i ens dóna aquestes dues
 funcions; les fem servir tal qual, sense reinventar el format del missatge.
+
+Això és especialment rellevant per al refactor d'ownership: quan `Compra` necessita snapshots del
+catàleg, `Retornador` necessita compres d'usuari, o `VenedorExtern` necessita el perfil bancari,
+no es llegeixen fitxers `.ttl` aliens. Es fa una **petició ACL `request`** a l'agent propietari i
+es rep una **resposta ACL `inform`/`confirm`** amb contingut RDF. El patró segueix sent el del
+Capítol 6; simplement l'apliquem també a les consultes internes entre agents.
 
 ---
 

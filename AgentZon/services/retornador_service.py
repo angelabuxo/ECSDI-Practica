@@ -10,6 +10,12 @@ Aquest mòdul centralitza la lògica que no ha d'estar al fitxer Flask de l'agen
 from uuid import uuid4
 
 from rdflib import RDF
+from rdflib import Literal
+
+from AgentUtil.OntoNamespaces import AZON
+from services.catalog_service import get_products_by_ids
+from services.history_service import load_purchase_records
+from services.rdf_store import load_graph
 
 # Motius de devolució (UI) i política d'acceptació (Opinador)
 RETURN_REASON_DEFECTUOUS = "Producte defectuós"
@@ -43,23 +49,14 @@ RETURN_REASONS_ACCEPTED_BY_POLICY = {
 RETURN_REJECTION_MESSAGE = "Ho sentim, no es compleixen les condicions per retornar el producte."
 MAX_RETURN_DAYS = 15
 
-from AgentUtil.OntoNamespaces import AZON
-from services.catalog_service import get_products_by_ids
-from services.history_service import load_purchase_records
-from services.rdf_store import load_graph
-def build_purchased_products_for_user(purchase_history_path, catalog_path, user_id, logger=None):
-    """Retorna els productes comprats per un usuari (IP) amb dades de catàleg."""
-    purchases = load_purchase_records(purchase_history_path, user_id=user_id)
-    product_ids = sorted({pid for purchase in purchases for pid in purchase.get("product_ids", [])})
-    catalog_products = {
-        product["product_id"]: product
-        for product in get_products_by_ids(catalog_path, product_ids)
-    }
+
+def build_purchased_products_from_orders(purchases, logger=None, user_id=None):
+    """Converteix snapshots de compra en files simples per a la UI de devolucions."""
     purchased_products = []
     for purchase in purchases:
         order_id = purchase.get("order_id", "")
-        for product_id in purchase.get("product_ids", []):
-            product = catalog_products.get(product_id, {})
+        for product in purchase.get("products", []):
+            product_id = product.get("product_id", "")
             purchased_products.append(
                 {
                     "order_id": order_id,
@@ -68,6 +65,40 @@ def build_purchased_products_for_user(purchase_history_path, catalog_path, user_
                     "brand": product.get("brand", ""),
                 }
             )
+    if logger is not None:
+        logger.info(
+            "Retornador UI: %d productes comprats disponibles per a l'usuari %s",
+            len(purchased_products),
+            user_id or "",
+        )
+    return purchased_products
+
+
+def build_purchased_products_for_user(purchase_history_path, catalog_path, user_id, logger=None):
+    """Compatibilitat per a proves antigues que encara llegeixen historial local."""
+    purchases = load_purchase_records(purchase_history_path, user_id=user_id)
+    purchased_products = build_purchased_products_from_orders(purchases, user_id=user_id)
+    missing_ids = sorted(
+        {
+            product["product_id"]
+            for product in purchased_products
+            if product.get("name") == product.get("product_id") or not product.get("brand")
+        }
+    )
+    catalog_products = {}
+    if catalog_path is not None and missing_ids:
+        catalog_products = {
+            product["product_id"]: product
+            for product in get_products_by_ids(catalog_path, missing_ids)
+        }
+    for product in purchased_products:
+        catalog_product = catalog_products.get(product["product_id"])
+        if catalog_product is None:
+            continue
+        if product.get("name") == product.get("product_id"):
+            product["name"] = catalog_product.get("name", product["product_id"])
+        if not product.get("brand"):
+            product["brand"] = catalog_product.get("brand", "")
     if logger is not None:
         logger.info(
             "Retornador UI: %d productes comprats disponibles per a l'usuari %s",
@@ -122,28 +153,37 @@ def build_aggregate_return_decision(parent_return_id, user_id, reason, order_dec
     """Agrupa les resolucions per comanda en una resposta per a la UI."""
     accepted_items = []
     rejected_items = []
-    total_amount = 0.0
+    accepted_products = []
 
     for order_id, decision in sorted(order_decisions.items()):
         accepted_ids = set(decision.get("accepted_product_ids") or decision.get("product_ids") or [])
         requested_ids = set(decision.get("requested_product_ids") or accepted_ids)
+        products_by_id = {
+            product["product_id"]: product
+            for product in decision.get("products", [])
+            if product.get("product_id")
+        }
         for product_id in sorted(requested_ids):
-            item = {"order_id": order_id, "product_id": product_id}
+            product = products_by_id.get(product_id, {})
+            item = {
+                "order_id": order_id,
+                "product_id": product_id,
+                "name": product.get("name", product_id),
+                "brand": product.get("brand", ""),
+            }
             if product_id in accepted_ids:
                 accepted_items.append(item)
+                accepted_products.append(
+                    product if product else {"product_id": product_id, "name": product_id, "brand": "", "price": 0.0}
+                )
             else:
                 rejected_items.append(item)
 
-    if accepted_items:
-        products = get_products_by_ids(
-            catalog_path,
-            sorted({item["product_id"] for item in accepted_items}),
-        )
-        price_by_id = {product["product_id"]: product.get("price", 0.0) for product in products}
-        total_amount = round(
-            sum(price_by_id.get(item["product_id"], 0.0) for item in accepted_items),
-            2,
-        )
+    total_amount = round(sum(_product_amount(product) for product in accepted_products), 2)
+    if total_amount == 0.0 and accepted_items and catalog_path is not None:
+        products = get_products_by_ids(catalog_path, sorted({item["product_id"] for item in accepted_items}))
+        products_by_id = {product["product_id"]: product for product in products}
+        total_amount = round(sum(products_by_id.get(item["product_id"], {}).get("price", 0.0) for item in accepted_items), 2)
 
     if not accepted_items:
         return {
@@ -193,6 +233,45 @@ def _extract_product_id_from_node(graph, node):
     return node_text
 
 
+def _product_amount(product):
+    try:
+        return float(product.get("price", 0.0))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def build_refund_batches_from_products(products):
+    """Agrupa snapshots acceptats en lots interns i externs per venedor."""
+    internal_products = []
+    external_by_seller = {}
+    for product in products:
+        seller_id = product.get("seller_id") or ""
+        requires_external = bool(product.get("requires_external_logistics"))
+        if seller_id and requires_external:
+            external_by_seller.setdefault(seller_id, []).append(product)
+        else:
+            internal_products.append(product)
+
+    batches = []
+    if internal_products:
+        batches.append(
+            {
+                "seller_id": None,
+                "product_ids": sorted(product["product_id"] for product in internal_products),
+                "amount": round(sum(_product_amount(product) for product in internal_products), 2),
+            }
+        )
+    for seller_id, seller_products in sorted(external_by_seller.items()):
+        batches.append(
+            {
+                "seller_id": seller_id,
+                "product_ids": sorted(product["product_id"] for product in seller_products),
+                "amount": round(sum(_product_amount(product) for product in seller_products), 2),
+            }
+        )
+    return batches
+
+
 def load_external_seller_by_product(shipping_responsibility_path, catalog_path):
     """Mapeja `product_id -> seller_id` per als productes externs."""
     graph = load_graph(shipping_responsibility_path)
@@ -222,7 +301,16 @@ def calculate_amount_for_products(catalog_path, product_ids):
 
 
 def build_refund_batches(decision, shipping_responsibility_path, catalog_path):
-    """Separa una devolució en lots de reemborsament intern/extern per venedor."""
+    """Compatibilitat: usa snapshots si hi són; si no, recorre a les rutes antigues."""
+    snapshot_products = [
+        product
+        for product in decision.get("products", [])
+        if product.get("product_id") in set(decision.get("product_ids", []))
+    ]
+    snapshot_batches = build_refund_batches_from_products(snapshot_products)
+    if snapshot_batches:
+        return snapshot_batches
+
     product_ids = decision.get("product_ids", [])
     seller_by_product = load_external_seller_by_product(shipping_responsibility_path, catalog_path)
     internal_product_ids = []

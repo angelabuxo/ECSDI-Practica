@@ -31,6 +31,50 @@ def _add_product_reference(graph, subject, product):
     return product_node
 
 
+def _add_snapshot_product(graph, subject, product, relation):
+    product_node = AZON[f"product-{product['product_id']}"]
+    graph.add((subject, relation, product_node))
+    product_type = AZON.ProducteExtern if product.get("seller_id") else AZON.Producte
+    graph.add((product_node, RDF.type, product_type))
+    graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
+    graph.add((product_node, AZON.Nom, Literal(product.get("name", ""))))
+    if "description" in product:
+        graph.add((product_node, AZON.Descripcio, Literal(product.get("description", ""))))
+    graph.add((product_node, AZON.Categoria, Literal(product.get("category", ""))))
+    graph.add((product_node, AZON.Marca, Literal(product.get("brand", ""))))
+    graph.add((product_node, AZON.Preu, Literal(product.get("price", 0.0), datatype=XSD.float)))
+    graph.add((product_node, AZON.Pes, Literal(product.get("weight", 0.0), datatype=XSD.float)))
+    if product.get("seller_id"):
+        graph.add((product_node, AZON.IdVenedorExtern, Literal(product["seller_id"])))
+    graph.add(
+        (
+            product_node,
+            AZON.RequereixLogisticaExterna,
+            Literal(bool(product.get("requires_external_logistics", False)), datatype=XSD.boolean),
+        )
+    )
+    return product_node
+
+
+def _parse_snapshot_product(graph, product_node):
+    price_value = graph.value(product_node, AZON.Preu)
+    weight_value = graph.value(product_node, AZON.Pes)
+    requires_external = graph.value(product_node, AZON.RequereixLogisticaExterna)
+    seller_id = graph.value(product_node, AZON.IdVenedorExtern)
+    description = graph.value(product_node, AZON.Descripcio)
+    return {
+        "product_id": str(graph.value(product_node, AZON.IdProducte)),
+        "name": str(graph.value(product_node, AZON.Nom) or ""),
+        "description": str(description) if description is not None else "",
+        "category": str(graph.value(product_node, AZON.Categoria) or ""),
+        "brand": str(graph.value(product_node, AZON.Marca) or ""),
+        "price": float(price_value) if price_value is not None else 0.0,
+        "weight": float(weight_value) if weight_value is not None else 0.0,
+        "seller_id": str(seller_id) if seller_id is not None else "",
+        "requires_external_logistics": bool(requires_external.toPython()) if requires_external is not None else False,
+    }
+
+
 def build_peticio_feedback(feedback_request, sender=None, receiver=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
@@ -191,6 +235,169 @@ def parse_resposta_feedback(graph, content):
     }
 
 
+def build_peticio_registre_cerca(search_record, sender=None, receiver=None, msgcnt=0):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"search-history-{search_record['user_id']}-{msgcnt}"]
+    graph.add((content, RDF.type, AZON.PeticioRegistreCerca))
+    graph.add((content, AZON.IdUsuari, Literal(search_record["user_id"])))
+    graph.add((content, AZON.TextConsulta, Literal(search_record["criteria"].get("text", ""))))
+    graph.add((content, AZON.CategoriaConsulta, Literal(search_record["criteria"].get("category", ""))))
+    graph.add((content, AZON.MarcaConsulta, Literal(search_record["criteria"].get("brand", ""))))
+    if search_record["criteria"].get("min_price") is not None:
+        graph.add((content, AZON.PreuMinim, Literal(search_record["criteria"]["min_price"], datatype=XSD.float)))
+    if search_record["criteria"].get("max_price") is not None:
+        graph.add((content, AZON.PreuMaxim, Literal(search_record["criteria"]["max_price"], datatype=XSD.float)))
+    for product in search_record.get("products", []):
+        _add_snapshot_product(graph, content, product, AZON.MostraProducte)
+    return build_message(
+        graph,
+        perf=ACL.request,
+        sender=sender,
+        receiver=receiver,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
+def parse_peticio_registre_cerca(graph):
+    props = get_message_properties(graph)
+    content = props["content"]
+    return {
+        "user_id": str(graph.value(content, AZON.IdUsuari)),
+        "criteria": {
+            "text": str(graph.value(content, AZON.TextConsulta) or ""),
+            "category": str(graph.value(content, AZON.CategoriaConsulta) or ""),
+            "brand": str(graph.value(content, AZON.MarcaConsulta) or ""),
+            "min_price": float(graph.value(content, AZON.PreuMinim)) if graph.value(content, AZON.PreuMinim) is not None else None,
+            "max_price": float(graph.value(content, AZON.PreuMaxim)) if graph.value(content, AZON.PreuMaxim) is not None else None,
+        },
+        "products": [_parse_snapshot_product(graph, product_node) for product_node in graph.objects(content, AZON.MostraProducte)],
+    }
+
+
+def build_confirmacio_registre_cerca(user_id, sender=None, receiver=None, request_content=None, msgcnt=0):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"search-history-confirmation-{user_id}-{msgcnt}"]
+    graph.add((content, RDF.type, AZON.ConfirmacioRegistreCerca))
+    graph.add((content, AZON.IdUsuari, Literal(user_id)))
+    if request_content is not None:
+        graph.add((content, AZON.EsRespostaA, request_content))
+    return build_message(
+        graph,
+        perf=ACL.inform,
+        sender=sender,
+        receiver=receiver,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
+def parse_confirmacio_registre_cerca(graph):
+    props = get_message_properties(graph)
+    content = props["content"]
+    return {"user_id": str(graph.value(content, AZON.IdUsuari))}
+
+
+def build_peticio_consulta_compres_usuari(user_id, sender=None, receiver=None, msgcnt=0):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"user-purchases-{user_id}-{msgcnt}"]
+    graph.add((content, RDF.type, AZON.PeticioConsultaCompresUsuari))
+    graph.add((content, AZON.IdUsuari, Literal(user_id)))
+    return build_message(
+        graph,
+        perf=ACL.request,
+        sender=sender,
+        receiver=receiver,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
+def parse_peticio_consulta_compres_usuari(graph):
+    props = get_message_properties(graph)
+    content = props["content"]
+    return str(graph.value(content, AZON.IdUsuari))
+
+
+def build_resultat_consulta_compres_usuari(
+    user_id,
+    purchases,
+    sender=None,
+    receiver=None,
+    request_content=None,
+    msgcnt=0,
+):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"user-purchases-result-{user_id}-{msgcnt}"]
+    graph.add((content, RDF.type, AZON.ResultatConsultaCompresUsuari))
+    graph.add((content, AZON.IdUsuari, Literal(user_id)))
+    for purchase in purchases:
+        order_node = AZON[f"order-{purchase['order_id']}"]
+        graph.add((content, AZON.SobreComanda, order_node))
+        graph.add((order_node, RDF.type, AZON.Comanda))
+        graph.add((order_node, AZON.IdComanda, Literal(purchase["order_id"])))
+        graph.add((order_node, AZON.IdUsuari, Literal(purchase.get("user_id", user_id))))
+        shipping_data = purchase.get("shipping_data", {})
+        graph.add((order_node, AZON.Nom, Literal(shipping_data.get("user_name", purchase.get("user_name", "")))))
+        graph.add((order_node, AZON.Carrer, Literal(shipping_data.get("street_address", ""))))
+        graph.add((order_node, AZON.Ciutat, Literal(shipping_data.get("city", ""))))
+        graph.add((order_node, AZON.Prioritat, Literal(shipping_data.get("priority", ""))))
+        if shipping_data.get("payment_method"):
+            graph.add((order_node, AZON.MetodePagament, Literal(shipping_data["payment_method"])))
+        if purchase.get("purchase_date"):
+            graph.add((order_node, AZON.DataCompra, Literal(purchase["purchase_date"])))
+        if purchase.get("delivery_date"):
+            graph.add((order_node, AZON.DataEntrega, Literal(purchase["delivery_date"])))
+        for product in purchase.get("products", []):
+            _add_snapshot_product(graph, order_node, product, AZON.TeProducte)
+    if request_content is not None:
+        graph.add((content, AZON.EsRespostaA, request_content))
+    return build_message(
+        graph,
+        perf=ACL.inform,
+        sender=sender,
+        receiver=receiver,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
+def parse_resultat_consulta_compres_usuari(graph):
+    props = get_message_properties(graph)
+    content = props["content"]
+    purchases = []
+    for order_node in graph.objects(content, AZON.SobreComanda):
+        products = [_parse_snapshot_product(graph, product_node) for product_node in graph.objects(order_node, AZON.TeProducte)]
+        purchases.append(
+            {
+                "order_id": str(graph.value(order_node, AZON.IdComanda)),
+                "user_id": str(graph.value(order_node, AZON.IdUsuari) or ""),
+                "user_name": str(graph.value(order_node, AZON.Nom) or ""),
+                "products": products,
+                "product_ids": sorted(product["product_id"] for product in products),
+                "shipping_data": {
+                    "user_name": str(graph.value(order_node, AZON.Nom) or ""),
+                    "street_address": str(graph.value(order_node, AZON.Carrer) or ""),
+                    "city": str(graph.value(order_node, AZON.Ciutat) or ""),
+                    "priority": str(graph.value(order_node, AZON.Prioritat) or ""),
+                    "payment_method": str(graph.value(order_node, AZON.MetodePagament) or ""),
+                    "user_id": str(graph.value(order_node, AZON.IdUsuari) or ""),
+                },
+                "purchase_date": str(graph.value(order_node, AZON.DataCompra) or ""),
+                "delivery_date": str(graph.value(order_node, AZON.DataEntrega) or ""),
+            }
+        )
+    return purchases
+
+
 def build_resposta_recomanacio(recommendation, sender=None, receiver=None, request_content=None, msgcnt=0):
     graph = Graph()
     bind_namespaces(graph)
@@ -295,11 +502,15 @@ def build_resolucio_devolucio(decision, sender=None, receiver=None, request_cont
     graph.add((content, AZON.ImportPagament, Literal(_amount_as_float(decision.get("amount")), datatype=XSD.float)))
     graph.add((content, AZON.Acceptada, Literal(bool(decision["accepted"]), datatype=XSD.boolean)))
     graph.add((content, AZON.MotiuDevolucio, Literal(decision.get("reason", ""))))
-    for product_id in decision.get("product_ids", []):
-        product_node = AZON[f"product-{product_id}"]
-        graph.add((content, AZON.SobreProducte, product_node))
-        graph.add((product_node, RDF.type, AZON.Producte))
-        graph.add((product_node, AZON.IdProducte, Literal(product_id)))
+    if decision.get("products"):
+        for product in decision.get("products", []):
+            _add_snapshot_product(graph, content, product, AZON.SobreProducte)
+    else:
+        for product_id in decision.get("product_ids", []):
+            product_node = AZON[f"product-{product_id}"]
+            graph.add((content, AZON.SobreProducte, product_node))
+            graph.add((product_node, RDF.type, AZON.Producte))
+            graph.add((product_node, AZON.IdProducte, Literal(product_id)))
     if decision.get("seller_id"):
         graph.add((content, AZON.IdVenedorExtern, Literal(decision["seller_id"])))
     if request_content is not None:
@@ -318,12 +529,12 @@ def build_resolucio_devolucio(decision, sender=None, receiver=None, request_cont
 def parse_resolucio_devolucio(graph, content=None):
     if content is None:
         content = graph.value(predicate=RDF.type, object=AZON.ResolucioDevolucio)
+    products = []
     product_ids = []
     for product_node in graph.objects(content, AZON.SobreProducte):
-        product_id = graph.value(product_node, AZON.IdProducte)
-        if product_id is None:
-            product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
-        product_ids.append(str(product_id))
+        product = _parse_snapshot_product(graph, product_node)
+        products.append(product)
+        product_ids.append(product["product_id"])
     amount_value = graph.value(content, AZON.ImportPagament)
     return {
         "return_id": str(graph.value(content, AZON.IdDevolucio)),
@@ -333,6 +544,7 @@ def parse_resolucio_devolucio(graph, content=None):
         "accepted": bool(graph.value(content, AZON.Acceptada).toPython()),
         "reason": str(graph.value(content, AZON.MotiuDevolucio) or ""),
         "product_ids": sorted(product_ids),
+        "products": products,
     }
 
 

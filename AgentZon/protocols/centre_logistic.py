@@ -46,6 +46,8 @@ def _add_product_to_graph(graph, subject, product, centre_node=None):
         graph.add((product_node, AZON.Nom, Literal(product["name"])))
     if "weight" in product:
         graph.add((product_node, AZON.Pes, Literal(product["weight"], datatype=XSD.float)))
+    if "price" in product:
+        graph.add((product_node, AZON.Preu, Literal(product["price"], datatype=XSD.float)))
     if centre_node is not None:
         graph.add((product_node, AZON.UbicatACentre, centre_node))
     return product_node
@@ -87,6 +89,7 @@ def parse_productes_localitzats(graph, content):
     centre_city = None
     for _, product_node in product_nodes_from_content(graph, content):
         weight_value = graph.value(product_node, AZON.Pes)
+        price_value = graph.value(product_node, AZON.Preu)
         centre_node = graph.value(product_node, AZON.UbicatACentre)
         if centre_node is not None and centre_id is None:
             centre_id_value = graph.value(centre_node, AZON.IdCentreLogistic)
@@ -97,6 +100,7 @@ def parse_productes_localitzats(graph, content):
             "product_id": str(graph.value(product_node, AZON.IdProducte)),
             "name": str(graph.value(product_node, AZON.Nom) or ""),
             "weight": float(weight_value) if weight_value is not None else 0.0,
+            "price": float(price_value) if price_value is not None else 0.0,
         }
         break
     return {
@@ -104,7 +108,7 @@ def parse_productes_localitzats(graph, content):
         "user_id": str(graph.value(content, AZON.IdUsuari)),
         "city": str(graph.value(content, AZON.Ciutat)),
         "delivery_date": str(graph.value(content, AZON.DataEntrega)),
-        "product": product or {"product_id": "", "name": "", "weight": 0.0},
+        "product": product or {"product_id": "", "name": "", "weight": 0.0, "price": 0.0},
         "centre_id": centre_id,
         "centre_city": centre_city,
     }
@@ -162,6 +166,7 @@ def parse_confirmacio_localitzacio(graph):
     product_source = request_content if request_content is not None else content
     for _, product_node in product_nodes_from_content(graph, product_source):
         weight_value = graph.value(product_node, AZON.Pes)
+        price_value = graph.value(product_node, AZON.Preu)
         centre_node = graph.value(product_node, AZON.UbicatACentre)
         if centre_node is not None and centre_id is None:
             centre_id_value = graph.value(centre_node, AZON.IdCentreLogistic)
@@ -172,6 +177,7 @@ def parse_confirmacio_localitzacio(graph):
             "product_id": str(graph.value(product_node, AZON.IdProducte)),
             "name": str(graph.value(product_node, AZON.Nom) or ""),
             "weight": float(weight_value) if weight_value is not None else 0.0,
+            "price": float(price_value) if price_value is not None else 0.0,
         }
         break
     return {
@@ -183,7 +189,7 @@ def parse_confirmacio_localitzacio(graph):
         "delivery_date": str(graph.value(content, AZON.DataEntrega)),
         "centre_id": centre_id,
         "centre_city": centre_city,
-        "product": product or {"product_id": "", "name": "", "weight": 0.0},
+        "product": product or {"product_id": "", "name": "", "weight": 0.0, "price": 0.0},
     }
 
 
@@ -552,4 +558,3 @@ def extract_shipping_details_list(graph):
             shipment["lot_id"],
         ),
     )
-

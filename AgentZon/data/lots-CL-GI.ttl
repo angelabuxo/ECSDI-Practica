@@ -1,16 +1,26 @@
 @prefix azon: <http://www.semanticweb.org/agentzon#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+azon:ploc-15a166 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-36B0BF ;
+    azon:TeProducteIntern azon:product-P1017 .
+
+azon:ploc-8b2d14 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-36B0BF ;
+    azon:TeProducteIntern azon:product-P1011 .
+
 azon:ploc-b0a826 a azon:ProducteLocalitzat ;
     azon:Ciutat "Bcn" ;
     azon:DataEntrega "2026-06-10" ;
     azon:IdUsuari "127.0.0.1" ;
     azon:SobreLot azon:lot-LOT-F13520 ;
     azon:TeProducteIntern azon:product-P1011 .
-
-azon:centre-CL-GI a azon:CentreLogistic ;
-    azon:Ciutat "Girona" ;
-    azon:IdCentreLogistic "CL-GI" .
 
 azon:lot-LOT-F13520 a azon:Lot ;
     azon:Ciutat "Bcn" ;
@@ -20,9 +30,29 @@ azon:lot-LOT-F13520 a azon:Lot ;
     azon:IdLot "LOT-F13520" ;
     azon:PesTotal "1.78"^^xsd:float .
 
+azon:product-P1017 a azon:ProducteIntern ;
+    azon:IdProducte "P1017" ;
+    azon:Nom "Adjustable Desk Lamp" ;
+    azon:Pes "1.53"^^xsd:float ;
+    azon:Preu "48.17"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
+azon:centre-CL-GI a azon:CentreLogistic ;
+    azon:Ciutat "Girona" ;
+    azon:IdCentreLogistic "CL-GI" .
+
+azon:lot-LOT-36B0BF a azon:Lot ;
+    azon:Ciutat "Barcelona" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:Estat "OBERT" ;
+    azon:IdCentreLogistic "CL-GI" ;
+    azon:IdLot "LOT-36B0BF" ;
+    azon:PesTotal "3.31"^^xsd:float .
+
 azon:product-P1011 a azon:ProducteIntern ;
     azon:IdProducte "P1011" ;
     azon:Nom "Slim Desk Lamp" ;
     azon:Pes "1.78"^^xsd:float ;
+    azon:Preu "42.48"^^xsd:float ;
     azon:UbicatACentre azon:centre-CL-GI .
 

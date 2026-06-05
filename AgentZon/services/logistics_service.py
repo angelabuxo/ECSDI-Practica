@@ -102,6 +102,8 @@ def _add_product_reference(graph, subject, product, centre_node=None):
         graph.set((product_node, AZON.Nom, Literal(product["name"])))
     if "weight" in product:
         graph.set((product_node, AZON.Pes, Literal(product["weight"], datatype=XSD.float)))
+    if "price" in product:
+        graph.set((product_node, AZON.Preu, Literal(product["price"], datatype=XSD.float)))
     if centre_node is not None:
         graph.add((product_node, AZON.UbicatACentre, centre_node))
     return product_node
@@ -122,10 +124,12 @@ def _read_item(graph, item_node):
     product = None
     for _, product_node in product_nodes_from_content(graph, item_node):
         weight_value = graph.value(product_node, AZON.Pes)
+        price_value = graph.value(product_node, AZON.Preu)
         product = {
             "product_id": str(graph.value(product_node, AZON.IdProducte)),
             "name": str(graph.value(product_node, AZON.Nom) or ""),
             "weight": float(weight_value) if weight_value is not None else 0.0,
+            "price": float(price_value) if price_value is not None else 0.0,
         }
         break
 
@@ -139,7 +143,7 @@ def _read_item(graph, item_node):
         ),
         "centre_id": centre_id,
         "centre_city": centre_city,
-        "product": product or {"product_id": "", "name": "", "weight": 0.0},
+        "product": product or {"product_id": "", "name": "", "weight": 0.0, "price": 0.0},
     }
 
 
