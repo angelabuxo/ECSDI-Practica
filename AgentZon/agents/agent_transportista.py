@@ -28,7 +28,7 @@ from config import (
     build_agent,
     build_directory_agent,
     register_with_directory,
-    resolve_runtime_hostname,
+    resolve_agent_hosts,
     serve_agent,
 )
 from protocols.centre_logistic import (
@@ -185,7 +185,7 @@ if __name__ == "__main__":
     parser.add_argument("--price-per-kg", type=float, default=8.0)
     parser.add_argument("--delivery-days", type=int, default=1)
     args = parser.parse_args()
-    hostname = resolve_runtime_hostname(args)
+    bind_host, publish_host = resolve_agent_hosts(args)
 
     configure_runtime(
         {
@@ -193,7 +193,7 @@ if __name__ == "__main__":
                 "Transportista-%s" % args.transport_id,
                 "Transport%s" % args.transport_id.title(),
                 args.port,
-                host=hostname,
+                host=publish_host,
             ),
             "directory_agent": build_directory_agent(args.directory_host, args.directory_port),
             "transport_id": args.transport_id,
@@ -201,10 +201,10 @@ if __name__ == "__main__":
             "delivery_days": args.delivery_days,
         }
     )
-    logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
+    logger.info("Iniciant %s a %s:%s (publicat com a %s)", AGENT.name, bind_host, args.port, publish_host)
     serve_agent(
         app,
-        hostname,
+        bind_host,
         args.port,
         register_fn=lambda: register_transport_agent(0),
     )

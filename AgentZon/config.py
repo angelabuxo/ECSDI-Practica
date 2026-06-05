@@ -66,7 +66,7 @@ def build_directory_agent(host=DEFAULT_LOCAL_HOST, port=DEFAULT_PORTS["directory
     return build_agent("DirectoryAgent", "Directory", port, host=host, endpoint="/Register")
 
 
-def resolve_runtime_hostname(args):
+def resolve_bind_hostname(args):
     configured_host = getattr(args, "host", None)
     if configured_host:
         return configured_host
@@ -75,8 +75,28 @@ def resolve_runtime_hostname(args):
     return gethostname()
 
 
+def resolve_publish_hostname(args):
+    publish_host = getattr(args, "publish_host", None)
+    if publish_host:
+        return publish_host
+    return resolve_bind_hostname(args)
+
+
+def resolve_agent_hosts(args):
+    return resolve_bind_hostname(args), resolve_publish_hostname(args)
+
+
+def resolve_runtime_hostname(args):
+    return resolve_bind_hostname(args)
+
+
 def add_runtime_arguments(parser, default_port):
     parser.add_argument("--host", default=None)
+    parser.add_argument(
+        "--publish-host",
+        default=None,
+        help="IP or hostname published to the Directory (defaults to --host).",
+    )
     parser.add_argument(
         "--open",
         action="store_true",

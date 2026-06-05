@@ -32,7 +32,7 @@ from config import (
     build_agent,
     build_directory_agent,
     register_with_directory,
-    resolve_runtime_hostname,
+    resolve_agent_hosts,
     serve_agent,
 )
 from protocols.centre_logistic import (
@@ -574,7 +574,7 @@ if __name__ == "__main__":
     parser.add_argument("--centre-city", default="Barcelona")
     add_data_dir_argument(parser)
     args = parser.parse_args()
-    hostname = resolve_runtime_hostname(args)
+    bind_host, publish_host = resolve_agent_hosts(args)
 
     configure_runtime(
         {
@@ -582,7 +582,7 @@ if __name__ == "__main__":
                 f"CentreLogisticAgent-{args.centre_id}",
                 format_centre_uri_name(args.centre_id),
                 args.port,
-                host=hostname,
+                host=publish_host,
             ),
             "directory_agent": build_directory_agent(args.directory_host, args.directory_port),
             "data_dir": Path(args.data_dir),
@@ -591,10 +591,10 @@ if __name__ == "__main__":
             "transport_agents": [],
         }
     )
-    logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
+    logger.info("Iniciant %s a %s:%s (publicat com a %s)", AGENT.name, bind_host, args.port, publish_host)
     serve_agent(
         app,
-        hostname,
+        bind_host,
         args.port,
         register_fn=lambda: register_with_directory(
             AGENT,

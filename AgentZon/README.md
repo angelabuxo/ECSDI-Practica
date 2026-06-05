@@ -67,7 +67,7 @@ Obre **una terminal per agent** i executa les comandes següents des de `AgentZo
 1. Directory  
 2. Cobrador  
 3. Opinador, Retornador i transportistes  
-4. Centres Logístics, Compra i Cercador (aquest últim, el que exposa la UI)
+4. Centres Logístics, Venedor Extern, Compra i Cercador (aquest últim, el que exposa la UI de cerca/compra)
 
 Substitueix `.venv/bin/python` per `../.venv/bin/python` si el virtualenv està a l'arrel del repositori.
 
@@ -121,13 +121,19 @@ Substitueix `.venv/bin/python` per `../.venv/bin/python` si el virtualenv està 
 .venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9008 --centre-id CL-TGN --centre-city Tarragona --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
-**10. Agent Compra**
+**10. Agent Venedor Extern**
+
+```bash
+.venv/bin/python -m agents.agent_venedor_extern --host 127.0.0.1 --port 9012 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+```
+
+**11. Agent Compra**
 
 ```bash
 .venv/bin/python -m agents.agent_compra --host 127.0.0.1 --port 9002 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
 ```
 
-**11. Agent Cercador**
+**12. Agent Cercador**
 
 ```bash
 .venv/bin/python -m agents.agent_cercador --host 127.0.0.1 --port 9001 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
@@ -137,12 +143,13 @@ Substitueix `.venv/bin/python` per `../.venv/bin/python` si el virtualenv està 
 
 Quan tots els agents estiguin en marxa, obre:
 
-`http://127.0.0.1:9001/iface`
+- Cerca i compra: `http://127.0.0.1:9001/iface`
+- Registre de productes externs (venedors): `http://127.0.0.1:9012/iface`
 
 Endpoints principals:
 
 - `DirectoryAgent`: `/Register`, `/Info`, `/Stop`
-- `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `RetornadorAgent`, `Transportista`, `CobradorAgent`: `/comm`, `/iface`, `/Stop`
+- `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `RetornadorAgent`, `Transportista`, `CobradorAgent`, `VenedorExternAgent`: `/comm`, `/iface`, `/Stop`
 
 Per forçar la negociació dels lots oberts amb entrega imminent:
 
@@ -154,6 +161,55 @@ curl "http://127.0.0.1:9008/cron/negotiate-ready-lots"
 
 Per a la demo: el sistema ha de funcionar **realment distribuït**. Pots executar agents en màquines diferents passant `--host` i `--directory-host` amb les IP reals.
 
+### Opció C (11+ PCs a la xarxa local)
+
+Hi ha scripts per automatitzar el desplegament. El fitxer `distributed.env` només necessita la IP del **Directory**; cada PC detecta la seva IP local sol:
+
+```bash
+cd AgentZon
+cp distributed.env.example distributed.env
+# Edita distributed.env: DIRECTORY_HOST=<ip_del_pc_del_directory>
+
+./run_distributed_agent.sh --local-ip   # comprova quina IP detecta aquest PC
+```
+
+**Manual (recomanat en laboratori):** copia el mateix `distributed.env` a totes les màquines i executa un agent per PC:
+
+```bash
+./run_distributed_agent.sh directory    # només al PC del Directory (primer!)
+./run_distributed_agent.sh cobrador     # al PC del Cobrador
+# ... (./run_distributed_agent.sh --list per veure tots)
+```
+
+**Scripts per repartir:** `./generate_node_scripts.sh` crea `distributed/nodes/start_<agent>.sh` (un fitxer per agent).
+
+**SSH des d'un PC central** (cal `ssh-copy-id`, `deploy.hosts` i el mateix path del projecte):
+
+```bash
+cp deploy.hosts.example deploy.hosts   # agent=ip per cada PC (només per SSH)
+# A distributed.env: SSH_USER=..., REMOTE_AGENTZON_DIR=/ruta/al/AgentZon
+./deploy_distributed.sh --check         # només prova SSH (sense clonar ni instal·lar res)
+./deploy_distributed.sh --check-setup   # SSH + comprova que existeix el projecte i .venv
+./deploy_distributed.sh --dry-run       # previsualitza comandes d'arrencada
+./deploy_distributed.sh                 # arrenca tots en ordre
+./deploy_distributed.sh --stop          # atura agents remots
+```
+
+Prova manual a un sol PC:
+
+```bash
+ssh -o ConnectTimeout=5 student@10.10.43.2 'echo OK && hostname'
+```
+
+El sistema té **12 agents**; amb **11 PCs** executa dos agents al mateix PC (p. ex. `transport_fast` i `transport_economy` en dos terminals).
+
+Interfícies quan tot estigui actiu (IP del PC on corre cada agent):
+
+- Cerca/compra: `http://<ip_pc_cercador>:9001/iface`
+- Venedor extern: `http://<ip_pc_venedor>:9012/iface`
+
+Si la detecció automàtica de IP falla, afegeix `LOCAL_HOST=<ip>` a `distributed.env`.
+
 ### Aturar agents, terminals i ports actius
 
 Si has obert els agents amb `./run_agents.sh` o manualment i vols reiniciar net (errors `Address already in use`, processos penjats, etc.), executa des de qualsevol directori:
@@ -162,8 +218,8 @@ Si has obert els agents amb `./run_agents.sh` o manualment i vols reiniciar net 
 # 1) Aturar tots els processos Python dels agents
 pkill -f '[Pp]ython.*-m agents\.agent_' 2>/dev/null || true
 
-# 2) Alliberar els ports reservats per AgentZon (9000–9009, 9010–9011)
-for port in 9000 9001 9002 9003 9004 9005 9006 9007 9008 9009 9010 9011; do
+# 2) Alliberar els ports reservats per AgentZon (9000–9009, 9010–9012)
+for port in 9000 9001 9002 9003 9004 9005 9006 9007 9008 9009 9010 9011 9012; do
   lsof -ti "tcp:$port" -sTCP:LISTEN 2>/dev/null | xargs kill -9 2>/dev/null
 done
 ```
@@ -171,7 +227,7 @@ done
 Comprovar que no queda res en escolta:
 
 ```bash
-lsof -nP -iTCP:9000-9011 -sTCP:LISTEN
+lsof -nP -iTCP:9000-9012 -sTCP:LISTEN
 ```
 
 Si has usat `./run_agents.sh` a macOS, tanca també les finestres de Terminal que han quedat obertes (Cmd+W a cada una, o tanca-les des del menú Terminal).

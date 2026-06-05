@@ -25,7 +25,7 @@ from config import (
     DEFAULT_PORTS,
     add_runtime_arguments,
     build_agent,
-    resolve_runtime_hostname,
+    resolve_agent_hosts,
     serve_agent,
 )
 
@@ -57,6 +57,8 @@ def process_register():
 
     dsgraph.add((agn_uri, RDF.type, FOAF.Agent))
     dsgraph.add((agn_uri, FOAF.name, agn_name))
+    for _, _, old_address in list(dsgraph.triples((agn_uri, DSO.Address, None))):
+        dsgraph.remove((agn_uri, DSO.Address, old_address))
     dsgraph.add((agn_uri, DSO.Address, agn_add))
     dsgraph.add((agn_uri, DSO.AgentType, agn_type))
     dsgraph.add((agn_uri, DSO.Uri, agn_uri))
@@ -146,10 +148,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     add_runtime_arguments(parser, DEFAULT_PORTS["directory"])
     args = parser.parse_args()
-    hostname = resolve_runtime_hostname(args)
+    bind_host, publish_host = resolve_agent_hosts(args)
 
     configure_runtime(
-        {"agent": build_agent("DirectoryAgent", "Directory", args.port, host=hostname, endpoint="/Register")}
+        {"agent": build_agent("DirectoryAgent", "Directory", args.port, host=publish_host, endpoint="/Register")}
     )
-    logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
-    serve_agent(app, hostname, args.port)
+    logger.info("Iniciant %s a %s:%s (publicat com a %s)", AGENT.name, bind_host, args.port, publish_host)
+    serve_agent(app, bind_host, args.port)

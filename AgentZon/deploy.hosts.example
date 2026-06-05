@@ -1,0 +1,19 @@
+# Copia a `deploy.hosts` només si uses deploy_distributed.sh (SSH central).
+#   cp deploy.hosts.example deploy.hosts
+#
+# Mapeja cada agent a la IP del PC on s'ha d'executar (per SSH).
+# No cal aquest fitxer si cada persona arrenca el seu agent manualment
+# amb ./run_distributed_agent.sh <agent>.
+
+directory=10.10.43.1
+cobrador=10.10.43.2
+opinador=10.10.43.3
+retornador=10.10.43.4
+transport_fast=10.10.43.5
+transport_economy=10.10.43.5
+centre_bcn=10.10.43.7
+centre_gi=10.10.43.8
+centre_tgn=10.10.43.9
+venedor_extern=10.10.43.10
+compra=10.10.43.11
+cercador=10.10.43.12

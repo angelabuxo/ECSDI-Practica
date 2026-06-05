@@ -31,6 +31,16 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(directory.address, "http://directory.test:9000/Register")
         self.assertEqual(directory.stop, "http://directory.test:9000/Stop")
 
+    def test_resolve_agent_hosts_uses_publish_host_for_directory_registration(self):
+        from config import resolve_agent_hosts
+
+        args = types.SimpleNamespace(host="0.0.0.0", publish_host="10.10.43.4", open=None)
+
+        bind_host, publish_host = resolve_agent_hosts(args)
+
+        self.assertEqual(bind_host, "0.0.0.0")
+        self.assertEqual(publish_host, "10.10.43.4")
+
 
 if __name__ == "__main__":
     unittest.main()

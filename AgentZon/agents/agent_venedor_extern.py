@@ -32,7 +32,7 @@ from config import (
     build_agent,
     build_directory_agent,
     register_with_directory,
-    resolve_runtime_hostname,
+    resolve_agent_hosts,
     serve_agent,
 )
 from protocols.pagament import build_peticio_registre_dades_venedor, extract_confirmacio_registre_dades
@@ -412,19 +412,19 @@ if __name__ == "__main__":
     add_directory_arguments(parser)
     add_data_dir_argument(parser)
     args = parser.parse_args()
-    hostname = resolve_runtime_hostname(args)
+    bind_host, publish_host = resolve_agent_hosts(args)
 
     configure_runtime(
         {
-            "agent": build_agent("VenedorExternAgent", "VenedorExtern", args.port, host=hostname),
+            "agent": build_agent("VenedorExternAgent", "VenedorExtern", args.port, host=publish_host),
             "directory_agent": build_directory_agent(args.directory_host, args.directory_port),
             "data_dir": Path(args.data_dir),
         }
     )
-    logger.info("Iniciant %s a %s:%s", AGENT.name, hostname, args.port)
+    logger.info("Iniciant %s a %s:%s (publicat com a %s)", AGENT.name, bind_host, args.port, publish_host)
     serve_agent(
         app,
-        hostname,
+        bind_host,
         args.port,
         register_fn=lambda: register_with_directory(AGENT, DirectoryAgent, VENDOR_EXTERN_AGENT_TYPE, 0),
     )
