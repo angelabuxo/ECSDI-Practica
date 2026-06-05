@@ -89,7 +89,6 @@ class TransportAgentTests(unittest.TestCase):
                 "delivery_days": 1,
             }
         )
-        agent_transportista._random_fn = lambda: 0.5
         router = LocalMessageRouter()
         router.register_app(transport.address, agent_transportista.app)
 
@@ -104,7 +103,7 @@ class TransportAgentTests(unittest.TestCase):
         proposal_reply = router.send_message(cfp_message, transport.address)
         proposal = extract_transport_offer(proposal_reply)
 
-        counter_price = 14.0
+        counter_price = 12.5
         counter_message = build_contraoferta_transport(
             lot,
             proposal,
@@ -151,7 +150,6 @@ class TransportAgentTests(unittest.TestCase):
                 "delivery_days": 1,
             }
         )
-        agent_transportista._random_fn = lambda: 0.5
         router = LocalMessageRouter()
         router.register_app(transport.address, agent_transportista.app)
 
@@ -178,68 +176,6 @@ class TransportAgentTests(unittest.TestCase):
         )
         counter_reply = router.send_message(counter_message, transport.address)
         self.assertEqual(get_message_properties(counter_reply)["performative"], ACL.refuse)
-
-    def test_transport_agent_accepts_below_threshold_with_lucky_random(self):
-        from AgentUtil.ACL import ACL
-        from AgentUtil.ACLMessages import get_message_properties
-        from AgentUtil.Agent import Agent
-        from agents import agent_transportista
-        from protocols.centre_logistic import (
-            build_contraoferta_transport,
-            build_peticio_transport,
-            extract_transport_offer,
-        )
-        from tests.support import LocalMessageRouter
-
-        agn = Namespace("http://www.agentes.org#")
-        transport = Agent(
-            "Transportista-fast",
-            agn.TransportFast,
-            "http://transport-fast.test/comm",
-            "http://transport-fast.test/Stop",
-        )
-        centre = Agent(
-            "CentreLogisticAgent-CL-BCN",
-            agn.CentreLogisticCLBCN,
-            "http://centre.test/comm",
-            "http://centre.test/Stop",
-        )
-
-        agent_transportista.configure_runtime(
-            {
-                "agent": transport,
-                "transport_id": "fast",
-                "price_per_kg": 8.0,
-                "delivery_days": 1,
-            }
-        )
-        agent_transportista._random_fn = lambda: 0.01
-        router = LocalMessageRouter()
-        router.register_app(transport.address, agent_transportista.app)
-
-        lot = {
-            "lot_id": "LOT-LUCKY",
-            "order_id": "ORDER-1",
-            "city": "Barcelona",
-            "delivery_date": "2026-06-10",
-            "total_weight": 2.0,
-        }
-        cfp_message, cfp_content = build_peticio_transport(lot, sender=centre.uri, receiver=transport.uri, msgcnt=1)
-        proposal_reply = router.send_message(cfp_message, transport.address)
-        proposal = extract_transport_offer(proposal_reply)
-
-        counter_price = 10.0
-        counter_message = build_contraoferta_transport(
-            lot,
-            proposal,
-            new_price=counter_price,
-            sender=centre.uri,
-            receiver=transport.uri,
-            request_content=cfp_content,
-            msgcnt=2,
-        )
-        counter_reply = router.send_message(counter_message, transport.address)
-        self.assertEqual(get_message_properties(counter_reply)["performative"], ACL.agree)
 
     def test_transport_agent_answers_counter_accept_reject_cycle(self):
         from AgentUtil.ACL import ACL
@@ -277,7 +213,6 @@ class TransportAgentTests(unittest.TestCase):
                 "delivery_days": 1,
             }
         )
-        agent_transportista._random_fn = lambda: 0.5
         router = LocalMessageRouter()
         router.register_app(transport.address, agent_transportista.app)
 
