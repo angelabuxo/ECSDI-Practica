@@ -1,1 +1,54 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:ploc-452d54 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-292879 ;
+    azon:TeProducteIntern azon:product-P1004 .
+
+azon:ploc-5b36fb a azon:ProducteLocalitzat ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-292879 ;
+    azon:TeProducteIntern azon:product-P1010 .
+
+azon:ploc-b5acf6 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-292879 ;
+    azon:TeProducteIntern azon:product-P1001 .
+
+azon:product-P1001 a azon:ProducteIntern ;
+    azon:IdProducte "P1001" ;
+    azon:Nom "Slim Desk Lamp" ;
+    azon:Pes "1.47"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN .
+
+azon:product-P1004 a azon:ProducteIntern ;
+    azon:IdProducte "P1004" ;
+    azon:Nom "Minimalist Coffee Mug" ;
+    azon:Pes "0.3"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN .
+
+azon:product-P1010 a azon:ProducteIntern ;
+    azon:IdProducte "P1010" ;
+    azon:Nom "Slim Desk Lamp" ;
+    azon:Pes "1.93"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN .
+
+azon:centre-CL-BCN a azon:CentreLogistic ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdCentreLogistic "CL-BCN" .
+
+azon:lot-LOT-292879 a azon:Lot ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:Estat "OBERT" ;
+    azon:IdCentreLogistic "CL-BCN" ;
+    azon:IdLot "LOT-292879" ;
+    azon:PesTotal "3.7"^^xsd:float .
 

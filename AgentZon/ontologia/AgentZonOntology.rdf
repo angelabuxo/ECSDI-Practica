@@ -90,6 +90,7 @@
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#ConfirmacioLocalitzacio"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#EleccioTransportista"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioCompra"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioConsultaComanda"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioEnviamentExtern"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioRegistreCompra"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/agentzon#PeticioTransport"/>
@@ -940,6 +941,14 @@
     <!-- http://www.semanticweb.org/agentzon#PeticioDevolucio -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioDevolucio">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/agentzon#PeticioConsultaComanda -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/agentzon#PeticioConsultaComanda">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/agentzon#Accio"/>
     </owl:Class>
     

@@ -238,6 +238,21 @@ azon:order-ORDER-977CDB81 a azon:Comanda ;
         azon:product-P1013,
         azon:product-P1014 .
 
+azon:order-ORDER-9B50E957 a azon:Comanda ;
+    azon:Carrer "afj" ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdComanda "ORDER-9B50E957" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "sflqf" ;
+    azon:Nom "hola" ;
+    azon:Prioritat "5 dies" ;
+    azon:TeProducte azon:product-P1001,
+        azon:product-P1004,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011 .
+
 azon:order-ORDER-9B6F87D3 a azon:Comanda ;
     azon:Carrer "a" ;
     azon:Ciutat "Barcelona" ;

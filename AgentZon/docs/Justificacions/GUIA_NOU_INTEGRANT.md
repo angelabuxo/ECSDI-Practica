@@ -414,7 +414,7 @@ funcions `build_*` (construir el graf RDF d'un missatge) i `parse_*`/`extract_*`
 
 ### `data/` — l'estat del sistema en Turtle (`.ttl`)
 
-Tot l'estat persistent és RDF en fitxers `.ttl`: `productes.ttl`, `comandes.ttl`, `lots-CL-*.ttl`,
+Tot l'estat persistent és RDF en fitxers `.ttl`: `productes.ttl`, `historial_compres.ttl`, `lots-CL-*.ttl`,
 `pagaments.ttl`, `devolucions.ttl`, `historial_*.ttl`, `dades_bancaries_*.ttl`,
 `ubicacions_productes.ttl`, etc. Pots obrir-los amb un editor de text: són llegibles.
 

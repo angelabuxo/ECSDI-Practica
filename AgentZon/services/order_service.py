@@ -60,8 +60,13 @@ def save_order(orders_path, order):
     graph.set((node, AZON.Carrer, Literal(order["shipping_data"]["street_address"])))
     graph.set((node, AZON.Ciutat, Literal(order["shipping_data"]["city"])))
     graph.set((node, AZON.Prioritat, Literal(order["shipping_data"]["priority"])))
-    graph.set((node, AZON.DataEntrega, Literal(order["delivery_date"])))
     graph.set((node, AZON.MetodePagament, Literal(order["shipping_data"]["payment_method"])))
+    if order.get("delivery_date"):
+        graph.set((node, AZON.DataEntrega, Literal(order["delivery_date"])))
+    if order.get("purchase_date"):
+        graph.set((node, AZON.DataCompra, Literal(order["purchase_date"])))
+    if order.get("status"):
+        graph.set((node, AZON.Estat, Literal(order["status"])))
     for product in order["products"]:
         graph.add((node, AZON.TeProducte, AZON[f"product-{product['product_id']}"]))
     if order.get("final_delivery_date"):
@@ -69,28 +74,33 @@ def save_order(orders_path, order):
     save_graph(orders_path, graph)
 
 
-def load_order(orders_path, order_id):
-    graph = load_graph(orders_path)
-    bind_namespaces(graph)
-    node = AZON[f"order-{order_id}"]
-    if (node, RDF.type, AZON.Comanda) not in graph:
-        return None
-
+def _product_ids_from_order_node(graph, node):
     product_ids = []
     for product_node in graph.objects(node, AZON.TeProducte):
         product_id = graph.value(product_node, AZON.IdProducte)
         if product_id is None:
             product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
         product_ids.append(str(product_id))
+    return sorted(product_ids)
 
+
+def load_order_from_graph(graph, node):
+    if (node, RDF.type, AZON.Comanda) not in graph:
+        return None
+
+    order_id = str(graph.value(node, AZON.IdComanda) or str(node).rsplit("order-", 1)[-1])
+    product_ids = _product_ids_from_order_node(graph, node)
+    purchase_date = graph.value(node, AZON.DataCompra)
     final_delivery_date = graph.value(node, AZON.DataEntregaDefinitiva)
     return {
         "order_id": order_id,
         "user_id": str(graph.value(node, AZON.IdUsuari)),
         "user_name": str(graph.value(node, AZON.Nom)),
-        "product_ids": sorted(product_ids),
-        "delivery_date": str(graph.value(node, AZON.DataEntrega)),
+        "product_ids": product_ids,
+        "purchase_date": str(purchase_date) if purchase_date is not None else None,
+        "delivery_date": str(graph.value(node, AZON.DataEntrega) or ""),
         "final_delivery_date": str(final_delivery_date) if final_delivery_date is not None else None,
+        "status": str(graph.value(node, AZON.Estat) or ""),
         "shipping_data": {
             "user_name": str(graph.value(node, AZON.Nom)),
             "street_address": str(graph.value(node, AZON.Carrer)),
@@ -100,6 +110,13 @@ def load_order(orders_path, order_id):
             "user_id": str(graph.value(node, AZON.IdUsuari)),
         },
     }
+
+
+def load_order(orders_path, order_id):
+    graph = load_graph(orders_path)
+    bind_namespaces(graph)
+    node = AZON[f"order-{order_id}"]
+    return load_order_from_graph(graph, node)
 
 
 def update_order_final_delivery_date(orders_path, order_id, final_delivery_date):

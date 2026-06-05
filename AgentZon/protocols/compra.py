@@ -48,8 +48,87 @@ def _build_embedded_order(graph, order_node, order, include_order_id):
     graph.add((order_node, AZON.Carrer, Literal(shipping["street_address"])))
     graph.add((order_node, AZON.Ciutat, Literal(shipping["city"])))
     graph.add((order_node, AZON.Prioritat, Literal(shipping["priority"])))
+    payment_method = shipping.get("payment_method")
+    if payment_method:
+        graph.add((order_node, AZON.MetodePagament, Literal(payment_method)))
+    delivery_date = order.get("delivery_date")
+    if delivery_date:
+        graph.add((order_node, AZON.DataEntrega, Literal(delivery_date)))
+    purchase_date = order.get("purchase_date")
+    if purchase_date:
+        graph.add((order_node, AZON.DataCompra, Literal(purchase_date)))
+    final_delivery_date = order.get("final_delivery_date")
+    if final_delivery_date:
+        graph.add((order_node, AZON.DataEntregaDefinitiva, Literal(final_delivery_date)))
+    status = order.get("status")
+    if status:
+        graph.add((order_node, AZON.Estat, Literal(status)))
     for product in order["products"]:
         _add_product_reference(graph, order_node, product)
+
+
+def extract_order_snapshot(graph, order_node):
+    products = []
+    seen_product_ids = set()
+    for _, product_node in product_nodes_from_content(graph, order_node):
+        product_id = graph.value(product_node, AZON.IdProducte)
+        if product_id is None:
+            product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
+        product_id = str(product_id)
+        seen_product_ids.add(product_id)
+        product = {"product_id": product_id}
+        name = graph.value(product_node, AZON.Nom)
+        description = graph.value(product_node, AZON.Descripcio)
+        category = graph.value(product_node, AZON.Categoria)
+        brand = graph.value(product_node, AZON.Marca)
+        price = graph.value(product_node, AZON.Preu)
+        weight = graph.value(product_node, AZON.Pes)
+        if name is not None:
+            product["name"] = str(name)
+        if description is not None:
+            product["description"] = str(description)
+        if category is not None:
+            product["category"] = str(category)
+        if brand is not None:
+            product["brand"] = str(brand)
+        if price is not None:
+            product["price"] = float(price)
+        if weight is not None:
+            product["weight"] = float(weight)
+        products.append(product)
+
+    for product_node in graph.objects(order_node, AZON.TeProducte):
+        product_id = graph.value(product_node, AZON.IdProducte)
+        if product_id is None:
+            product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
+        product_id = str(product_id)
+        if product_id in seen_product_ids:
+            continue
+        products.append({"product_id": product_id})
+        seen_product_ids.add(product_id)
+
+    final_delivery_date = graph.value(order_node, AZON.DataEntregaDefinitiva)
+    purchase_date = graph.value(order_node, AZON.DataCompra)
+    status = graph.value(order_node, AZON.Estat)
+    return {
+        "order_id": order_id_from_node(graph, order_node),
+        "user_id": str(graph.value(order_node, AZON.IdUsuari)),
+        "user_name": str(graph.value(order_node, AZON.Nom)),
+        "purchase_date": str(purchase_date) if purchase_date is not None else None,
+        "delivery_date": str(graph.value(order_node, AZON.DataEntrega) or ""),
+        "final_delivery_date": str(final_delivery_date) if final_delivery_date is not None else None,
+        "status": str(status) if status is not None else "",
+        "product_ids": sorted(product["product_id"] for product in products),
+        "products": products,
+        "shipping_data": {
+            "user_name": str(graph.value(order_node, AZON.Nom)),
+            "street_address": str(graph.value(order_node, AZON.Carrer) or ""),
+            "city": str(graph.value(order_node, AZON.Ciutat) or ""),
+            "priority": str(graph.value(order_node, AZON.Prioritat) or ""),
+            "payment_method": str(graph.value(order_node, AZON.MetodePagament) or ""),
+            "user_id": str(graph.value(order_node, AZON.IdUsuari)),
+        },
+    }
 
 
 def _extract_centre_metadata(graph, subject):
@@ -161,6 +240,11 @@ def parse_peticio_compra(graph, content):
 
 
 def parse_peticio_registre_compra(graph, content):
+    order_node = graph.value(content, AZON.SobreComanda)
+    parsed = extract_order_snapshot(graph, order_node)
+    if parsed["products"]:
+        return parsed
+
     products = []
     for product_node in graph.objects(content, AZON.SobreProducte):
         product_id = graph.value(product_node, AZON.IdProducte)
@@ -168,20 +252,7 @@ def parse_peticio_registre_compra(graph, content):
             local = str(product_node).rsplit("product-", 1)[-1]
             product_id = Literal(local)
         products.append({"product_id": str(product_id)})
-    if not products:
-        order_node = graph.value(content, AZON.SobreComanda)
-        for _, product_node in product_nodes_from_content(graph, order_node):
-            product_id = graph.value(product_node, AZON.IdProducte)
-            if product_id is None:
-                local = str(product_node).rsplit("product-", 1)[-1]
-                product_id = Literal(local)
-            products.append({"product_id": str(product_id)})
-
-    return {
-        "order_id": order_id_from_node(graph, content),
-        "user_id": str(graph.value(content, AZON.IdUsuari)),
-        "products": products,
-    }
+    return {**parsed, "products": products, "product_ids": sorted(product["product_id"] for product in products)}
 
 
 def build_confirmacio_registre_compra(order_id, sender=None, receiver=None, request_content=None, msgcnt=0):

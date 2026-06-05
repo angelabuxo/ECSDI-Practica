@@ -1,1 +1,109 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:tracking-ploc-452d54 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:Estat "OBERT" ;
+    azon:SobreComanda azon:order-ORDER-9B50E957 ;
+    azon:SobreLot azon:lot-LOT-292879 ;
+    azon:TeProducteIntern azon:product-P1004 .
+
+azon:tracking-ploc-5b36fb a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:Estat "OBERT" ;
+    azon:SobreComanda azon:order-ORDER-9B50E957 ;
+    azon:SobreLot azon:lot-LOT-292879 ;
+    azon:TeProducteIntern azon:product-P1010 .
+
+azon:tracking-ploc-932655 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:Estat "OBERT" ;
+    azon:SobreComanda azon:order-ORDER-9B50E957 ;
+    azon:SobreLot azon:lot-LOT-16E88D ;
+    azon:TeProducteIntern azon:product-P1009 .
+
+azon:tracking-ploc-b0a826 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:Estat "OBERT" ;
+    azon:SobreComanda azon:order-ORDER-9B50E957 ;
+    azon:SobreLot azon:lot-LOT-F13520 ;
+    azon:TeProducteIntern azon:product-P1011 .
+
+azon:tracking-ploc-b5acf6 a azon:ConfirmacioLocalitzacio ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:Estat "OBERT" ;
+    azon:SobreComanda azon:order-ORDER-9B50E957 ;
+    azon:SobreLot azon:lot-LOT-292879 ;
+    azon:TeProducteIntern azon:product-P1001 .
+
+azon:centre-CL-GI a azon:CentreLogistic ;
+    azon:Ciutat "Girona" ;
+    azon:IdCentreLogistic "CL-GI" .
+
+azon:centre-CL-TGN a azon:CentreLogistic ;
+    azon:Ciutat "Tarragona" ;
+    azon:IdCentreLogistic "CL-TGN" .
+
+azon:lot-LOT-16E88D a azon:Lot ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:Estat "OBERT" ;
+    azon:IdCentreLogistic "CL-TGN" ;
+    azon:IdLot "LOT-16E88D" .
+
+azon:lot-LOT-F13520 a azon:Lot ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:Estat "OBERT" ;
+    azon:IdCentreLogistic "CL-GI" ;
+    azon:IdLot "LOT-F13520" .
+
+azon:product-P1001 a azon:ProducteIntern ;
+    azon:IdProducte "P1001" ;
+    azon:Nom "Slim Desk Lamp" ;
+    azon:Pes "1.47"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN .
+
+azon:product-P1004 a azon:ProducteIntern ;
+    azon:IdProducte "P1004" ;
+    azon:Nom "Minimalist Coffee Mug" ;
+    azon:Pes "0.3"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN .
+
+azon:product-P1009 a azon:ProducteIntern ;
+    azon:IdProducte "P1009" ;
+    azon:Nom "Adjustable Desk Lamp" ;
+    azon:Pes "1.85"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
+
+azon:product-P1010 a azon:ProducteIntern ;
+    azon:IdProducte "P1010" ;
+    azon:Nom "Slim Desk Lamp" ;
+    azon:Pes "1.93"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-BCN .
+
+azon:product-P1011 a azon:ProducteIntern ;
+    azon:IdProducte "P1011" ;
+    azon:Nom "Slim Desk Lamp" ;
+    azon:Pes "1.78"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-GI .
+
+azon:centre-CL-BCN a azon:CentreLogistic ;
+    azon:Ciutat "Barcelona" ;
+    azon:IdCentreLogistic "CL-BCN" .
+
+azon:lot-LOT-292879 a azon:Lot ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:Estat "OBERT" ;
+    azon:IdCentreLogistic "CL-BCN" ;
+    azon:IdLot "LOT-292879" .
+
+azon:order-ORDER-9B50E957 a azon:Comanda ;
+    azon:IdComanda "ORDER-9B50E957" .
 

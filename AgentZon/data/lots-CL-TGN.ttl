@@ -1,1 +1,28 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:ploc-932655 a azon:ProducteLocalitzat ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:SobreLot azon:lot-LOT-16E88D ;
+    azon:TeProducteIntern azon:product-P1009 .
+
+azon:centre-CL-TGN a azon:CentreLogistic ;
+    azon:Ciutat "Tarragona" ;
+    azon:IdCentreLogistic "CL-TGN" .
+
+azon:lot-LOT-16E88D a azon:Lot ;
+    azon:Ciutat "Bcn" ;
+    azon:DataEntrega "2026-06-10" ;
+    azon:Estat "OBERT" ;
+    azon:IdCentreLogistic "CL-TGN" ;
+    azon:IdLot "LOT-16E88D" ;
+    azon:PesTotal "1.85"^^xsd:float .
+
+azon:product-P1009 a azon:ProducteIntern ;
+    azon:IdProducte "P1009" ;
+    azon:Nom "Adjustable Desk Lamp" ;
+    azon:Pes "1.85"^^xsd:float ;
+    azon:UbicatACentre azon:centre-CL-TGN .
 

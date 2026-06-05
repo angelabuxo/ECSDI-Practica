@@ -6,6 +6,7 @@ from rdflib.namespace import XSD
 from AgentUtil.ACL import ACL
 from AgentUtil.ACLMessages import build_message, get_message_properties
 from AgentUtil.OntoNamespaces import AZON, ONTOLOGY_URI, bind_namespaces
+from protocols.compra import extract_order_snapshot
 from protocols.rdf_refs import link_sobre_comanda, order_id_from_node
 
 
@@ -51,6 +52,81 @@ def build_peticio_feedback(feedback_request, sender=None, receiver=None, msgcnt=
         ontology=ONTOLOGY_URI,
         msgcnt=msgcnt,
     )
+
+
+def build_peticio_consulta_comanda(order_id, sender=None, receiver=None, msgcnt=0):
+    graph = Graph()
+    bind_namespaces(graph)
+    content = AZON[f"order-query-{order_id}"]
+    graph.add((content, RDF.type, AZON.PeticioConsultaComanda))
+    link_sobre_comanda(graph, content, order_id)
+    return build_message(
+        graph,
+        perf=ACL.request,
+        sender=sender,
+        receiver=receiver,
+        content=content,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
+def parse_peticio_consulta_comanda(graph, content):
+    return order_id_from_node(graph, content)
+
+
+def build_resultat_consulta_comanda(order, sender=None, receiver=None, msgcnt=0):
+    graph = Graph()
+    bind_namespaces(graph)
+    order_node = AZON[f"order-{order['order_id']}"]
+    graph.add((order_node, RDF.type, AZON.Comanda))
+    graph.add((order_node, AZON.IdComanda, Literal(order["order_id"])))
+    graph.add((order_node, AZON.IdUsuari, Literal(order["user_id"])))
+    graph.add((order_node, AZON.Nom, Literal(order["user_name"])))
+    graph.add((order_node, AZON.Carrer, Literal(order["shipping_data"]["street_address"])))
+    graph.add((order_node, AZON.Ciutat, Literal(order["shipping_data"]["city"])))
+    graph.add((order_node, AZON.Prioritat, Literal(order["shipping_data"]["priority"])))
+    graph.add((order_node, AZON.MetodePagament, Literal(order["shipping_data"]["payment_method"])))
+    if order.get("purchase_date"):
+        graph.add((order_node, AZON.DataCompra, Literal(order["purchase_date"])))
+    if order.get("delivery_date"):
+        graph.add((order_node, AZON.DataEntrega, Literal(order["delivery_date"])))
+    if order.get("final_delivery_date"):
+        graph.add((order_node, AZON.DataEntregaDefinitiva, Literal(order["final_delivery_date"])))
+    if order.get("status"):
+        graph.add((order_node, AZON.Estat, Literal(order["status"])))
+    for product in order.get("products", []):
+        product_node = AZON[f"product-{product['product_id']}"]
+        graph.add((order_node, AZON.TeProducte, product_node))
+        product_type = AZON.ProducteExtern if product.get("seller_id") else AZON.Producte
+        graph.add((product_node, RDF.type, product_type))
+        graph.add((product_node, AZON.IdProducte, Literal(product["product_id"])))
+        if "name" in product:
+            graph.add((product_node, AZON.Nom, Literal(product["name"])))
+        if "description" in product:
+            graph.add((product_node, AZON.Descripcio, Literal(product["description"])))
+        if "category" in product:
+            graph.add((product_node, AZON.Categoria, Literal(product["category"])))
+        if "brand" in product:
+            graph.add((product_node, AZON.Marca, Literal(product["brand"])))
+        if "price" in product:
+            graph.add((product_node, AZON.Preu, Literal(product["price"], datatype=XSD.float)))
+        if "weight" in product:
+            graph.add((product_node, AZON.Pes, Literal(product["weight"], datatype=XSD.float)))
+    return build_message(
+        graph,
+        perf=ACL.inform,
+        sender=sender,
+        receiver=receiver,
+        content=order_node,
+        ontology=ONTOLOGY_URI,
+        msgcnt=msgcnt,
+    )
+
+
+def parse_resultat_consulta_comanda(graph):
+    props = get_message_properties(graph)
+    return extract_order_snapshot(graph, props["content"])
 
 
 def parse_peticio_feedback(graph, content):

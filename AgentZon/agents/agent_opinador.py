@@ -44,8 +44,10 @@ from config import (
 )
 from protocols.compra import build_confirmacio_registre_compra, parse_peticio_registre_compra
 from protocols.opinador import (
+    build_resultat_consulta_comanda,
     build_peticio_feedback,
     build_resolucio_devolucio,
+    parse_peticio_consulta_comanda,
     parse_peticio_devolucio,
     parse_resposta_feedback,
 )
@@ -60,6 +62,7 @@ from services.history_service import (
     record_feedback,
     record_purchase,
 )
+from services.order_service import load_order
 from services.opinador_service import (
     build_feedback_requests_for_user,
     evaluate_return_request,
@@ -271,6 +274,10 @@ def pla_de_registre_de_compra(request_data):
         "order_id": request_data["order_id"],
         "user_id": request_data["user_id"],
         "user_name": request_data.get("user_name", "history-user"),
+        "purchase_date": request_data.get("purchase_date"),
+        "delivery_date": request_data.get("delivery_date", ""),
+        "final_delivery_date": request_data.get("final_delivery_date"),
+        "status": request_data.get("status", ""),
         "products": request_data["products"],
         "shipping_data": request_data.get(
             "shipping_data",
@@ -544,8 +551,36 @@ def pla_feedback_acl(gm, content, sender):
     )
 
 
+def pla_consulta_comanda_acl(gm, content, sender):
+    order_id = parse_peticio_consulta_comanda(gm, content)
+    order = load_order(PURCHASE_HISTORY_PATH, order_id)
+    if order is None:
+        return build_message(
+            Graph(),
+            ACL["not-understood"],
+            sender=AGENT.uri,
+            receiver=sender,
+            msgcnt=mss_cnt,
+        )
+    products_by_id = {}
+    for record in load_purchase_records(PURCHASE_HISTORY_PATH, user_id=order["user_id"]):
+        if record["order_id"] != order_id:
+            continue
+        for product in record.get("products", []):
+            products_by_id[product["product_id"]] = product
+        break
+    detailed_products = [products_by_id.get(product_id, {"product_id": product_id}) for product_id in order["product_ids"]]
+    return build_resultat_consulta_comanda(
+        {**order, "products": detailed_products},
+        sender=AGENT.uri,
+        receiver=sender,
+        msgcnt=mss_cnt,
+    )
+
+
 PLANS = {
     AZON.PeticioRegistreCompra: pla_registre_compra_acl,
+    AZON.PeticioConsultaComanda: pla_consulta_comanda_acl,
     AZON.PeticioDevolucio: pla_devolucio_acl,
     AZON.RespostaFeedback: pla_feedback_acl,
 }

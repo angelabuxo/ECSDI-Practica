@@ -10,7 +10,12 @@ from rdflib import Graph, Namespace, RDF
 from AgentUtil.Agent import Agent
 from AgentUtil.OntoNamespaces import AZON
 from protocols.compra import build_peticio_registre_compra
-from protocols.opinador import build_peticio_devolucio, parse_resolucio_devolucio
+from protocols.opinador import (
+    build_peticio_consulta_comanda,
+    build_peticio_devolucio,
+    parse_resolucio_devolucio,
+    parse_resultat_consulta_comanda,
+)
 from services.bootstrap import bootstrap_phase2_data
 from services.history_service import load_feedback_records, load_purchase_records, record_purchase
 from services.opinador_service import (
@@ -191,6 +196,68 @@ class OpinadorFlowTests(unittest.TestCase):
             rejected_decision = parse_resolucio_devolucio(rejected_graph)
             self.assertFalse(rejected_decision["accepted"])
             self.assertEqual(rejected_decision["reason"], RETURN_REJECTION_MESSAGE)
+
+    def test_opinador_returns_full_order_snapshot_for_order_query(self):
+        from agents import agent_opinador
+
+        agn = Namespace("http://www.agentes.org#")
+        opinador = Agent(
+            "OpinadorAgent",
+            agn.Opinador,
+            "http://opinador.test/comm",
+            "http://opinador.test/Stop",
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            bootstrap_phase2_data(data_dir, product_count=8, seed=21)
+
+            agent_opinador.configure_runtime(_test_runtime_settings(opinador, data_dir))
+            client = agent_opinador.app.test_client()
+
+            purchase_order = {
+                "order_id": "ORDER-Q1",
+                "user_id": "10.0.0.10",
+                "user_name": "Pol",
+                "purchase_date": "2026-06-05",
+                "delivery_date": "2026-06-08",
+                "products": [{"product_id": "P1001", "name": "Teclat", "price": 50.0, "weight": 0.8}],
+                "shipping_data": {
+                    "user_id": "10.0.0.10",
+                    "user_name": "Pol",
+                    "street_address": "Gran Via 1",
+                    "city": "Barcelona",
+                    "priority": "48h",
+                    "payment_method": "visa",
+                },
+            }
+
+            purchase_message = build_peticio_registre_compra(
+                purchase_order,
+                sender=agn.Compra,
+                receiver=opinador.uri,
+                msgcnt=1,
+            )
+            client.get("/comm", query_string={"content": purchase_message.serialize(format="xml")})
+
+            query_message = build_peticio_consulta_comanda(
+                "ORDER-Q1",
+                sender=agn.Compra,
+                receiver=opinador.uri,
+                msgcnt=2,
+            )
+            query_response = client.get("/comm", query_string={"content": query_message.serialize(format="xml")})
+            response_graph = Graph()
+            response_graph.parse(data=query_response.get_data(as_text=True), format="xml")
+            parsed = parse_resultat_consulta_comanda(response_graph)
+
+            self.assertEqual(parsed["order_id"], "ORDER-Q1")
+            self.assertEqual(parsed["user_id"], "10.0.0.10")
+            self.assertEqual(parsed["shipping_data"]["street_address"], "Gran Via 1")
+            self.assertEqual(parsed["shipping_data"]["payment_method"], "visa")
+            self.assertEqual(parsed["delivery_date"], "2026-06-08")
+            self.assertEqual(parsed["purchase_date"], "2026-06-05")
+            self.assertEqual(parsed["product_ids"], ["P1001"])
 
     def test_opinador_dashboard_and_feedback_are_scoped_by_client_ip(self):
         from agents import agent_opinador

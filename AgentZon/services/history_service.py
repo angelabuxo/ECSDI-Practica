@@ -5,7 +5,7 @@ from datetime import date, datetime
 from rdflib import Graph, Literal, RDF
 
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
-from protocols.rdf_refs import ensure_order_node, link_sobre_comanda, order_id_from_node
+from services.order_service import load_order_from_graph, save_order
 from services.rdf_store import load_graph, save_graph
 
 
@@ -62,41 +62,40 @@ def load_search_records(path, user_id=None):
 
 # Purchase history -----------------------------------------------------------------
 def record_purchase(path, order):
-    graph = load_graph(path)
-    bind_namespaces(graph)
-    record = AZON[f"purchase-{order['order_id']}"]
-    purchase_date = order.get("purchase_date") or date.today().isoformat()
-    ensure_order_node(graph, order["order_id"])
-    graph.add((record, AZON.IdUsuari, Literal(order["user_id"])))
-    graph.add((record, AZON.DataCompra, Literal(purchase_date)))
-    link_sobre_comanda(graph, record, order["order_id"])
-    for product in order["products"]:
-        graph.add((record, AZON.SobreProducte, AZON[f"product-{product['product_id']}"]))
-    save_graph(path, graph)
+    save_order(
+        path,
+        {
+            **order,
+            "purchase_date": order.get("purchase_date") or date.today().isoformat(),
+        },
+    )
 
 
 def load_purchase_records(path, user_id=None):
     graph = load_graph(path)
     records = []
-    for record in set(graph.subjects(AZON.DataCompra, None)):
-        record_user_id = str(graph.value(record, AZON.IdUsuari) or "")
+    for order_node in set(graph.subjects(RDF.type, AZON.Comanda)):
+        order = load_order_from_graph(graph, order_node)
+        if order is None:
+            continue
+        record_user_id = order["user_id"]
         if user_id is not None and record_user_id != user_id:
             continue
-        products = []
-        for product_node in graph.objects(record, AZON.SobreProducte):
-            product_id = graph.value(product_node, AZON.IdProducte)
-            if product_id is None:
-                product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
-            products.append({"product_id": str(product_id)})
+        products = [{"product_id": product_id} for product_id in order["product_ids"]]
         records.append(
             {
-                "order_id": order_id_from_node(graph, record),
+                "order_id": order["order_id"],
                 "user_id": record_user_id,
-                "purchase_date": str(graph.value(record, AZON.DataCompra) or ""),
+                "user_name": order["user_name"],
+                "purchase_date": order.get("purchase_date") or "",
+                "delivery_date": order["delivery_date"],
+                "final_delivery_date": order.get("final_delivery_date"),
+                "shipping_data": order["shipping_data"],
                 "product_ids": sorted(product["product_id"] for product in products),
                 "products": products,
             }
         )
+    records.sort(key=lambda record: (record.get("purchase_date") or "", record["order_id"]))
     return records
 
 

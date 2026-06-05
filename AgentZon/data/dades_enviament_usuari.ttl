@@ -1,1 +1,9 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+
+azon:shipping-ORDER-9B50E957 azon:Carrer "afj" ;
+    azon:Ciutat "Bcn" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MetodePagament "sflqf" ;
+    azon:Nom "hola" ;
+    azon:Prioritat "5 dies" .
 

@@ -44,6 +44,7 @@ from protocols.compra import (
     parse_peticio_compra,
 )
 from protocols.centre_logistic import extract_shipping_details_list
+from protocols.opinador import build_peticio_consulta_comanda, parse_resultat_consulta_comanda
 from protocols.venedor_extern import (
     build_peticio_enviament_extern,
     extract_external_shipments_from_reply,
@@ -71,10 +72,7 @@ from services.logistics_routing_service import (
 )
 from services.order_service import (
     build_order,
-    load_order,
-    save_order,
     save_user_shipping_data,
-    update_order_final_delivery_date,
 )
 from services.shipping_service import (
     build_invoice_summary,
@@ -82,7 +80,6 @@ from services.shipping_service import (
     group_shipments_for_display,
 )
 from services.shipping_tracking_service import (
-    aggregate_official_delivery_date,
     apply_shipping_update,
     load_tracking_for_order,
     lookup_order_for_localized_product,
@@ -99,7 +96,6 @@ AGENT = None
 DirectoryAgent = None
 MESSAGE_SENDER = send_message
 CATALOG_PATH = None
-ORDERS_PATH = None
 SHIPPING_PATH = None
 LOCATIONS_PATH = None
 TRACKING_PATH = None
@@ -110,14 +106,13 @@ VENDOR_EXTERN_AGENT_TYPE = URIRef("http://www.semanticweb.org/directory-service-
 
 
 def configure_runtime(settings, message_sender=send_message):
-    global AGENT, DirectoryAgent, MESSAGE_SENDER, CATALOG_PATH, ORDERS_PATH, SHIPPING_PATH
+    global AGENT, DirectoryAgent, MESSAGE_SENDER, CATALOG_PATH, SHIPPING_PATH
     global LOCATIONS_PATH, TRACKING_PATH, USER_BANK_PATH, SHIPPING_RESPONSIBILITY_PATH, mss_cnt
     AGENT = settings["agent"]
     DirectoryAgent = settings["directory_agent"]
     MESSAGE_SENDER = message_sender
     data_dir = Path(settings["data_dir"])
     CATALOG_PATH = data_dir / "productes.ttl"
-    ORDERS_PATH = data_dir / "comandes.ttl"
     SHIPPING_PATH = data_dir / "dades_enviament_usuari.ttl"
     LOCATIONS_PATH = data_dir / "ubicacions_productes.ttl"
     TRACKING_PATH = data_dir / "seguiment_enviaments.ttl"
@@ -334,8 +329,21 @@ def pla_cobrament_extern(order, seller_id):
 
 
 def carregar_comanda(order_id):
-    stored_order = load_order(ORDERS_PATH, order_id)
-    if stored_order is None:
+    try:
+        opinador_agent = resolve_agent(DSO.OpinadorAgent)
+    except Exception:
+        return None
+    message = build_peticio_consulta_comanda(
+        order_id,
+        sender=AGENT.uri,
+        receiver=opinador_agent.uri,
+        msgcnt=_msgcnt(),
+    )
+    try:
+        stored_order = parse_resultat_consulta_comanda(MESSAGE_SENDER(message, opinador_agent.address))
+    except Exception:
+        return None
+    if stored_order is None or not stored_order.get("order_id"):
         return None
     products = get_products_by_ids(CATALOG_PATH, stored_order["product_ids"])
     return {
@@ -362,7 +370,6 @@ def _build_acknowledgement(receiver):
 def process_shipping_update(gm, content, sender):
     invoice = extract_invoice_from_content(gm, content)
     shipped = (content, RDF.type, AZON.ConfirmacioEnviament) in gm
-    touched_orders = set()
 
     for shipment in extract_shipping_details_list(gm):
         localized_product_id = shipment.get("localized_product_id")
@@ -378,13 +385,6 @@ def process_shipping_update(gm, content, sender):
             shipped=shipped,
             invoice=invoice,
         )
-        touched_orders.add(order_id)
-
-    for order_id in touched_orders:
-        entries = load_tracking_for_order(TRACKING_PATH, order_id)
-        final_delivery_date = aggregate_official_delivery_date(entries)
-        if final_delivery_date is not None:
-            update_order_final_delivery_date(ORDERS_PATH, order_id, final_delivery_date)
 
     return _build_acknowledgement(sender)
 
@@ -403,7 +403,6 @@ def process_purchase_request(request_data, acl_sender=None, request_content=None
     products = get_products_by_ids(CATALOG_PATH, request_data["product_ids"])
     order = build_order(shipping, products)
     save_user_shipping_data(SHIPPING_PATH, order)
-    save_order(ORDERS_PATH, order)
     external_groups, platform_shipped, internal_products = split_order_products(order)
     warehouse_order = {**order, "products": internal_products + platform_shipped}
     shipping_details = []

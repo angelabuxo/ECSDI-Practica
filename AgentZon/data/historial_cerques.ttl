@@ -1,1 +1,40 @@
+@prefix azon: <http://www.semanticweb.org/agentzon#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+azon:search-0 azon:CategoriaConsulta "" ;
+    azon:IdUsuari "127.0.0.1" ;
+    azon:MarcaConsulta "" ;
+    azon:MostraProducte azon:product-P1001,
+        azon:product-P1002,
+        azon:product-P1003,
+        azon:product-P1004,
+        azon:product-P1005,
+        azon:product-P1006,
+        azon:product-P1008,
+        azon:product-P1009,
+        azon:product-P1010,
+        azon:product-P1011,
+        azon:product-P1012,
+        azon:product-P1013,
+        azon:product-P1014,
+        azon:product-P1015,
+        azon:product-P1016,
+        azon:product-P1017,
+        azon:product-P1018,
+        azon:product-P1019,
+        azon:product-P1020,
+        azon:product-P1021,
+        azon:product-P1022,
+        azon:product-P1023,
+        azon:product-P1024,
+        azon:product-P1025,
+        azon:product-P1026,
+        azon:product-P1027,
+        azon:product-P1028,
+        azon:product-P1029,
+        azon:product-P1031,
+        azon:product-P1032,
+        azon:product-P1033 ;
+    azon:TextConsulta "a" ;
+    azon:TotalResultats 31 .
 

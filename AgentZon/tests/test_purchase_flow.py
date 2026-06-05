@@ -512,8 +512,8 @@ class PurchaseFlowTests(unittest.TestCase):
         from AgentUtil.OntoNamespaces import AZON
         from agents import agent_compra
         from protocols.centre_logistic import build_dades_enviament
-        from services.order_service import save_order, build_order, load_order
-        from services.shipping_tracking_service import save_localization_confirmations
+        from services.order_service import build_order
+        from services.shipping_tracking_service import load_tracking_for_order, save_localization_confirmations
 
         agn = Namespace("http://www.agentes.org#")
         compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
@@ -533,7 +533,6 @@ class PurchaseFlowTests(unittest.TestCase):
                 [{"product_id": "P1011", "name": "X", "price": 10.0, "weight": 1.5}],
             )
             order["order_id"] = "ORDER-1234"
-            save_order(data_dir / "comandes.ttl", order)
             save_localization_confirmations(data_dir / "seguiment_enviaments.ttl", [{
                 "localized_product_id": "ploc-9a13e6",
                 "order_id": "ORDER-1234",
@@ -568,8 +567,9 @@ class PurchaseFlowTests(unittest.TestCase):
             )
             content = message.value(predicate=RDF.type, object=AZON.DadesEnviament)
             agent_compra.process_shipping_update(message, content, compra.uri)
-            stored_order = load_order(data_dir / "comandes.ttl", "ORDER-1234")
-            self.assertEqual(stored_order["final_delivery_date"], "2026-06-04")
+            tracking_entries = load_tracking_for_order(data_dir / "seguiment_enviaments.ttl", "ORDER-1234")
+            self.assertEqual(tracking_entries[0]["official_delivery_date"], "2026-06-04")
+            self.assertEqual(tracking_entries[0]["status"], "ASSIGNAT")
 
     def test_bank_registration_skipped_when_user_already_in_database(self):
         from AgentUtil.Agent import Agent
@@ -607,6 +607,88 @@ class PurchaseFlowTests(unittest.TestCase):
 
             self.assertIsNone(result)
             self.assertEqual(sent_messages, [])
+
+    def test_order_status_page_reads_base_order_from_opinador(self):
+        from AgentUtil.Agent import Agent
+        from AgentUtil.DSO import DSO
+        from AgentUtil.OntoNamespaces import AZON
+        from agents import agent_compra, agent_directory, agent_opinador
+        from protocols.directory import build_register_message
+        from services.bootstrap import bootstrap_phase2_data
+        from services.history_service import record_purchase
+        from services.shipping_tracking_service import save_localization_confirmations
+
+        agn = Namespace("http://www.agentes.org#")
+        directory = Agent("DirectoryAgent", agn.Directory, "http://directory.test/Register", "http://directory.test/Stop")
+        compra = Agent("CompraAgent", agn.Compra, "http://compra.test/comm", "http://compra.test/Stop")
+        opinador = Agent("OpinadorAgent", agn.Opinador, "http://opinador.test/comm", "http://opinador.test/Stop")
+
+        router = LocalMessageRouter()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            data_dir = Path(tmpdir)
+            bootstrap_phase2_data(data_dir, product_count=8, seed=21)
+
+            agent_directory.configure_runtime({"agent": directory})
+            router.register_app(directory.address, agent_directory.app)
+            agent_opinador.configure_runtime({"agent": opinador, "data_dir": data_dir})
+            router.register_app(opinador.address, agent_opinador.app)
+
+            agent_compra.configure_runtime(
+                {"agent": compra, "directory_agent": directory, "data_dir": data_dir},
+                message_sender=router.send_message,
+            )
+            router.register_app(compra.address, agent_compra.app)
+
+            for msgcnt, agent, agent_type in [
+                (1, compra, DSO.CompraAgent),
+                (2, opinador, DSO.OpinadorAgent),
+            ]:
+                register_graph = build_register_message(agent, agent_type, directory, msgcnt=msgcnt)
+                router.send_message(register_graph, directory.address)
+
+            record_purchase(
+                data_dir / "historial_compres.ttl",
+                {
+                    "order_id": "ORDER-REMOTE-1",
+                    "user_id": "127.0.0.1",
+                    "user_name": "Pol",
+                    "purchase_date": "2026-06-05",
+                    "delivery_date": "2026-06-07",
+                    "products": [{"product_id": "P1001", "name": "Teclat", "price": 50.0, "weight": 0.8}],
+                    "shipping_data": {
+                        "user_id": "127.0.0.1",
+                        "user_name": "Pol",
+                        "street_address": "Carrer Major 1",
+                        "city": "Girona",
+                        "priority": "48h",
+                        "payment_method": "visa",
+                    },
+                },
+            )
+            save_localization_confirmations(
+                data_dir / "seguiment_enviaments.ttl",
+                [{
+                    "localized_product_id": "ploc-remote-1",
+                    "order_id": "ORDER-REMOTE-1",
+                    "lot_id": "LOT-REMOTE-1",
+                    "user_id": "127.0.0.1",
+                    "city": "Girona",
+                    "delivery_date": "2026-06-07",
+                    "status": "OBERT",
+                    "product": {"product_id": "P1001", "name": "Teclat", "weight": 0.8},
+                    "centre_id": "CL-GI",
+                    "centre_city": "Girona",
+                }],
+            )
+
+            response = agent_compra.app.test_client().get("/orders/ORDER-REMOTE-1")
+            html = response.get_data(as_text=True)
+
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("ORDER-REMOTE-1", html)
+            self.assertIn("Carrer Major 1, Girona", html)
+            self.assertIn("LOT-REMOTE-1", html)
 
 
 if __name__ == "__main__":

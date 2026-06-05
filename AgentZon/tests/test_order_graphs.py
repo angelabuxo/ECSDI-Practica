@@ -9,9 +9,11 @@ from rdflib import RDF
 from AgentUtil.OntoNamespaces import AZON
 from protocols.compra import (
     build_peticio_compra,
+    build_peticio_registre_compra,
     build_resultat_compra,
     extract_resultat_compra,
     parse_peticio_compra,
+    parse_peticio_registre_compra,
 )
 from protocols.centre_logistic import (
     build_confirmacio_localitzacio,
@@ -189,13 +191,46 @@ class OrderGraphTests(unittest.TestCase):
         self.assertEqual(parsed["centre_id"], "CL-BCN")
         self.assertEqual(parsed["product"]["product_id"], "P1001")
 
-    def test_purchase_history_links_back_to_the_order(self):
+    def test_peticio_registre_compra_round_trip_keeps_full_order_snapshot(self):
+        order = {
+            "order_id": "ORDER-55",
+            "user_id": "USER-55",
+            "user_name": "Pol",
+            "purchase_date": "2026-06-05",
+            "delivery_date": "2026-06-08",
+            "products": [{"product_id": "P1001", "name": "Wireless Headphones", "price": 49.0, "weight": 1.5}],
+            "shipping_data": {
+                "user_id": "USER-55",
+                "user_name": "Pol",
+                "street_address": "Gran Via 100",
+                "city": "Barcelona",
+                "priority": "48h",
+                "payment_method": "visa",
+            },
+        }
+
+        message = build_peticio_registre_compra(order, sender=AZON.Compra, receiver=AZON.Opinador, msgcnt=2)
+        content = message.value(predicate=RDF.type, object=AZON.PeticioRegistreCompra)
+        parsed = parse_peticio_registre_compra(message, content)
+
+        self.assertEqual(parsed["order_id"], "ORDER-55")
+        self.assertEqual(parsed["user_id"], "USER-55")
+        self.assertEqual(parsed["user_name"], "Pol")
+        self.assertEqual(parsed["delivery_date"], "2026-06-08")
+        self.assertEqual(parsed["purchase_date"], "2026-06-05")
+        self.assertEqual(parsed["shipping_data"]["street_address"], "Gran Via 100")
+        self.assertEqual(parsed["shipping_data"]["payment_method"], "visa")
+        self.assertEqual(parsed["products"][0]["product_id"], "P1001")
+
+    def test_purchase_history_stores_only_comanda_nodes(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             history_path = Path(tmpdir) / "historial_compres.ttl"
             order = {
                 "order_id": "ORDER-1",
                 "user_id": "USER-1",
                 "user_name": "Pol",
+                "purchase_date": "2026-06-05",
+                "delivery_date": "2026-06-09",
                 "products": [{"product_id": "P1001"}],
                 "shipping_data": {
                     "user_id": "USER-1",
@@ -209,10 +244,15 @@ class OrderGraphTests(unittest.TestCase):
 
             record_purchase(history_path, order)
             graph = load_graph(history_path)
-            history_node = AZON["purchase-ORDER-1"]
+            order_node = AZON["order-ORDER-1"]
 
-            self.assertIn((history_node, AZON.SobreComanda, AZON["order-ORDER-1"]), graph)
-            self.assertIn((history_node, AZON.SobreProducte, AZON["product-P1001"]), graph)
+            self.assertIn((order_node, RDF.type, AZON.Comanda), graph)
+            self.assertIn((order_node, AZON.IdComanda, None), graph)
+            self.assertIn((order_node, AZON.DataCompra, None), graph)
+            self.assertIn((order_node, AZON.MetodePagament, None), graph)
+            self.assertIn((order_node, AZON.DataEntrega, None), graph)
+            self.assertIn((order_node, AZON.TeProducte, AZON["product-P1001"]), graph)
+            self.assertNotIn((AZON["purchase-ORDER-1"], None, None), graph)
 
 
 if __name__ == "__main__":
