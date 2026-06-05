@@ -38,3 +38,6 @@ dist/
 
 .DS_Store
 **/.DS_Store
+
+# Fitxers locals del desplegament distribuït (no versionar)
+AgentZon/deploy.hosts
