@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <title>AgentZon — Directori d'Agents</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; line-height: 1.5; }
+    .container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+    header { text-align: center; margin-bottom: 2.5rem; }
+    header h1 { font-size: 1.8rem; color: #16213e; }
+    header .subtitle { color: #6c757d; font-size: 0.95rem; margin-top: 0.3rem; }
+    .stats { display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap; }
+    .stat-card { background: #fff; border-radius: 10px; padding: 1rem 1.5rem; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); min-width: 120px; }
+    .stat-card .number { font-size: 2rem; font-weight: 700; color: #16213e; }
+    .stat-card .label { font-size: 0.8rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.05em; }
+    .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .agent-card { background: #fff; border-radius: 10px; padding: 1.2rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-left: 4px solid transparent; transition: box-shadow 0.15s; }
+    .agent-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+    .agent-card.directory { border-left-color: #6f42c1; }
+    .agent-card.cercador { border-left-color: #0d6efd; }
+    .agent-card.compra { border-left-color: #198754; }
+    .agent-card.logistic { border-left-color: #fd7e14; }
+    .agent-card.transport { border-left-color: #0dcaf0; }
+    .agent-card.opinador { border-left-color: #d63384; }
+    .agent-card.retornador { border-left-color: #ffc107; }
+    .agent-card.cobrador { border-left-color: #20c997; }
+    .agent-card.venedor { border-left-color: #6c757d; }
+    .agent-name { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .agent-type { font-size: 0.8rem; color: #6c757d; margin-bottom: 0.75rem; }
+    .agent-detail { font-size: 0.85rem; color: #495057; word-break: break-all; }
+    .agent-detail span { font-weight: 500; color: #16213e; }
+    .empty-state { text-align: center; padding: 3rem 1rem; color: #6c757d; }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    footer { text-align: center; margin-top: 3rem; font-size: 0.8rem; color: #adb5bd; }
+    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #28a745; }
+    .protocols { margin-top: 0.5rem; }
+    .protocols details { margin-top: 0.3rem; }
+    .protocols summary { cursor: pointer; font-size: 0.8rem; color: #6c757d; }
+    .protocol-list { margin-top: 0.3rem; padding-left: 1.2rem; }
+    .protocol-list li { font-size: 0.78rem; color: #495057; word-break: break-all; }
+    .refresh-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .refresh-bar .last-update { font-size: 0.8rem; color: #6c757d; }
+    .refresh-btn { background: #16213e; color: #fff; border: none; padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+    .refresh-btn:hover { background: #0f3460; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Directori d'Agents</h1>
+      <p class="subtitle">Registre central del sistema multi-agent AgentZon</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="number">{{ agents|length }}</div>
+        <div class="label">Agents Connectats</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">{{ agent_types|length }}</div>
+        <div class="label">Tipus d'Agent</div>
+      </div>
+    </div>
+
+    <div class="refresh-bar">
+      <span class="last-update">Darrera actualització: {{ current_time }}</span>
+      <button class="refresh-btn" onclick="location.reload()">Actualitza</button>
+    </div>
+
+    {% if agents %}
+    <div class="agent-grid">
+      {% for agent in agents %}
+      <div class="agent-card {{ agent.css_class }}">
+        <div class="agent-name"><span class="status-dot"></span>{{ agent.name }}</div>
+        <div class="agent-type">{{ agent.agent_type }}</div>
+        <div class="agent-detail"><span>URI:</span> {{ agent.uri }}</div>
+        <div class="agent-detail"><span>Adreça:</span> {{ agent.address }}</div>
+        {% if agent.extra %}
+        <div class="protocols">
+          <details>
+            <summary>Metadades addicionals</summary>
+            <ul class="protocol-list">
+              {% for key, val in agent.extra.items() %}
+              <li><strong>{{ key }}:</strong> {{ val }}</li>
+              {% endfor %}
+            </ul>
+          </details>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">---</div>
+      <p>No hi ha cap agent registrat al directori.</p>
+      <p>Arrenca els agents perque es registrin automaticament.</p>
+    </div>
+    {% endif %}
+
+    <footer>Agent Directory &middot; AgentZon &middot; ECSDI</footer>
+  </div>
+</body>
+</html>

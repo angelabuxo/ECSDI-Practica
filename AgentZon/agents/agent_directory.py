@@ -11,7 +11,9 @@ Agent de directori AgentZon (registre i cerca d'agents).
 
 import argparse
 
-from flask import Flask, request
+from datetime import datetime
+
+from flask import Flask, render_template, request
 from rdflib import Graph, RDF
 from rdflib.namespace import FOAF
 
@@ -142,6 +144,56 @@ def info():
 def stop():
     shutdown_server()
     return "Parando Servidor"
+
+
+def _agent_css_class(agent_type):
+    mapping = {
+        "DirectoryAgent": "directory",
+        "CercadorAgent": "cercador",
+        "CompraAgent": "compra",
+        "CentreLogisticAgent": "logistic",
+        "TransportistaAgent": "transport",
+        "OpinadorAgent": "opinador",
+        "RetornadorAgent": "retornador",
+        "CobradorAgent": "cobrador",
+        "ProveidorPagamentAgent": "cobrador",
+    }
+    return mapping.get(str(agent_type), "")
+
+
+@app.route("/iface")
+def iface():
+    agents = []
+    agent_types = set()
+
+    for uri in dsgraph.subjects(RDF.type, FOAF.Agent):
+        agent_type = dsgraph.value(uri, DSO.AgentType)
+        agent_types.add(str(agent_type) if agent_type else "Desconegut")
+
+        extra = {}
+        for predicate, obj in dsgraph.predicate_objects(uri):
+            if predicate in (RDF.type, FOAF.name, DSO.Address, DSO.AgentType, DSO.Uri):
+                continue
+            key = str(predicate).split("#")[-1].split("/")[-1]
+            extra[key] = str(obj)
+
+        agents.append({
+            "name": str(dsgraph.value(uri, FOAF.name) or uri),
+            "agent_type": str(agent_type) if agent_type else "—",
+            "uri": str(uri),
+            "address": str(dsgraph.value(uri, DSO.Address) or "—"),
+            "css_class": _agent_css_class(agent_type),
+            "extra": extra if extra else None,
+        })
+
+    agents.sort(key=lambda a: a["name"])
+
+    return render_template(
+        "directory.html",
+        agents=agents,
+        agent_types=agent_types,
+        current_time=datetime.now().strftime("%H:%M:%S"),
+    )
 
 
 if __name__ == "__main__":
