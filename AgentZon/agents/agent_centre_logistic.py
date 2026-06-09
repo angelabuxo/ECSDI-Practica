@@ -159,8 +159,10 @@ def pla_assignar_producte_a_lot(request_data):
 
 def resolve_transport_agents():
     if TRANSPORT_AGENTS:
+        logger.debug("Usant llista de transportistes preconfigurada (%d agents)", len(TRANSPORT_AGENTS))
         return TRANSPORT_AGENTS
     if DirectoryAgent is None:
+        logger.warning("No hi ha agent de directori configurat; no es poden resoldre transportistes")
         return []
 
     entries = resolve_agents_via_directory(
@@ -170,7 +172,7 @@ def resolve_transport_agents():
         _msgcnt,
         DSO.TransportistaAgent,
     )
-    return [
+    agents = [
         Agent(
             name=entry["name"],
             uri=entry["uri"],
@@ -179,6 +181,8 @@ def resolve_transport_agents():
         )
         for entry in entries
     ]
+    logger.info("Resolts %d transportistes via directori: %s", len(agents), [(a.name, a.address) for a in agents])
+    return agents
 
 
 def pla_cerca_de_transportista(lot):
@@ -194,13 +198,17 @@ def pla_cerca_de_transportista(lot):
 
     def request_offer(transport_agent):
         try:
+            logger.debug("Enviant CFP a %s (%s) per al lot %s", transport_agent.name, transport_agent.address, lot["lot_id"])
             message, _ = build_peticio_transport(
                 lot,
                 sender=AGENT.uri,
                 receiver=transport_agent.uri,
                 msgcnt=_msgcnt(),
             )
-            return extract_transport_offer(MESSAGE_SENDER(message, transport_agent.address))
+            reply = MESSAGE_SENDER(message, transport_agent.address)
+            offer = extract_transport_offer(reply)
+            logger.debug("Oferta rebuda de %s per al lot %s: %.2f EUR, entrega %s", transport_agent.name, lot["lot_id"], offer["price"], offer["delivery_date"])
+            return offer
         except Exception as exc:
             logger.warning(
                 "No s'ha pogut obtenir oferta de %s (%s): %s",
@@ -251,6 +259,14 @@ def pla_negociar_contraoferta(lot, transport_agents, offers):
     negotiated_offers = []
     for other_offer in other_offers:
         transport_agent = match_transport_agent(transport_agents, other_offer["transport_id"])
+        logger.debug(
+            "Enviant contraoferta a %s (%s) per al lot %s: %.2f EUR (original %.2f EUR)",
+            other_offer["transport_id"],
+            transport_agent.address,
+            lot["lot_id"],
+            counter_price,
+            other_offer["price"],
+        )
         message = build_contraoferta_transport(
             lot,
             other_offer,
@@ -262,6 +278,12 @@ def pla_negociar_contraoferta(lot, transport_agents, offers):
         try:
             reply = MESSAGE_SENDER(message, transport_agent.address)
             performative = get_message_properties(reply).get("performative")
+            logger.debug(
+                "Resposta contraoferta de %s per al lot %s: %s",
+                other_offer["transport_id"],
+                lot["lot_id"],
+                str(performative).rsplit("#", 1)[-1] if performative is not None else "None",
+            )
             if performative == ACL.agree:
                 logger.info(
                     "Contraoferta acceptada per %s al lot %s: %.2f EUR",
@@ -303,6 +325,14 @@ def pla_negociar_contraoferta(lot, transport_agents, offers):
                 exc,
             )
 
+    logger.info(
+        "Resum negociacio lot %s: %d concessio(ns) acceptada(es) de %d contraofertes (preu objectiu=%.2f EUR, sostre=%.2f EUR)",
+        lot["lot_id"],
+        len(negotiated_offers),
+        len(other_offers),
+        counter_price,
+        cap_price,
+    )
     return {
         "low_offer": low_offer,
         "counter_price": counter_price,

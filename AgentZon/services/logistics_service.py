@@ -391,10 +391,14 @@ def query_transport_offers(lot, transport_agents, request_offer):
 
 
 def match_transport_agent(transport_agents, transport_id):
-    return next(
-        agent
-        for agent in transport_agents
-        if agent.name.endswith(transport_id) or transport_id in agent.name.lower()
+    """Find the transport agent whose name matches the given transport_id."""
+    for agent in transport_agents:
+        if agent.name.endswith(transport_id) or transport_id in agent.name.lower():
+            return agent
+    available = [(a.name, a.address) for a in transport_agents]
+    raise ValueError(
+        f"No transport agent matches transport_id={transport_id!r}. "
+        f"Available agents: {available}"
     )
 
 

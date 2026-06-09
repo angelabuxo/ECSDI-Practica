@@ -64,7 +64,7 @@ def configure_runtime(settings, message_sender=send_message):
 
 
 def generar_oferta_transport(request_data):
-    return {
+    offer = {
         "lot_id": request_data["lot_id"],
         "order_id": request_data["order_id"],
         "transport_id": TRANSPORT_ID,
@@ -73,6 +73,16 @@ def generar_oferta_transport(request_data):
         "delivery_date": (date.today() + timedelta(days=DELIVERY_DAYS)).isoformat(),
         "price": round(request_data["total_weight"] * PRICE_PER_KG, 2),
     }
+    logger.info(
+        "Generant oferta %s pel lot %s (%.2f EUR/kg, pes=%.2f, total=%.2f EUR, entrega=%s)",
+        TRANSPORT_ID,
+        offer["lot_id"],
+        PRICE_PER_KG,
+        request_data["total_weight"],
+        offer["price"],
+        offer["delivery_date"],
+    )
+    return offer
 
 
 def register_transport_agent(directory_agent=None, msgcnt=0):
@@ -91,14 +101,26 @@ def register_transport_agent(directory_agent=None, msgcnt=0):
 def respondre_contraoferta(counter_offer, receiver=None):
     previous_offer = LAST_OFFERS.get(counter_offer["lot_id"])
     if previous_offer is None:
+        logger.warning(
+            "Contraoferta rebut per lot %s sense oferta previa (transport_id=%s)",
+            counter_offer.get("lot_id"),
+            TRANSPORT_ID,
+        )
         return build_message(Graph(), ACL.refuse, sender=AGENT.uri, receiver=receiver, msgcnt=mss_cnt)
 
-    counter_price = counter_offer["price"]
-    original_price = previous_offer["price"]
-    min_acceptable = round(original_price * MIN_ACCEPTABLE_RATIO, 2)
-
-    if counter_price >= min_acceptable:
-        LAST_OFFERS[counter_offer["lot_id"]] = {**previous_offer, "price": counter_price}
+    min_acceptable = round(previous_offer["price"] * MIN_ACCEPTABLE_RATIO, 2)
+    accept = counter_offer["price"] >= min_acceptable
+    logger.info(
+        "Contraoferta pel lot %s (%s): proposta %.2f EUR, original %.2f EUR, minim acceptable %.2f EUR -> %s",
+        counter_offer["lot_id"],
+        TRANSPORT_ID,
+        counter_offer["price"],
+        previous_offer["price"],
+        min_acceptable,
+        "accepta" if accept else "rebutja",
+    )
+    if accept:
+        LAST_OFFERS[counter_offer["lot_id"]] = {**previous_offer, "price": counter_offer["price"]}
         return build_message(Graph(), ACL.agree, sender=AGENT.uri, receiver=receiver, msgcnt=mss_cnt)
 
     return build_message(Graph(), ACL.refuse, sender=AGENT.uri, receiver=receiver, msgcnt=mss_cnt)
@@ -111,7 +133,7 @@ def comunicacion():
     """
     global mss_cnt
 
-    print("INFO AgenteTransportista => Peticio rebuda\n")
+    logger.debug("Peticio rebuda a /comm (transport_id=%s)", TRANSPORT_ID)
 
     message = request.args["content"]
     gm = Graph()
@@ -120,20 +142,37 @@ def comunicacion():
 
     if msgdic is None:
         gr = build_message(Graph(), ACL["not-understood"], sender=AGENT.uri, msgcnt=mss_cnt)
-        print("INFO AgenteTransportista => El missatge no era un FIPA ACL")
+        logger.warning("Missatge rebut no es FIPA ACL (transport_id=%s)", TRANSPORT_ID)
     else:
         perf = msgdic["performative"]
         sender = msgdic.get("sender")
+        logger.debug("Performativa rebuda: %s (transport_id=%s)", str(perf).rsplit("#", 1)[-1], TRANSPORT_ID)
         if perf == ACL["accept-proposal"]:
             selected_offer = extract_transport_offer(gm)
             LAST_OFFERS.pop(selected_offer["lot_id"], None)
+            logger.info(
+                "Acceptacio rebuda pel lot %s (%s) - oferta eliminada",
+                selected_offer["lot_id"],
+                TRANSPORT_ID,
+            )
             gr = build_message(Graph(), ACL.inform, sender=AGENT.uri, receiver=sender, msgcnt=mss_cnt)
         elif perf == ACL["reject-proposal"]:
             rejected_offer = extract_transport_offer(gm)
             LAST_OFFERS.pop(rejected_offer["lot_id"], None)
+            logger.info(
+                "Rebuig rebut pel lot %s (%s) - oferta eliminada",
+                rejected_offer["lot_id"],
+                TRANSPORT_ID,
+            )
             gr = build_message(Graph(), ACL.inform, sender=AGENT.uri, receiver=sender, msgcnt=mss_cnt)
         elif perf == ACL.propose:
             counter_offer = extract_transport_offer(gm)
+            logger.info(
+                "Contraoferta rebuda pel lot %s (%s): preu proposat %.2f EUR",
+                counter_offer.get("lot_id"),
+                TRANSPORT_ID,
+                counter_offer.get("price", 0),
+            )
             gr = respondre_contraoferta(counter_offer, receiver=sender)
         elif perf != ACL.cfp:
             gr = build_message(
@@ -143,10 +182,17 @@ def comunicacion():
                 receiver=sender,
                 msgcnt=mss_cnt,
             )
-            print("INFO AgenteTransportista => Performativa no suportada")
+            logger.warning("Performativa no suportada: %s (transport_id=%s)", str(perf), TRANSPORT_ID)
         else:
             content = msgdic["content"]
             request_data = parse_peticio_transport(gm, content)
+            logger.info(
+                "CFP rebut pel lot %s (pes=%.2f, desti=%s, entrega=%s)",
+                request_data["lot_id"],
+                request_data["total_weight"],
+                request_data["city"],
+                request_data["delivery_date"],
+            )
             offer = generar_oferta_transport(request_data)
             LAST_OFFERS[offer["lot_id"]] = dict(offer)
             logger.info(
