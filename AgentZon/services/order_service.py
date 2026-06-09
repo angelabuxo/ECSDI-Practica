@@ -13,11 +13,9 @@ from services.rdf_store import load_graph, save_graph, _user_id_from_iri, _selle
 # Order construction ---------------------------------------------------------------
 def _priority_to_delivery_date(priority):
     offsets = {
+        "1 dia": 1,
+        "2 dies": 2,
         "5 dies": 5,
-        "7 dies": 7,
-        "24h": 1,
-        "48h": 2,
-        "72h": 3,
     }
     return (date.today() + timedelta(days=offsets.get(priority, 7))).isoformat()
 
