@@ -554,7 +554,7 @@ def order_status(order_id):
     logger.info("order_status: comanda %s, product_ids=%s", order_id, product_ids)
     if not product_ids:
         logger.warning("order_status: product_ids buit! order keys=%s, products count=%d", list(order.keys()), len(order.get("products", [])))
-    shipments = load_tracking_for_order(TRACKING_PATH, product_ids) if product_ids else []
+    shipments = load_tracking_for_order(TRACKING_PATH, product_ids, order_id=order_id) if product_ids else []
     logger.info("order_status: trobats %d seguiments per a %s", len(shipments), order_id)
     for s in shipments:
         logger.info("  seguiment: pid=%s status=%s lot=%s transport=%s", (s.get("product") or {}).get("product_id"), s.get("status"), s.get("lot_id"), s.get("transport_name"))

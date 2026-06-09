@@ -10,8 +10,10 @@ from protocols.pagament import embed_invoice_in_content, extract_invoice_from_co
 from protocols.rdf_refs import (
     link_assignat_transportista,
     link_product,
+    link_sobre_comanda,
     link_sobre_lot,
     lot_id_from_node,
+    order_id_from_node,
     product_nodes_from_content,
     transport_id_from_node,
 )
@@ -69,6 +71,8 @@ def save_localization_confirmations(tracking_path, items):
             graph.set((node, AZON.Estat, Literal(item.get("status", "OBERT"))))
             graph.set((node, AZON.Ciutat, Literal(item["city"])))
             graph.set((node, AZON.DataEntrega, Literal(item["delivery_date"])))
+            if item.get("order_id"):
+                link_sobre_comanda(graph, node, item["order_id"])
             link_sobre_lot(
                 graph,
                 node,
@@ -159,10 +163,11 @@ def _load_tracking_entry(graph, node):
     official_delivery_date = graph.value(node, AZON.DataEntregaDefinitiva)
     transport_cost = graph.value(node, AZON.CostTransport)
     invoice = extract_invoice_from_content(graph, node)
+    order_id = order_id_from_node(graph, node)
     localized_product_id = str(node).rsplit("tracking-", 1)[-1]
     return {
         "localized_product_id": localized_product_id,
-        "order_id": "",
+        "order_id": order_id if order_id else "",
         "lot_id": lot_id_from_node(graph, node),
         "status": status,
         "city": str(graph.value(node, AZON.Ciutat)),
@@ -179,14 +184,14 @@ def _load_tracking_entry(graph, node):
     }
 
 
-def load_tracking_for_order(tracking_path, product_ids):
+def load_tracking_for_order(tracking_path, product_ids, order_id=None):
     graph = load_graph(tracking_path)
     bind_namespaces(graph)
     entries = []
     all_nodes = set(graph.subjects(RDF.type, AZON.ConfirmacioLocalitzacio)) | set(
         graph.subjects(RDF.type, AZON.DadesEnviament)
     ) | set(graph.subjects(RDF.type, AZON.ConfirmacioEnviament))
-    logging.info("load_tracking_for_order: product_ids=%s, nodes_al_tot=%d", product_ids, len(all_nodes))
+    logging.info("load_tracking_for_order: product_ids=%s, order_id=%s, nodes_al_tot=%d", product_ids, order_id, len(all_nodes))
     for node in all_nodes:
         tracking_pid = _tracking_product_id(graph, node)
         if tracking_pid not in product_ids:
@@ -195,7 +200,11 @@ def load_tracking_for_order(tracking_path, product_ids):
         if not lot_id_from_node(graph, node):
             logging.debug("  descartat node %s: sense lot_id", node)
             continue
-        entries.append(_load_tracking_entry(graph, node))
+        entry = _load_tracking_entry(graph, node)
+        if order_id is not None and entry.get("order_id") and entry["order_id"] != order_id:
+            logging.debug("  descartat node %s: order_id=%s != %s", node, entry.get("order_id"), order_id)
+            continue
+        entries.append(entry)
     logging.info("load_tracking_for_order: entrades trobades=%d", len(entries))
     return sorted(entries, key=lambda entry: (entry["lot_id"], entry["localized_product_id"]))
 

@@ -50,7 +50,7 @@ from services.agent_common_service import (
     replace_url_path,
     resolve_agent_via_directory,
 )
-from services.payment_service import record_refund
+from services.payment_service import load_returned_product_pairs, record_refund
 from services.retornador_service import (
     RETURN_REASON_OPTIONS,
     build_aggregate_return_decision,
@@ -314,11 +314,15 @@ def pla_retorn(decision):
 
 
 def _load_purchased_products_for_iface(user_id):
-    return build_purchased_products_from_orders(
+    all_products = build_purchased_products_from_orders(
         _fetch_user_purchases_from_opinador(user_id),
-        logger=logger,
+        logger=None,
         user_id=user_id,
     )
+    returned_pairs = load_returned_product_pairs(REFUNDS_PATH, user_id=user_id)
+    filtered = [p for p in all_products if (p["order_id"], p["product_id"]) not in returned_pairs] if returned_pairs else all_products
+    logger.info("Retornador UI: %d productes disponibles per a l'usuari %s (%d ja retornats)", len(filtered), user_id, len(all_products) - len(filtered))
+    return filtered
 
 
 def _render_retornador_iface(

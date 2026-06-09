@@ -322,6 +322,29 @@ def _offer_rank_key(offer):
     return (offer["price"], offer["delivery_date"], offer["transport_id"])
 
 
+def _delivery_rank_key(offer):
+    return (offer["delivery_date"], offer["price"], offer["transport_id"])
+
+
+def filter_on_time_offers(offers, expected_delivery_date):
+    """Filtra les ofertes que compleixen la data d'entrega esperada.
+
+    Descarta qualsevol oferta on la data d'entrega oficial es posterior
+    a la data d'entrega esperada del lot. Retorna la llista d'ofertes
+    a temps i la llista d'ofertes descartades.
+    """
+    expected = _parse_date(expected_delivery_date) if isinstance(expected_delivery_date, str) else expected_delivery_date
+    on_time = []
+    late = []
+    for offer in offers:
+        offer_date = _parse_date(offer["delivery_date"]) if isinstance(offer["delivery_date"], str) else offer["delivery_date"]
+        if offer_date is not None and expected is not None and offer_date > expected:
+            late.append(offer)
+        else:
+            on_time.append(offer)
+    return on_time, late
+
+
 def split_low_and_other_offers(offers):
     """Separa l'oferta mes baixa de la resta. Retorna (low_offer, other_offers)."""
     if not offers:
@@ -353,12 +376,16 @@ def _acl_performative_name(performative):
 
 
 def select_best_offer(low_offer, negotiated_offers):
-    """Retorna la millor oferta entre la baixa i qualsevol contraoferta acceptada."""
+    """Retorna la millor oferta entre la baixa i qualsevol contraoferta acceptada.
+
+    Prioritza l'entrega mes propera (data d'entrega mes baixa); en cas d'empat,
+    desempata per preu i despres per transport_id.
+    """
     if low_offer is None:
         return negotiated_offers[0] if negotiated_offers else None
     best_offer = dict(low_offer)
     for offer in negotiated_offers:
-        if _offer_rank_key(offer) < _offer_rank_key(best_offer):
+        if _delivery_rank_key(offer) < _delivery_rank_key(best_offer):
             best_offer = offer
     return best_offer
 

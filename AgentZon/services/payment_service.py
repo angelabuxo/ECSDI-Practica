@@ -5,7 +5,7 @@ from rdflib.namespace import XSD
 
 from AgentUtil.OntoNamespaces import AZON, bind_namespaces
 from protocols.rdf_refs import ensure_order_node, link_sobre_comanda
-from services.rdf_store import load_graph, save_graph, _seller_id_from_iri
+from services.rdf_store import load_graph, save_graph, _seller_id_from_iri, _user_id_from_iri
 
 
 # Bank data ------------------------------------------------------------------------
@@ -107,7 +107,9 @@ def record_refund(path, refund):
     graph.add((node, RDF.type, AZON.Devolucio))
     graph.add((node, AZON.IdDevolucio, Literal(refund["return_id"])))
     graph.add((node, AZON.IdComanda, Literal(refund["order_id"])))
-    ensure_order_node(graph, refund["order_id"])
+    if "," not in refund["order_id"]:
+        ensure_order_node(graph, refund["order_id"])
+        graph.add((node, AZON.SobreComanda, AZON[f"order-{refund['order_id']}"]))
     graph.add((node, AZON.PertanyAUsuari, AZON["usuari-" + str(refund["user_id"])]))
     graph.add((node, AZON.ImportPagament, Literal(refund["amount"], datatype=XSD.float)))
     graph.add((node, AZON.MotiuDevolucio, Literal(refund.get("reason", ""))))
@@ -117,3 +119,20 @@ def record_refund(path, refund):
     for product_id in refund.get("product_ids", []):
         graph.add((node, AZON.SobreProducte, AZON[f"product-{product_id}"]))
     save_graph(path, graph)
+
+
+def load_returned_product_pairs(path, user_id=None):
+    """Retorna el conjunt de parells (order_id, product_id) ja retornats."""
+    graph = load_graph(path)
+    returned = set()
+    for node in set(graph.subjects(RDF.type, AZON.Devolucio)):
+        record_user_id = _user_id_from_iri(graph.value(node, AZON.PertanyAUsuari) or "")
+        if user_id is not None and record_user_id != user_id:
+            continue
+        order_id = str(graph.value(node, AZON.IdComanda) or "")
+        for product_node in graph.objects(node, AZON.SobreProducte):
+            product_id = graph.value(product_node, AZON.IdProducte)
+            if product_id is None:
+                product_id = Literal(str(product_node).rsplit("product-", 1)[-1])
+            returned.add((order_id, str(product_id)))
+    return returned

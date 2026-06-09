@@ -55,6 +55,7 @@ from services.logistics_service import (
     build_premium_counter_price,
     build_premium_price_cap,
     create_lot,
+    filter_on_time_offers,
     format_centre_uri_name,
     list_all_lots,
     list_ready_lots_for_negotiation,
@@ -221,17 +222,36 @@ def pla_cerca_de_transportista(lot):
     offers = query_transport_offers(lot, transport_agents, request_offer)
     if not offers:
         raise RuntimeError("Cap transportista disponible per al lot {}".format(lot["lot_id"]))
-    logger.info("Rebudes %d ofertes de transport per al lot %s", len(offers), lot["lot_id"])
-    for offer in sorted(offers, key=lambda current: (current["price"], current["delivery_date"], current["transport_id"])):
+
+    on_time_offers, late_offers = filter_on_time_offers(offers, lot["delivery_date"])
+    for offer in late_offers:
+        logger.warning(
+            "Oferta descartada per entrega tardia al lot %s: %s (%s) entrega %s > %s",
+            lot["lot_id"],
+            offer["transport_id"],
+            offer["transport_name"],
+            offer["delivery_date"],
+            lot["delivery_date"],
+        )
+    if not on_time_offers:
+        raise RuntimeError(
+            "Cap transportista lliura a temps per al lot {} (entrega esperada: {}, ofertes tardanes: {})".format(
+                lot["lot_id"],
+                lot["delivery_date"],
+                [o["transport_id"] for o in late_offers],
+            )
+        )
+    logger.info("Rebudes %d ofertes de transport per al lot %s (%d a temps, %d tardanes)", len(offers), lot["lot_id"], len(on_time_offers), len(late_offers))
+    for offer in sorted(on_time_offers, key=lambda current: (current["delivery_date"], current["price"], current["transport_id"])):
         logger.info(
-            "Oferta inicial rebuda per al lot %s: %s (%s) %.2f EUR, entrega %s",
+            "Oferta a temps per al lot %s: %s (%s) %.2f EUR, entrega %s",
             lot["lot_id"],
             offer["transport_id"],
             offer["transport_name"],
             offer["price"],
             offer["delivery_date"],
         )
-    return transport_agents, offers
+    return transport_agents, on_time_offers
 
 
 def pla_negociar_contraoferta(lot, transport_agents, offers):

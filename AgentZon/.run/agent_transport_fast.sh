@@ -11,5 +11,5 @@ else
   exit 1
 fi
 clear
-echo ===\ Transportista\ ràpid\ ===
+echo $'=== Transportista r\303\240pid ==='
 exec "$PYTHON" -m agents.agent_transportista --host 127.0.0.1 --port 9010 --directory-host 127.0.0.1 --directory-port 9000 --transport-id fast --price-per-kg 8.0 --delivery-days 1
