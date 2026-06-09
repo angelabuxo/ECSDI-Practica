@@ -412,7 +412,7 @@ def _build_return_decision(
         "reason": reason,
         "accepted": accepted,
         "product_ids": product_ids,
-        "products": list(request_data.get("products", [])),
+        "products": list(request_data.get("products", [])) if accepted else [],
         "accepted_product_ids": product_ids,
         "requested_product_ids": sorted(
             requested_product_ids if requested_product_ids is not None else request_data.get("product_ids", [])

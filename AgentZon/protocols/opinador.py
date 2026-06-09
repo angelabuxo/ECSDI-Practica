@@ -504,15 +504,16 @@ def build_resolucio_devolucio(decision, sender=None, receiver=None, request_cont
     graph.add((content, AZON.ImportPagament, Literal(_amount_as_float(decision.get("amount")), datatype=XSD.float)))
     graph.add((content, AZON.Acceptada, Literal(bool(decision["accepted"]), datatype=XSD.boolean)))
     graph.add((content, AZON.MotiuDevolucio, Literal(decision.get("reason", ""))))
-    if decision.get("products"):
-        for product in decision.get("products", []):
-            _add_snapshot_product(graph, content, product, AZON.SobreProducte)
-    else:
-        for product_id in decision.get("product_ids", []):
-            product_node = AZON[f"product-{product_id}"]
-            graph.add((content, AZON.SobreProducte, product_node))
-            graph.add((product_node, RDF.type, AZON.Producte))
-            graph.add((product_node, AZON.IdProducte, Literal(product_id)))
+    if decision.get("accepted"):
+        if decision.get("products"):
+            for product in decision.get("products", []):
+                _add_snapshot_product(graph, content, product, AZON.SobreProducte)
+        else:
+            for product_id in decision.get("product_ids", []):
+                product_node = AZON[f"product-{product_id}"]
+                graph.add((content, AZON.SobreProducte, product_node))
+                graph.add((product_node, RDF.type, AZON.Producte))
+                graph.add((product_node, AZON.IdProducte, Literal(product_id)))
     if decision.get("seller_id"):
         graph.add((content, AZON.PertanyAVenedorExtern, AZON["venedor-" + str(decision["seller_id"])]))
     if request_content is not None:
