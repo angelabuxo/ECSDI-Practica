@@ -127,7 +127,20 @@ def _build_product_record(index, rng):
 
 
 def _generate_random_products(product_count, rng):
-    return [_build_product_record(index, rng) for index in range(product_count)]
+    used_names = set()
+    products = []
+    for index in range(product_count):
+        record = _build_product_record(index, rng)
+        base_name = record["name"]
+        if base_name in used_names:
+            suffix = 2
+            while f"{base_name} #{suffix}" in used_names:
+                suffix += 1
+            record["name"] = f"{base_name} #{suffix}"
+            record["description"] = record["description"].replace(base_name, record["name"], 1)
+        used_names.add(record["name"])
+        products.append(record)
+    return products
 
 
 def _build_products_graph(products):
