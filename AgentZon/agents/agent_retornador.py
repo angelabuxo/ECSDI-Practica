@@ -245,9 +245,14 @@ def pla_compliment_de_devolucio(return_request):
             )
 
     total_refund_amount = round(sum(refund["amount"] for refund in refund_confirmations), 2)
-    global_status = "RETORNAT" if refund_confirmations and all(
-        refund["status"] == "RETORNAT" for refund in refund_confirmations
-    ) else "PARCIAL"
+    if not refund_confirmations:
+        global_status = "RETORNAT"
+    elif all(r["status"] == "RETORNAT" for r in refund_confirmations):
+        global_status = "RETORNAT"
+    elif all(r["status"] == "PENDENT_COBRADOR" for r in refund_confirmations):
+        global_status = "PENDENT_COBRADOR"
+    else:
+        global_status = "PARCIAL"
     record_refund(
         REFUNDS_PATH,
         {
@@ -263,30 +268,49 @@ def pla_compliment_de_devolucio(return_request):
     )
     aggregate["amount"] = total_refund_amount
     if total_refund_amount > 0:
-        aggregate["reason"] = (
-            f"{aggregate['reason']} Reemborsament {global_status} de {total_refund_amount:.2f} EUR."
-        ).strip()
+        if global_status == "PENDENT_COBRADOR":
+            aggregate["reason"] = (
+                f"{aggregate['reason']} Reemborsament pendent de {total_refund_amount:.2f} EUR "
+                f"(Cobrador no disponible)."
+            ).strip()
+        else:
+            aggregate["reason"] = (
+                f"{aggregate['reason']} Reemborsament {global_status} de {total_refund_amount:.2f} EUR."
+            ).strip()
     return aggregate, {"amount": total_refund_amount, "status": global_status}
 
 
 def pla_retorn(decision):
-    cobrador = resolve_cobrador_agent()
-    refund_message = build_peticio_retorn_diners(
-        {
+    try:
+        cobrador = resolve_cobrador_agent()
+        refund_message = build_peticio_retorn_diners(
+            {
+                "return_id": decision["return_id"],
+                "order_id": decision["order_id"],
+                "user_id": decision["user_id"],
+                "amount": decision["amount"],
+                "reason": decision.get("reason", ""),
+                "seller_id": decision.get("seller_id"),
+                "product_ids": decision.get("product_ids", []),
+            },
+            sender=AGENT.uri,
+            receiver=cobrador.uri,
+            msgcnt=_msgcnt(),
+        )
+        response_graph = MESSAGE_SENDER(refund_message, cobrador.address)
+        return extract_confirmacio_retorn_diners(response_graph)
+    except Exception as exc:
+        logger.warning(
+            "No s'ha pogut contactar amb el Cobrador per al reemborsament %s: %s",
+            decision.get("return_id", ""),
+            exc,
+        )
+        return {
             "return_id": decision["return_id"],
             "order_id": decision["order_id"],
-            "user_id": decision["user_id"],
             "amount": decision["amount"],
-            "reason": decision.get("reason", ""),
-            "seller_id": decision.get("seller_id"),
-            "product_ids": decision.get("product_ids", []),
-        },
-        sender=AGENT.uri,
-        receiver=cobrador.uri,
-        msgcnt=_msgcnt(),
-    )
-    response_graph = MESSAGE_SENDER(refund_message, cobrador.address)
-    return extract_confirmacio_retorn_diners(response_graph)
+            "status": "PENDENT_COBRADOR",
+        }
 
 
 def _load_purchased_products_for_iface(user_id):
