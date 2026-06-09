@@ -29,6 +29,7 @@ AGENT_ORDER=(
   retornador
   transport_fast
   transport_economy
+  transport
   centre_bcn
   centre_gi
   centre_tgn
@@ -39,10 +40,14 @@ AGENT_ORDER=(
 
 usage() {
   cat <<'EOF'
-Ús: ./run_distributed_agent.sh <agent>
+Ús: ./run_distributed_agent.sh <agent> [flags...]
 
 Agents: directory cobrador opinador retornador transport_fast transport_economy
-        centre_bcn centre_gi centre_tgn venedor_extern compra cercador
+        transport centre_bcn centre_gi centre_tgn venedor_extern compra cercador
+
+  transport         Transportista genèric; admet flags addicionals:
+                    --port <num> --transport-id <id> --price-per-kg <preu>
+                    --delivery-days <dies> (i qualsevol altre flag de agent_transportista)
 
 Variables d'entorn (a distributed.env):
   DIRECTORY_HOST    IP del PC on corre el Directory (compartida per totes les màquines)
@@ -121,8 +126,9 @@ resolve_publish_host() {
 
 build_command() {
   local agent="$1"
-  local host
   local python="$2"
+  local extra_args="${3:-}"
+  local host
   local data_dir="${DATA_DIR:-data}"
   host="$(resolve_publish_host)"
 
@@ -150,6 +156,10 @@ build_command() {
     transport_economy)
       printf '%s -m agents.agent_transportista --host 0.0.0.0 --publish-host %s --port 9011 --directory-host %s --directory-port %s --transport-id economy --price-per-kg 4.0 --delivery-days 3' \
         "$python" "$host" "$DIRECTORY_HOST" "$DIRECTORY_PORT"
+      ;;
+    transport)
+      printf '%s -m agents.agent_transportista --host 0.0.0.0 --publish-host %s --directory-host %s --directory-port %s %s' \
+        "$python" "$host" "$DIRECTORY_HOST" "$DIRECTORY_PORT" "$extra_args"
       ;;
     centre_bcn)
       printf '%s -m agents.agent_centre_logistic --host 0.0.0.0 --publish-host %s --port 9003 --centre-id CL-BCN --centre-city Barcelona --directory-host %s --directory-port %s --data-dir %s' \
@@ -185,6 +195,8 @@ build_command() {
 
 main() {
   local agent="${1:-}"
+  shift 2>/dev/null || true
+  local extra_args="$*"
 
   if [[ "$agent" == "--help" || "$agent" == "-h" ]]; then
     usage
@@ -213,7 +225,7 @@ main() {
   local host
   host="$(resolve_publish_host)"
   local cmd
-  cmd="$(build_command "$agent" "$python")"
+  cmd="$(build_command "$agent" "$python" "$extra_args")"
 
   echo "=== AgentZon distribuït: $agent ==="
   echo "Màquina ( --publish-host ): $host"
