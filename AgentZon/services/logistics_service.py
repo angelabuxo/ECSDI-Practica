@@ -322,15 +322,15 @@ def _offer_rank_key(offer):
     return (offer["price"], offer["delivery_date"], offer["transport_id"])
 
 
-def split_low_and_high_offers(offers):
-    """Classifica ofertes inicials en oferta baixa (mínim preu) i alta (màxim preu)."""
+def split_low_and_other_offers(offers):
+    """Separa l'oferta mes baixa de la resta. Retorna (low_offer, other_offers)."""
     if not offers:
-        return None, None
+        return None, []
     if len(offers) == 1:
-        return offers[0], None
+        return offers[0], []
     low_offer = min(offers, key=_offer_rank_key)
-    high_offer = max(offers, key=_offer_rank_key)
-    return low_offer, high_offer
+    other_offers = [o for o in offers if o["transport_id"] != low_offer["transport_id"]]
+    return low_offer, other_offers
 
 
 def build_premium_counter_price(low_offer):
@@ -352,31 +352,15 @@ def _acl_performative_name(performative):
     return str(performative).rsplit("#", 1)[-1]
 
 
-def select_offer_after_premium_negotiation(
-    low_offer,
-    high_offer,
-    *,
-    counter_price=None,
-    cap_price=None,
-    premium_performative=None,
-    premium_negotiated_offer=None,
-):
-    """Aplica la política 110 % / 115 % sobre l'oferta baixa."""
+def select_best_offer(low_offer, negotiated_offers):
+    """Retorna la millor oferta entre la baixa i qualsevol contraoferta acceptada."""
     if low_offer is None:
-        return dict(high_offer) if high_offer is not None else None
-    if high_offer is None:
-        return dict(low_offer)
-
-    performative_name = _acl_performative_name(premium_performative)
-    if performative_name == "agree" and counter_price is not None and counter_price <= cap_price:
-        return {**high_offer, "price": counter_price}
-    if (
-        performative_name == "propose"
-        and premium_negotiated_offer is not None
-        and premium_negotiated_offer["price"] <= cap_price
-    ):
-        return dict(premium_negotiated_offer)
-    return dict(low_offer)
+        return negotiated_offers[0] if negotiated_offers else None
+    best_offer = dict(low_offer)
+    for offer in negotiated_offers:
+        if _offer_rank_key(offer) < _offer_rank_key(best_offer):
+            best_offer = offer
+    return best_offer
 
 
 def choose_winning_offer(initial_offers, negotiated_offers, chooser=random.choice):

@@ -63,8 +63,8 @@ from services.logistics_service import (
     mark_lot_shipped,
     match_transport_agent,
     query_transport_offers,
-    select_offer_after_premium_negotiation,
-    split_low_and_high_offers,
+    select_best_offer,
+    split_low_and_other_offers,
 )
 
 
@@ -227,88 +227,99 @@ def pla_cerca_de_transportista(lot):
 
 
 def pla_negociar_contraoferta(lot, transport_agents, offers):
-    low_offer, high_offer = split_low_and_high_offers(offers)
-    negotiation = {
-        "low_offer": low_offer,
-        "high_offer": high_offer,
-        "counter_price": None,
-        "cap_price": None,
-        "premium_performative": None,
-        "premium_negotiated_offer": None,
-    }
-    if high_offer is None:
+    low_offer, other_offers = split_low_and_other_offers(offers)
+
+    if not other_offers:
         logger.info(
             "Lot %s amb una sola oferta (%s); sense contraoferta",
             lot["lot_id"],
-            low_offer["transport_id"],
+            low_offer["transport_id"] if low_offer else "cap",
         )
-        return negotiation
+        return {"low_offer": low_offer, "counter_price": None, "cap_price": None, "negotiated_offers": []}
 
     counter_price = build_premium_counter_price(low_offer)
     cap_price = build_premium_price_cap(low_offer)
-    negotiation["counter_price"] = counter_price
-    negotiation["cap_price"] = cap_price
     logger.info(
-        "Contraoferta oferta alta per al lot %s (%s): %.2f EUR (sostre %.2f EUR, referencia baixa %s %.2f EUR)",
+        "Contraoferta per al lot %s: preu objectiu %.2f EUR (sostre %.2f EUR) basat en oferta baixa de %s (%.2f EUR)",
         lot["lot_id"],
-        high_offer["transport_id"],
         counter_price,
         cap_price,
         low_offer["transport_id"],
         low_offer["price"],
     )
 
-    transport_agent = match_transport_agent(transport_agents, high_offer["transport_id"])
-    message = build_contraoferta_transport(
-        lot,
-        high_offer,
-        new_price=counter_price,
-        sender=AGENT.uri,
-        receiver=transport_agent.uri,
-        msgcnt=_msgcnt(),
-    )
-    reply = MESSAGE_SENDER(message, transport_agent.address)
-    performative = get_message_properties(reply).get("performative")
-    negotiation["premium_performative"] = performative
-    if performative == ACL.agree:
-        logger.info(
-            "Resposta a la contraoferta del lot %s per %s: acceptada a %.2f EUR",
-            lot["lot_id"],
-            high_offer["transport_id"],
-            counter_price,
+    negotiated_offers = []
+    for other_offer in other_offers:
+        transport_agent = match_transport_agent(transport_agents, other_offer["transport_id"])
+        message = build_contraoferta_transport(
+            lot,
+            other_offer,
+            new_price=counter_price,
+            sender=AGENT.uri,
+            receiver=transport_agent.uri,
+            msgcnt=_msgcnt(),
         )
-        negotiation["premium_negotiated_offer"] = {**high_offer, "price": counter_price}
-    elif performative == ACL.propose:
-        negotiated_offer = extract_transport_offer(reply)
-        logger.info(
-            "Resposta a la contraoferta del lot %s per %s: nova proposta de %.2f EUR amb entrega %s",
-            lot["lot_id"],
-            high_offer["transport_id"],
-            negotiated_offer["price"],
-            negotiated_offer["delivery_date"],
-        )
-        negotiation["premium_negotiated_offer"] = negotiated_offer
-    else:
-        logger.info(
-            "Resposta a la contraoferta del lot %s per %s: rebutjada; es mantindra l'oferta baixa",
-            lot["lot_id"],
-            high_offer["transport_id"],
-        )
-    return negotiation
+        try:
+            reply = MESSAGE_SENDER(message, transport_agent.address)
+            performative = get_message_properties(reply).get("performative")
+            if performative == ACL.agree:
+                logger.info(
+                    "Contraoferta acceptada per %s al lot %s: %.2f EUR",
+                    other_offer["transport_id"],
+                    lot["lot_id"],
+                    counter_price,
+                )
+                negotiated_offers.append({**other_offer, "price": counter_price})
+            elif performative == ACL.propose:
+                negotiated_offer = extract_transport_offer(reply)
+                if negotiated_offer["price"] <= cap_price:
+                    logger.info(
+                        "Contraoferta rebuda de %s al lot %s: %.2f EUR (entrega %s)",
+                        other_offer["transport_id"],
+                        lot["lot_id"],
+                        negotiated_offer["price"],
+                        negotiated_offer["delivery_date"],
+                    )
+                    negotiated_offers.append(negotiated_offer)
+                else:
+                    logger.info(
+                        "Contraoferta rebutjada de %s al lot %s: %.2f EUR > sostre %.2f EUR",
+                        other_offer["transport_id"],
+                        lot["lot_id"],
+                        negotiated_offer["price"],
+                        cap_price,
+                    )
+            else:
+                logger.info(
+                    "Contraoferta rebutjada per %s al lot %s",
+                    other_offer["transport_id"],
+                    lot["lot_id"],
+                )
+        except Exception as exc:
+            logger.warning(
+                "Error en contraoferta a %s pel lot %s: %s",
+                other_offer["transport_id"],
+                lot["lot_id"],
+                exc,
+            )
+
+    return {
+        "low_offer": low_offer,
+        "counter_price": counter_price,
+        "cap_price": cap_price,
+        "negotiated_offers": negotiated_offers,
+    }
 
 
 def pla_de_transportista_escollit(lot, transport_agents, initial_offers, negotiation, request_content=None):
-    selected = select_offer_after_premium_negotiation(
+    selected = select_best_offer(
         negotiation["low_offer"],
-        negotiation["high_offer"],
-        counter_price=negotiation.get("counter_price"),
-        cap_price=negotiation.get("cap_price"),
-        premium_performative=negotiation.get("premium_performative"),
-        premium_negotiated_offer=negotiation.get("premium_negotiated_offer"),
+        negotiation["negotiated_offers"],
     )
-    if negotiation.get("high_offer") and selected["transport_id"] == negotiation["high_offer"]["transport_id"]:
+    negotiated_ids = {o["transport_id"] for o in negotiation.get("negotiated_offers", [])}
+    if negotiated_ids and selected["transport_id"] in negotiated_ids:
         source = "negociada"
-    elif negotiation.get("high_offer"):
+    elif negotiated_ids:
         source = "oferta baixa"
     else:
         source = "inicial"
