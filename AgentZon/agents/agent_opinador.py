@@ -41,6 +41,7 @@ from config import (
     resolve_agent_hosts,
     serve_agent,
     _wait_for_shutdown_signal,
+    _wait_until_server_ready_for_registration,
 )
 from protocols.compra import build_confirmacio_registre_compra, parse_peticio_registre_compra
 from protocols.cerca import build_peticio_cerca, extract_result_products
@@ -469,9 +470,12 @@ def _run_proactive_scheduler_loop(queue):
             next_feedback = now + FEEDBACK_INTERVAL_SEC
 
 
-def _opinador_agent_behaviour(queue, register_fn):
+def _opinador_agent_behaviour(queue, register_fn, ready_host=None, ready_port=None):
     """Comportament concurrent: registre al directori + plans proactius periòdics."""
     if register_fn is not None:
+        if ready_host is not None and ready_port is not None:
+            if not _wait_until_server_ready_for_registration(queue, ready_host, ready_port):
+                return
         register_fn()
     if not PROACTIVE_ENABLED:
         _wait_for_shutdown_signal(queue)

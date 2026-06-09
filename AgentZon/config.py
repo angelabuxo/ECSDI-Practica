@@ -9,6 +9,7 @@ Configuracio compartida i arrencada concurrent dels agents AgentZon
 import multiprocessing
 import os
 import queue as queue_lib
+import socket
 import time
 from pathlib import Path
 
@@ -37,6 +38,8 @@ OPINADOR_RECOMMENDATION_INTERVAL_SEC = 60
 OPINADOR_FEEDBACK_INTERVAL_SEC = 120
 DIRECTORY_REGISTER_RETRIES = 20
 DIRECTORY_REGISTER_RETRY_DELAY_SEC = 0.5
+SERVER_READY_TIMEOUT_SEC = 10.0
+SERVER_READY_POLL_INTERVAL_SEC = 0.1
 
 
 DEFAULT_PORTS = {
@@ -168,7 +171,57 @@ def register_with_directory(
 
 
 # Concurrent behaviour + Flask server (patró dels agents d'exemple del professor) -----
-def _agent_behaviour(queue, register_fn):
+def _probe_server_host(hostname):
+    if hostname in (None, "", DEFAULT_BIND_HOST):
+        return DEFAULT_LOCAL_HOST
+    return hostname
+
+
+def _socket_family_for_host(hostname):
+    return socket.AF_INET6 if hostname and ":" in hostname and hostname != DEFAULT_BIND_HOST else socket.AF_INET
+
+
+def _ensure_port_available(hostname, port):
+    with socket.socket(_socket_family_for_host(hostname), socket.SOCK_STREAM) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind((hostname, port))
+
+
+def _wait_until_server_ready_for_registration(
+    queue,
+    hostname,
+    port,
+    timeout=SERVER_READY_TIMEOUT_SEC,
+    poll_interval=SERVER_READY_POLL_INTERVAL_SEC,
+):
+    probe_host = _probe_server_host(hostname)
+    deadline = time.monotonic() + timeout
+
+    while time.monotonic() < deadline:
+        try:
+            if queue.get(timeout=poll_interval) == 0:
+                return False
+        except queue_lib.Empty:
+            pass
+
+        if os.getppid() == 1:
+            return False
+
+        try:
+            with socket.create_connection((probe_host, port), timeout=poll_interval):
+                return True
+        except OSError:
+            continue
+
+    _logger.error(
+        "El servidor %s:%s no ha quedat en escolta dins del temps previst; s'omet el registre al directori",
+        probe_host,
+        port,
+    )
+    return False
+
+
+def _agent_behaviour(queue, register_fn, ready_host=None, ready_port=None):
     """Comportament concurrent de l'agent.
 
     Replica `agentbehavior1` dels exemples (SimpleInfoAgent/SimpleDirectoryService):
@@ -176,6 +229,9 @@ def _agent_behaviour(queue, register_fn):
     procés principal hi diposita un 0 a la cua per aturar-lo netament.
     """
     if register_fn is not None:
+        if ready_host is not None and ready_port is not None:
+            if not _wait_until_server_ready_for_registration(queue, ready_host, ready_port):
+                return
         register_fn()
     _wait_for_shutdown_signal(queue)
 
@@ -199,13 +255,14 @@ def serve_agent(app, hostname, port, register_fn=None, behaviour_fn=None):
     `Process(target=agentbehavior1, args=(cola,))` + `app.run(...)` + `join()`.
     El registre al directori passa dins del comportament concurrent.
     """
+    _ensure_port_available(hostname, port)
     behaviour_target = behaviour_fn or _agent_behaviour
     try:
         context = multiprocessing.get_context("fork")
     except ValueError:  # plataformes sense fork (p.ex. Windows): context per defecte
         context = multiprocessing.get_context()
     queue = context.Queue()
-    behaviour = context.Process(target=behaviour_target, args=(queue, register_fn))
+    behaviour = context.Process(target=behaviour_target, args=(queue, register_fn, hostname, port))
     behaviour.daemon = True
     behaviour.start()
     try:
