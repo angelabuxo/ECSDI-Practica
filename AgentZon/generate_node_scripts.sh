@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Genera un script d'arrencada per cada agent (per repartir-los manualment).
+# Genera un script d'arrencada per cada agent (per repartir-los manualment)
 #
 # Ús:
 #   cp distributed.env.example distributed.env && vim distributed.env
 #   ./generate_node_scripts.sh
-#   # Reparteix distributed/nodes/*.sh (un per agent) a cada PC i executa'l allà.
+#   # Reparteix distributed/nodes/*.sh (un per agent) a cada PC i executa'l alla
 
 set -euo pipefail
 
