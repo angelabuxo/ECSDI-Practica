@@ -53,6 +53,11 @@
           {% else %}
           <span class="status status-pending">PENDENT</span>
           {% endif %}
+          {% if line.delivery_date %}
+          <div class="meta">
+            {{ "Data real" if line.delivery_date_is_official else "Data prevista" }}: <strong>{{ line.delivery_date }}</strong>
+          </div>
+          {% endif %}
         </td>
         <td>{% if line.transport_name %}{{ line.transport_name }}{% else %}—{% endif %}</td>
       </tr>

@@ -158,6 +158,14 @@ curl "http://127.0.0.1:9007/cron/negotiate-ready-lots"
 curl "http://127.0.0.1:9008/cron/negotiate-ready-lots"
 ```
 
+Per a demos, pots simular la data de referència sense canviar la del dispositiu:
+
+```bash
+curl "http://127.0.0.1:9003/cron/negotiate-ready-lots?today=2026-06-11"
+```
+
+El paràmetre opcional `today` ha d'estar en format `YYYY-MM-DD`.
+
 Per a la demo: el sistema ha de funcionar **realment distribuït**. Pots executar agents en màquines diferents passant `--host` i `--directory-host` amb les IP reals.
 
 ### Opció C (11+ PCs a la xarxa local)

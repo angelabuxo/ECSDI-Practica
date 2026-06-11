@@ -11,6 +11,7 @@ Agent centre logistic AgentZon (lots, transport i cobrament intern).
 
 import argparse
 import threading
+from datetime import date
 from pathlib import Path
 
 from flask import Flask, render_template, request
@@ -623,8 +624,18 @@ def browser_iface():
 
 @app.route("/cron/negotiate-ready-lots")
 def negotiate_ready_lots():
+    today_override = request.args.get("today")
+    if today_override:
+        try:
+            reference_date = date.fromisoformat(today_override)
+        except ValueError:
+            return "Invalid today parameter. Expected YYYY-MM-DD", 400
+    else:
+        reference_date = None
+
     ready_lots = list_ready_lots_for_negotiation(
         LOTS_PATH,
+        today=reference_date,
         delivery_window_days=READY_DELIVERY_WINDOW_DAYS,
     )
     processed = 0

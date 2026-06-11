@@ -95,10 +95,14 @@ def _enrich_lines_with_shipment_status(lines, shipments):
             best = max(matching, key=lambda s: _status_rank(s.get("status", "OBERT")))
             line["shipping_status"] = best.get("status", "PENDENT")
             line["transport_name"] = best.get("transport_name", "")
+            line["delivery_date"] = best.get("official_delivery_date") or best.get("estimated_delivery_date") or best.get("delivery_date") or ""
+            line["delivery_date_is_official"] = bool(best.get("official_delivery_date"))
             logging.info("  linia %s -> status=%s (matching=%d)", line["product_id"], line["shipping_status"], len(matching))
         else:
             line["shipping_status"] = "PENDENT"
             line["transport_name"] = ""
+            line["delivery_date"] = ""
+            line["delivery_date_is_official"] = False
             logging.info("  linia %s -> PENDENT (sense seguiment coincident)")
 
 
@@ -278,5 +282,4 @@ def collect_warehouse_reservations(order, centre_groups, sender_uri, message_sen
                 if tracking_path is not None:
                     save_localization_confirmations(tracking_path, group_reservations)
     return reservations
-
 
