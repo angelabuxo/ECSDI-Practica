@@ -13,7 +13,7 @@
 #   ./deploy_distributed.sh --check-setup  # SSH + comprova projecte i .venv remots
 #   ./deploy_distributed.sh              # arrenca tots els agents en ordre
 #   ./deploy_distributed.sh --dry-run    # mostra les comandes SSH sense executar-les
-#   ./deploy_distributed.sh cobrador     # només un agent
+#   ./deploy_distributed.sh cobrador     # nomes un agent
 #   ./deploy_distributed.sh --stop       # atura agents remots (pkill)
 
 set -euo pipefail

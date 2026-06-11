@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Reinicia dades de runtime generades durant l'execució del sistema.
-# Executa des de qualsevol ubicació; resol paths respecte a AgentZon/.
+# Reinicia dades de runtime generades durant l'execució del sistema
+# Executa des de qualsevol ubicació; resol paths respecte a AgentZon/
 
 set -euo pipefail
 

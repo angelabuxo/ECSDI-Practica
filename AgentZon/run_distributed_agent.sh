@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Arrenca UN agent AgentZon en mode distribuït (una màquina de la xarxa).
+# Arrenca UN agent AgentZon en mode distribuït (una màquina de la xarxa)
 #
 # Ús:
 #   cp distributed.env.example distributed.env   # primera vegada
