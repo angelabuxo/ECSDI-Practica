@@ -257,13 +257,22 @@ Per reproduir el mateix catàleg entre execucions:
 .venv/bin/python -m services.bootstrap --data-dir data --product-count 24 --seed 21
 ```
 
-## 5) Passar els tests
+## 5) Passar els jocs de prova
 
-Des de `AgentZon/`:
+Els scripts de `scripts/` validen el sistema amb els agents en marxa (secció 3). Des de `AgentZon/`:
 
 ```bash
 cd AgentZon
-.venv/bin/python -m unittest discover -s tests -p 'test_*.py'
+chmod +x scripts/*.sh   # només la primera vegada
+./scripts/run_all_tests.sh
 ```
 
-Han de passar **tots** els tests. En entorns sandboxats on no es poden obrir ports locals, `test_distributed_smoke` es marca com a `skipped`.
+Opcions útils:
+
+```bash
+./scripts/run_all_tests.sh --clean   # neteja dades de runtime i executa tots
+./scripts/run_all_tests.sh 1 3       # només els tests 1 i 3
+./scripts/test_01_search.sh          # un test individual
+```
+
+Els 11 jocs de prova cobreixen cerca, compra (interna i múltiple), devolucions, suggeriments, feedback i productes externs. Han de passar **tots** abans de considerar el sistema validat.
