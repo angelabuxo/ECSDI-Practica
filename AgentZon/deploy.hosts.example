@@ -3,7 +3,7 @@
 #
 # Mapeja cada agent a la IP del PC on s'ha d'executar (per SSH).
 # No cal aquest fitxer si cada persona arrenca el seu agent manualment
-# amb ./run_distributed_agent.sh <agent>.
+# amb ./run_distributed_agent.sh <agent>
 
 directory=10.10.43.1
 cobrador=10.10.43.2

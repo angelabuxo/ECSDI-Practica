@@ -3,7 +3,7 @@
 filename: config
 
 Configuracio compartida i arrencada concurrent dels agents AgentZon
-(patrons SimpleInfoAgent / SimpleDirectoryService del laboratori).
+(patrons SimpleInfoAgent / SimpleDirectoryService del laboratori)
 """
 
 import multiprocessing
