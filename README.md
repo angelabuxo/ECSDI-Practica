@@ -1,0 +1,278 @@
+# AgentZon
+
+AgentZon és un prototip de sistema multiagent per a l'assignatura ECSDI. Implementa una botiga distribuïda amb cerca de productes, compra i gestió logística basada en ontologia RDF/OWL.
+
+
+## Flux híbrid de lots i enviament
+
+El flux de compra i logística és ara híbrid:
+
+- `Compra` retorna immediatament un `ResultatCompra` amb la data estimada (`DataEntrega`) i les reserves de lot localitzades.
+- `Centre Logístic` només negocia el transport quan un lot queda `PREPARAT`.
+- Un lot passa a `PREPARAT` quan el seu pes total arriba o supera el límit (`MAX_LOT_WEIGHT_KG`) després d'afegir-hi un producte, encara que el desbordi.
+- Els productes següents (amb mateixa ciutat i data) obren un lot nou `OBERT` un cop l'anterior ja és `PREPARAT`.
+- Els lots oberts però imminents també es poden promoure amb l'escombrat diari `GET /cron/negotiate-ready-lots`.
+- Quan la negociació acaba, `Compra` rep `DadesEnviament` (`ASSIGNAT`) amb la data definitiva i el transportista. 
+- Quan el lot s'envia, `Compra` rep `ConfirmacioEnviament` (`ENVIAT`) i la comanda queda actualitzada a `/orders/<order_id>`.
+
+## 1) Generar documentació i graf de l'ontologia
+
+Des de `AgentZon/` (amb l'entorn virtual activat; vegeu la secció 2):
+
+```bash
+cd AgentZon
+python -m pylode ontologia/AgentZonOntology.rdf -o ontologia/docs/ontology.html
+```
+
+Generar el graf de l'ontologia (cal tenir instal·lat Graphviz: `dot`):
+
+```bash
+rdf2dot ontologia/AgentZonOntology.rdf | dot -Tpng -o ontologia/docs/ontology_graph.png
+```
+
+## 2) Preparar l'entorn (un sol cop)
+
+Des de l'arrel del repositori:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+També pots crear el virtualenv dins de `AgentZon/.venv`; el script `run_agents.sh` accepta qualsevol dels dos.
+
+## 3) Executar el sistema distribuït
+
+Totes les comandes d'aquesta secció s'executen des de **`AgentZon/`** (és el directori de treball dels agents). La interfície humana viu a `/iface`; els agents es comuniquen per `/comm` i el directori per `/Register`.
+
+### Opció A (recomanada, macOS)
+
+Un script obre una finestra de Terminal per agent (12 processos):
+
+```bash
+cd AgentZon
+chmod +x run_agents.sh   # només la primera vegada
+./run_agents.sh
+```
+
+Variables opcionals: `HOST`, `DELAY_SECONDS`, `OPEN_BROWSER=0` (per no obrir el navegador automàticament).
+
+### Opció B (manual)
+
+Obre **una terminal per agent** i executa les comandes següents des de `AgentZon/`. **L'ordre importa**:
+
+1. Directory  
+2. Cobrador  
+3. Opinador, Retornador i transportistes  
+4. Centres Logístics, Venedor Extern, Compra i Cercador (aquest últim, el que exposa la UI de cerca/compra)
+
+Substitueix `.venv/bin/python` per `../.venv/bin/python` si el virtualenv està a l'arrel del repositori.
+
+**1. Agent Directory**
+
+```bash
+.venv/bin/python -m agents.agent_directory --host 127.0.0.1 --port 9000
+```
+
+**2. Agent Cobrador**
+
+```bash
+.venv/bin/python -m agents.agent_cobrador --host 127.0.0.1 --port 9005 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+```
+
+**3. Agent Opinador**
+
+```bash
+.venv/bin/python -m agents.agent_opinador --host 127.0.0.1 --port 9004 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+```
+
+**4. Agent Retornador**
+
+```bash
+.venv/bin/python -m agents.agent_retornador --host 127.0.0.1 --port 9009 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+```
+
+**5. Transportista ràpid**
+
+```bash
+.venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9010 --directory-host 127.0.0.1 --directory-port 9000 --transport-id fast --price-per-kg 8.0 --delivery-days 1
+```
+
+**6. Transportista econòmic**
+
+```bash
+.venv/bin/python -m agents.agent_transportista --host 127.0.0.1 --port 9011 --directory-host 127.0.0.1 --directory-port 9000 --transport-id economy --price-per-kg 4.0 --delivery-days 3
+```
+
+**7–9. Agents Centre Logístic (BCN, Girona, Tarragona)**
+
+```bash
+.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9003 --centre-id CL-BCN --centre-city Barcelona --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+```
+
+```bash
+.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9007 --centre-id CL-GI --centre-city Girona --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+```
+
+```bash
+.venv/bin/python -m agents.agent_centre_logistic --host 127.0.0.1 --port 9008 --centre-id CL-TGN --centre-city Tarragona --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+```
+
+**10. Agent Venedor Extern**
+
+```bash
+.venv/bin/python -m agents.agent_venedor_extern --host 127.0.0.1 --port 9012 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+```
+
+**11. Agent Compra**
+
+```bash
+.venv/bin/python -m agents.agent_compra --host 127.0.0.1 --port 9002 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+```
+
+**12. Agent Cercador**
+
+```bash
+.venv/bin/python -m agents.agent_cercador --host 127.0.0.1 --port 9001 --directory-host 127.0.0.1 --directory-port 9000 --data-dir data
+```
+
+### Interfície i endpoints
+
+Quan tots els agents estiguin en marxa, obre:
+
+- Cerca i compra: `http://127.0.0.1:9001/iface`
+- Registre de productes externs (venedors): `http://127.0.0.1:9012/iface`
+
+Endpoints principals:
+
+- `DirectoryAgent`: `/Register`, `/Info`, `/Stop`
+- `CercadorAgent`, `CompraAgent`, `CentreLogisticAgent`, `OpinadorAgent`, `RetornadorAgent`, `Transportista`, `CobradorAgent`, `VenedorExternAgent`: `/comm`, `/iface`, `/Stop`
+
+Per forçar la negociació dels lots oberts amb entrega imminent:
+
+```bash
+curl "http://127.0.0.1:9003/cron/negotiate-ready-lots"
+curl "http://127.0.0.1:9007/cron/negotiate-ready-lots"
+curl "http://127.0.0.1:9008/cron/negotiate-ready-lots"
+```
+
+Per a demos, pots simular la data de referència sense canviar la del dispositiu:
+
+```bash
+curl "http://127.0.0.1:9003/cron/negotiate-ready-lots?today=2026-06-11"
+```
+
+El paràmetre opcional `today` ha d'estar en format `YYYY-MM-DD`.
+
+Per a la demo: el sistema ha de funcionar **realment distribuït**. Pots executar agents en màquines diferents passant `--host` i `--directory-host` amb les IP reals.
+
+### Opció C (11+ PCs a la xarxa local)
+
+
+Hi ha scripts per automatitzar el desplegament. El fitxer `distributed.env` només necessita la IP del **Directory**; cada PC detecta la seva IP local sol:
+
+```bash
+cd AgentZon
+cp distributed.env.example distributed.env
+# Edita distributed.env: DIRECTORY_HOST=<ip_del_pc_del_directory>
+
+./run_distributed_agent.sh --local-ip   # comprova quina IP detecta aquest PC
+```
+
+**Manual (recomanat en laboratori):** copia el mateix `distributed.env` a totes les màquines i executa un agent per PC:
+
+```bash
+./run_distributed_agent.sh directory    # només al PC del Directory (primer!)
+./run_distributed_agent.sh cobrador     # al PC del Cobrador
+# ... (./run_distributed_agent.sh --list per veure tots)
+```
+
+**Scripts per repartir:** `./generate_node_scripts.sh` crea `distributed/nodes/start_<agent>.sh` (un fitxer per agent).
+
+**SSH des d'un PC central** (cal `ssh-copy-id`, `deploy.hosts` i el mateix path del projecte):
+
+```bash
+cp deploy.hosts.example deploy.hosts   # agent=ip per cada PC (només per SSH)
+# A distributed.env: SSH_USER=..., REMOTE_AGENTZON_DIR=/ruta/al/AgentZon
+./deploy_distributed.sh --check         # només prova SSH (sense clonar ni instal·lar res)
+./deploy_distributed.sh --check-setup   # SSH + comprova que existeix el projecte i .venv
+./deploy_distributed.sh --dry-run       # previsualitza comandes d'arrencada
+./deploy_distributed.sh                 # arrenca tots en ordre
+./deploy_distributed.sh --stop          # atura agents remots
+```
+
+Prova manual a un sol PC:
+
+```bash
+ssh -o ConnectTimeout=5 student@10.10.43.2 'echo OK && hostname'
+```
+
+El sistema té **12 agents**; amb **11 PCs** executa dos agents al mateix PC (p. ex. `transport_fast` i `transport_economy` en dos terminals).
+
+Interfícies quan tot estigui actiu (IP del PC on corre cada agent):
+
+- Cerca/compra: `http://<ip_pc_cercador>:9001/iface`
+- Venedor extern: `http://<ip_pc_venedor>:9012/iface`
+
+Si la detecció automàtica de IP falla, afegeix `LOCAL_HOST=<ip>` a `distributed.env`.
+
+### Aturar agents, terminals i ports actius
+
+Si has obert els agents amb `./run_agents.sh` o manualment i vols reiniciar net (errors `Address already in use`, processos penjats, etc.), executa des de qualsevol directori:
+
+```bash
+# 1) Aturar tots els processos Python dels agents
+pkill -f '[Pp]ython.*-m agents\.agent_' 2>/dev/null || true
+
+# 2) Alliberar els ports reservats per AgentZon (9000–9009, 9010–9012)
+for port in 9000 9001 9002 9003 9004 9005 9006 9007 9008 9009 9010 9011 9012; do
+  lsof -ti "tcp:$port" -sTCP:LISTEN 2>/dev/null | xargs kill -9 2>/dev/null
+done
+```
+
+Comprovar que no queda res en escolta:
+
+```bash
+lsof -nP -iTCP:9000-9012 -sTCP:LISTEN
+```
+
+Si has usat `./run_agents.sh` a macOS, tanca també les finestres de Terminal que han quedat obertes (Cmd+W a cada una, o tanca-les des del menú Terminal).
+
+## 4) Regenerar dades de prova
+
+El catàleg RDF de `productes.ttl` i les ubicacions de `ubicacions_productes.ttl` es poden generar aleatòriament.
+
+Des de `AgentZon/`:
+
+```bash
+cd AgentZon
+.venv/bin/python -m services.bootstrap --data-dir data --product-count 24
+```
+
+Per reproduir el mateix catàleg entre execucions:
+
+```bash
+.venv/bin/python -m services.bootstrap --data-dir data --product-count 24 --seed 21
+```
+
+## 5) Passar els jocs de prova
+
+Els scripts de `scripts/` validen el sistema amb els agents en marxa (secció 3). Des de `AgentZon/`:
+
+```bash
+cd AgentZon
+chmod +x scripts/*.sh   # només la primera vegada
+./scripts/run_all_tests.sh
+```
+
+Opcions útils:
+
+```bash
+./scripts/run_all_tests.sh --clean   # neteja dades de runtime i executa tots
+./scripts/run_all_tests.sh 1 3       # només els tests 1 i 3
+./scripts/test_01_search.sh          # un test individual
+```
+
+Els 11 jocs de prova cobreixen cerca, compra (interna i múltiple), devolucions, suggeriments, feedback i productes externs. Han de passar **tots** abans de considerar el sistema validat.
